@@ -45,8 +45,12 @@ module zap_fetch_main
 );
 
 // Since the I-cache is allowed 1 full cycle for access, the PC needs
-// to be buffered properly.
+// to be buffered properly. This mimics the I-cache providing the address
+// back after 1 cycle on every new clock out.
 reg [31:0] pc_buff;
+
+// If an instruction abort occurs, this unit sleeps until it is woken up.
+reg sleep_ff;
 
 // This is the instruction payload on an abort
 // because no instruction is actually available on
@@ -63,19 +67,22 @@ begin
                 o_instruction   <= 32'd0;
                 o_instr_abort   <= 1'd0;
                 pc_buff         <= 32'd0;
+                sleep_ff        <= 1'd0;
         end
         else if ( i_clear_from_writeback )       
         begin   
                 o_valid         <= 1'd0;
                 o_instr_abort   <= 1'd0;
                 o_instruction   <= 32'd0;
+                sleep_ff        <= 1'd0;
         end
         else if ( i_data_stall)                  begin end // Save state.
-        else if ( i_clear_from_alu )             
+        else if ( i_clear_from_alu || sleep_ff )             
         begin
-                o_valid <= 1'd0;
-                o_instr_abort <= 1'd0;
-                o_instruction <= 32'd0;
+                // When asleep, do not present anything.
+                o_valid         <= 1'd0;
+                o_instr_abort   <= 1'd0;
+                o_instruction   <= 32'd0;
         end
         else if ( i_stall_from_issue )           begin end // Save state.
         else if ( i_stall_from_decode)           begin end
