@@ -19,7 +19,7 @@ Author --
 Revanth Kamaraj
 
 License --
-Released under the FreeBSD license.
+Released under the MIT license.
 */
 
 module zap_decode_main #(

@@ -27,7 +27,7 @@
  Revanth Kamaraj.
 
  License --
- FreeBSD license.
+ MIT license.
 */
 
 module zap_decode #(
