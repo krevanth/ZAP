@@ -60,7 +60,7 @@ module zap_top #(
                 input wire [31:0]       i_instruction,          // A 32-bit ZAP instruction.
                 input wire              i_valid,                // Instruction valid.
                 input wire              i_instr_abort,          // Instruction abort fault.
-                
+                input wire [31:0]       i_instruction_address,  // I-cache address out.                
 
                 // Memory access.
                 output wire             o_read_en,              // Memory load
@@ -255,7 +255,7 @@ u_zap_fetch_main (
         .i_clear_from_alu               (clear_from_alu),
         .i_stall_from_issue             (stall_from_issue),
         .i_stall_from_decode            (stall_from_decode),
-        .i_pc_ff                        (o_pc),
+        .i_pc_ff                        (i_instruction_address),
         .i_instruction                  (i_instruction),
         .i_valid                        (i_valid),
         .i_instr_abort                  (i_instr_abort),

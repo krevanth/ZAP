@@ -9,7 +9,8 @@ module cache
         output reg              o_hit,
         output reg              o_miss,
         output reg              o_abort,
-        
+        output reg [31:0]       o_address,       
+ 
         input wire              i_rd_en,
         input wire              i_wr_en,
         input wire              i_recover
@@ -27,13 +28,19 @@ end
 // Construct read and write operations.
 always @ (posedge i_clk)
 begin
+        o_miss <= 1'd0;
+        o_hit  <= 1'd1;
+
+        // Cache read.
         if ( i_rd_en )
         begin
                 o_data <= {mem[i_address+3],mem[i_address+2],mem[i_address+1],mem[i_address]};
                 o_hit  <= 1'd1;
                 o_miss <= 1'd0;
+                o_address <= i_address;
         end
 
+        // Cache write.
         if ( i_wr_en )
         begin
                 {mem[i_address+3],mem[i_address+2],mem[i_address+1],mem[i_address]} <= i_data;
@@ -42,14 +49,9 @@ begin
         // Give a miss on reset.
         if ( i_reset )
         begin
-                o_miss <= 1'd1;
-                o_hit  <= 1'd0;
-        end
-
-        if ( !i_rd_en && !i_wr_en )
-        begin
-                o_miss <= 1'd0;
-                o_hit  <= 1'd1;
+                o_miss          <= 1'd1;
+                o_hit           <= 1'd0;
+                o_address       <= 32'd0;
         end
 end
 

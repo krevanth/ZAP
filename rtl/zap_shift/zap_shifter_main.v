@@ -263,15 +263,8 @@ zap_shift_shifter U_SHIFT
 // ===============================
 always @*
 begin
-        if ( !i_disable_shifter_ff )
-        begin
-                rn = shout;
-        end
-        else
-        begin
                 rn = resolve_conflict ( i_alu_source_ff, i_alu_source_value_ff, 
                                         o_destination_index_ff, i_alu_value_nxt ); 
-        end
 end
 
 // ===============================
@@ -279,8 +272,15 @@ end
 // ===============================
 always @*
 begin
+        if( !i_disable_shifter_ff )
+        begin
+                rm = shout;
+        end
+        else
+        begin
                 rm = resolve_conflict ( i_shift_source_ff, i_shift_source_value_ff,
                                         o_destination_index_ff, i_alu_value_nxt );
+        end
 end
 
 // ================================

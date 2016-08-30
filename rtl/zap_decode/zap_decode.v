@@ -381,7 +381,7 @@ begin
         o_destination_index     = ARCH_PC;
         o_alu_source            = ARCH_PC;
         o_alu_source[32]        = INDEX_EN;
-        o_shift_source          = $signed(i_instruction[23:0]);
+        o_shift_source          = ($signed(i_instruction[23:0]));
         o_shift_source[32]      = IMMED_EN;
         o_shift_operation       = LSL;
         o_shift_length          = 2;

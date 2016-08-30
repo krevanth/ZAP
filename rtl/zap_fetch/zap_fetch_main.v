@@ -29,7 +29,7 @@ module zap_fetch_main
                 input wire i_stall_from_issue,     // |
                 input wire i_stall_from_decode,    // V Low Priority.
 
-                // From program counter. This unit will add 8 to it.
+                // Comes from the cache.
                 input wire [31:0] i_pc_ff,               
  
                 // From I-cache.
@@ -43,11 +43,6 @@ module zap_fetch_main
                 output reg         o_instr_abort,       // Indication of an abort.       
                 output reg [31:0]  o_pc_plus_8_ff       // PC ouput.
 );
-
-// Since the I-cache is allowed 1 full cycle for access, the PC needs
-// to be buffered properly. This mimics the I-cache providing the address
-// back after 1 cycle on every new clock out.
-reg [31:0] pc_buff;
 
 // If an instruction abort occurs, this unit sleeps until it is woken up.
 reg sleep_ff;
@@ -66,26 +61,32 @@ begin
                 o_valid         <= 1'd0;
                 o_instruction   <= 32'd0;
                 o_instr_abort   <= 1'd0;
-                pc_buff         <= 32'd0;
-                sleep_ff        <= 1'd0;
+                sleep_ff        <= 1'd0;        // Wake unit up.
         end
         else if ( i_clear_from_writeback )       
         begin   
                 o_valid         <= 1'd0;
                 o_instr_abort   <= 1'd0;
                 o_instruction   <= 32'd0;
-                sleep_ff        <= 1'd0;
+                sleep_ff        <= 1'd0;        // Wake unit up.
         end
         else if ( i_data_stall)                  begin end // Save state.
-        else if ( i_clear_from_alu || sleep_ff )             
+        else if ( i_clear_from_alu )             
         begin
-                // When asleep, do not present anything.
                 o_valid         <= 1'd0;
                 o_instr_abort   <= 1'd0;
                 o_instruction   <= 32'd0;
+                sleep_ff        <= 1'd0;        // Wake unit up.
         end
         else if ( i_stall_from_issue )           begin end // Save state.
         else if ( i_stall_from_decode)           begin end
+        else if ( sleep_ff )
+        begin
+                o_valid <= 1'd0;
+                o_instr_abort <= 1'd0;
+                o_instruction <= 32'd0;
+                sleep_ff <= 1'd1;
+        end
         else
         begin
                 // Instruction aborts occur only when i_valid
@@ -101,10 +102,6 @@ begin
                 // R0, R0) which is harmless.
                 
                 o_instr_abort   <= i_instr_abort;
-
-                // Buffer PC. Advance only when capturing an instruction.
-                pc_buff <= (i_valid || i_instr_abort) ? 
-                           i_pc_ff : pc_buff;
         end
 
         // This is needed to maintain a PC + 8
@@ -112,7 +109,7 @@ begin
         if ( i_reset )
                 o_pc_plus_8_ff <= 32'd8;
         else
-                o_pc_plus_8_ff <= pc_buff + 32'd8;
+                o_pc_plus_8_ff <= i_pc_ff + 32'd8;
 end
 
 endmodule

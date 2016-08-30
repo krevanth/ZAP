@@ -24,6 +24,9 @@ wire             o_signed_byte_en;       // Signed byte enable.
 wire             o_unsigned_halfword_en; // Unsiged halfword enable.
 wire             o_signed_halfword_en;   // Signed halfword enable.
 
+// From cache.
+wire [31:0]     i_instruction_address;
+
 // User view.
 wire             o_mem_translate;
 
@@ -69,6 +72,7 @@ u_zap_top
 (
         .i_clk(i_clk),
         .i_reset(i_reset),
+        .i_instruction_address(i_instruction_address),
         .i_instruction(i_instruction),
         .i_valid(i_valid),
         .i_instr_abort(i_instr_abort),
@@ -102,6 +106,7 @@ cache u_i_cache
         .o_data(i_instruction),
         .i_data('d0),
         .o_hit(i_valid),
+        .o_address(i_instruction_address),
         .o_miss(),
         .o_abort(i_instr_abort),
         .i_rd_en(1'd1),
@@ -119,7 +124,8 @@ cache u_d_cache
         .o_data(i_rd_data),
         .o_hit(),
         .o_miss(i_data_stall),
-        .o_abort(i_data_abort),     
+        .o_abort(i_data_abort),  
+        .o_address(),   
         .i_rd_en(o_read_en),
         .i_wr_en(o_write_en),
         .i_recover(o_mem_reset)
@@ -137,7 +143,7 @@ begin
         @(negedge i_clk);
         i_reset = 0;
 
-        repeat(10) @(negedge i_clk);
+        repeat(100) @(negedge i_clk);
 
         $finish;
 end

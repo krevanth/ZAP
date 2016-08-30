@@ -373,7 +373,9 @@ function [31:0] get_register_value (
 reg [31:0] get;
 begin
              if   ( index[32] )                 // Catch constant here.
-                        get = index[31:0];   
+                        get = index[31:0]; 
+        else if   ( index == ARCH_PC )          // Catch PC here.
+                        get = i_pc_plus_8_ff;
         else if   ( index == i_shifter_destination_index_ff && i_alu_dav_nxt  )                 
                         get =  i_alu_destination_value_nxt;         
         else if   ( index == i_alu_destination_index_ff && i_alu_dav_ff       )                 
