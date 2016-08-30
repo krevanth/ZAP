@@ -1,6 +1,5 @@
 `default_nettype none
 
-// ============================================================================
 // Filename --
 // zap_shift_shifter.v 
 //
@@ -9,7 +8,6 @@
 //
 // Description --
 // This module is an ARM compatible barrel shifter.
-// ============================================================================
 
 module zap_shift_shifter
 #(

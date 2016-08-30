@@ -36,6 +36,7 @@ module zap_register_file #(
         input wire      [31:0]               i_pc_from_alu,
         input wire                           i_stall_from_decode,
         input wire                           i_stall_from_issue,
+        input wire                           i_stall_from_shifter,
 
         // Configurable intertupt vector positions.
         input wire      [31:0]              i_data_abort_vector,
@@ -151,6 +152,8 @@ begin: blk1
         else if ( i_stall_from_decode )
                 r_nxt[PHY_PC] = r_ff[PHY_PC];
         else if ( i_stall_from_issue )
+                r_nxt[PHY_PC] = r_ff[PHY_PC];
+        else if ( i_stall_from_shifter )
                 r_nxt[PHY_PC] = r_ff[PHY_PC];
         else
                 r_nxt[PHY_PC] = r_ff[PHY_PC] + 32'd4;

@@ -43,6 +43,7 @@ module zap_issue_main
         input wire                              i_clear_from_writeback,
         input wire                              i_data_stall,          
         input wire                              i_clear_from_alu,
+        input wire                              i_stall_from_shifter,
 
         // From decode
         input       [31:0]                      i_pc_plus_8_ff,
@@ -254,6 +255,10 @@ begin
         o_shift_length_value_ff           <= 0;
         o_mem_srcdest_value_ff            <= 0;
 end
+else if ( i_stall_from_shifter )
+begin
+        // Preserve values.
+end
 else if ( lock )
 begin
         o_condition_code_ff               <= NV;
@@ -435,7 +440,7 @@ begin
         // A shift lock occurs if the current instruction requires a shift
         // other than LSL #0 or RORI if the operands are right on the output of this
         // stage.
-        shift_lock =    !(
+        shift_lock =    (!(
                                 i_shift_operation_ff    == LSL && 
                                 i_shift_length_ff[31:0] == 32'd0 && 
                                 i_shift_length_ff[32]   == IMMED_EN
@@ -446,10 +451,19 @@ begin
                         )
                         && // If it is not RORI AND...
                         (
+                                // Stuff is locked.
                                 shifter_lock_check ( i_shift_source_ff, o_destination_index_ff, o_condition_code_ff ) ||
                                 shifter_lock_check ( i_shift_length_ff, o_destination_index_ff, o_condition_code_ff ) ||
                                 shifter_lock_check ( i_alu_source_ff  , o_destination_index_ff, o_condition_code_ff )   
-                        ); 
+                        )) || 
+                        (
+                                // If it is a multiply and stuff is locked.
+                                i_alu_operation_ff == MLA && (
+                                shifter_lock_check ( i_shift_source_ff, o_destination_index_ff, o_condition_code_ff ) ||
+                                shifter_lock_check ( i_shift_length_ff, o_destination_index_ff, o_condition_code_ff ) ||
+                                shifter_lock_check ( i_alu_source_ff  , o_destination_index_ff, o_condition_code_ff )   
+                                )
+                        ); // If it is multiply (MAC). 
 
         // Shifter disable.
         o_shifter_disable_nxt = (       

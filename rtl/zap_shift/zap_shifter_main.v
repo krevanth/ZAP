@@ -1,6 +1,5 @@
 `default_nettype none
 
-// ============================================================================
 // Filename --
 // zap_shift_stage.v 
 //
@@ -9,7 +8,6 @@
 //
 // Description --
 // This stage contains the barrel shifter and the conflict resolver system.
-// ============================================================================
 
 module zap_shifter_main
 #(
@@ -119,7 +117,10 @@ module zap_shifter_main
         output reg       [$clog2(PHY_REGS )-1:0] o_destination_index_ff,
         output reg       [$clog2(ALU_OPS)-1:0]   o_alu_operation_ff,
         output reg       [$clog2(SHIFT_OPS)-1:0] o_shift_operation_ff,
-        output reg                               o_flag_update_ff
+        output reg                               o_flag_update_ff,
+
+        // Stall from shifter.
+        output reg                              o_stall_from_shifter
 );
 
 `include "opcodes.vh"
@@ -131,6 +132,24 @@ wire shcarry;
 wire        rrx;
 reg [31:0] mem_srcdest_value;
 reg [31:0] rm, rn;
+
+reg [31:0] mult_out;
+
+zap_multiply u_zap_multiply
+(
+        .i_clk(i_clk),
+        .i_reset(i_reset),
+
+        .i_clear(i_clear_from_writeback || i_clear_from_alu),
+        .i_start( i_alu_operation_ff == MLA ),
+
+        .i_rm(i_alu_source_value_ff),
+        .i_rn(i_shift_length_value_ff),
+        .i_rs(i_shift_source_value_ff), // rm.rs + rn
+
+        .o_rd(mult_out),
+        .o_busy(o_stall_from_shifter)
+);
 
 always @ (posedge i_clk)
 begin
@@ -223,7 +242,7 @@ begin
         begin
            o_condition_code_ff               <= i_condition_code_ff;                                     
            o_destination_index_ff            <= i_destination_index_ff;
-           o_alu_operation_ff                <= i_alu_operation_ff;
+           o_alu_operation_ff                <= (i_alu_operation_ff == MLA) ? MOV : i_alu_operation_ff;
            o_shift_operation_ff              <= i_shift_operation_ff;
            o_flag_update_ff                  <= i_flag_update_ff;
            o_mem_srcdest_index_ff            <= i_mem_srcdest_index_ff;           
@@ -242,7 +261,7 @@ begin
            o_pc_plus_8_ff                    <= i_pc_plus_8_ff;
            o_mem_srcdest_value_ff            <= mem_srcdest_value;
            o_alu_source_value_ff             <= rn;
-           o_shifted_source_value_ff         <= rm;
+           o_shifted_source_value_ff         <= (i_alu_operation_ff == MLA) ? mult_out : rm;
            o_shift_carry_ff                  <= shcarry;
            o_rrx_ff                          <= rrx; 
    end
@@ -272,7 +291,11 @@ end
 // ===============================
 always @*
 begin
-        if( !i_disable_shifter_ff )
+        if ( i_alu_operation_ff == MLA )
+        begin
+                rm = mult_out;
+        end        
+        else if( !i_disable_shifter_ff )
         begin
                 rm = shout;
         end

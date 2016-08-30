@@ -14,4 +14,4 @@ parameter LT =  4'hB;
 parameter GT =  4'hC;
 parameter LE =  4'hD;
 parameter AL =  4'hE;
-parameter NV =  4'hF; // Never execute!
+parameter NV =  4'hF; // Never eXecute!

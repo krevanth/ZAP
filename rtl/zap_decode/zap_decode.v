@@ -212,23 +212,18 @@ begin: tskDecodeMult
         $display($time, "%m: MLT decode...");
 
         o_condition_code        =       i_instruction[31:28];
-        o_alu_operation         =       i_instruction[24] ? MLA : MUL;
+        o_alu_operation         =       MLA;
         o_destination_index     =       {i_instruction[`DP_RD_EXTEND], i_instruction[19:16]};
         // For MUL, Rd and Rn are interchanged.
-        o_alu_source            =       i_instruction[11:8];
+        o_alu_source            =       i_instruction[11:8]; // ARM rs
         o_alu_source[32]        =       INDEX_EN;
+
         o_shift_source          =       {i_instruction[`DP_RS_EXTEND], i_instruction[`DP_RS]};
-        o_shift_source[32]      =       INDEX_EN;
+        o_shift_source[32]      =       INDEX_EN;            // ARM rm 
 
-        // Multiplication does not use the traditional shifter+ALU. The
-        // shifter consists of 2 parallel 32x16=32 unsigned multiplier blocks
-        // and the ALU adder is used to process the two products. This allows
-        // the unit to perform multiplication at the rate of 1 per clock
-        // cycle max.
-
-        // To avoid unwanted locks.
-        o_shift_length          =       0;
-        o_shift_length[32]      =       IMMED_EN;
+        // ARM rn
+        o_shift_length          =       i_instruction[24] ? {i_instruction[`DP_RN_EXTEND], i_instruction[`DP_RD]} : 32'd0;
+        o_shift_length[32]      =       i_instruction[24] ? INDEX_EN : IMMED_EN;
 end
 endtask
 

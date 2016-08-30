@@ -209,6 +209,8 @@ wire shifter_fiq_ff;
 wire shifter_abt_ff;
 wire shifter_swi_ff;
 
+wire stall_from_shifter;
+
 // ALU
 wire [$clog2(SHIFT_OPS)-1:0]    alu_shift_operation_ff;
 wire [31:0]                     alu_alu_result_nxt;
@@ -255,6 +257,7 @@ u_zap_fetch_main (
         .i_clear_from_writeback         (clear_from_writeback),
         .i_data_stall                   (i_data_stall),
         .i_clear_from_alu               (clear_from_alu),
+        .i_stall_from_shifter           (stall_from_shifter),
         .i_stall_from_issue             (stall_from_issue),
         .i_stall_from_decode            (stall_from_decode),
         .i_pc_ff                        (i_instruction_address),
@@ -285,6 +288,7 @@ u_zap_decode_main (
         .i_clear_from_writeback         (clear_from_writeback),
         .i_data_stall                   (i_data_stall),
         .i_clear_from_alu               (clear_from_alu),
+        .i_stall_from_shifter           (stall_from_shifter),
         .i_stall_from_issue             (stall_from_issue),
         .i_irq                          (i_irq),
         .i_fiq                          (i_fiq),
@@ -334,6 +338,7 @@ u_zap_issue_main
         .i_clk                          (i_clk),
         .i_reset                        (i_reset),
         .i_clear_from_writeback         (clear_from_writeback),
+        .i_stall_from_shifter           (stall_from_shifter),
         .i_data_stall                   (i_data_stall),
         .i_clear_from_alu               (clear_from_alu),
         .i_pc_plus_8_ff                 (decode_pc_plus_8_ff),
@@ -496,7 +501,10 @@ u_zap_shifter_main
         .o_irq_ff                       (shifter_irq_ff), 
         .o_fiq_ff                       (shifter_fiq_ff), 
         .o_abt_ff                       (shifter_abt_ff), 
-        .o_swi_ff                       (shifter_swi_ff)
+        .o_swi_ff                       (shifter_swi_ff),
+
+        // Stall
+        .o_stall_from_shifter           (stall_from_shifter)
 );
 
 // ALU STAGE //
@@ -634,6 +642,7 @@ u_zap_regf
         .i_pc_from_alu          (pc_from_alu),
         .i_stall_from_decode    (stall_from_decode),
         .i_stall_from_issue     (stall_from_issue),
+        .i_stall_from_shifter   (stall_from_shifter),
 
         .i_data_abort_vector        (DATA_ABORT_VECTOR),
         .i_fiq_vector               (FIQ_VECTOR),

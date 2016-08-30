@@ -26,6 +26,7 @@ module zap_fetch_main
                 input wire i_clear_from_writeback, // | High Priority.
                 input wire i_data_stall,           // |
                 input wire i_clear_from_alu,       // |
+                input wire i_stall_from_shifter,   // |
                 input wire i_stall_from_issue,     // |
                 input wire i_stall_from_decode,    // V Low Priority.
 
@@ -78,6 +79,7 @@ begin
                 o_instruction   <= 32'd0;
                 sleep_ff        <= 1'd0;        // Wake unit up.
         end
+        else if ( i_stall_from_shifter )         begin end // Save state.
         else if ( i_stall_from_issue )           begin end // Save state.
         else if ( i_stall_from_decode)           begin end
         else if ( sleep_ff )

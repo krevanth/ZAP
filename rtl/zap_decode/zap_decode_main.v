@@ -47,6 +47,7 @@ module zap_decode_main #(
         input wire                      i_clear_from_writeback, // | Priority
         input wire                      i_data_stall,           // |
         input wire                      i_clear_from_alu,       // |
+        input wire                      i_stall_from_shifter,   // |
         input wire                      i_stall_from_issue,     // V
 
         // Interrupt events.
@@ -167,6 +168,10 @@ begin
         else if ( i_clear_from_alu )
         begin
                 clear;
+        end
+        else if ( i_stall_from_shifter )
+        begin
+                // Preserve state.
         end
         else if ( i_stall_from_issue )
         begin
