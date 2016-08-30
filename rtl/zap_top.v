@@ -1,3 +1,5 @@
+`default_nettype none
+
 /*
 Filename --
 zap_top.v

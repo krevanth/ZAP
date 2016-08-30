@@ -1,51 +1,43 @@
 `default_nettype none
 
-// ============================================================================
-// Filename --
-// zap_register_file.v
-//
-// HDL --
-// Verilog-2005
-//
-// Description --
-// The ZAP register file. The register file is a typical RISC like structure
-// with 46 x 32-bit registers. Intended to be implemented using flip-flops. 
-// The register file provides dedicated ports for accessing the PC and CPSR
-// registers. Atomic register updates for interrupt processing is done here.
-//
-// Copyright --
-// (C) 2016 Revanth Kamaraj.
-// ============================================================================
+/* 
+ Filename --
+ zap_register_file.v
+
+ HDL --
+ Verilog-2005
+
+ Description --
+ The ZAP register file. The register file is a typical RISC like structure
+ with 46 x 32-bit registers. Intended to be implemented using flip-flops. 
+ The register file provides dedicated ports for accessing the PC and CPSR
+ registers. Atomic register updates for interrupt processing is done here.
+
+ Copyright --
+ (C) 2016 Revanth Kamaraj.
+*/
 
 module zap_register_file #(
         parameter PHY_REGS  = 46 // Number of physical registers.
 )
 (
-        // =====================================
         // Clock and reset.
-        // =====================================
         input wire                           i_clk,     // ZAP clock.
         input wire                           i_reset,   // ZAP reset.
 
-        // ======================================
         // Inputs from memory unit valid signal.
-        // ======================================
         input wire                           i_valid,
 
-        // ====================================================================
         // The PC can either be frozen in place or changed based on signals
         // from other units. If a unit clears the PC, it must provide the
         // appropriate new value.
-        // ====================================================================
         input wire                           i_data_stall,
         input wire                           i_clear_from_alu,
         input wire      [31:0]               i_pc_from_alu,
         input wire                           i_stall_from_decode,
         input wire                           i_stall_from_issue,
 
-        // =======================================
         // Configurable intertupt vector positions.
-        // =======================================
         input wire      [31:0]              i_data_abort_vector,
         input wire      [31:0]              i_fiq_vector,
         input wire      [31:0]              i_irq_vector,
@@ -53,26 +45,20 @@ module zap_register_file #(
         input wire      [31:0]              i_swi_vector,
         input wire      [31:0]              i_und_vector,
 
-        // =======================================
         // 4 read ports for high performance.
-        // =======================================
         input wire   [$clog2(PHY_REGS)-1:0] i_rd_index_0, 
         input wire   [$clog2(PHY_REGS)-1:0] i_rd_index_1, 
         input wire   [$clog2(PHY_REGS)-1:0] i_rd_index_2, 
         input wire   [$clog2(PHY_REGS)-1:0] i_rd_index_3,
 
-        // ========================================
         // Write index and data and flag updates.
-        // ========================================
         input   wire [$clog2(PHY_REGS)-1:0] i_wr_index,
         input   wire [31:0]                 i_wr_data,
         input   wire [3:0]                  i_flags,
         input   wire [$clog2(PHY_REGS)-1:0] i_wr_index_1,
         input   wire [31:0]                 i_wr_data_1,
 
-        // ========================================
         // Interrupt indicators.
-        // ========================================
         input   wire                         i_irq,
         input   wire                         i_fiq,
         input   wire                         i_instr_abt,
@@ -80,33 +66,23 @@ module zap_register_file #(
         input   wire                         i_swi,    
         input   wire                         i_und,
 
-        // ==============================================================
         // Program counter, PC + 8. This value is captured in the fetch
         // stage and is buffered all the way through.
-        // ==============================================================
         input   wire    [31:0]               i_pc_buf_ff,
 
-        // ========================================
         // Read data from the register file.
-        // ========================================
         output reg      [31:0]               o_rd_data_0,         
         output reg      [31:0]               o_rd_data_1,         
         output reg      [31:0]               o_rd_data_2,         
         output reg      [31:0]               o_rd_data_3,
 
-        // =========================================
         // Program counter (dedicated port).
-        // =========================================
         output reg      [31:0]               o_pc,
 
-        // =========================================
         // CPSR output
-        // =========================================
         output reg       [31:0]              o_cpsr,
 
-        // ================================================================
         // Clear from writeback
-        // ================================================================
         output reg                           o_clear_from_writeback,
 
         // Acks.

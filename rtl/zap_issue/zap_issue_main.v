@@ -328,19 +328,19 @@ always @*
 begin
 o_alu_source_value_nxt  = 
 get_register_value ( i_alu_source_ff,       0,i_shifter_destination_index_ff, i_alu_dav_nxt, i_alu_destination_value_nxt, i_alu_destination_value_ff, 
-                     i_alu_destination_index_ff, i_alu_dav_ff, i_memory_destination_index_ff, i_memory_dav_ff );
+                     i_alu_destination_index_ff, i_alu_dav_ff, i_memory_destination_index_ff, i_memory_dav_ff, i_memory_mem_srcdest_index_ff, i_memory_mem_load_ff );
 
 o_shift_source_value_nxt= 
 get_register_value ( i_shift_source_ff,     1,i_shifter_destination_index_ff, i_alu_dav_nxt, i_alu_destination_value_nxt, i_alu_destination_value_ff,
-                     i_alu_destination_index_ff, i_alu_dav_ff, i_memory_destination_index_ff, i_memory_dav_ff );
+                     i_alu_destination_index_ff, i_alu_dav_ff, i_memory_destination_index_ff, i_memory_dav_ff, i_memory_mem_srcdest_index_ff, i_memory_mem_load_ff );
 
 o_shift_length_value_nxt= 
 get_register_value ( i_shift_length_ff,     2,i_shifter_destination_index_ff, i_alu_dav_nxt, i_alu_destination_value_nxt, i_alu_destination_value_ff,
-                     i_alu_destination_index_ff, i_alu_dav_ff, i_memory_destination_index_ff, i_memory_dav_ff );
+                     i_alu_destination_index_ff, i_alu_dav_ff, i_memory_destination_index_ff, i_memory_dav_ff, i_memory_mem_srcdest_index_ff, i_memory_mem_load_ff );
 
 o_mem_srcdest_value_nxt = 
 get_register_value ( i_mem_srcdest_index_ff,3,i_shifter_destination_index_ff, i_alu_dav_nxt, i_alu_destination_value_nxt, i_alu_destination_value_ff,
-                     i_alu_destination_index_ff, i_alu_dav_ff, i_memory_destination_index_ff, i_memory_dav_ff ); 
+                     i_alu_destination_index_ff, i_alu_dav_ff, i_memory_destination_index_ff, i_memory_dav_ff, i_memory_mem_srcdest_index_ff, i_memory_mem_load_ff ); 
 //Naturally an index...
 end
 
@@ -367,8 +367,10 @@ function [31:0] get_register_value (
         input [31:0]                    i_alu_destination_value_ff,             // ALU flopped result.
         input [$clog2(PHY_REGS)-1:0]    i_alu_destination_index_ff,             // ALU flopped destination index.
         input                           i_alu_dav_ff,                           // ALU result valid flopped.
-        input [$clog2(PHY_REGS)-1:0]    i_memory_destination_index_ff,          // Memory stage destination index.
-        input                           i_memory_dav_ff                         // Memory stage valid
+        input [$clog2(PHY_REGS)-1:0]    i_memory_destination_index_ff,          // Memory stage destination index (POINTER).
+        input                           i_memory_dav_ff,                        // Memory stage valid
+        input [$clog2(PHY_REGS)-1:0]    i_memory_mem_srcdest_index_ff,          // Memory stage srcdest index.
+        input                           i_memory_mem_load_ff                    // Memory load.
 );
 reg [31:0] get;
 begin
@@ -392,8 +394,8 @@ begin
                 endcase
         end
 
-        // The memory accelerator.
-        if ( index == i_mem_srcdest_index_ff && i_memory_mem_load_ff && i_memory_dav_ff )
+        // The memory accelerator. If the requires stuff is present in the memory unit, short circuit.
+        if ( index == i_memory_mem_srcdest_index_ff && i_memory_mem_load_ff && i_memory_dav_ff )
         begin
                 get = i_memory_mem_srcdest_value_ff;
         end
