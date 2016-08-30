@@ -1,3 +1,22 @@
+
+ZAP is an ARM processor compatible with v4 of the ARM instruction set. The
+processor is built around a 7 stage pipeline:
+
+    FETCH => DECODE => ISSUE => SHIFTER => ALU => MEMORY => WRITEBACK
+
+The pipeline is fully interlocked and fed-back. Most dependent instructions
+execute with interlocks. A load accelerator allows instructions that require
+a loaded register to issue 1 cycle early. Multiplication takes 4 clock cycles.
+
+Current limitations :
+- Still in Alpha stage of development. Not tested thoroughly. Very buggy.
+- No long multiply/MAC.
+- No Thumb support.
+- No MMU included.
+- No coprocessor support 
+
+-------------------------------------------------------------------------------
+
 MIT License
 
 Copyright (c) 2016 Revanth Kamaraj
