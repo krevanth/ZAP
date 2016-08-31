@@ -103,6 +103,7 @@ localparam Z = 2;
 localparam C = 1;
 localparam V = 0;
 
+reg sleep_ff, sleep_nxt;
 reg [3:0] flags_ff, flags_nxt;
 reg [31:0] rm, rn;
 reg [31:0] mem_address_nxt;
@@ -160,15 +161,16 @@ begin
                 o_mem_unsigned_halfword_enable_ff<= 0;
                 o_mem_translate_ff               <= 0;
                 o_mem_srcdest_value_ff           <= 0;
+                sleep_ff                         <= 0;
         end
-        else if ( i_clear_from_writeback ) // Make flags_ff same as i_cpsr_ff
+        else if ( i_clear_from_writeback ) // Make flags_ff same as i_cpsr_nxt
         begin
                 o_alu_result_ff                  <= 0; 
                 o_dav_ff                         <= 0;    
                 o_pc_plus_8_ff                   <= 0; 
                 o_mem_address_ff                 <= 0; 
                 o_destination_index_ff           <= 0; 
-                flags_ff                         <= i_cpsr_ff;
+                flags_ff                         <= flags_ff; // Preserve flags.
                 o_abt_ff                         <= 0; 
                 o_irq_ff                         <= 0; 
                 o_fiq_ff                         <= 0; 
@@ -182,7 +184,8 @@ begin
                 o_mem_signed_halfword_enable_ff  <= 0; 
                 o_mem_unsigned_halfword_enable_ff<= 0; 
                 o_mem_translate_ff               <= 0; 
-                o_mem_srcdest_value_ff           <= 0; 
+                o_mem_srcdest_value_ff           <= 0;
+                sleep_ff                         <= 0; 
 
         end
         else if ( i_data_stall )
@@ -191,26 +194,54 @@ begin
         end
         else
         begin
-                o_alu_result_ff                  <= o_alu_result_nxt;
-                o_dav_ff                         <= o_dav_nxt;                
-                o_pc_plus_8_ff                   <= i_pc_plus_8_ff;
-                o_mem_address_ff                 <= mem_address_nxt;
-                o_destination_index_ff           <= i_destination_index_ff;
-                flags_ff                         <= o_dav_nxt ? flags_nxt : flags_ff;
-                o_abt_ff                         <= i_abt_ff;
-                o_irq_ff                         <= i_irq_ff;
-                o_fiq_ff                         <= i_fiq_ff;
-                o_swi_ff                         <= i_swi_ff;
-                o_mem_srcdest_index_ff           <= i_mem_srcdest_index_ff;
-                o_mem_srcdest_index_ff           <= i_mem_srcdest_index_ff;           
-                o_mem_load_ff                    <= i_mem_load_ff;                    
-                o_mem_store_ff                   <= i_mem_store_ff;                   
-                o_mem_unsigned_byte_enable_ff    <= i_mem_unsigned_byte_enable_ff;    
-                o_mem_signed_byte_enable_ff      <= i_mem_signed_byte_enable_ff;      
-                o_mem_signed_halfword_enable_ff  <= i_mem_signed_halfword_enable_ff;  
-                o_mem_unsigned_halfword_enable_ff<= i_mem_unsigned_halfword_enable_ff;
-                o_mem_translate_ff               <= i_mem_translate_ff;  
-                o_mem_srcdest_value_ff           <= i_mem_srcdest_value_ff;
+                if ( sleep_ff )
+                begin
+                        o_alu_result_ff                  <= 0; 
+                        o_dav_ff                         <= 0;    
+                        o_pc_plus_8_ff                   <= 0; 
+                        o_mem_address_ff                 <= 0; 
+                        o_destination_index_ff           <= 0; 
+                        flags_ff                         <= flags_ff; // Preserve flags.
+                        o_abt_ff                         <= 0; 
+                        o_irq_ff                         <= 0; 
+                        o_fiq_ff                         <= 0; 
+                        o_swi_ff                         <= 0; 
+                        o_mem_srcdest_index_ff           <= 0; 
+                        o_mem_srcdest_index_ff           <= 0; 
+                        o_mem_load_ff                    <= 0; 
+                        o_mem_store_ff                   <= 0; 
+                        o_mem_unsigned_byte_enable_ff    <= 0; 
+                        o_mem_signed_byte_enable_ff      <= 0; 
+                        o_mem_signed_halfword_enable_ff  <= 0; 
+                        o_mem_unsigned_halfword_enable_ff<= 0; 
+                        o_mem_translate_ff               <= 0; 
+                        o_mem_srcdest_value_ff           <= 0;
+                        sleep_ff                         <= 1'd1; // Keep sleeping.
+                end
+                else
+                begin
+                        o_alu_result_ff                  <= o_alu_result_nxt;
+                        o_dav_ff                         <= o_dav_nxt;                
+                        o_pc_plus_8_ff                   <= i_pc_plus_8_ff;
+                        o_mem_address_ff                 <= mem_address_nxt;
+                        o_destination_index_ff           <= i_destination_index_ff;
+                        flags_ff                         <= o_dav_nxt ? flags_nxt : flags_ff;
+                        o_abt_ff                         <= i_abt_ff;
+                        o_irq_ff                         <= i_irq_ff;
+                        o_fiq_ff                         <= i_fiq_ff;
+                        o_swi_ff                         <= i_swi_ff;
+                        o_mem_srcdest_index_ff           <= i_mem_srcdest_index_ff;
+                        o_mem_srcdest_index_ff           <= i_mem_srcdest_index_ff;           
+                        o_mem_load_ff                    <= i_mem_load_ff;                    
+                        o_mem_store_ff                   <= i_mem_store_ff;                   
+                        o_mem_unsigned_byte_enable_ff    <= i_mem_unsigned_byte_enable_ff;    
+                        o_mem_signed_byte_enable_ff      <= i_mem_signed_byte_enable_ff;      
+                        o_mem_signed_halfword_enable_ff  <= i_mem_signed_halfword_enable_ff;  
+                        o_mem_unsigned_halfword_enable_ff<= i_mem_unsigned_halfword_enable_ff;
+                        o_mem_translate_ff               <= i_mem_translate_ff;  
+                        o_mem_srcdest_value_ff           <= i_mem_srcdest_value_ff;
+                        sleep_ff                         <= sleep_nxt;
+                end
         end
 end
 
@@ -220,10 +251,17 @@ begin: blk1
        reg [$clog2(ALU_OPS)-1:0]  opcode;
 
        opcode = i_alu_operation_ff;
+       sleep_nxt = sleep_ff;
 
        o_dav_nxt = is_cc_satisfied ( i_condition_code_ff, flags_ff );
 
-        if (    opcode == AND || 
+        if ( i_irq_ff || i_fiq_ff || i_abt_ff || i_swi_ff ) // Any sign of an interrupt is present.
+        begin
+                // Send out invalid instruction. Interrupt will trigger despite the instruction
+                // being invalid. Flags won't be updated because of this.
+                o_dav_nxt = 1'd0;
+        end
+        else if (    opcode == AND || 
                 opcode == EOR || 
                 opcode == MOV || 
                 opcode == MVN || 
@@ -251,6 +289,22 @@ begin: blk1
                         if ( exp_mask[i] )
                                 rd[i] = rm[i];
                 end                
+
+                // We must put the unit to sleep if rd[7:0] is different from i_cpsr_ff[7:0]. If only flags
+                // are changing, we can update flags_nxt.
+
+                if ( opcode == FMOV && o_dav_nxt )
+                begin
+                        if ( rd[7:0] != i_cpsr_ff[7:0] ) // Critical change.
+                        begin
+                                sleep_nxt = 1;
+                                flags_nxt = rd[31:28];
+                        end
+                        else
+                        begin
+                                flags_nxt = rd[31:28]; // Just update flags. Don't sleep.
+                        end
+                end
         end
         else
         begin: blk3

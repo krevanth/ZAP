@@ -117,7 +117,7 @@ assign o_mem_reset = clear_from_writeback;
 // Fetch
 wire [31:0] fetch_instruction;  // Instruction from the fetch unit.
 wire        fetch_valid;        // Instruction valid from the fetch unit.
-wire        fetch_instr_abort;   // abort indicator.
+wire        fetch_instr_abort;  // abort indicator.
 wire [31:0] fetch_pc_plus_8_ff; // PC + 8 generated from the fetch unit.
 
 // Decode

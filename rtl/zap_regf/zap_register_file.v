@@ -8,7 +8,7 @@
  Verilog-2005
 
  Description --
- The ZAP register file. The register file is a typical RISC like structure
+ The ZAP register file. The register file is a memory structure
  with 46 x 32-bit registers. Intended to be implemented using flip-flops. 
  The register file provides dedicated ports for accessing the PC and CPSR
  registers. Atomic register updates for interrupt processing is done here.
@@ -165,11 +165,11 @@ begin: blk1
         // jumps, all units are flushed effectively clearing any global stalls.
         // ====================================================================
 
-        if ( i_data_abt || 
-                i_fiq   || 
-                i_irq   || 
-                i_instr_abt || 
-                i_swi ||
+        if ( i_data_abt         || 
+                i_fiq           || 
+                i_irq           || 
+                i_instr_abt     || 
+                i_swi           ||
                 i_und )
                 o_clear_from_writeback = 1'd1;
                 
@@ -238,6 +238,18 @@ begin: blk1
                 r_nxt[PHY_CPSR]         = i_flags;                 
                 r_nxt[i_wr_index]       = i_wr_data;
                 r_nxt[i_wr_index_1]     = i_wr_data_1;
+
+                // Note that if we are writing to CPSR and if CPSR[4:0] == USR,
+                // we maintain it the same way. Thus, user cannot change interrupt
+                // controls or change processor mode...
+                if ( r_ff[PHY_CPSR][4:0] == USR)
+                        r_nxt[PHY_CPSR][7:0] = r_ff[PHY_CPSR][7:0]; // Don't change LOWER byte.
+                else if (       i_wr_index == PHY_CPSR && 
+                                r_ff[PHY_CPSR][7:0] != i_wr_data[7:0] ) // Mode, interrupt change.
+                begin
+                        // Flush instructions currently in the pipeline.
+                        o_clear_from_writeback = 1'd1;
+                end
         end
 
         $display("PC_nxt = %d", r_nxt[15]);
