@@ -106,11 +106,17 @@ begin
         begin
                 out_ff   <= 0;
                 state_ff <= IDLE;
+				prodlolo_ff <= 0;
+				prodlohi_ff <= 0;
+				prodhilo_ff <= 0;
         end
         else
         begin
                 state_ff <= state_nxt;
                 out_ff   <= out_nxt;
+				prodlolo_ff <= prodlolo_nxt;
+				prodlohi_ff <= prodlohi_nxt;
+				prodhilo_ff <= prodhilo_nxt;
         end
 end
 
