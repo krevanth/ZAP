@@ -50,19 +50,20 @@ begin
         prodlohi_nxt = prodlohi_ff;
         prodhilo_nxt = prodhilo_ff;
         state_nxt    = state_ff;
+        out_nxt      = out_ff;
 
         case ( state_ff )
                 IDLE:
                 begin
                         if ( i_start )
                         begin
-                                state_nxt = SX;
-                                o_busy = 1'd1;
+                                state_nxt       = SX;
+                                o_busy          = 1'd1;
                         end
                         else
                         begin
-                                state_nxt = IDLE;
-                                o_busy = 1'd0;
+                                state_nxt       = IDLE;
+                                o_busy          = 1'd0;
                         end
                 end
                 SX:
@@ -106,17 +107,17 @@ begin
         begin
                 out_ff   <= 0;
                 state_ff <= IDLE;
-				prodlolo_ff <= 0;
-				prodlohi_ff <= 0;
-				prodhilo_ff <= 0;
+	        prodlolo_ff <= 0;
+        	prodlohi_ff <= 0;
+	        prodhilo_ff <= 0;
         end
         else
         begin
                 state_ff <= state_nxt;
                 out_ff   <= out_nxt;
-				prodlolo_ff <= prodlolo_nxt;
-				prodlohi_ff <= prodlohi_nxt;
-				prodhilo_ff <= prodhilo_nxt;
+	        prodlolo_ff <= prodlolo_nxt;
+        	prodlohi_ff <= prodlohi_nxt;
+	        prodhilo_ff <= prodhilo_nxt;
         end
 end
 
