@@ -242,7 +242,7 @@ begin
         begin
            o_condition_code_ff               <= i_condition_code_ff;                                     
            o_destination_index_ff            <= i_destination_index_ff;
-           o_alu_operation_ff                <= (i_alu_operation_ff == MLA) ? MOV : i_alu_operation_ff;
+           o_alu_operation_ff                <= (i_alu_operation_ff == MLA) ? MOV : i_alu_operation_ff; // Multiplication needs transformation.
            o_shift_operation_ff              <= i_shift_operation_ff;
            o_flag_update_ff                  <= i_flag_update_ff;
            o_mem_srcdest_index_ff            <= i_mem_srcdest_index_ff;           
@@ -261,12 +261,13 @@ begin
            o_pc_plus_8_ff                    <= i_pc_plus_8_ff;
            o_mem_srcdest_value_ff            <= mem_srcdest_value;
            o_alu_source_value_ff             <= rn;
-           o_shifted_source_value_ff         <= (i_alu_operation_ff == MLA) ? mult_out : rm;
+           o_shifted_source_value_ff         <= rm;
            o_shift_carry_ff                  <= shcarry;
            o_rrx_ff                          <= rrx; 
    end
 end
 
+// A 32x32+32=32 MAC unit.
 zap_shift_shifter U_SHIFT
 (
         .i_source       ( i_shift_source_value_ff ),
@@ -277,22 +278,20 @@ zap_shift_shifter U_SHIFT
         .o_rrx          ( rrx )
 );
 
-// ===============================
 // For ALU source value (rn)
-// ===============================
 always @*
 begin
                 rn = resolve_conflict ( i_alu_source_ff, i_alu_source_value_ff, 
                                         o_destination_index_ff, i_alu_value_nxt ); 
 end
 
-// ===============================
 // For shifter source value.
-// ===============================
 always @*
 begin
+        // If we issue an MLA.
         if ( i_alu_operation_ff == MLA )
         begin
+                // Get result from multiplier.
                 rm = mult_out;
         end        
         else if( !i_disable_shifter_ff )
@@ -306,10 +305,8 @@ begin
         end
 end
 
-// ================================
 // Mem srcdest index. Used for
 // stores.
-// ================================
 always @*
 begin
         mem_srcdest_value = resolve_conflict ( i_mem_srcdest_index_ff, i_mem_srcdest_value_ff,
@@ -317,10 +314,8 @@ begin
 end
 
 
-// =======================================================================
 // This will resolve conflicts for back to back instruction execution.
 // The function entirely depends only on the inputs.
-// =======================================================================
 function [31:0] resolve_conflict ( 
         input    [32:0]                  index_from_issue,       // Index from issue stage. Could have immed too.
         input    [31:0]                  value_from_issue,       // Issue speculatively read value.
