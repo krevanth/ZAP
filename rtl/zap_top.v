@@ -46,12 +46,12 @@ module zap_top #(
         parameter PHY_REGS = 46,
 
         // Vectors.
-        parameter DATA_ABORT_VECTOR     =       0,
-        parameter FIQ_VECTOR            =       4,
-        parameter IRQ_VECTOR            =       8,
-        parameter INSTRUCTION_ABORT_VECTOR =    12,
-        parameter SWI_VECTOR =                  16,
-        parameter UND_VECTOR =                  20
+        parameter DATA_ABORT_VECTOR     =       32'h10,
+        parameter FIQ_VECTOR            =       32'h1C,
+        parameter IRQ_VECTOR            =       32'h18,
+        parameter INSTRUCTION_ABORT_VECTOR =    32'hC,
+        parameter SWI_VECTOR =                  32'h8,
+        parameter UND_VECTOR =                  32'h4
 )
 (
                 // Clock and reset.
