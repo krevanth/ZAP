@@ -84,10 +84,10 @@ begin
         else if ( i_stall_from_decode)           begin end
         else if ( sleep_ff )
         begin
-                o_valid <= 1'd0;
-                o_instr_abort <= 1'd0;
-                o_instruction <= 32'd0;
-                sleep_ff <= 1'd1;
+                o_valid         <= 1'd0;
+                o_instr_abort   <= 1'd0;
+                o_instruction   <= 32'd0;
+                sleep_ff        <= 1'd1;
         end
         else
         begin
