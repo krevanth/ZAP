@@ -180,8 +180,8 @@ begin
         // If no stall, only then update...
         else
         begin
-                o_irq_ff                                <= o_irq_nxt;
-                o_fiq_ff                                <= o_fiq_nxt;
+                o_irq_ff                                <= o_irq_nxt & !i_cpu_mode[I]; // If mask is 1, do not pass.
+                o_fiq_ff                                <= o_fiq_nxt & !i_cpu_mode[F]; // If mask is 1, do not pass.
                 o_swi_ff                                <= o_swi_nxt;
                 o_abt_ff                                <= o_abt_nxt;      
                 // An aborted instruction must read as 0x00000000.
