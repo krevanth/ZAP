@@ -117,6 +117,7 @@ module zap_decode_main #(
 `include "regs.vh"
 `include "modes.vh"
 `include "index_immed.vh"
+`include "cpsr.vh"
 
 wire    [3:0]                   o_condition_code_nxt;
 wire    [$clog2(PHY_REGS )-1:0] o_destination_index_nxt;
