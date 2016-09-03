@@ -34,6 +34,7 @@ module zap_memory_main
         // ALU value, flags,and where to write the value.
         input wire [31:0]                   i_alu_result_ff,
         input wire  [3:0]                   i_flags_ff,
+        input wire                          i_flag_update_ff,
         input wire [$clog2(PHY_REGS)-1:0]   i_destination_index_ff,
 
         // Interrupts.
@@ -49,6 +50,7 @@ module zap_memory_main
         // ALU result and flags.
         output reg  [31:0]                   o_alu_result_ff,
         output reg   [3:0]                   o_flags_ff,
+        output reg                           o_flag_update_ff,
 
         // Where to write ALU and memory read target register.
         output reg [$clog2(PHY_REGS)-1:0]    o_destination_index_ff,
@@ -88,6 +90,7 @@ begin
         o_swi_ff              <= 0;//i_swi_ff;
         o_instr_abort_ff      <= 0;//i_instr_abort_ff;
         o_mem_load_ff         <= 0;//i_mem_load_ff; 
+        o_flag_update_ff      <= 0;
 end
 else if ( i_clear_from_writeback )
 begin
@@ -102,6 +105,7 @@ begin
         o_swi_ff              <= 0;//i_swi_ff;
         o_instr_abort_ff      <= 0;//i_instr_abort_ff;
         o_mem_load_ff         <= 0;//i_mem_load_ff; 
+        o_flag_update_ff      <= 0;
 end
 else if ( i_data_stall )
 begin
@@ -121,15 +125,7 @@ begin
         o_swi_ff              <= i_swi_ff;
         o_instr_abort_ff      <= i_instr_abort_ff;
         o_mem_load_ff         <= i_mem_load_ff; 
+        o_flag_update_ff      <= i_flag_update_ff;
 end
-
-// This is required to prevent stale interrupts from triggering the writeback stage.
-task clear_interrupts;
-        o_irq_ff <= 0;
-        o_fiq_ff <= 0;
-        o_swi_ff <= 0;
-        o_instr_abort_ff <= 0;
-        o_mem_load_ff <= 0;
-endtask
 
 endmodule

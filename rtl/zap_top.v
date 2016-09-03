@@ -227,6 +227,7 @@ wire [$clog2(PHY_REGS)-1:0]     alu_destination_index_ff;
 wire [3:0]                      alu_flags_ff;
 wire [$clog2(PHY_REGS)-1:0]     alu_mem_srcdest_index_ff;
 wire                            alu_mem_load_ff;
+wire                            alu_flag_update_ff;
 
 // Memory
 wire [31:0]                     memory_alu_result_ff;
@@ -240,6 +241,7 @@ wire                            memory_swi_ff;
 wire                            memory_instr_abort_ff;
 wire                            memory_mem_load_ff;
 wire  [3:0]                     memory_flags_ff;
+wire                            memory_flag_update_ff;
 
 // Writeback
 wire [31:0] rd_data_0;
@@ -576,7 +578,9 @@ u_zap_alu_main
          .o_mem_signed_byte_enable_ff      (o_signed_byte_en),       
          .o_mem_signed_halfword_enable_ff  (o_signed_halfword_en),        
          .o_mem_unsigned_halfword_enable_ff(o_unsigned_halfword_en),      
-         .o_mem_translate_ff               (o_mem_translate) 
+         .o_mem_translate_ff               (o_mem_translate),
+
+        .o_flag_update_ff                  (alu_flag_update_ff) 
 );
 
 assign o_read_en = alu_mem_load_ff; 
@@ -624,7 +628,10 @@ u_zap_memory_main
         .o_swi_ff                       (memory_swi_ff),
         .o_instr_abort_ff               (memory_instr_abort_ff),
          
-        .o_mem_load_ff                  (memory_mem_load_ff)
+        .o_mem_load_ff                  (memory_mem_load_ff),
+
+        .i_flag_update_ff               (alu_flag_update_ff),
+        .o_flag_update_ff               (memory_flag_update_ff)
 );
 
 // WRITEBACK //
@@ -643,6 +650,8 @@ u_zap_regf
         .i_stall_from_decode    (stall_from_decode),
         .i_stall_from_issue     (stall_from_issue),
         .i_stall_from_shifter   (stall_from_shifter),
+
+        .i_flag_update_ff       (memory_flag_update_ff),
 
         .i_data_abort_vector        (DATA_ABORT_VECTOR),
         .i_fiq_vector               (FIQ_VECTOR),

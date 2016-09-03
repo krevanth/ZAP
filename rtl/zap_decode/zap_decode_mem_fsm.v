@@ -156,6 +156,7 @@ begin
                 // If needed, we finally write to the program counter.
                 WRITE_PC:
                 begin
+                        // MOV(S) PC, ARCH_DUMMY_REG1
                         state_nxt = IDLE;
                         o_stall_from_decode = 1'd0;      
                         o_instruction = { cc, 2'b00, 1'd0, MOV, s_bit, 4'd0, ARCH_PC, 8'd0, 4'd0 };
@@ -225,9 +226,12 @@ begin
                         14:     {map[`SRCDEST_EXTEND],map[`SRCDEST]}  = ARCH_USR2_R14;
                         endcase
         end
-        else if ( load && enc == 15  ) // Load with PC in register list. Load to dummy register. S bit does not matter here. Will never use user bank.
+        else if ( load && enc == 15  ) // Load with PC in register list. Load to dummy register. Will never use user bank.
         begin
-                        // Load to ARCH_DUMMY_REG1.
+                        // If S = 1, perform an atomic return.
+                        // If S = 0, just write to PC i.e., a jump.
+                        //
+                        // For now, load to ARCH_DUMMY_REG1.
                         {map[`SRCDEST_EXTEND],map[`SRCDEST]} = ARCH_DUMMY_REG1;
         end
 end

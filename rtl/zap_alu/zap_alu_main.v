@@ -82,6 +82,7 @@ module zap_alu_main #(
         output reg [31:0]                   o_pc_from_alu,
         output reg [$clog2(PHY_REGS)-1:0]   o_destination_index_ff,
         output reg              [3:0]       o_flags_ff,                 // Output flags.
+        output reg                          o_flag_update_ff,
 
         output reg  [$clog2(PHY_REGS)-1:0]  o_mem_srcdest_index_ff,     
         output reg                          o_mem_load_ff,                     
@@ -162,6 +163,7 @@ begin
                 o_mem_translate_ff               <= 0;
                 o_mem_srcdest_value_ff           <= 0;
                 sleep_ff                         <= 0;
+                o_flag_update_ff                 <= 0;
         end
         else if ( i_clear_from_writeback ) // Make flags_ff same as i_cpsr_nxt
         begin
@@ -185,7 +187,8 @@ begin
                 o_mem_unsigned_halfword_enable_ff<= 0; 
                 o_mem_translate_ff               <= 0; 
                 o_mem_srcdest_value_ff           <= 0;
-                sleep_ff                         <= 0; 
+                sleep_ff                         <= 0;
+                o_flag_update_ff                 <= 0; 
 
         end
         else if ( i_data_stall )
@@ -216,6 +219,7 @@ begin
                         o_mem_unsigned_halfword_enable_ff<= 0; 
                         o_mem_translate_ff               <= 0; 
                         o_mem_srcdest_value_ff           <= 0;
+                        o_flag_update_ff                 <= 0;
                         sleep_ff                         <= 1'd1; // Keep sleeping.
                 end
                 else
@@ -241,6 +245,7 @@ begin
                         o_mem_translate_ff               <= i_mem_translate_ff;  
                         o_mem_srcdest_value_ff           <= i_mem_srcdest_value_ff;
                         sleep_ff                         <= sleep_nxt;
+                        o_flag_update_ff                 <= i_flag_update_ff;
                 end
         end
 end
