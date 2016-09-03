@@ -242,12 +242,30 @@ begin: blk1
                 // Note that if we are writing to CPSR and if CPSR[4:0] == USR,
                 // we maintain it the same way. Thus, user cannot change interrupt
                 // controls or change processor mode...
-                if ( r_ff[PHY_CPSR][4:0] == USR)
+                if ( r_ff[PHY_CPSR][4:0] == USR )
+                begin
                         r_nxt[PHY_CPSR][7:0] = r_ff[PHY_CPSR][7:0]; // Don't change LOWER byte.
+                end
                 else if (       i_wr_index == PHY_CPSR && 
                                 r_ff[PHY_CPSR][7:0] != i_wr_data[7:0] ) // Mode, interrupt change.
                 begin
                         // Flush instructions currently in the pipeline.
+                        o_clear_from_writeback = 1'd1;
+                end
+
+                // Also if writes to PC change LSB, we change to Thumb mode.
+                if ( r_nxt[PHY_PC][0] )
+                begin
+                        r_nxt[PHY_CPSR][T] = 1'd1; // Set T bit.
+                end
+                else
+                begin
+                        r_nxt[PHY_CPSR][T] = 1'd0; // Clear T bit.
+                end
+
+                // A write to PC will trigger a clear from writeback.
+                if ( i_wr_index == ARCH_PC )
+                begin
                         o_clear_from_writeback = 1'd1;
                 end
         end
