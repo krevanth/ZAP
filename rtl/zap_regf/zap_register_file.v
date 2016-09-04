@@ -267,6 +267,9 @@ begin: blk1
                 begin
                         // Flush instructions currently in the pipeline.
                         o_clear_from_writeback = 1'd1;
+
+                        // Provide a new PC.
+                        r_nxt[PHY_PC] = i_pc_buf_ff - 32'd4; // Goes to the next instruction.
                 end
 
                 // Also if writes to PC change LSB, we change to Thumb mode.
@@ -284,6 +287,7 @@ begin: blk1
                 // A write to PC will trigger a clear from writeback.
                 if ( i_wr_index == ARCH_PC )
                 begin
+                        // If flag update is set, then restore state.
                         if ( i_flag_update_ff )
                         begin
 
