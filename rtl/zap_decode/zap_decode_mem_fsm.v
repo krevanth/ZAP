@@ -36,6 +36,7 @@ module zap_decode_mem_fsm
         input wire              i_clear_from_writeback,
         input wire              i_data_stall,
         input wire              i_clear_from_alu,
+        input wire              i_stall_from_shifter,
         input wire              i_issue_stall,
 
         output reg [34:0]       o_instruction,
@@ -254,6 +255,7 @@ begin
         else if ( i_clear_from_writeback)               clear;
         else if ( i_data_stall )                        begin end       // Stall the CPU.
         else if ( i_clear_from_alu )                    clear;
+        else if ( i_stall_from_shifter )                begin end
         else if ( i_issue_stall )                       begin end
         else
         begin

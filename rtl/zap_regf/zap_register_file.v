@@ -31,6 +31,7 @@ module zap_register_file #(
         // The PC can either be frozen in place or changed based on signals
         // from other units. If a unit clears the PC, it must provide the
         // appropriate new value.
+        input wire                           i_code_stall,
         input wire                           i_data_stall,
         input wire                           i_clear_from_alu,
         input wire      [31:0]               i_pc_from_alu,
@@ -138,20 +139,47 @@ begin: blk1
         for ( i=0 ; i<PHY_REGS ; i=i+1 )
                 r_nxt[i] = r_ff[i];
 
+        $display($time, "PC_nxt before = %d", r_nxt[PHY_PC]);
+
         // PC control sequence.
-        if ( i_data_stall )
+        if ( i_code_stall )
+        begin
+                r_nxt[PHY_PC] = r_ff[PHY_PC];
+                $display("Code Stall!");
+        end
+        else if ( i_data_stall )
+        begin
                 r_nxt[PHY_PC] = r_ff[PHY_PC];                        
+                $display("Data Stall!");
+        end
         else if ( i_clear_from_alu )
+        begin
                 r_nxt[PHY_PC] = i_pc_from_alu;
+                $display("Clear from ALU!");
+        end
         else if ( i_stall_from_decode )
+        begin
                 r_nxt[PHY_PC] = r_ff[PHY_PC];
+                $display("Stall from decode!");
+        end
         else if ( i_stall_from_issue )
+        begin
                 r_nxt[PHY_PC] = r_ff[PHY_PC];
+                $display("Stall from issue!");
+        end
         else if ( i_stall_from_shifter )
+        begin
                 r_nxt[PHY_PC] = r_ff[PHY_PC];
+                $display("Stall from shifter!");
+        end
         else
+        begin
+                $display("Normal PC update!");
                 // Based on ARM or Thumb, we decide how much to increment.
-                r_nxt[PHY_PC] = r_ff[PHY_PC] + (r_ff[PHY_CPSR][T]) ? 32'd2 : 32'd4;
+                r_nxt[PHY_PC] = r_ff[PHY_PC] + ((r_ff[PHY_CPSR][T]) ? 32'd2 : 32'd4);
+        end
+
+        $display($time, "PC_nxt after = %d", r_nxt[PHY_PC]);
 
         // The stuff below has more priority than the above. This means even in
         // a global stall, interrupts can overtake execution. Further, writes to 
@@ -164,7 +192,10 @@ begin: blk1
                 i_instr_abt     || 
                 i_swi           ||
                 i_und )
+        begin
                 o_clear_from_writeback = 1'd1;
+                $display("Interrupt detected! Clearing from writeback...");
+        end
                 
 
         if ( i_data_abt )

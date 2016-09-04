@@ -242,6 +242,7 @@ wire                            memory_instr_abort_ff;
 wire                            memory_mem_load_ff;
 wire  [3:0]                     memory_flags_ff;
 wire                            memory_flag_update_ff;
+wire  [31:0]                    memory_mem_rd_data_ff;
 
 // Writeback
 wire [31:0] rd_data_0;
@@ -262,7 +263,7 @@ u_zap_fetch_main (
         .i_stall_from_shifter           (stall_from_shifter),
         .i_stall_from_issue             (stall_from_issue),
         .i_stall_from_decode            (stall_from_decode),
-        .i_pc_ff                        (i_instruction_address),
+        .i_pc_ff                        (o_pc),
         .i_instruction                  (i_instruction),
         .i_valid                        (i_valid),
         .i_instr_abort                  (i_instr_abort),
@@ -601,6 +602,7 @@ u_zap_memory_main
         .i_flags_ff                     (alu_flags_ff), 
         
         .i_mem_load_ff                  (alu_mem_load_ff),
+        .i_mem_rd_data                  (i_rd_data), // From memory.
          
         .i_dav_ff                       (alu_dav_ff),
         .i_pc_plus_8_ff                 (alu_pc_plus_8_ff),
@@ -631,7 +633,9 @@ u_zap_memory_main
         .o_mem_load_ff                  (memory_mem_load_ff),
 
         .i_flag_update_ff               (alu_flag_update_ff),
-        .o_flag_update_ff               (memory_flag_update_ff)
+        .o_flag_update_ff               (memory_flag_update_ff),
+
+        .o_mem_rd_data_ff               (memory_mem_rd_data_ff)
 );
 
 // WRITEBACK //
@@ -651,6 +655,8 @@ u_zap_regf
         .i_stall_from_issue     (stall_from_issue),
         .i_stall_from_shifter   (stall_from_shifter),
 
+        .i_code_stall           (!i_valid),
+
         .i_flag_update_ff       (memory_flag_update_ff),
 
         .i_data_abort_vector        (DATA_ABORT_VECTOR),
@@ -668,8 +674,8 @@ u_zap_regf
         .i_wr_index             (memory_destination_index_ff),
         .i_wr_data              (memory_alu_result_ff),
         .i_flags                (memory_flags_ff),
-        .i_wr_index_1           (memory_mem_srcdest_index_ff), // Memory load index.
-        .i_wr_data_1            (i_rd_data), // Memory load.
+        .i_wr_index_1           (memory_mem_srcdest_index_ff),  // Memory load index.
+        .i_wr_data_1            (memory_mem_rd_data_ff),        // Memory load data.
 
         .i_irq                  (memory_irq_ff),
         .i_fiq                  (memory_fiq_ff),

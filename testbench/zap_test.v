@@ -106,7 +106,6 @@ cache u_i_cache
         .o_data(i_instruction),
         .i_data('d0),
         .o_hit(i_valid),
-        .o_address(i_instruction_address),
         .o_miss(),
         .o_abort(i_instr_abort),
         .i_rd_en(1'd1),
@@ -125,7 +124,6 @@ cache u_d_cache
         .o_hit(),
         .o_miss(i_data_stall),
         .o_abort(i_data_abort),  
-        .o_address(),   
         .i_rd_en(o_read_en),
         .i_wr_en(o_write_en),
         .i_recover(o_mem_reset)
@@ -138,6 +136,8 @@ initial
 begin
         $dumpfile("zap.vcd");
         $dumpvars;
+
+        $display("Started!");
 
         i_reset = 1;
         @(negedge i_clk);

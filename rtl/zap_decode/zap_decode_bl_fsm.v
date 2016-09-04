@@ -40,6 +40,7 @@ module zap_decode_bl_fsm (
                 input wire i_clear_from_writeback, // | High Priority
                 input wire i_data_stall,           // |
                 input wire i_clear_from_alu,       // |
+                input wire i_stall_from_shifter,   // |
                 input wire i_stall_from_issue,     // V Low Priority
                 
                 // Inputs from the memory FSM and not fetch. That's because the
@@ -144,6 +145,8 @@ begin
                 state_ff <= S0;
         else if ( i_clear_from_alu )
                 state_ff <= S0;
+        else if ( i_stall_from_shifter )
+                state_ff <= state_ff;
         else if ( i_stall_from_issue )
                 state_ff <= state_ff;
         else

@@ -262,6 +262,7 @@ zap_decode_mem_fsm u_zap_mem_fsm (
         .i_data_stall(i_data_stall),          
         .i_clear_from_alu(i_clear_from_alu),      
         .i_issue_stall(i_stall_from_issue), 
+        .i_stall_from_shifter(i_stall_from_shifter),
 
         .o_irq(mem_irq),
         .o_fiq(mem_fiq),
@@ -281,6 +282,8 @@ zap_decode_bl_fsm u_zap_bl_fsm (
         .i_data_stall(i_data_stall),          
         .i_clear_from_alu(i_clear_from_alu),      
         .i_stall_from_issue(i_stall_from_issue), 
+
+        .i_stall_from_shifter(i_stall_from_shifter),
 
         .i_instruction(mem_instruction),
         .i_instruction_valid(mem_instruction_valid), 

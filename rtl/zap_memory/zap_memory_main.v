@@ -27,6 +27,9 @@ module zap_memory_main
         // Memory stuff.
         input   wire                        i_mem_load_ff,
 
+        // Data read from memory.
+        input   wire [31:0]                 i_mem_rd_data,
+
         // Data valid and buffered PC.
         input wire                          i_dav_ff,
         input wire [31:0]                   i_pc_plus_8_ff,
@@ -67,7 +70,8 @@ module zap_memory_main
         output reg                           o_instr_abort_ff,
 
         // Memory load information is passed down.
-        output reg                           o_mem_load_ff        
+        output reg                           o_mem_load_ff,
+        output reg  [31:0]                   o_mem_rd_data_ff
 );
 
 `include "regs.vh"
@@ -91,6 +95,7 @@ begin
         o_instr_abort_ff      <= 0;//i_instr_abort_ff;
         o_mem_load_ff         <= 0;//i_mem_load_ff; 
         o_flag_update_ff      <= 0;
+        o_mem_rd_data_ff         <= 0;
 end
 else if ( i_clear_from_writeback )
 begin
@@ -106,6 +111,7 @@ begin
         o_instr_abort_ff      <= 0;//i_instr_abort_ff;
         o_mem_load_ff         <= 0;//i_mem_load_ff; 
         o_flag_update_ff      <= 0;
+        o_mem_rd_data_ff         <= 0;
 end
 else if ( i_data_stall )
 begin
@@ -126,6 +132,7 @@ begin
         o_instr_abort_ff      <= i_instr_abort_ff;
         o_mem_load_ff         <= i_mem_load_ff; 
         o_flag_update_ff      <= i_flag_update_ff;
+        o_mem_rd_data_ff         <= i_mem_rd_data;
 end
 
 endmodule

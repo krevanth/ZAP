@@ -30,9 +30,9 @@ module zap_fetch_main
                 input wire i_stall_from_issue,     // |
                 input wire i_stall_from_decode,    // V Low Priority.
 
-                // Comes from the cache.
-                input wire [31:0] i_pc_ff,               
- 
+                // Comes from Wb.
+                input wire [31:0] i_pc_ff,               // Program counter.
+
                 // From I-cache.
                 input wire [31:0] i_instruction,         // A 32-bit ZAP instruction.
                 input wire        i_valid,               // Instruction valid indicator.
@@ -63,6 +63,7 @@ begin
                 o_instruction   <= 32'd0;
                 o_instr_abort   <= 1'd0;
                 sleep_ff        <= 1'd0;        // Wake unit up.
+                o_pc_plus_8_ff  <= 32'd8;
         end
         else if ( i_clear_from_writeback )       
         begin   
@@ -104,14 +105,14 @@ begin
                 // R0, R0) which is harmless.
                 
                 o_instr_abort   <= i_instr_abort;
-        end
 
-        // This is needed to maintain a PC + 8
-        // illusion.
-        if ( i_reset )
-                o_pc_plus_8_ff <= 32'd8;
-        else
+                if ( i_instr_abort )
+                begin
+                        sleep_ff <= 1'd1;
+                end
+
                 o_pc_plus_8_ff <= i_pc_ff + 32'd8;
+        end
 end
 
 endmodule
