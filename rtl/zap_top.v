@@ -93,8 +93,8 @@ module zap_top #(
                 input wire              i_irq,                  // IRQ signal.
 
                 // Interrupt acknowledge.
-                output reg              o_fiq_ack,              // FIQ acknowledge.
-                output reg              o_irq_ack,              // IRQ acknowledge.
+                output wire             o_fiq_ack,              // FIQ acknowledge.
+                output wire             o_irq_ack,              // IRQ acknowledge.
 
                 // Program counter.
                 output wire[31:0]       o_pc,                   // Program counter.

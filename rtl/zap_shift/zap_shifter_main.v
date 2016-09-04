@@ -120,7 +120,7 @@ module zap_shifter_main
         output reg                               o_flag_update_ff,
 
         // Stall from shifter.
-        output reg                              o_stall_from_shifter
+        output wire                             o_stall_from_shifter
 );
 
 `include "opcodes.vh"
@@ -133,7 +133,7 @@ wire        rrx;
 reg [31:0] mem_srcdest_value;
 reg [31:0] rm, rn;
 
-reg [31:0] mult_out;
+wire [31:0] mult_out;
 
 zap_multiply u_zap_multiply
 (

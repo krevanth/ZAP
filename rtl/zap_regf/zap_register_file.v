@@ -103,12 +103,12 @@ module zap_register_file #(
 reg     [31:0]  r_ff       [PHY_REGS-1:0];
 reg     [31:0]  r_nxt      [PHY_REGS-1:0];
 
-// synopsys translate_ff
+`ifdef RDB
 always @ (posedge i_clk)
 begin
-        $monitor("PC next = %d PC current = %d", r_nxt[15], r_ff[15]);
+        $monitor($time, "PC next = %d PC current = %d", r_nxt[15], r_ff[15]);
 end
-// synopsys translate_on
+`endif
 
 // CPSR dedicated output.
 always @*
@@ -139,7 +139,9 @@ begin: blk1
         for ( i=0 ; i<PHY_REGS ; i=i+1 )
                 r_nxt[i] = r_ff[i];
 
+        `ifdef RDB
         $display($time, "PC_nxt before = %d", r_nxt[PHY_PC]);
+        `endif
 
         // PC control sequence.
         if ( i_code_stall )
@@ -179,7 +181,9 @@ begin: blk1
                 r_nxt[PHY_PC] = r_ff[PHY_PC] + ((r_ff[PHY_CPSR][T]) ? 32'd2 : 32'd4);
         end
 
+        `ifdef RDB
         $display($time, "PC_nxt after = %d", r_nxt[PHY_PC]);
+        `endif
 
         // The stuff below has more priority than the above. This means even in
         // a global stall, interrupts can overtake execution. Further, writes to 
@@ -291,7 +295,9 @@ begin: blk1
                         if ( i_flag_update_ff )
                         begin
 
+                                `ifdef RDB
                                 $display($time, "Restoring mode...");
+                                `endif
 
                                 // Restore mode.
                                 case ( r_ff[PHY_CPSR][`CPSR_MODE] )
@@ -307,7 +313,9 @@ begin: blk1
                 end
         end
 
+        `ifdef RDB
         $display("PC_nxt = %d", r_nxt[15]);
+        `endif
 
 end
 
@@ -319,7 +327,7 @@ begin
 
                 integer i;
 
-                $display($time, "Register file in reset...");
+                $display("Register file in reset...");
 
                 for(i=0;i<PHY_REGS;i=i+1)
                         r_ff[i] <= 32'd0;

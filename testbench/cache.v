@@ -1,3 +1,5 @@
+`default_nettype none
+
 module cache
 (
         input wire              i_clk,
@@ -16,10 +18,17 @@ module cache
 );
 
 // Create a 1024 byte memory.
-bit [7:0] mem [1024:0];
+reg [7:0] mem [1024:0];
 
 initial
-begin
+begin:blk1
+        integer i;
+
+        o_abort = 0;
+
+        for(i=0;i<1025;i=i+1)
+                mem[i] = 0;
+
         // Initialize memory with the program.
        `include "prog.v"
 end
@@ -42,6 +51,11 @@ begin
                 o_miss = 0;
                 o_hit  = !o_miss;
                 o_data = {mem[i_address+3],mem[i_address+2],mem[i_address+1],mem[i_address]};
+        end
+        else
+        begin
+                o_miss = 0;
+                o_hit  = 1;
         end
 end
 

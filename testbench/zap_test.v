@@ -6,13 +6,13 @@ parameter SHIFT_OPS = 5;
 parameter ARCH_REGS = 32;
 
 // Clock and reset.
-bit              i_clk;                  // ZAP clock.        
-bit              i_reset;                // Active high synchronous reset.
+reg              i_clk;                  // ZAP clock.        
+reg              i_reset;                // Active high synchronous reset.
                 
 // From I-cache.
-bit [31:0]       i_instruction;          // A 32-bit ZAP instruction.
-bit              i_valid;                // Instruction valid.
-bit              i_instr_abort;          // Instruction abort fault.
+wire [31:0]       i_instruction;          // A 32-bit ZAP instruction.
+wire             i_valid;                // Instruction valid.
+wire             i_instr_abort;          // Instruction abort fault.
 
 
 // Memory access.
@@ -31,20 +31,20 @@ wire [31:0]     i_instruction_address;
 wire             o_mem_translate;
 
 // Memory stall.
-bit              i_data_stall;
+wire             i_data_stall;
 
 // Memory abort.
-bit              i_data_abort;
+wire             i_data_abort;
 
 // Memory read data.
-bit  [31:0]      i_rd_data;
+wire [31:0]      i_rd_data;
 
 // Memory write data.
 wire [31:0]      o_wr_data;
 
 // Interrupts.
-bit              i_fiq;                  // FIQ signal.
-bit              i_irq;                  // IRQ signal.
+reg              i_fiq;                  // FIQ signal.
+reg              i_irq;                  // IRQ signal.
 
 // Interrupt acknowledge.
  wire              o_fiq_ack;              // FIQ acknowledge.
@@ -181,6 +181,9 @@ always #10 i_clk = !i_clk;
 
 initial
 begin
+        i_irq = 0;
+        i_fiq = 0;
+
         $dumpfile("zap.vcd");
         $dumpvars;
 

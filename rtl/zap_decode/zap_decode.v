@@ -143,7 +143,9 @@ task decode_swi;
 begin: tskDecodeSWI
         // Generate a MOV RAZ, SWI_number.
 
-        $display($time, "%m:SWI decode...");
+        `ifdef DECODE_DEBUG
+                $display($time, "%m:SWI decode...");
+        `endif
 
         o_condition_code = i_instruction[31:28];
         o_alu_operation  = MOV;
@@ -162,7 +164,9 @@ task decode_halfword_ls;
 begin: tskDecodeHalfWordLs
         reg [11:0] temp, temp1;
 
-        $display($time, "%m: Halfword decode...");
+        `ifdef DECODE_DEBUG
+                $display($time, "%m: Halfword decode...");
+        `endif
 
         temp = i_instruction;
         temp1 = i_instruction;
@@ -198,10 +202,21 @@ begin: tskDecodeHalfWordLs
         o_mem_srcdest_index = {i_instruction[`SRCDEST_EXTEND], i_instruction[`SRCDEST]};
 
         // Transfer size.
+
+        o_mem_unsigned_byte_enable      = 0;
+        o_mem_unsigned_halfword_enable  = 0;
+        o_mem_signed_halfword_enable    = 0;
+
         case ( i_instruction[6:5] )
         SIGNED_BYTE:            o_mem_signed_byte_enable = 1;
         UNSIGNED_HALF_WORD:     o_mem_unsigned_halfword_enable = 1;
         SIGNED_HALF_WORD:       o_mem_signed_halfword_enable = 1;
+        default:
+        begin
+                o_mem_unsigned_byte_enable      = 0;
+                o_mem_unsigned_halfword_enable  = 0;
+                o_mem_signed_halfword_enable    = 0;
+        end
         endcase
 end
 endtask
@@ -209,7 +224,9 @@ endtask
 task decode_mult;
 begin: tskDecodeMult
 
-        $display($time, "%m: MLT decode...");
+        `ifdef DECODE_DEBUG
+                $display($time, "%m: MLT decode...");
+        `endif
 
         o_condition_code        =       i_instruction[31:28];
         o_alu_operation         =       MLA;
@@ -235,7 +252,9 @@ begin: tskDecodeBx
         temp = i_instruction;
         temp[11:4] = 0;
 
-        $display($time, "%m: BX decode...");
+        `ifdef DECODE_DEBUG
+                $display($time, "%m: BX decode...");
+        `endif
 
         process_instruction_specified_shift(temp[11:0]);
 
@@ -257,7 +276,9 @@ begin: tskDecodeClz
 
         reg [31:0] temp;
 
-        $display($time, "%m: CLZ decode...");
+        `ifdef DECODE_DEBUG
+                $display($time, "%m: CLZ decode...");
+        `endif
 
         temp = i_instruction;
         temp[4] = 1'd0;
@@ -278,7 +299,9 @@ endtask
 task decode_ls;
 begin: tskDecodeLs
 
-        $display($time, "%m: LS decode...");
+        `ifdef DECODE_DEBUG
+                $display($time, "%m: LS decode...");
+        `endif
 
         o_condition_code = i_instruction[31:28];
 
@@ -328,7 +351,9 @@ endtask
 task decode_mrs;
 begin
 
-        $display($time, "%m: MRS decode...");
+        `ifdef DECODE_DEBUG
+                $display($time, "%m: MRS decode...");
+        `endif
 
         process_immediate ( i_instruction[11:0] );
         
@@ -342,8 +367,9 @@ endtask
 
 task decode_msr;
 begin
-
-        $display($time, "%m: MSR decode...");
+        `ifdef DECODE_DEBUG
+                $display($time, "%m: MSR decode...");
+        `endif
 
         if ( i_instruction[25] ) // Immediate present.
         begin
@@ -367,8 +393,9 @@ endtask
 
 task decode_branch;
 begin
-
-        $display($time, "%m: B decode...");
+        `ifdef DECODE_DEBUG
+                $display($time, "%m: B decode...");
+        `endif
 
         // A branch is decayed into PC = PC + $signed(immed)
         o_condition_code        = i_instruction[31:28];
@@ -388,8 +415,9 @@ endtask
 // formats.
 task decode_data_processing;
 begin
-
-        $display($time, "%m: Normal DP decode...");
+        `ifdef DECODE_DEBUG
+                $display($time, "%m: Normal DP decode...");
+        `endif
 
         o_condition_code        = i_instruction[31:28];
         o_alu_operation         = i_instruction[24:21];
@@ -410,6 +438,11 @@ begin
         3'b1zz: process_immediate ( i_instruction[11:0] );
         3'b0z0: process_instruction_specified_shift ( i_instruction[11:0] );
         3'b001: process_register_specified_shift ( i_instruction[11:0] );
+        default:
+        begin
+                $display("This should never happen! Check the RTL..!");
+                $finish;
+        end
         endcase
 end
 endtask
@@ -418,7 +451,9 @@ endtask
 task process_immediate ( input [11:0] instruction );
 begin
 
+        `ifdef DECODE_DEBUG
         $display("%m Process immediate...");
+        `endif
 
         o_shift_length          = instruction[11:8] << 1'd1;
         o_shift_length[32]      = IMMED_EN;
@@ -431,8 +466,9 @@ endtask
 // The shifter source is a register but the amount to shift is in the instruction itself.
 task process_instruction_specified_shift ( input [33:0] instruction );
 begin
-
+        `ifdef DECODE_DEBUG
         $display("%m Process instruction specified shift...");
+        `endif
 
         // ROR #0 = ROR #32, ASR #0 = ASR #23, LSL #0 = LSL #0.
         o_shift_length          = instruction[11:7];
@@ -452,8 +488,9 @@ endtask
 // The source register and the amount of shift are both in registers.
 task process_register_specified_shift ( input [33:0] instruction );
 begin
-
+        `ifdef DECODE_DEBUG
         $display("%m Process register specified shift...");
+        `endif
 
         o_shift_length          = instruction[11:8];
         o_shift_length[32]      = INDEX_EN;

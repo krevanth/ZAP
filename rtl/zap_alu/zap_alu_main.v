@@ -368,6 +368,11 @@ begin: blk2
         ORR: rd = rn | rm;
         TST: rd = rn & rm;
         TEQ: rd = rn ^ rn;
+        default:
+        begin
+                $display("This should never happen, check the RTL!");
+                $finish;
+        end
         endcase           
 
         flags_out = flags;
@@ -409,6 +414,10 @@ begin: blk3
         RSC: {c,rd} = rm + ~rn + !flags[C];
         CMP: {c,rd} = rm + ~rn + 32'd0;
         CMN: {c,rd} = rm + ~rn + 32'd1;
+        default:
+        begin
+                $display($time, "ALU__arith__:This should never happen op = %d, check the RTL!", op);
+        end
         endcase
 
         flags_out = flags;

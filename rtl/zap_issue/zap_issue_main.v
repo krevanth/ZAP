@@ -46,7 +46,7 @@ module zap_issue_main
         input wire                              i_stall_from_shifter,
 
         // From decode
-        input       [31:0]                      i_pc_plus_8_ff,
+        input wire  [31:0]                      i_pc_plus_8_ff,
 
         // Inputs from decode.
         // Look at decode_stage.v for the meaning of these ports...
@@ -385,37 +385,56 @@ function [31:0] get_register_value (
 reg [31:0] get;
 begin
 
+        `ifdef ISSUE_DEBUG
         $display($time, "Received index as %d and rd_port %d", index, rd_port);
+        `endif
 
         if   ( index[32] )                 // Catch constant here.
         begin
+                        `ifdef ISSUE_DEBUG
                         $display($time, "Constant detect. Returning %x", index[31:0]);
+                        `endif 
+
                         get = index[31:0]; 
         end
         else if   ( index == ARCH_PC )          // Catch PC here.
         begin
                         get = i_pc_plus_8_ff;
+
+                        `ifdef ISSUE_DEBUG
                         $display($time, "PC requested... given as %x", get);
+                        `endif
         end
         else if   ( index == i_shifter_destination_index_ff && i_alu_dav_nxt  )                 
         begin
                         get =  i_alu_destination_value_nxt;         
+
+                       `ifdef ISSUE_DEBUG
                         $display($time, "Matched shifter destination index %x ... given as %x", i_shifter_destination_index_ff, get);
+                        `endif
         end
         else if   ( index == i_alu_destination_index_ff && i_alu_dav_ff       )                 
         begin
                         get =  i_alu_destination_value_ff;
+
+                        `ifdef ISSUE_DEBUG
                         $display($time, "Matched ALU destination index %x ... given as %x", i_alu_destination_index_ff, get);
+                        `endif
         end
         else if   ( index == i_memory_destination_index_ff && i_memory_dav_ff )                
         begin 
                         get =  i_memory_destination_value_ff;
+
+                        `ifdef ISSUE_DEBUG
                         $display($time, "Matched memory destination index %x ... given as %x", i_memory_destination_index_ff, get);
+                        `endif
         end
         else                          
         begin                        
 
+                `ifdef ISSUE_DEBUG
                 $display($time, "Register read on rd_port %x", rd_port );
+                `endif
                                   
                 case ( rd_port )
                         0: get = i_rd_data_0;
@@ -424,13 +443,18 @@ begin
                         3: get = i_rd_data_3;
                 endcase
 
+                `ifdef ISSUE_DEBUG
                 $display($time, "Reg read -> Returned value %x", get);
+                `endif
         end
 
         // The memory accelerator. If the requires stuff is present in the memory unit, short circuit.
         if ( index == i_memory_mem_srcdest_index_ff && i_memory_mem_load_ff && i_memory_dav_ff )
         begin
+                `ifdef ISSUE_DEBUG
                 $display($time, "Memory accelerator gets value %x", i_memory_mem_srcdest_value_ff);
+                `endif
+
                 get = i_memory_mem_srcdest_value_ff;
         end
 
