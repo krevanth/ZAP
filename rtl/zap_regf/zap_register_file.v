@@ -284,7 +284,7 @@ begin: blk1
                         $display("Executing in ARM mode...!");
                 end
 
-                // A write to PC will trigger a clear from writeback.
+                // A write to PC via a load will trigger a clear from writeback.
                 if ( i_wr_index == ARCH_PC )
                 begin
                         // If flag update is set, then restore state.

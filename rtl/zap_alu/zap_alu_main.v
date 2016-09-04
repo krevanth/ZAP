@@ -223,7 +223,8 @@ begin
                         o_dav_ff                         <= o_dav_nxt;                
                         o_pc_plus_8_ff                   <= i_pc_plus_8_ff;
                         o_mem_address_ff                 <= mem_address_nxt;
-                        o_destination_index_ff           <= i_destination_index_ff == ARCH_PC ? ARCH_DUMMY_REG1 : i_destination_index_ff;
+                        o_destination_index_ff           <= (i_destination_index_ff == ARCH_PC && !i_flag_update_ff) ? ARCH_DUMMY_REG1 : i_destination_index_ff;
+                                                                // No flag update is handled here itself.
                         flags_ff                         <= o_dav_nxt ? flags_nxt : flags_ff;
                         o_abt_ff                         <= i_abt_ff;
                         o_irq_ff                         <= i_irq_ff;
@@ -272,6 +273,12 @@ begin: blk1
                         opcode == ORR 
                 )
         begin
+                // If you can write to PC and choose flag update. THis stuff is handled in writeback.
+                if ( i_destination_index_ff == ARCH_PC && o_dav_nxt && i_flag_update_ff )
+                begin
+                        sleep_nxt = 1'd1;
+                end
+
                 {flags_nxt, rd} = process_logical_instructions ( rn, rm, flags_ff, opcode, i_rrx_ff, i_flag_update_ff  );
 
         end
@@ -315,6 +322,18 @@ begin: blk1
         begin: blk3
                 // Process arithmetic instructions.
                 {flags_nxt, rd} = process_arithmetic_instructions ( rn, rm, flags_ff, opcode, i_rrx_ff, i_flag_update_ff );
+
+                // If you can write to PC and choose flag update. THis stuff is handled in writeback.
+                if ( i_destination_index_ff == ARCH_PC && o_dav_nxt && i_flag_update_ff )
+                begin
+                        sleep_nxt = 1'd1;
+                end
+
+                // If this happens to be a load to PC, kill this unit off. A writeback wakeup is needed.
+                if ( i_mem_load_ff && o_dav_nxt && i_mem_srcdest_index_ff == ARCH_PC )
+                begin
+                        sleep_nxt = 1'd1;
+                end
         end
 
         // Memory address output based on pre or post index.
