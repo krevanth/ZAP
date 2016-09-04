@@ -9,7 +9,11 @@ execute without interlocks. A load accelerator allows instructions that require
 a loaded register to issue 1 cycle early. Multiplication takes 4 clock cycles.
 
 Current limitations :
-- Still in Alpha stage of development. Not tested thoroughly. Very buggy.
+- Still in Alpha stage of development. Not tested thoroughly. *Very buggy*.
+- Only basic artithmetic, MUL, MLA and branch have been reasonably tested.
+- LD/ST(R/M) although implemented have lots of bugs. Example - load to PC
+  locks the processor up.
+- Mode changes and interrupt handling is full of bugs.
 - No long multiply/MAC.
 - No Thumb support.
 - No MMU included.
