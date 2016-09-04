@@ -117,10 +117,11 @@ begin
 end
 
 // Provides branch instructions. This will change
-// the direction PC takes.
+// the direction PC takes. Only if target is PC and instruction 
+// is valid.
 always @*
 begin
-        if ( i_destination_index_ff == PHY_PC )
+        if ( i_destination_index_ff == PHY_PC && o_dav_nxt )
         begin
                 o_clear_from_alu = 1'd1;
                 o_pc_from_alu    = o_alu_result_nxt;
@@ -225,7 +226,7 @@ begin
                 else
                 begin
                         o_alu_result_ff                  <= o_alu_result_nxt;
-                        o_dav_ff                         <= o_dav_nxt;                
+                        o_dav_ff                         <= o_clear_from_alu ? 1'd0 : o_dav_nxt;                
                         o_pc_plus_8_ff                   <= i_pc_plus_8_ff;
                         o_mem_address_ff                 <= mem_address_nxt;
                         o_destination_index_ff           <= i_destination_index_ff;
