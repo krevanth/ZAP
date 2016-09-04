@@ -251,7 +251,7 @@ begin: blk1
         else if ( i_valid )
         begin
                 // Only then execute the instruction at hand...
-                r_nxt[PHY_CPSR]         = i_flags;                 
+                r_nxt[PHY_CPSR][31:28]  = i_flags;                 
                 r_nxt[i_wr_index]       = i_wr_data;
                 r_nxt[i_wr_index_1]     = i_wr_data_1;
 

@@ -101,8 +101,8 @@ begin
                                 // presenting new data.
                                 o_stall_from_decode = 1'd1;
 
-                                // Craft a MOV LR, PC.
-                                o_instruction = {i_instruction[31:28], 28'h1A0E00F};
+                                // Craft a SUB LR, PC, 4.
+                                o_instruction = {i_instruction[31:28], 28'h24FE004};
 
                                 // Sell it as a valid instruction
                                 o_instruction_valid = 1;

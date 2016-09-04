@@ -133,12 +133,6 @@ begin
         end
 end
 
-// This check can be done independently of
-// others. This ensures that the instructions can be
-// executed.
-always @*
-        o_dav_nxt = is_cc_satisfied ( i_condition_code_ff, flags_ff );
-
 always @ (posedge i_clk)
 begin
         if ( i_reset )
@@ -226,10 +220,10 @@ begin
                 else
                 begin
                         o_alu_result_ff                  <= o_alu_result_nxt;
-                        o_dav_ff                         <= o_clear_from_alu ? 1'd0 : o_dav_nxt;                
+                        o_dav_ff                         <= o_dav_nxt;                
                         o_pc_plus_8_ff                   <= i_pc_plus_8_ff;
                         o_mem_address_ff                 <= mem_address_nxt;
-                        o_destination_index_ff           <= i_destination_index_ff;
+                        o_destination_index_ff           <= i_destination_index_ff == ARCH_PC ? ARCH_DUMMY_REG1 : i_destination_index_ff;
                         flags_ff                         <= o_dav_nxt ? flags_nxt : flags_ff;
                         o_abt_ff                         <= i_abt_ff;
                         o_irq_ff                         <= i_irq_ff;
@@ -280,11 +274,6 @@ begin: blk1
         begin
                 {flags_nxt, rd} = process_logical_instructions ( rn, rm, flags_ff, opcode, i_rrx_ff, i_flag_update_ff  );
 
-                // If the target is PC and instruction is valid, put unit to sleep.
-                if ( o_dav_nxt && i_destination_index_ff == PHY_PC )
-                begin
-                        sleep_nxt = 1'd1;
-                end
         end
         else if ( opcode == FMOV || opcode == MMOV )
         begin: blk2
@@ -326,12 +315,6 @@ begin: blk1
         begin: blk3
                 // Process arithmetic instructions.
                 {flags_nxt, rd} = process_arithmetic_instructions ( rn, rm, flags_ff, opcode, i_rrx_ff, i_flag_update_ff );
-
-                // If the target is PC and instruction is valid, put unit to sleep.
-                if ( o_dav_nxt && i_destination_index_ff == PHY_PC )
-                begin
-                        sleep_nxt = 1'd1;
-                end
         end
 
         // Memory address output based on pre or post index.

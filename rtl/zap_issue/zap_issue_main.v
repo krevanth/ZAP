@@ -333,19 +333,23 @@ always @*
 begin
 o_alu_source_value_nxt  = 
 get_register_value ( i_alu_source_ff,       0,i_shifter_destination_index_ff, i_alu_dav_nxt, i_alu_destination_value_nxt, i_alu_destination_value_ff, 
-                     i_alu_destination_index_ff, i_alu_dav_ff, i_memory_destination_index_ff, i_memory_dav_ff, i_memory_mem_srcdest_index_ff, i_memory_mem_load_ff );
+                     i_alu_destination_index_ff, i_alu_dav_ff, i_memory_destination_index_ff, i_memory_dav_ff, i_memory_mem_srcdest_index_ff, i_memory_mem_load_ff,
+                     i_rd_data_0, i_rd_data_1, i_rd_data_2, i_rd_data_3 );
 
 o_shift_source_value_nxt= 
 get_register_value ( i_shift_source_ff,     1,i_shifter_destination_index_ff, i_alu_dav_nxt, i_alu_destination_value_nxt, i_alu_destination_value_ff,
-                     i_alu_destination_index_ff, i_alu_dav_ff, i_memory_destination_index_ff, i_memory_dav_ff, i_memory_mem_srcdest_index_ff, i_memory_mem_load_ff );
+                     i_alu_destination_index_ff, i_alu_dav_ff, i_memory_destination_index_ff, i_memory_dav_ff, i_memory_mem_srcdest_index_ff, i_memory_mem_load_ff,
+                     i_rd_data_0, i_rd_data_1, i_rd_data_2, i_rd_data_3 );
 
 o_shift_length_value_nxt= 
 get_register_value ( i_shift_length_ff,     2,i_shifter_destination_index_ff, i_alu_dav_nxt, i_alu_destination_value_nxt, i_alu_destination_value_ff,
-                     i_alu_destination_index_ff, i_alu_dav_ff, i_memory_destination_index_ff, i_memory_dav_ff, i_memory_mem_srcdest_index_ff, i_memory_mem_load_ff );
+                     i_alu_destination_index_ff, i_alu_dav_ff, i_memory_destination_index_ff, i_memory_dav_ff, i_memory_mem_srcdest_index_ff, i_memory_mem_load_ff,
+                     i_rd_data_0, i_rd_data_1, i_rd_data_2, i_rd_data_3 );
 
 o_mem_srcdest_value_nxt = 
 get_register_value ( i_mem_srcdest_index_ff,3,i_shifter_destination_index_ff, i_alu_dav_nxt, i_alu_destination_value_nxt, i_alu_destination_value_ff,
-                     i_alu_destination_index_ff, i_alu_dav_ff, i_memory_destination_index_ff, i_memory_dav_ff, i_memory_mem_srcdest_index_ff, i_memory_mem_load_ff ); 
+                     i_alu_destination_index_ff, i_alu_dav_ff, i_memory_destination_index_ff, i_memory_dav_ff, i_memory_mem_srcdest_index_ff, i_memory_mem_load_ff,
+                     i_rd_data_0, i_rd_data_1, i_rd_data_2, i_rd_data_3    ); 
 //Naturally an index...
 end
 
@@ -375,33 +379,58 @@ function [31:0] get_register_value (
         input [$clog2(PHY_REGS)-1:0]    i_memory_destination_index_ff,          // Memory stage destination index (POINTER).
         input                           i_memory_dav_ff,                        // Memory stage valid
         input [$clog2(PHY_REGS)-1:0]    i_memory_mem_srcdest_index_ff,          // Memory stage srcdest index.
-        input                           i_memory_mem_load_ff                    // Memory load.
+        input                           i_memory_mem_load_ff,                   // Memory load.
+        input [31:0]                    i_rd_data_0, i_rd_data_1, i_rd_data_2, i_rd_data_3
 );
 reg [31:0] get;
 begin
-             if   ( index[32] )                 // Catch constant here.
+
+        $display($time, "Received index as %d and rd_port %d", index, rd_port);
+
+        if   ( index[32] )                 // Catch constant here.
+        begin
+                        $display($time, "Constant detect. Returning %x", index[31:0]);
                         get = index[31:0]; 
+        end
         else if   ( index == ARCH_PC )          // Catch PC here.
+        begin
                         get = i_pc_plus_8_ff;
+                        $display($time, "PC requested... given as %x", get);
+        end
         else if   ( index == i_shifter_destination_index_ff && i_alu_dav_nxt  )                 
+        begin
                         get =  i_alu_destination_value_nxt;         
+                        $display($time, "Matched shifter destination index %x ... given as %x", i_shifter_destination_index_ff, get);
+        end
         else if   ( index == i_alu_destination_index_ff && i_alu_dav_ff       )                 
+        begin
                         get =  i_alu_destination_value_ff;
-        else if   ( index == i_memory_destination_index_ff && i_memory_dav_ff )                 
+                        $display($time, "Matched ALU destination index %x ... given as %x", i_alu_destination_index_ff, get);
+        end
+        else if   ( index == i_memory_destination_index_ff && i_memory_dav_ff )                
+        begin 
                         get =  i_memory_destination_value_ff;
+                        $display($time, "Matched memory destination index %x ... given as %x", i_memory_destination_index_ff, get);
+        end
         else                          
-        begin                                                          
+        begin                        
+
+                $display($time, "Register read on rd_port %x", rd_port );
+                                  
                 case ( rd_port )
                         0: get = i_rd_data_0;
                         1: get = i_rd_data_1;
                         2: get = i_rd_data_2;
                         3: get = i_rd_data_3;
                 endcase
+
+                $display($time, "Reg read -> Returned value %x", get);
         end
 
         // The memory accelerator. If the requires stuff is present in the memory unit, short circuit.
         if ( index == i_memory_mem_srcdest_index_ff && i_memory_mem_load_ff && i_memory_dav_ff )
         begin
+                $display($time, "Memory accelerator gets value %x", i_memory_mem_srcdest_value_ff);
                 get = i_memory_mem_srcdest_value_ff;
         end
 
