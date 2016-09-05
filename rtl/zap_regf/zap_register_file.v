@@ -13,6 +13,8 @@
  The register file provides dedicated ports for accessing the PC and CPSR
  registers. Atomic register updates for interrupt processing is done here.
 
+ Define REG_DEBUG to turn on debugging messages.
+
  Copyright --
  (C) 2016 Revanth Kamaraj.
 */
@@ -55,6 +57,9 @@ module zap_register_file #(
         input wire   [$clog2(PHY_REGS)-1:0] i_rd_index_1, 
         input wire   [$clog2(PHY_REGS)-1:0] i_rd_index_2, 
         input wire   [$clog2(PHY_REGS)-1:0] i_rd_index_3,
+
+        // Memory load indicator.
+        input wire                          i_mem_load_ff,
 
         // Write index and data and flag updates.
         input   wire [$clog2(PHY_REGS)-1:0] i_wr_index,
@@ -103,7 +108,7 @@ module zap_register_file #(
 reg     [31:0]  r_ff       [PHY_REGS-1:0];
 reg     [31:0]  r_nxt      [PHY_REGS-1:0];
 
-`ifdef RDB
+`ifdef REG_DEBUG
 always @ (posedge i_clk)
 begin
         $monitor($time, "PC next = %d PC current = %d", r_nxt[15], r_ff[15]);
@@ -139,7 +144,7 @@ begin: blk1
         for ( i=0 ; i<PHY_REGS ; i=i+1 )
                 r_nxt[i] = r_ff[i];
 
-        `ifdef RDB
+        `ifdef REG_DEBUG
         $display($time, "PC_nxt before = %d", r_nxt[PHY_PC]);
         `endif
 
@@ -181,7 +186,7 @@ begin: blk1
                 r_nxt[PHY_PC] = r_ff[PHY_PC] + ((r_ff[PHY_CPSR][T]) ? 32'd2 : 32'd4);
         end
 
-        `ifdef RDB
+        `ifdef REG_DEBUG
         $display($time, "PC_nxt after = %d", r_nxt[PHY_PC]);
         `endif
 
@@ -257,7 +262,9 @@ begin: blk1
                 // Only then execute the instruction at hand...
                 r_nxt[PHY_CPSR][31:28]  = i_flags;                 
                 r_nxt[i_wr_index]       = i_wr_data;
-                r_nxt[i_wr_index_1]     = i_wr_data_1;
+
+                if ( i_mem_load_ff )
+                        r_nxt[i_wr_index_1]     = i_wr_data_1;
 
                 // Note that if we are writing to CPSR and if CPSR[4:0] == USR,
                 // we maintain it the same way. Thus, user cannot change interrupt
@@ -288,14 +295,15 @@ begin: blk1
                         $display("Executing in ARM mode...!");
                 end
 
-                // A write to PC via a load will trigger a clear from writeback.
+                // A write to PC will trigger a clear from writeback.
+                // PC writes reach this only if flag update bit is set.
                 if ( i_wr_index == ARCH_PC )
                 begin
                         // If flag update is set, then restore state.
                         if ( i_flag_update_ff )
                         begin
 
-                                `ifdef RDB
+                                `ifdef REG_DEBUG
                                 $display($time, "Restoring mode...");
                                 `endif
 
@@ -308,13 +316,24 @@ begin: blk1
                                         SVC: r_nxt[PHY_CPSR] = r_ff[PHY_SVC_SPSR];
                                 endcase
                         end
+                        else
+                        begin
+                                $display("Register File :: PC reached without flag update! Check RTL!");
+                                $finish;
+                        end
 
+                        o_clear_from_writeback = 1'd1;
+                end
+
+                // Independently check PC writes from other source.
+                if ( i_wr_index_1 == ARCH_PC && i_mem_load_ff )
+                begin
                         o_clear_from_writeback = 1'd1;
                 end
         end
 
-        `ifdef RDB
-        $display("PC_nxt = %d", r_nxt[15]);
+        `ifdef REG_DEBUG
+                $display("PC_nxt = %d", r_nxt[15]);
         `endif
 
 end

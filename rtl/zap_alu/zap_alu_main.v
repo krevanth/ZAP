@@ -416,7 +416,8 @@ begin: blk3
         CMN: {c,rd} = rm + ~rn + 32'd1;
         default:
         begin
-                $display($time, "ALU__arith__:This should never happen op = %d, check the RTL!", op);
+                $display("ALU__arith__:This should never happen op = %d, check the RTL!", op);
+                $finish;
         end
         endcase
 

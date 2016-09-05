@@ -666,6 +666,8 @@ u_zap_regf
         .i_swi_vector               (SWI_VECTOR),
         .i_und_vector               (UND_VECTOR),
 
+        .i_mem_load_ff          (memory_mem_load_ff), // Used to valid writes on i_wr_index1.
+
         .i_rd_index_0           (rd_index_0), 
         .i_rd_index_1           (rd_index_1), 
         .i_rd_index_2           (rd_index_2), 
