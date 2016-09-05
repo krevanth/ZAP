@@ -109,6 +109,7 @@ module zap_decode_main #(
         output  reg                             o_irq_ff,
         output  reg                             o_fiq_ff,
         output  reg                             o_abt_ff,
+        output  reg                             o_und_ff,
         output  reg                             o_swi_ff  // EX tests for condition validity.
 );
 
@@ -141,6 +142,7 @@ wire                            o_irq_nxt;
 wire                            o_fiq_nxt;
 wire                            o_abt_nxt;
 reg                             o_swi_nxt;
+wire                            o_und_nxt;
 
 always @*
 begin
@@ -184,7 +186,8 @@ begin
                 o_irq_ff                                <= o_irq_nxt & !i_cpu_mode[I]; // If mask is 1, do not pass.
                 o_fiq_ff                                <= o_fiq_nxt & !i_cpu_mode[F]; // If mask is 1, do not pass.
                 o_swi_ff                                <= o_swi_nxt;
-                o_abt_ff                                <= o_abt_nxt;      
+                o_abt_ff                                <= o_abt_nxt;                   // Undefined instruction. 
+                o_und_ff                                <= o_und_nxt && i_instruction_valid;
                 // An aborted instruction must read as 0x00000000.
                 o_condition_code_ff                     <= o_condition_code_nxt;
                 o_destination_index_ff                  <= o_destination_index_nxt;
@@ -348,7 +351,8 @@ u_zap_decode (
         .o_mem_signed_byte_enable(o_mem_signed_byte_enable_nxt),       
         .o_mem_signed_halfword_enable(o_mem_signed_halfword_enable_nxt),
         .o_mem_unsigned_halfword_enable(o_mem_unsigned_halfword_enable_nxt),
-        .o_mem_translate(o_mem_translate_nxt)                       
+        .o_mem_translate(o_mem_translate_nxt),
+        .o_und(o_und_nxt)
 );      
 
 endmodule

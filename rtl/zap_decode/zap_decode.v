@@ -80,7 +80,10 @@ module zap_decode #(
                 output  reg                             o_mem_signed_byte_enable,       
                 output  reg                             o_mem_signed_halfword_enable,
                 output  reg                             o_mem_unsigned_halfword_enable,
-                output  reg                             o_mem_translate                 // Force user's view of memory.
+                output  reg                             o_mem_translate,                // Force user's view of memory.
+                
+                // Unrecognized instruction.
+                output  reg                             o_und
 );
 
 `include "regs.vh"
@@ -118,6 +121,7 @@ begin
         o_mem_signed_halfword_enable = 0;
         o_mem_unsigned_halfword_enable = 0;
         o_mem_translate = 0;
+        o_und           = 0;
 
         // Based on our pattern match, call the appropriate task
         if ( i_instruction_valid )
@@ -134,10 +138,21 @@ begin
         MULT_INST:                                      decode_mult;
         HALFWORD_LS:                                    decode_halfword_ls;
         SOFTWARE_INTERRUPT:                             decode_swi;
+        default:
+        begin
+                decode_und;
+        end
         endcase
 end
 
 // Task definitions.
+
+task decode_und;
+begin
+        // Say instruction is undefined.
+        o_und = 1;
+end
+endtask
 
 task decode_swi;
 begin: tskDecodeSWI

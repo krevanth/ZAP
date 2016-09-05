@@ -141,6 +141,7 @@ begin: blk1
         o_fiq_ack = 0;
         o_irq_ack = 0;
 
+        // Avoid latch inference.
         for ( i=0 ; i<PHY_REGS ; i=i+1 )
                 r_nxt[i] = r_ff[i];
 
@@ -202,7 +203,9 @@ begin: blk1
                 i_swi           ||
                 i_und )
         begin
-                o_clear_from_writeback = 1'd1;
+                o_clear_from_writeback  = 1'd1;
+                r_nxt[PHY_CPSR][I]      = 1'd1; // Mask interrupts.
+                r_nxt[PHY_CPSR][T]      = 1'd0; // Go to ARM mode.
                 $display("Interrupt detected! Clearing from writeback...");
         end
                 
@@ -210,18 +213,21 @@ begin: blk1
         if ( i_data_abt )
         begin
                 // Returns do LR - 8 to get back to the same instruction.
-                r_nxt[PHY_PC]           = i_data_abort_vector; 
-                r_nxt[PHY_ABT_R14]      = i_pc_buf_ff;
-                r_nxt[PHY_ABT_SPSR]     = r_ff[PHY_CPSR];
-                r_nxt[PHY_CPSR][`CPSR_MODE] = ABT;
+                r_nxt[PHY_PC]                   = i_data_abort_vector; 
+                r_nxt[PHY_ABT_R14]              = i_pc_buf_ff;
+                r_nxt[PHY_ABT_SPSR]             = r_ff[PHY_CPSR];
+                r_nxt[PHY_CPSR][`CPSR_MODE]     = ABT;
+                r_nxt[PHY_CPSR][I]              = 1'd1; 
         end
         else if ( i_fiq )
         begin
                 // Returns do LR - 4 to get back to the same instruction.
-                r_nxt[PHY_PC]           = i_fiq_vector;
-                r_nxt[PHY_FIQ_R14]      = i_pc_buf_ff - 32'd4;
-                r_nxt[PHY_FIQ_SPSR]     = r_ff[PHY_CPSR];
-                r_nxt[PHY_CPSR][`CPSR_MODE] = FIQ;
+                r_nxt[PHY_PC]                   = i_fiq_vector;
+                r_nxt[PHY_FIQ_R14]              = i_pc_buf_ff - 32'd4;
+                r_nxt[PHY_FIQ_SPSR]             = r_ff[PHY_CPSR];
+                r_nxt[PHY_CPSR][`CPSR_MODE]     = FIQ;
+                r_nxt[PHY_CPSR][I]              = 1'd1;
+                r_nxt[PHY_CPSR][F]              = 1'd1;
                 o_fiq_ack = 1;
         end
         else if ( i_irq )
@@ -231,31 +237,35 @@ begin: blk1
                 r_nxt[PHY_IRQ_R14]      = i_pc_buf_ff - 32'd4;
                 r_nxt[PHY_IRQ_SPSR]     = r_ff[PHY_CPSR];
                 r_nxt[PHY_CPSR][`CPSR_MODE] = IRQ;
+                r_nxt[PHY_CPSR][I]      = 1'd1;
                 o_irq_ack = 1;
         end
         else if ( i_instr_abt )
         begin
                 // Returns do LR - 4 to get back to the same instruction.
-                r_nxt[PHY_PC]           = i_instruction_abort_vector;
-                r_nxt[PHY_ABT_R14]      = i_pc_buf_ff - 32'd4;
-                r_nxt[PHY_ABT_SPSR]     = r_ff[PHY_CPSR];
-                r_nxt[PHY_CPSR][`CPSR_MODE] = ABT;
+                r_nxt[PHY_PC]                   = i_instruction_abort_vector;
+                r_nxt[PHY_ABT_R14]              = i_pc_buf_ff - 32'd4;
+                r_nxt[PHY_ABT_SPSR]             = r_ff[PHY_CPSR];
+                r_nxt[PHY_CPSR][`CPSR_MODE]     = ABT;
+                r_nxt[PHY_CPSR][I]              = 1'd1;
         end
         else if ( i_swi )
         begin
                 // Returns do LR to return to the next instruction.
-                r_nxt[PHY_PC]           = i_swi_vector;
-                r_nxt[PHY_SVC_R14]      = i_pc_buf_ff - 32'd4;
-                r_nxt[PHY_SVC_SPSR]     = r_ff[PHY_CPSR];
-                r_nxt[PHY_CPSR][`CPSR_MODE] = SVC;
+                r_nxt[PHY_PC]                   = i_swi_vector;
+                r_nxt[PHY_SVC_R14]              = i_pc_buf_ff - 32'd4;
+                r_nxt[PHY_SVC_SPSR]             = r_ff[PHY_CPSR];
+                r_nxt[PHY_CPSR][`CPSR_MODE]     = SVC;
+                r_nxt[PHY_CPSR][I]              = 1'd1;
         end
         else if ( i_und )
         begin
                 // Returns do LR to get back to the same instruction.
-                r_nxt[PHY_PC]           = i_und_vector;
-                r_nxt[PHY_FIQ_R14]      = i_pc_buf_ff - 32'd4;
-                r_nxt[PHY_FIQ_SPSR]     = r_ff[PHY_CPSR];
-                r_nxt[PHY_CPSR][`CPSR_MODE] = UND;
+                r_nxt[PHY_PC]                   = i_und_vector;
+                r_nxt[PHY_FIQ_R14]              = i_pc_buf_ff - 32'd4;
+                r_nxt[PHY_FIQ_SPSR]             = r_ff[PHY_CPSR];
+                r_nxt[PHY_CPSR][`CPSR_MODE]     = UND;
+                r_nxt[PHY_CPSR][I]              = 1'd1;
         end
         else if ( i_valid )
         begin

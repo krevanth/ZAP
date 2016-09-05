@@ -97,20 +97,17 @@ begin
                 // faults only on a miss. However, to maintain
                 // pipeline synchronization, we asserted valid
                 // for aborted instructions too.
-                o_valid         <= i_instr_abort ? 1'd1  : i_valid;
-                o_instruction   <= i_instr_abort ? ABORT_PAYLOAD : 
-                                                   i_instruction;
-                
-                // Aborted instructions go with a 0x0000_0000 payload (AND R0,
-                // R0, R0) which is harmless.
-                
+                o_valid         <= i_valid;
+                o_instruction   <= i_instruction;
                 o_instr_abort   <= i_instr_abort;
 
+                // Put unit to sleep on an abort.
                 if ( i_instr_abort )
                 begin
                         sleep_ff <= 1'd1;
                 end
 
+                // Pump PC + 8 down the pipeline.
                 o_pc_plus_8_ff <= i_pc_ff + 32'd8;
         end
 end

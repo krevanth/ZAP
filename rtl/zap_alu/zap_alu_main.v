@@ -99,6 +99,7 @@ module zap_alu_main #(
 `include "regs.vh"
 `include "opcodes.vh"
 
+// These override global N,Z,C,V definitions which are on CPSR.
 localparam N = 3;
 localparam Z = 2;
 localparam C = 1;
