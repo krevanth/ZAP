@@ -102,8 +102,8 @@ begin
                                 state_nxt = MEMOP;  
                                 o_stall_from_decode = 1'd1; 
 
-                                o_irq = 0;
-                                o_fiq = 0;
+                                o_irq = i_irq;
+                                o_fiq = i_fiq;
                         end
                         else
                         begin
@@ -129,6 +129,9 @@ begin
 
                         pri_enc_out = pri_enc(reglist_ff);
                         reglist_nxt = reglist_ff & ~(1 << pri_enc_out); 
+
+                        o_irq = 0;
+                        o_fiq = 0;
 
                         // The map function generates a base restore instruction if reglist = 0.
                         o_instruction = map ( i_instruction, pri_enc_out, reglist_ff );
@@ -163,6 +166,8 @@ begin
                         o_instruction = { cc, 2'b00, 1'd0, MOV, s_bit, 4'd0, ARCH_PC, 8'd0, 4'd0 };
                         {o_instruction[`DP_RS_EXTEND], o_instruction[`DP_RS]} = ARCH_DUMMY_REG1; 
                         o_instruction_valid = 1'd1;                 
+                        o_irq = 0;
+                        o_fiq = 0;
                 end
         endcase
 end
