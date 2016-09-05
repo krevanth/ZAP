@@ -30,7 +30,9 @@ Released under the MIT license.
 
 module zap_top #(
         // For several reasons, we need more architectural registers than
-        // what ARM specifies. We also need more physical registers.
+        // what ARM specifies. We also need more physical registers. This has
+        // nothing to do with superscalar terminology. THIS IS PROCESS IS A 
+        // SINGLE ISSUE SCALAR PROCESSOR.
         parameter ARCH_REGS = 32,
 
         // Although ARM mentions only 16 ALU operations, the processor

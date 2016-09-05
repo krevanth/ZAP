@@ -9,7 +9,8 @@
  Description --
  This module sequences ARM LDM/STM CISC instructions into simpler RISC
  instructions. Basically LDM -> LDRs and STM -> STRs. Supports a base restored
- abort model.
+ abort model. Start instruction carries interrupt information so this cannot
+ block interrupts if there is a sequence of these.
 
  Dependencies --
  None
@@ -85,6 +86,10 @@ reg     [15:0]  reglist_ff, reglist_nxt;
 // Next state and output logic.
 always @*
 begin
+
+        o_irq = 0;
+        o_fiq = 0;
+
         case ( state_ff )
                 IDLE:
                 begin
@@ -102,6 +107,8 @@ begin
                                 state_nxt = MEMOP;  
                                 o_stall_from_decode = 1'd1; 
 
+                                // Since this instruction does not change the actual state of the CPU,
+                                // an interrupt may be taken on this.
                                 o_irq = i_irq;
                                 o_fiq = i_fiq;
                         end
