@@ -179,6 +179,11 @@ cache u_d_cache
 initial i_clk = 0;
 always #10 i_clk = !i_clk;
 
+initial #200
+begin
+        i_irq = 1;
+end
+
 initial
 begin
         i_irq = 0;
