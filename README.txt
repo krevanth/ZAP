@@ -1,3 +1,7 @@
+Title  : ZAP - An ARM v4T compatible processor.
+Author : Revanth Kamaraj (revanth91kamaraj@gmail.com)
+License: MIT License.
+------------------------------------------------------------------------------
 
 ZAP is an ARM processor compatible with v4 of the ARM instruction set. The
 processor is built around a 7 stage pipeline:
