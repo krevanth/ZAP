@@ -12,7 +12,8 @@ None
 
 Description --
 This unit performs arithmetic operations. It also generates memory signals at the end of
-the clock cycle. RRX is performed here since the operation is trivial.
+the clock cycle. RRX is performed here since the operation is trivial. The point is to 
+not carry CARRY over to another stage.
 
 Author --
 Revanth Kamaraj
@@ -33,6 +34,7 @@ module zap_alu_main #(
 
         // From CPSR. ( I, F, T, Mode )
         input wire  [31:0]                 i_cpsr_ff,
+        input wire  [31:0]                 i_cpsr_nxt,
 
         // Clear and Stall signals.
         input wire                         i_clear_from_writeback, // | High Priority
@@ -161,14 +163,14 @@ begin
                 sleep_ff                         <= 0;
                 o_flag_update_ff                 <= 0;
         end
-        else if ( i_clear_from_writeback ) // Make flags_ff same as i_cpsr_nxt
+        else if ( i_clear_from_writeback ) // Update flags from CPSR. 
         begin
                 o_alu_result_ff                  <= 0; 
                 o_dav_ff                         <= 0;    
                 o_pc_plus_8_ff                   <= 0; 
                 o_mem_address_ff                 <= 0; 
                 o_destination_index_ff           <= 0; 
-                flags_ff                         <= flags_ff; // Preserve flags.
+                flags_ff                         <= i_cpsr_nxt; 
                 o_abt_ff                         <= 0; 
                 o_irq_ff                         <= 0; 
                 o_fiq_ff                         <= 0; 
@@ -225,7 +227,7 @@ begin
                         o_pc_plus_8_ff                   <= i_pc_plus_8_ff;
                         o_mem_address_ff                 <= mem_address_nxt;
                         o_destination_index_ff           <= (i_destination_index_ff == ARCH_PC && !i_flag_update_ff) ? ARCH_DUMMY_REG1 : i_destination_index_ff;
-                                                                // No flag update is handled here itself.
+                                                                // No flag update and PC write is handled here itself for better performance.
                         flags_ff                         <= o_dav_nxt ? flags_nxt : flags_ff;
                         o_abt_ff                         <= i_abt_ff;
                         o_irq_ff                         <= i_irq_ff;
@@ -367,8 +369,9 @@ begin: blk2
         MOV: rd = rm;
         MVN: rd = ~rm;
         ORR: rd = rn | rm;
-        TST: rd = rn & rm;
-        TEQ: rd = rn ^ rn;
+        TST: rd = rn & rm; // Target is not written.
+        TEQ: rd = rn ^ rn; // Target is not written.
+        CLZ: rd = count_leading_zeros(rm);
         default:
         begin
                 $display("This should never happen, check the RTL!");
@@ -413,8 +416,8 @@ begin: blk3
         RSB: {c,rd} = rn + ~rm + 32'd1;
         SBC: {c,rd} = rn + ~rm + !flags[C];
         RSC: {c,rd} = rm + ~rn + !flags[C];
-        CMP: {c,rd} = rm + ~rn + 32'd0;
-        CMN: {c,rd} = rm + ~rn + 32'd1;
+        CMP: {c,rd} = rm + ~rn + 32'd0; // Target is not written.
+        CMN: {c,rd} = rm + ~rn + 32'd1; // Target is not written.
         default:
         begin
                 $display("ALU__arith__:This should never happen op = %d, check the RTL!", op);
@@ -472,6 +475,40 @@ begin
         endcase   
 
         is_cc_satisfied = ok;
+end
+endfunction
+
+// Count leading zeros.
+function [5:0] count_leading_zeros ( input [31:0] in );
+begin
+        integer i;
+        reg done;
+        reg [5:0] cnt;
+
+        // Avoid latch inference.
+        done = 0;
+        cnt  = 32; // If in = 0, out = 32
+
+        // Ripple carry method.
+        for(i=31;i>=0;i=i-1)
+        begin
+                if ( done == 0 ) /* no sleep */
+                begin
+                        // Keep counting till you see a '1'.
+                        if ( in[i] == 1'd1 )
+                        begin
+                                // Put loop to sleep.
+                                done = 1;
+                        end
+                        else
+                        begin
+                                cnt = cnt - 6'd1;        
+                        end
+                end
+        end
+
+        count_leading_zeros = cnt;        
+        
 end
 endfunction
 

@@ -2,6 +2,8 @@
 // Instruction Patterns.
 // ===============================
 
+/* ARM */
+
 localparam      [31:0]  DATA_PROCESSING_IMMEDIATE                       =                                       32'bzzzz_00_1_zzzz_z_zzzz_zzzz_zzzzzzzzzzzz;
 localparam      [31:0]  DATA_PROCESSING_REGISTER_SPECIFIED_SHIFT        =                                       32'bzzzz_00_0_zzzz_z_zzzz_zzzz_zzzz0zz1zzzz;
 localparam      [31:0]  DATA_PROCESSING_INSTRUCTION_SPECIFIED_SHIFT     =                                       32'bzzzz_00_0_zzzz_z_zzzz_zzzz_zzzzzzz0zzzz;       
@@ -28,4 +30,15 @@ localparam      [31:0]  HALFWORD_LS                                     =       
 
 // Software interrupt.
 localparam      [31:0]  SOFTWARE_INTERRUPT                              =                                       32'bzzzz_1111_zzzz_zzzz_zzzz_zzzz_zzzz_zzzz;
+
+/* THUMB */
+
+//B
+localparam      [15:0]  T_BRANCH_COND                                   =                                       16'b1101_zzzz_zzzzzzzz;
+localparam      [15:0]  T_BRANCH_NOCOND                                 =                                       16'b11100_zzzzzzzzzzz;
+localparam      [15:0]  T_BL                                            =                                       16'b1111_z_zzzzzzzzzzz;
+localparam      [15:0]  T_BX                                            =                                       16'b01000111_0_z_zzz_000;
+
+// SWI
+localparam      [15:0]  T_SWI                                           =                                       16'b11011111_zzzzzzzz;
 

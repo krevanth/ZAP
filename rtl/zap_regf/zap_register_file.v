@@ -91,6 +91,7 @@ module zap_register_file #(
 
         // CPSR output
         output reg       [31:0]              o_cpsr,
+        output wire      [31:0]              o_cpsr_nxt,
 
         // Clear from writeback
         output reg                           o_clear_from_writeback,
@@ -107,6 +108,8 @@ module zap_register_file #(
 // Register file.
 reg     [31:0]  r_ff       [PHY_REGS-1:0];
 reg     [31:0]  r_nxt      [PHY_REGS-1:0];
+
+assign o_cpsr_nxt = r_nxt[PHY_CPSR];
 
 `ifdef REG_DEBUG
 always @ (posedge i_clk)
@@ -326,7 +329,7 @@ begin: blk1
                                         SVC: r_nxt[PHY_CPSR] = r_ff[PHY_SVC_SPSR];
                                 endcase
                         end
-                        else
+                        else /* Architecture should not allow this to happen */
                         begin
                                 $display("Register File :: PC reached without flag update! Check RTL!");
                                 $finish;

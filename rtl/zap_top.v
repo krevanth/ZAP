@@ -31,7 +31,7 @@ Released under the MIT license.
 module zap_top #(
         // For several reasons, we need more architectural registers than
         // what ARM specifies. We also need more physical registers. This has
-        // nothing to do with superscalar terminology. THIS IS PROCESS IS A 
+        // *nothing* to do with superscalar terminology. THIS PROCESSOR IS A 
         // SINGLE ISSUE SCALAR PROCESSOR.
         parameter ARCH_REGS = 32,
 
@@ -102,7 +102,7 @@ module zap_top #(
                 output wire[31:0]       o_pc,                   // Program counter.
 
                 // CPSR.
-                output wire [31:0]      o_cpsr,                 // CPSR
+                output wire [31:0]      o_cpsr,                 // CPSR. Cache must use this to determine size of code fetches, VM scheme etc.
 
                 // Memory reset.
                 output wire             o_mem_reset
@@ -251,6 +251,7 @@ wire [31:0] rd_data_0;
 wire [31:0] rd_data_1;
 wire [31:0] rd_data_2;
 wire [31:0] rd_data_3;
+wire        cpsr_nxt;
 
 // FETCH STAGE //
 
@@ -269,6 +270,7 @@ u_zap_fetch_main (
         .i_instruction                  (i_instruction),
         .i_valid                        (i_valid),
         .i_instr_abort                  (i_instr_abort),
+        .i_cpsr_ff                      (o_cpsr),
 
         // Output.
         .o_instruction                  (fetch_instruction),
@@ -278,7 +280,6 @@ u_zap_fetch_main (
 );
 
 // DECODE STAGE //
-
 
 zap_decode_main #(
         .ARCH_REGS(ARCH_REGS),
@@ -527,6 +528,7 @@ u_zap_alu_main
         .i_data_stall                   (i_data_stall),             // V Low Priority
 
         .i_cpsr_ff                      (o_cpsr),
+        .i_cpsr_nxt                     (cpsr_nxt),
         .i_flag_update_ff               (shifter_flag_update_ff),
 
          .i_mem_srcdest_value_ff        (shifter_mem_srcdest_value_ff),
@@ -697,6 +699,7 @@ u_zap_regf
 
         .o_pc                   (o_pc),
         .o_cpsr                 (o_cpsr),
+        .o_cpsr_nxt             (cpsr_nxt),
         .o_clear_from_writeback (clear_from_writeback),
 
         .o_fiq_ack              (o_fiq_ack),

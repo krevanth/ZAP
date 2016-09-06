@@ -33,6 +33,9 @@ module zap_fetch_main
                 // Comes from Wb.
                 input wire [31:0] i_pc_ff,               // Program counter.
 
+                // Comes from CPSR
+                input wire [31:0] i_cpsr_ff,            // CPSR.
+
                 // From I-cache.
                 input wire [31:0] i_instruction,         // A 32-bit ZAP instruction.
                 input wire        i_valid,               // Instruction valid indicator.
@@ -107,8 +110,9 @@ begin
                         sleep_ff <= 1'd1;
                 end
 
-                // Pump PC + 8 down the pipeline.
-                o_pc_plus_8_ff <= i_pc_ff + 32'd8;
+                // Pump PC + 8 or 4 down the pipeline. The number depends on
+                // ARM/Thumb mode.
+                o_pc_plus_8_ff <= i_pc_ff + i_cpsr_ff[T] ? 32'd4 : 32'd8;
         end
 end
 
