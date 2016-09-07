@@ -91,7 +91,7 @@ endtask
 task decode_bx;
 begin
         case ( i_instruction[6] )
-        
+                
         endcase 
 end
 endtask

@@ -297,10 +297,10 @@ begin: blk1
                 end
 
                 // Also if writes to PC change LSB, we change to Thumb mode.
-                if ( r_nxt[PHY_PC][0] )
+                if ( r_nxt[PHY_PC][0] && r_ff[PHY_CPSR][T] == 1'd0 ) // Attemp to switch!
                 begin
                         r_nxt[PHY_CPSR][T] = 1'd1; // Set T bit.
-                        $display("Executing in Thumb mode...!");
+                        $display("Switched to Thumb mode...!");
                 end
                 else
                 begin
