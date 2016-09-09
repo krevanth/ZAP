@@ -20,6 +20,7 @@
 */
 
 module zap_register_file #(
+        parameter FLAG_WDT = 32, // Flags width a.k.a CPSR.
         parameter PHY_REGS  = 46 // Number of physical registers.
 )
 (
@@ -64,7 +65,7 @@ module zap_register_file #(
         // Write index and data and flag updates.
         input   wire [$clog2(PHY_REGS)-1:0] i_wr_index,
         input   wire [31:0]                 i_wr_data,
-        input   wire [3:0]                  i_flags,
+        input   wire [FLAG_WDT-1:0]         i_flags,
         input   wire [$clog2(PHY_REGS)-1:0] i_wr_index_1,
         input   wire [31:0]                 i_wr_data_1,
 
@@ -273,40 +274,11 @@ begin: blk1
         else if ( i_valid )
         begin
                 // Only then execute the instruction at hand...
-                r_nxt[PHY_CPSR][31:28]  = i_flags;                 
+                r_nxt[PHY_CPSR]         = i_flags;                 
                 r_nxt[i_wr_index]       = i_wr_data;
 
                 if ( i_mem_load_ff )
                         r_nxt[i_wr_index_1]     = i_wr_data_1;
-
-                // Note that if we are writing to CPSR and if CPSR[4:0] == USR,
-                // we maintain it the same way. Thus, user cannot change interrupt
-                // controls or change processor mode...
-                if ( r_ff[PHY_CPSR][`CPSR_MODE] == USR )
-                begin
-                        r_nxt[PHY_CPSR][7:0] = r_ff[PHY_CPSR][7:0]; // Don't change LOWER byte.
-                end
-                else if (       i_wr_index == PHY_CPSR && 
-                                r_ff[PHY_CPSR][7:0] != i_wr_data[7:0] ) // Mode, interrupt change.
-                begin
-                        // Flush instructions currently in the pipeline.
-                        o_clear_from_writeback = 1'd1;
-
-                        // Provide a new PC.
-                        r_nxt[PHY_PC] = i_pc_buf_ff - 32'd4; // Goes to the next instruction.
-                end
-
-                // Also if writes to PC change LSB, we change to Thumb mode.
-                if ( r_nxt[PHY_PC][0] && r_ff[PHY_CPSR][T] == 1'd0 ) // Attemp to switch!
-                begin
-                        r_nxt[PHY_CPSR][T] = 1'd1; // Set T bit.
-                        $display("Switched to Thumb mode...!");
-                end
-                else
-                begin
-                        r_nxt[PHY_CPSR][T] = 1'd0; // Clear T bit.
-                        $display("Executing in ARM mode...!");
-                end
 
                 // A write to PC will trigger a clear from writeback.
                 // PC writes reach this only if flag update bit is set.
@@ -317,7 +289,7 @@ begin: blk1
                         begin
 
                                 `ifdef REG_DEBUG
-                                $display($time, "Restoring mode...");
+                                        $display($time, "Restoring mode...");
                                 `endif
 
                                 // Restore mode.
@@ -348,7 +320,6 @@ begin: blk1
         `ifdef REG_DEBUG
                 $display("PC_nxt = %d", r_nxt[15]);
         `endif
-
 end
 
 // Sequential Logic.

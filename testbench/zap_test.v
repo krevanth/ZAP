@@ -24,9 +24,6 @@ wire             o_signed_byte_en;       // Signed byte enable.
 wire             o_unsigned_halfword_en; // Unsiged halfword enable.
 wire             o_signed_halfword_en;   // Signed halfword enable.
 
-// From cache.
-wire [31:0]     i_instruction_address;
-
 // User view.
 wire             o_mem_translate;
 
@@ -119,7 +116,6 @@ u_zap_top
 (
         .i_clk(i_clk),
         .i_reset(i_reset),
-        .i_instruction_address(i_instruction_address),
         .i_instruction(i_instruction),
         .i_valid(i_valid),
         .i_instr_abort(i_instr_abort),
@@ -178,11 +174,6 @@ cache u_d_cache
 
 initial i_clk = 0;
 always #10 i_clk = !i_clk;
-
-initial #200
-begin
-        i_irq = 1;
-end
 
 initial
 begin

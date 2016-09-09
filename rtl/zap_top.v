@@ -47,6 +47,9 @@ module zap_top #(
         // physical registers in a fixed way.
         parameter PHY_REGS = 46,
 
+        // Width of the flags.
+        parameter FLAG_WDT = 32,
+
         // Vectors.
         parameter DATA_ABORT_VECTOR     =       32'h10,
         parameter FIQ_VECTOR            =       32'h1C,
@@ -64,7 +67,6 @@ module zap_top #(
                 input wire [31:0]       i_instruction,          // A 32-bit ZAP instruction.
                 input wire              i_valid,                // Instruction valid.
                 input wire              i_instr_abort,          // Instruction abort fault.
-                input wire [31:0]       i_instruction_address,  // I-cache address out.                
 
                 // Memory access.
                 output wire             o_read_en,              // Memory load
@@ -226,7 +228,7 @@ wire                            alu_dav_nxt;
 wire [31:0]                     alu_pc_plus_8_ff;
 wire [31:0]                     pc_from_alu;
 wire [$clog2(PHY_REGS)-1:0]     alu_destination_index_ff;
-wire [3:0]                      alu_flags_ff;
+wire [FLAG_WDT-1:0]             alu_flags_ff;
 wire [$clog2(PHY_REGS)-1:0]     alu_mem_srcdest_index_ff;
 wire                            alu_mem_load_ff;
 wire                            alu_flag_update_ff;
@@ -242,7 +244,7 @@ wire                            memory_fiq_ff;
 wire                            memory_swi_ff;
 wire                            memory_instr_abort_ff;
 wire                            memory_mem_load_ff;
-wire  [3:0]                     memory_flags_ff;
+wire  [FLAG_WDT-1:0]            memory_flags_ff;
 wire                            memory_flag_update_ff;
 wire  [31:0]                    memory_mem_rd_data_ff;
 
@@ -251,7 +253,9 @@ wire [31:0] rd_data_0;
 wire [31:0] rd_data_1;
 wire [31:0] rd_data_2;
 wire [31:0] rd_data_3;
-wire        cpsr_nxt;
+wire [31:0] cpsr_nxt, cpsr;
+
+assign o_cpsr = alu_flags_ff;
 
 // FETCH STAGE //
 
@@ -522,14 +526,15 @@ zap_alu_main #(
 )
 u_zap_alu_main
 (
-        .i_clk                          (i_clk),
-        .i_reset                        (i_reset),
-        .i_clear_from_writeback         (clear_from_writeback),     // | High Priority
-        .i_data_stall                   (i_data_stall),             // V Low Priority
+         .i_clk                          (i_clk),
+         .i_reset                        (i_reset),
+         .i_clear_from_writeback         (clear_from_writeback),     // | High Priority
+         .i_data_stall                   (i_data_stall),             // V Low Priority
 
-        .i_cpsr_ff                      (o_cpsr),
-        .i_cpsr_nxt                     (cpsr_nxt),
-        .i_flag_update_ff               (shifter_flag_update_ff),
+         .i_cpsr_ff                      (cpsr),
+         .i_cpsr_nxt                     (cpsr_nxt),
+         .i_flag_update_ff               (shifter_flag_update_ff),
+         .i_switch_ff                    (1'd0),
 
          .i_mem_srcdest_value_ff        (shifter_mem_srcdest_value_ff),
          .i_alu_source_value_ff         (shifter_alu_source_value_ff), 
@@ -698,7 +703,7 @@ u_zap_regf
         .o_rd_data_3            (rd_data_3),
 
         .o_pc                   (o_pc),
-        .o_cpsr                 (o_cpsr),
+        .o_cpsr                 (cpsr),
         .o_cpsr_nxt             (cpsr_nxt),
         .o_clear_from_writeback (clear_from_writeback),
 

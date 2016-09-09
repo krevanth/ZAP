@@ -104,6 +104,9 @@ module zap_decode_main #(
 
         // PC output.
         output  reg  [31:0]                     o_pc_plus_8_ff,       
+
+        // Switch.
+        output  reg                             o_switch_ff,
  
         // Interrupts.
         output  reg                             o_irq_ff,
@@ -143,6 +146,7 @@ wire                            o_fiq_nxt;
 wire                            o_abt_nxt;
 reg                             o_swi_nxt;
 wire                            o_und_nxt;
+wire                            o_switch_nxt;
 
 always @*
 begin
@@ -186,9 +190,8 @@ begin
                 o_irq_ff                                <= o_irq_nxt & !i_cpu_mode[I]; // If mask is 1, do not pass.
                 o_fiq_ff                                <= o_fiq_nxt & !i_cpu_mode[F]; // If mask is 1, do not pass.
                 o_swi_ff                                <= o_swi_nxt;
-                o_abt_ff                                <= o_abt_nxt;                   // Undefined instruction. 
+                o_abt_ff                                <= o_abt_nxt;                    
                 o_und_ff                                <= o_und_nxt && i_instruction_valid;
-                // An aborted instruction must read as 0x00000000.
                 o_condition_code_ff                     <= o_condition_code_nxt;
                 o_destination_index_ff                  <= o_destination_index_nxt;
                 o_alu_source_ff                         <= o_alu_source_nxt;
@@ -207,6 +210,7 @@ begin
                 o_mem_unsigned_halfword_enable_ff       <= o_mem_unsigned_halfword_enable_nxt;
                 o_mem_translate_ff                      <= o_mem_translate_nxt;                
                 o_pc_plus_8_ff                          <= i_pc_plus_8_ff;
+                o_switch_ff                             <= o_switch_nxt;
         end
 end
 
@@ -233,7 +237,9 @@ begin
                 o_mem_signed_halfword_enable_ff         <= 0; 
                 o_mem_unsigned_halfword_enable_ff       <= 0; 
                 o_mem_translate_ff                      <= 0;
-                o_pc_plus_8_ff                          <= 32'd8; 
+                o_pc_plus_8_ff                          <= 32'd8;
+                o_und_ff                                <= 0;
+                o_switch_ff                             <= 0; 
 end
 endtask
 
@@ -352,7 +358,8 @@ u_zap_decode (
         .o_mem_signed_halfword_enable(o_mem_signed_halfword_enable_nxt),
         .o_mem_unsigned_halfword_enable(o_mem_unsigned_halfword_enable_nxt),
         .o_mem_translate(o_mem_translate_nxt),
-        .o_und(o_und_nxt)
+        .o_und(o_und_nxt),
+        .o_switch(o_switch_nxt)
 );      
 
 endmodule

@@ -83,7 +83,10 @@ module zap_decode #(
                 output  reg                             o_mem_translate,                // Force user's view of memory.
                 
                 // Unrecognized instruction.
-                output  reg                             o_und
+                output  reg                             o_und,
+
+                // ARM <-> Thumb switch indicator.
+                output  reg                             o_switch
 );
 
 `include "regs.vh"
@@ -122,6 +125,7 @@ begin
         o_mem_unsigned_halfword_enable = 0;
         o_mem_translate = 0;
         o_und           = 0;
+        o_switch        = 0;
 
         // Based on our pattern match, call the appropriate task
         if ( i_instruction_valid )
@@ -281,6 +285,9 @@ begin: tskDecodeBx
         // We will force an immediate in alu source to prevent unwanted locks.
         o_alu_source            = 0;
         o_alu_source[32]        = IMMED_EN;
+
+        // Indicate switch.
+        o_switch = 1;
 end
 endtask
 

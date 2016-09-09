@@ -25,7 +25,8 @@ Released under the MIT license.
 module zap_alu_main #(
         parameter PHY_REGS = 46,
         parameter SHIFT_OPS = 5,
-        parameter ALU_OPS = 32
+        parameter ALU_OPS = 32,
+        parameter FLAG_WDT = 32
 )
 (
         // Clock and reset.
@@ -35,6 +36,9 @@ module zap_alu_main #(
         // From CPSR. ( I, F, T, Mode )
         input wire  [31:0]                 i_cpsr_ff,
         input wire  [31:0]                 i_cpsr_nxt,
+
+        // State switch ( ARM <-> Thumb possible ).
+        input wire                         i_switch_ff,
 
         // Clear and Stall signals.
         input wire                         i_clear_from_writeback, // | High Priority
@@ -83,7 +87,7 @@ module zap_alu_main #(
         output reg                          o_clear_from_alu,
         output reg [31:0]                   o_pc_from_alu,
         output reg [$clog2(PHY_REGS)-1:0]   o_destination_index_ff,
-        output reg              [3:0]       o_flags_ff,                 // Output flags.
+        output reg [FLAG_WDT-1:0]           o_flags_ff,                 // Output flags.
         output reg                          o_flag_update_ff,
 
         output reg  [$clog2(PHY_REGS)-1:0]  o_mem_srcdest_index_ff,     
@@ -100,40 +104,26 @@ module zap_alu_main #(
 `include "cc.vh"
 `include "regs.vh"
 `include "opcodes.vh"
+`include "cpsr.vh"
+`include "modes.vh"
 
 // These override global N,Z,C,V definitions which are on CPSR.
-localparam N = 3;
-localparam Z = 2;
-localparam C = 1;
-localparam V = 0;
+localparam _N = 3;
+localparam _Z = 2;
+localparam _C = 1;
+localparam _V = 0;
 
 reg sleep_ff, sleep_nxt;
-reg [3:0] flags_ff, flags_nxt;
+reg [31:0] flags_ff, flags_nxt;
 reg [31:0] rm, rn;
 reg [31:0] mem_address_nxt;
+reg [$clog2(PHY_REGS)-1:0] o_destination_index_nxt;
 
 always @*
 begin
         rm         = i_shifted_source_value_ff;
         rn         = i_alu_source_value_ff;
         o_flags_ff = flags_ff;
-end
-
-// Provides branch instructions. This will change
-// the direction PC takes. Only if target is PC and instruction 
-// is valid.
-always @*
-begin
-        if ( i_destination_index_ff == PHY_PC && o_dav_nxt )
-        begin
-                o_clear_from_alu = 1'd1;
-                o_pc_from_alu    = o_alu_result_nxt;
-        end
-        else
-        begin
-                o_clear_from_alu = 1'd0;
-                o_pc_from_alu = 32'd0;
-        end
 end
 
 always @ (posedge i_clk)
@@ -145,7 +135,7 @@ begin
                 o_pc_plus_8_ff                   <= 0;
                 o_mem_address_ff                 <= 0;
                 o_destination_index_ff           <= 0;
-                flags_ff                         <= 0;
+                flags_ff                         <= SVC;
                 o_abt_ff                         <= 0;
                 o_irq_ff                         <= 0;
                 o_fiq_ff                         <= 0;
@@ -163,7 +153,7 @@ begin
                 sleep_ff                         <= 0;
                 o_flag_update_ff                 <= 0;
         end
-        else if ( i_clear_from_writeback ) // Update flags from CPSR. 
+        else if ( i_clear_from_writeback ) 
         begin
                 o_alu_result_ff                  <= 0; 
                 o_dav_ff                         <= 0;    
@@ -226,9 +216,8 @@ begin
                         o_dav_ff                         <= o_dav_nxt;                
                         o_pc_plus_8_ff                   <= i_pc_plus_8_ff;
                         o_mem_address_ff                 <= mem_address_nxt;
-                        o_destination_index_ff           <= (i_destination_index_ff == ARCH_PC && !i_flag_update_ff) ? ARCH_DUMMY_REG1 : i_destination_index_ff;
-                                                                // No flag update and PC write is handled here itself for better performance.
-                        flags_ff                         <= o_dav_nxt ? flags_nxt : flags_ff;
+                        o_destination_index_ff           <= o_destination_index_nxt;
+                        flags_ff                         <= flags_nxt;
                         o_abt_ff                         <= i_abt_ff;
                         o_irq_ff                         <= i_irq_ff;
                         o_fiq_ff                         <= i_fiq_ff;
@@ -250,25 +239,29 @@ begin
 end
 
 always @*
+begin
+        // Memory address output based on pre or post index.
+        if ( i_mem_pre_index_ff == 0 ) // Post-index. Update is done after memory access.
+                mem_address_nxt = rn;   
+        else                           // Pre-index. Update is done before memory access.
+                mem_address_nxt = o_alu_result_nxt;
+end
+
+always @*
 begin: blk1
        reg [31:0] rd;
        reg [$clog2(ALU_OPS)-1:0]  opcode;
 
-       opcode = i_alu_operation_ff;
-       sleep_nxt = sleep_ff;
+       o_clear_from_alu         = 1'd0;
+       o_pc_from_alu            = 32'd0;
+       opcode                   = i_alu_operation_ff;
+       sleep_nxt                = sleep_ff;
+       flags_nxt                = flags_ff;
+       o_destination_index_nxt  = i_destination_index_ff;
 
-       o_dav_nxt = is_cc_satisfied ( i_condition_code_ff, flags_ff );
+       o_dav_nxt = is_cc_satisfied ( i_condition_code_ff, flags_ff[31:28] );
 
-        if ( i_irq_ff || i_fiq_ff || i_abt_ff || i_swi_ff ) // Any sign of an interrupt is present.
-        begin
-                // Send out invalid instruction. Interrupt will trigger despite the instruction
-                // being invalid. Flags won't be updated because of this.
-                o_dav_nxt = 1'd0;
-
-                // Put the unit to sleep.
-                sleep_nxt = 1'd1;
-        end
-        else if (       opcode == AND || 
+        if (            opcode == AND || 
                         opcode == EOR || 
                         opcode == MOV || 
                         opcode == MVN || 
@@ -276,76 +269,73 @@ begin: blk1
                         opcode == ORR 
                 )
         begin
-                // If you can write to PC and choose flag update. THis stuff is handled in writeback.
-                if ( i_destination_index_ff == ARCH_PC && o_dav_nxt && i_flag_update_ff )
-                begin
-                        sleep_nxt = 1'd1;
-                end
-
-                {flags_nxt, rd} = process_logical_instructions ( rn, rm, flags_ff, opcode, i_rrx_ff, i_flag_update_ff  );
-
+                {flags_nxt[31:28], rd} = process_logical_instructions ( rn, rm, flags_ff[31:28], opcode, i_rrx_ff, i_flag_update_ff  );
         end
         else if ( opcode == FMOV || opcode == MMOV )
         begin: blk2
-                // Update ALU flags if needed. Also a fancy MOV instruction.
-                // This is a special kind of MOV instruction that has mask bits
-                // in ALU source.
-
                 integer i;
                 reg [31:0] exp_mask;
 
-                flags_nxt = flags_ff;
-
-                rd = {flags_ff, 4'd0, 8'd0, 8'd0, i_cpsr_ff[7:0]}; 
+                rd = flags_ff;
                 exp_mask = {{8{rn[3]}},{8{rn[2]}},{8{rn[1]}},{8{rn[0]}}};
 
                 for ( i=0;i<32;i=i+1 )
                 begin
                         if ( exp_mask[i] )
                                 rd[i] = rm[i];
-                end                
-
-                // We must put the unit to sleep if rd[7:0] is different from i_cpsr_ff[7:0]. If only flags
-                // are changing, we can update flags_nxt.
-
-                if ( opcode == FMOV && o_dav_nxt )
-                begin
-                        if ( rd[7:0] != i_cpsr_ff[7:0] ) // Critical change.
-                        begin
-                                sleep_nxt = 1;          // Set to sleep.
-                                flags_nxt = rd[31:28];  // Update flags too.
-                        end
-                        else
-                        begin
-                                flags_nxt = rd[31:28]; // Just update flags. Don't sleep.
-                        end
                 end
+
+                if ( opcode == FMOV )
+                begin
+                        flags_nxt = rd;
+                end                
         end
         else
         begin: blk3
-                // Process arithmetic instructions.
-                {flags_nxt, rd} = process_arithmetic_instructions ( rn, rm, flags_ff, opcode, i_rrx_ff, i_flag_update_ff );
-
-                // If you can write to PC and choose flag update. THis stuff is handled in writeback.
-                if ( i_destination_index_ff == ARCH_PC && o_dav_nxt && i_flag_update_ff )
-                begin
-                        sleep_nxt = 1'd1;
-                end
-
-                // If this happens to be a load to PC, kill this unit off. A writeback wakeup is needed.
-                if ( i_mem_load_ff && o_dav_nxt && i_mem_srcdest_index_ff == ARCH_PC )
-                begin
-                        sleep_nxt = 1'd1;
-                end
+                {flags_nxt[31:28], rd} = process_arithmetic_instructions ( rn, rm, flags_ff[31:28], opcode, i_rrx_ff, i_flag_update_ff );
         end
 
-        // Memory address output based on pre or post index.
-        if ( i_mem_pre_index_ff == 1 )
-                mem_address_nxt = rn;  
-        else
-                mem_address_nxt = rd;
+        if ( i_irq_ff || i_fiq_ff || i_abt_ff || i_swi_ff ) // Any sign of an interrupt is present.
+        begin
+                $display($time, "ALU :: Interrupt detected! ALU put to sleep...");
+                o_dav_nxt = 1'd0;
+                sleep_nxt = 1'd1;
+        end
+        else if ( (flags_nxt[7:0] != flags_ff[7:0]) && o_dav_nxt ) // Critical change. Can occur only on FMOV.
+        begin
+                $display($time, "ALU :: Major change to CPSR! Restarting from the next instruction...");
+                o_clear_from_alu = 1'd1;
+                o_pc_from_alu    = i_pc_plus_8_ff - 32'd4;
+                flags_nxt[`CPSR_MODE] = (flags_nxt[`CPSR_MODE] == USR) ? USR : flags_nxt[`CPSR_MODE]; // Security.
+        end
+        else if ( i_destination_index_ff == ARCH_PC && o_dav_nxt)
+        begin
+                if ( i_flag_update_ff ) // Unit sleeps since this is handled in WB.
+                begin
+                        $display($time, "ALU :: PC write with flag update! Unit put to sleep...");
+                        sleep_nxt = 1'd1;
+                end
+                else // Without flag updates!
+                begin
+                        $display($time, "ALU :: A quick branch!...");
+                        // Quick branches!
+                        o_destination_index_nxt = PHY_RAZ_REGISTER;                     // Dumping ground.
+                        o_clear_from_alu        = 1'd1;
+                        o_pc_from_alu           = rd;
+                        flags_nxt[T]            = i_switch_ff ? rd[0] : flags_ff[T];   // Thumb/ARM state if i_switch_ff = 1.
+                end
+        end
+        else if ( i_mem_srcdest_index_ff == ARCH_PC && o_dav_nxt && i_mem_load_ff)
+        begin
+                // Loads to PC also puts the unit to sleep.
+                sleep_nxt = 1'd1;
+        end
 
+        // Drive nxt.
         o_alu_result_nxt = rd;
+
+        if ( o_dav_nxt == 1'd0 ) // If the current instruction is invalid, do not update flags.
+                flags_nxt = flags_ff;
 end
 
 // Process logical instructions.
@@ -358,8 +348,12 @@ begin: blk2
 
         if ( rrx )
         begin
-                rm = {flags[C], rm[31:1]};
+                rm = {flags[_C], rm[31:1]};
                 tmp_carry = rm[0];
+        end
+        else
+        begin
+                tmp_carry = i_shift_carry_ff;
         end
 
         case(op)
@@ -375,22 +369,19 @@ begin: blk2
         default:
         begin
                 $display("This should never happen, check the RTL!");
-                $finish;
         end
         endcase           
 
         flags_out = flags;
 
-        if ( rrx && i_flag_upd )
-        begin
-                flags_out[C] = tmp_carry;
-        end
+        if ( i_flag_upd )
+                flags_out[_C] = tmp_carry;
 
         if ( rd == 0 && i_flag_upd )
-                flags_out[Z] = 1'd1;
+                flags_out[_Z] = 1'd1;
 
         if ( rd[31] && i_flag_upd )
-                flags_out[N] = 1'd1;
+                flags_out[_N] = 1'd1;
 
         process_logical_instructions = {flags_out, rd};     
 end
@@ -406,22 +397,21 @@ begin: blk3
 
         if ( rrx )
         begin
-                rm = {flags[C], rm[31:1]}; // The flag is not used anyway.
+                rm = {flags[_C], rm[31:1]}; // The flag is not used anyway.
         end
 
         case ( op )
         ADD: {c,rd} = rn +  rm + 32'd0;
-        ADC: {c,rd} = rn +  rm + flags[C];
+        ADC: {c,rd} = rn +  rm + flags[_C];
         SUB: {c,rd} = rn + ~rm + 32'd1;
         RSB: {c,rd} = rn + ~rm + 32'd1;
-        SBC: {c,rd} = rn + ~rm + !flags[C];
-        RSC: {c,rd} = rm + ~rn + !flags[C];
+        SBC: {c,rd} = rn + ~rm + !flags[_C];
+        RSC: {c,rd} = rm + ~rn + !flags[_C];
         CMP: {c,rd} = rm + ~rn + 32'd0; // Target is not written.
         CMN: {c,rd} = rm + ~rn + 32'd1; // Target is not written.
         default:
         begin
                 $display("ALU__arith__:This should never happen op = %d, check the RTL!", op);
-                $finish;
         end
         endcase
 
@@ -429,14 +419,14 @@ begin: blk3
 
         if ( i_flag_upd )
         begin
-                if ( rd == 0 )                  flags_out[Z] = 1;
-                if ( rd[31] )                   flags_out[N] = 1;
-                if ( c )                        flags_out[C] = 1;
+                if ( rd == 0 )                  flags_out[_Z] = 1;
+                if ( rd[31] )                   flags_out[_N] = 1;
+                if ( c )                        flags_out[_C] = 1;
 
                 // Overflow.
                 if ( rn[31] == rm[31] && (rd[31] != rn[31]) )
                 begin
-                        flags_out[V] = 1;
+                        flags_out[_V] = 1;
                 end 
         end
 
@@ -470,8 +460,8 @@ begin
         LT:     ok = !(n^v);
         GT:     ok = (n^v) && !z;
         LE:     ok = (!(n^v)) || z;
-        AL:     ok = 1;
-        NV:     ok = 0;                    
+        AL:     ok = 1'd1;
+        NV:     ok = 1'd0;                    
         endcase   
 
         is_cc_satisfied = ok;
@@ -480,7 +470,7 @@ endfunction
 
 // Count leading zeros.
 function [5:0] count_leading_zeros ( input [31:0] in );
-begin
+begin: clzBlk
         integer i;
         reg done;
         reg [5:0] cnt;

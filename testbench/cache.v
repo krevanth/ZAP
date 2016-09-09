@@ -18,7 +18,7 @@ module cache
 );
 
 // Create a 1024 byte memory.
-reg [7:0] mem [1024:0];
+reg [7:0] mem [1023:0];
 
 initial
 begin:blk1
@@ -26,8 +26,11 @@ begin:blk1
 
         o_abort = 0;
 
-        for(i=0;i<1025;i=i+1)
-                mem[i] = 0;
+        for(i=0;i<1024;i=i+1)
+        begin
+                mem[i] = 8'd0;
+                $display("mem[%d]=%d",i,mem[i]);
+        end
 
         // Initialize memory with the program.
        `include "prog.v"
@@ -56,6 +59,7 @@ begin
         begin
                 o_miss = 0;
                 o_hit  = 1;
+                o_data = 0;
         end
 end
 

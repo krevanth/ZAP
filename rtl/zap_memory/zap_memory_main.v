@@ -12,6 +12,7 @@ to allow the memory to use up 1 clock cycle to perform operations without the pi
 
 module zap_memory_main
 #(
+        parameter FLAG_WDT = 32,
         // Number of physical registers.
         parameter PHY_REGS = 46
 )
@@ -36,7 +37,7 @@ module zap_memory_main
 
         // ALU value, flags,and where to write the value.
         input wire [31:0]                   i_alu_result_ff,
-        input wire  [3:0]                   i_flags_ff,
+        input wire  [FLAG_WDT-1:0]          i_flags_ff,
         input wire                          i_flag_update_ff,
         input wire [$clog2(PHY_REGS)-1:0]   i_destination_index_ff,
 
@@ -52,7 +53,7 @@ module zap_memory_main
 
         // ALU result and flags.
         output reg  [31:0]                   o_alu_result_ff,
-        output reg   [3:0]                   o_flags_ff,
+        output reg  [FLAG_WDT-1:0]           o_flags_ff,
         output reg                           o_flag_update_ff,
 
         // Where to write ALU and memory read target register.
@@ -83,35 +84,35 @@ module zap_memory_main
 always @ (posedge i_clk)
 if ( i_reset )
 begin
-        o_alu_result_ff       <= 0;//i_alu_result_ff;
-        o_flags_ff            <= 0;//i_flags_ff;
-        o_mem_srcdest_index_ff<= 0;//i_mem_srcdest_index_ff;
-        o_dav_ff              <= 0;//i_dav_ff;
-        o_destination_index_ff<= 0;//i_destination_index_ff;
-        o_pc_plus_8_ff        <= 0;//i_pc_plus_8_ff;
-        o_irq_ff              <= 0;//i_irq_ff;
-        o_fiq_ff              <= 0;//i_fiq_ff;
-        o_swi_ff              <= 0;//i_swi_ff;
-        o_instr_abort_ff      <= 0;//i_instr_abort_ff;
-        o_mem_load_ff         <= 0;//i_mem_load_ff; 
+        o_alu_result_ff       <= 0;
+        o_flags_ff            <= 0;
+        o_mem_srcdest_index_ff<= 0;
+        o_dav_ff              <= 0;
+        o_destination_index_ff<= 0;
+        o_pc_plus_8_ff        <= 0;
+        o_irq_ff              <= 0;
+        o_fiq_ff              <= 0;
+        o_swi_ff              <= 0;
+        o_instr_abort_ff      <= 0;
+        o_mem_load_ff         <= 0;
         o_flag_update_ff      <= 0;
-        o_mem_rd_data_ff         <= 0;
+        o_mem_rd_data_ff      <= 0;
 end
 else if ( i_clear_from_writeback )
 begin
-        o_alu_result_ff       <= 0;//i_alu_result_ff;
-        o_flags_ff            <= 0;//i_flags_ff;
-        o_mem_srcdest_index_ff<= 0;//i_mem_srcdest_index_ff;
-        o_dav_ff              <= 0;//i_dav_ff;
-        o_destination_index_ff<= 0;//i_destination_index_ff;
-        o_pc_plus_8_ff        <= 0;//i_pc_plus_8_ff;
-        o_irq_ff              <= 0;//i_irq_ff;
-        o_fiq_ff              <= 0;//i_fiq_ff;
-        o_swi_ff              <= 0;//i_swi_ff;
-        o_instr_abort_ff      <= 0;//i_instr_abort_ff;
-        o_mem_load_ff         <= 0;//i_mem_load_ff; 
+        o_alu_result_ff       <= 0;
+        o_flags_ff            <= 0;
+        o_mem_srcdest_index_ff<= 0;
+        o_dav_ff              <= 0;
+        o_destination_index_ff<= 0;
+        o_pc_plus_8_ff        <= 0;
+        o_irq_ff              <= 0;
+        o_fiq_ff              <= 0;
+        o_swi_ff              <= 0;
+        o_instr_abort_ff      <= 0;
+        o_mem_load_ff         <= 0;
         o_flag_update_ff      <= 0;
-        o_mem_rd_data_ff         <= 0;
+        o_mem_rd_data_ff      <= 0;
 end
 else if ( i_data_stall )
 begin
@@ -132,7 +133,7 @@ begin
         o_instr_abort_ff      <= i_instr_abort_ff;
         o_mem_load_ff         <= i_mem_load_ff; 
         o_flag_update_ff      <= i_flag_update_ff;
-        o_mem_rd_data_ff         <= i_mem_rd_data;
+        o_mem_rd_data_ff      <= i_mem_rd_data;
 end
 
 endmodule

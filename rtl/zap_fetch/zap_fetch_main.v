@@ -48,6 +48,8 @@ module zap_fetch_main
                 output reg [31:0]  o_pc_plus_8_ff       // PC ouput.
 );
 
+`include "cpsr.vh"
+
 // If an instruction abort occurs, this unit sleeps until it is woken up.
 reg sleep_ff;
 
@@ -112,7 +114,7 @@ begin
 
                 // Pump PC + 8 or 4 down the pipeline. The number depends on
                 // ARM/Thumb mode.
-                o_pc_plus_8_ff <= i_pc_ff + i_cpsr_ff[T] ? 32'd4 : 32'd8;
+                o_pc_plus_8_ff <= i_pc_ff + (i_cpsr_ff[T] ? 32'd4 : 32'd8);
         end
 end
 
