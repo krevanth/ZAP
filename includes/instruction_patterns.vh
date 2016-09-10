@@ -57,6 +57,12 @@ localparam      [15:0]  T_ALU_LO                                        =       
 // ALU hi.
 localparam      [15:0]  T_ALU_HI                                        =                                       16'b010001_zz_z_z_zzz_zzz;
 
+// *Get address.
+localparam      [15:0]  T_GET_ADDR                                      =                                       16'b1010_z_zzz_zzzzzzzz;
+
+// *Add offset to SP.
+localparam      [15:0]  T_MOD_SP                                        =                                       16'b10110000_z_zzzz_zzz;
+
 // PC relative load.
 localparam      [15:0]  T_PC_REL_LOAD                                   =                                       16'b01001_zzz_zzzzzzzz;
 

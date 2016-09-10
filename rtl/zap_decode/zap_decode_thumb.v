@@ -86,7 +86,9 @@ begin
                         T_SP_REL_LDR_STR        : decode_sp_rel_ldr_str;
                         T_LDMIA_STMIA           : decode_ldmia_stmia;
                         T_POP_PUSH              : decode_pop_push;
-                        default:
+                        T_GET_ADDR              : decode_get_addr;
+                        T_MOD_SP                : decode_mod_sp;
+                        default: 
                         begin
                                 `ifdef SIM
                                         $display($time, "%m: Not implemented in Thumb decoder!!!");
@@ -97,6 +99,47 @@ begin
                 endcase 
         end
 end
+
+task decode_get_addr;
+begin: dcdGetAddr
+        reg [11:0] imm;
+        reg [3:0] rd;
+
+        rd              = i_instruction[10:8];
+        imm[7:0]        = i_instruction[7:0];
+        imm[11:8]       = 4'd15; // To achieve a left shift of 2 i.e., *4
+
+        o_instruction = 0;
+
+        // ADD Rd, PC, imm
+        o_instruction[31:0] = {AL, 2'b00, 1'b1, ADD, 1'd0, 4'd15, rd, imm};           // PC
+
+        // ADD Rd, SP, imm
+        if ( i_instruction[11] ) // SP
+        begin
+                o_instruction[31:0] = {AL, 2'b00, 1'b1, ADD, 1'd0, 4'd13, rd, imm};  // SP
+        end
+end
+endtask
+
+task decode_mod_sp;
+begin: dcdModSp
+        reg [11:0] imm;
+
+        imm[7:0]        = i_instruction[6:0];
+        imm[11:8]       = 4'd15; // To achieve a left shift of 2 i.e., *4
+
+        o_instruction = 0;
+
+        o_instruction[31:0] = {AL, 2'b00, 1'b1, ADD, 1'd0, 4'd13, 4'd13, imm};           
+
+        // SUB/ADD R13, R13, imm
+        if ( i_instruction[7] != 0 ) // SUB
+        begin
+                o_instruction[31:0] = {AL, 2'b00, 1'b1, SUB, 1'd0, 4'd13, 4'd13, imm};  
+        end
+end
+endtask
 
 task decode_pop_push;
 begin: decodePopPush
