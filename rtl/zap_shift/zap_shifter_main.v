@@ -79,6 +79,10 @@ module zap_shifter_main
         // ===============================
         input wire   [31:0]                     i_alu_value_nxt,
 
+        // AT indicator.
+        input wire      i_switch_ff,
+        output reg      o_switch_ff,
+
         // ===============================
         // Outputs.
         // ===============================
@@ -178,7 +182,8 @@ begin
            o_alu_source_value_ff             <= 0; 
            o_shifted_source_value_ff         <= 0; 
            o_shift_carry_ff                  <= 0; 
-           o_rrx_ff                          <= 0; 
+           o_rrx_ff                          <= 0;
+           o_switch_ff                       <= 0; 
         end
         else if ( i_clear_from_writeback )
         begin
@@ -205,7 +210,8 @@ begin
            o_alu_source_value_ff             <= 0; 
            o_shifted_source_value_ff         <= 0; 
            o_shift_carry_ff                  <= 0; 
-           o_rrx_ff                          <= 0; 
+           o_rrx_ff                          <= 0;
+           o_switch_ff                       <= 0;
         end
         else if ( i_data_stall )
         begin
@@ -237,6 +243,7 @@ begin
            o_shifted_source_value_ff         <= 0; 
            o_shift_carry_ff                  <= 0; 
            o_rrx_ff                          <= 0; 
+           o_switch_ff                       <= 0;
         end
         else
         begin
@@ -264,6 +271,7 @@ begin
            o_shifted_source_value_ff         <= rm;
            o_shift_carry_ff                  <= shcarry;
            o_rrx_ff                          <= rrx; 
+           o_switch_ff                       <= i_switch_ff;
    end
 end
 

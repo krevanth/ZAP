@@ -117,6 +117,10 @@ module zap_issue_main
         // Memory accelerator values for LOADS.
         input wire  [31:0]                      i_memory_mem_srcdest_value_ff,   // External memory data bus is connected to this.
 
+        // AT switch.
+        input wire i_switch_ff,
+        output reg o_switch_ff,
+
         // Outputs to register file.
         output reg      [$clog2(PHY_REGS )-1:0] o_rd_index_0,
         output reg      [$clog2(PHY_REGS )-1:0] o_rd_index_1,
@@ -220,6 +224,7 @@ begin
         o_shift_source_value_ff           <= 0;
         o_shift_length_value_ff           <= 0;
         o_mem_srcdest_value_ff            <= 0;
+        o_switch_ff                       <= 0;
 end
 else if ( i_data_stall )
 begin
@@ -254,6 +259,7 @@ begin
         o_shift_source_value_ff           <= 0;
         o_shift_length_value_ff           <= 0;
         o_mem_srcdest_value_ff            <= 0;
+        o_switch_ff                       <= 0;
 end
 else if ( i_stall_from_shifter )
 begin
@@ -288,6 +294,7 @@ begin
         o_shift_source_value_ff           <= 0;
         o_shift_length_value_ff           <= 0;
         o_mem_srcdest_value_ff            <= 0;
+        o_switch_ff                       <= 0;
 end
 else
 begin
@@ -318,6 +325,7 @@ begin
         o_shift_source_value_ff           <= o_shift_source_value_nxt;
         o_shift_length_value_ff           <= o_shift_length_value_nxt;
         o_mem_srcdest_value_ff            <= o_mem_srcdest_value_nxt;
+        o_switch_ff                       <= i_switch_ff;
 end
 end
 

@@ -26,7 +26,7 @@ module zap_decode_mem_fsm
         input wire              i_reset,                // ZAP reset.
 
         // Instruction information from the fetch.
-        input wire  [31:0]      i_instruction,
+        input wire  [34:0]      i_instruction,
         input wire              i_instruction_valid,
 
         // Interrupt information from the fetch.

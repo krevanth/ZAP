@@ -258,12 +258,26 @@ begin
         o_stall_from_decode = bl_fetch_stall || mem_fetch_stall;
 end
 
-// This FSM handles LDM/STM/SWAP/SWAPB
-zap_decode_mem_fsm u_zap_mem_fsm (
+wire [34:0] arm_instruction;
+wire arm_instruction_valid;
+
+// This unit handles decompression.
+zap_decode_thumb u_zap_decode_thumb (
         .i_clk(i_clk),
         .i_reset(i_reset),
         .i_instruction(i_instruction),
         .i_instruction_valid(i_instruction_valid),
+        .i_cpsr_ff(i_cpu_mode),
+        .o_instruction(arm_instruction),
+        .o_instruction_valid(arm_instruction_valid)
+);
+
+// This FSM handles LDM/STM/SWAP/SWAPB
+zap_decode_mem_fsm u_zap_mem_fsm (
+        .i_clk(i_clk),
+        .i_reset(i_reset),
+        .i_instruction(arm_instruction),
+        .i_instruction_valid(arm_instruction_valid),
         .i_fiq(i_fiq),
         .i_irq(i_irq),
 

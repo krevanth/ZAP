@@ -147,6 +147,7 @@ wire                            decode_fiq_ff;
 wire                            decode_abt_ff;
 wire                            decode_swi_ff;
 wire [31:0]                     decode_pc_plus_8_ff;
+wire                            decode_switch_ff;
 
 // Issue
 wire [$clog2(PHY_REGS)-1:0]     issue_rd_index_0, 
@@ -181,6 +182,7 @@ wire [32:0]                     issue_shift_source_ff;
 wire [32:0]                     issue_shift_length_ff;
 wire [31:0]                     issue_pc_plus_8_ff;
 wire                            issue_shifter_disable_ff;
+wire                            issue_switch_ff;
 
 wire [$clog2(PHY_REGS)-1:0]     rd_index_0;
 wire [$clog2(PHY_REGS)-1:0]     rd_index_1;
@@ -212,6 +214,7 @@ wire shifter_irq_ff;
 wire shifter_fiq_ff;
 wire shifter_abt_ff;
 wire shifter_swi_ff;
+wire shifter_switch_ff;
 
 wire stall_from_shifter;
 
@@ -327,11 +330,12 @@ u_zap_decode_main (
         .o_mem_unsigned_halfword_enable_ff (decode_mem_unsigned_halfword_enable_ff),
         .o_mem_translate_ff             (decode_mem_translate_ff),
         .o_stall_from_decode            (stall_from_decode),
+        .o_pc_plus_8_ff                 (decode_pc_plus_8_ff),
+        .o_switch_ff                    (decode_switch_ff), 
         .o_irq_ff                       (decode_irq_ff),
         .o_fiq_ff                       (decode_fiq_ff),
         .o_abt_ff                       (decode_abt_ff),
-        .o_swi_ff                       (decode_swi_ff),
-        .o_pc_plus_8_ff                 (decode_pc_plus_8_ff) 
+        .o_swi_ff                       (decode_swi_ff)
 );
 
 // ISSUE //
@@ -397,6 +401,10 @@ u_zap_issue_main
         .i_alu_mem_load_ff              (alu_mem_load_ff),
         .i_memory_mem_load_ff           (memory_mem_load_ff),
         .i_memory_mem_srcdest_value_ff  (i_rd_data),
+
+        // Switch indicator.
+        .i_switch_ff                    (decode_switch_ff),
+        .o_switch_ff                    (issue_switch_ff),
 
         // Outputs.
         .o_rd_index_0                   (rd_index_0),
@@ -481,6 +489,10 @@ u_zap_shifter_main
         // Feedback
         .i_alu_value_nxt                (alu_alu_result_nxt),
 
+        // Switch indicator.
+        .i_switch_ff                    (issue_switch_ff),
+        .o_switch_ff                    (shifter_switch_ff),
+
         // Outputs.
         
         .o_mem_srcdest_value_ff         (shifter_mem_srcdest_value_ff),
@@ -534,7 +546,7 @@ u_zap_alu_main
          .i_cpsr_ff                      (cpsr),
          .i_cpsr_nxt                     (cpsr_nxt),
          .i_flag_update_ff               (shifter_flag_update_ff),
-         .i_switch_ff                    (1'd0),
+         .i_switch_ff                    (shifter_switch_ff),
 
          .i_mem_srcdest_value_ff        (shifter_mem_srcdest_value_ff),
          .i_alu_source_value_ff         (shifter_alu_source_value_ff), 

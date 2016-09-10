@@ -87,7 +87,7 @@ begin
         end
         else if ( i_stall_from_shifter )         begin end // Save state.
         else if ( i_stall_from_issue )           begin end // Save state.
-        else if ( i_stall_from_decode)           begin end
+        else if ( i_stall_from_decode)           begin end // Save state.
         else if ( sleep_ff )
         begin
                 o_valid         <= 1'd0;

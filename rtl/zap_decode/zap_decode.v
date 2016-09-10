@@ -85,7 +85,7 @@ module zap_decode #(
                 // Unrecognized instruction.
                 output  reg                             o_und,
 
-                // ARM <-> Thumb switch indicator.
+                // ARM <-> Thumb switch indicator. Indicated on a BX.
                 output  reg                             o_switch
 );
 
@@ -428,7 +428,7 @@ begin
         o_shift_source          = ($signed(i_instruction[23:0]));
         o_shift_source[32]      = IMMED_EN;
         o_shift_operation       = LSL;
-        o_shift_length          = i_instruction[34] ? 1 : 2; // For some thumb, only LSB = 0.
+        o_shift_length          = i_instruction[34] ? 1 : 2; // Thumb branches sometimes need only a shift of 1.
         o_shift_length[32]      = IMMED_EN; 
 end
 endtask
