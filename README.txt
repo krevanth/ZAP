@@ -17,7 +17,7 @@ a loaded register to issue 1 cycle early. Multiplication takes 4 clock cycles.
 
 Current limitations :
 - In Alpha stage of development. Very experimental.
-- No long multiply/MAC.
+- No long multiply/long MAC.
 - No MMU included.
 
 -------------------------------------------------------------------------------
