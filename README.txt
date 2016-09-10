@@ -3,7 +3,7 @@ Author : Revanth Kamaraj (revanth91kamaraj@gmail.com)
 License: MIT License.
 ------------------------------------------------------------------------------
 
-ZAP is an ARM processor compatible with v4 of the ARM instruction set. The
+ZAP is an ARM processor compatible with v4T of the ARM instruction set. The
 processor is built around a 7 stage pipeline:
 
     FETCH => DECODE => ISSUE => SHIFTER => ALU => MEMORY => WRITEBACK
