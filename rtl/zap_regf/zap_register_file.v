@@ -13,7 +13,7 @@
  The register file provides dedicated ports for accessing the PC and CPSR
  registers. Atomic register updates for interrupt processing is done here.
 
- Define REG_DEBUG to turn on debugging messages.
+ Define SIM to turn on debugging messages.
 
  Copyright --
  (C) 2016 Revanth Kamaraj.
@@ -112,7 +112,7 @@ reg     [31:0]  r_nxt      [PHY_REGS-1:0];
 
 assign o_cpsr_nxt = r_nxt[PHY_CPSR];
 
-`ifdef REG_DEBUG
+`ifdef SIM
 always @ (posedge i_clk)
 begin
         $monitor($time, "PC next = %d PC current = %d", r_nxt[15], r_ff[15]);
@@ -149,7 +149,7 @@ begin: blk1
         for ( i=0 ; i<PHY_REGS ; i=i+1 )
                 r_nxt[i] = r_ff[i];
 
-        `ifdef REG_DEBUG
+        `ifdef SIM
         $display($time, "PC_nxt before = %d", r_nxt[PHY_PC]);
         `endif
 
@@ -191,7 +191,7 @@ begin: blk1
                 r_nxt[PHY_PC] = r_ff[PHY_PC] + ((r_ff[PHY_CPSR][T]) ? 32'd2 : 32'd4);
         end
 
-        `ifdef REG_DEBUG
+        `ifdef SIM
         $display($time, "PC_nxt after = %d", r_nxt[PHY_PC]);
         `endif
 
@@ -318,7 +318,7 @@ begin: blk1
                         if ( i_flag_update_ff )
                         begin
 
-                                `ifdef REG_DEBUG
+                                `ifdef SIM
                                         $display($time, "Restoring mode...");
                                 `endif
 
@@ -331,10 +331,12 @@ begin: blk1
                                         SVC: r_nxt[PHY_CPSR] = r_ff[PHY_SVC_SPSR];
                                 endcase
                         end
-                        else /* Architecture should not allow this to happen */
+                        else /* Architecture should not allow this to happen. No latch inference since regs are looped at the start. */
                         begin
-                                $display("Register File :: PC reached without flag update! Check RTL!");
-                                $finish;
+                                `ifdef SIM
+                                        $display($time, "Register File :: PC reached without flag update! Check RTL!");
+                                        $stop;
+                                `endif
                         end
 
                         o_clear_from_writeback = 1'd1;
@@ -347,7 +349,7 @@ begin: blk1
                 end
         end
 
-        `ifdef REG_DEBUG
+        `ifdef SIM
                 $display("PC_nxt = %d", r_nxt[15]);
         `endif
 end
@@ -360,7 +362,9 @@ begin
 
                 integer i;
 
-                $display("Register file in reset...");
+                `ifdef SIM
+                        $display($time, "Register file in reset...");
+                `endif
 
                 for(i=0;i<PHY_REGS;i=i+1)
                         r_ff[i] <= 32'd0;

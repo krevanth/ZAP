@@ -162,7 +162,7 @@ task decode_swi;
 begin: tskDecodeSWI
         // Generate a MOV RAZ, SWI_number.
 
-        `ifdef DECODE_DEBUG
+        `ifdef SIM
                 $display($time, "%m:SWI decode...");
         `endif
 
@@ -183,7 +183,7 @@ task decode_halfword_ls;
 begin: tskDecodeHalfWordLs
         reg [11:0] temp, temp1;
 
-        `ifdef DECODE_DEBUG
+        `ifdef SIM
                 $display($time, "%m: Halfword decode...");
         `endif
 
@@ -243,7 +243,7 @@ endtask
 task decode_mult;
 begin: tskDecodeMult
 
-        `ifdef DECODE_DEBUG
+        `ifdef SIM
                 $display($time, "%m: MLT decode...");
         `endif
 
@@ -271,7 +271,7 @@ begin: tskDecodeBx
         temp = i_instruction;
         temp[11:4] = 0;
 
-        `ifdef DECODE_DEBUG
+        `ifdef SIM
                 $display($time, "%m: BX decode...");
         `endif
 
@@ -298,7 +298,7 @@ begin: tskDecodeClz
 
         reg [31:0] temp;
 
-        `ifdef DECODE_DEBUG
+        `ifdef SIM
                 $display($time, "%m: CLZ decode...");
         `endif
 
@@ -321,7 +321,7 @@ endtask
 task decode_ls;
 begin: tskDecodeLs
 
-        `ifdef DECODE_DEBUG
+        `ifdef SIM
                 $display($time, "%m: LS decode...");
         `endif
 
@@ -373,7 +373,7 @@ endtask
 task decode_mrs;
 begin
 
-        `ifdef DECODE_DEBUG
+        `ifdef SIM
                 $display($time, "%m: MRS decode...");
         `endif
 
@@ -389,7 +389,7 @@ endtask
 
 task decode_msr;
 begin
-        `ifdef DECODE_DEBUG
+        `ifdef SIM
                 $display($time, "%m: MSR decode...");
         `endif
 
@@ -415,7 +415,7 @@ endtask
 
 task decode_branch;
 begin
-        `ifdef DECODE_DEBUG
+        `ifdef SIM
                 $display($time, "%m: B decode...");
         `endif
 
@@ -437,7 +437,7 @@ endtask
 // formats.
 task decode_data_processing;
 begin
-        `ifdef DECODE_DEBUG
+        `ifdef SIM
                 $display($time, "%m: Normal DP decode...");
         `endif
 
@@ -473,7 +473,7 @@ endtask
 task process_immediate ( input [11:0] instruction );
 begin
 
-        `ifdef DECODE_DEBUG
+        `ifdef SIM
         $display("%m Process immediate...");
         `endif
 
@@ -488,7 +488,7 @@ endtask
 // The shifter source is a register but the amount to shift is in the instruction itself.
 task process_instruction_specified_shift ( input [33:0] instruction );
 begin
-        `ifdef DECODE_DEBUG
+        `ifdef SIM
         $display("%m Process instruction specified shift...");
         `endif
 
@@ -510,7 +510,7 @@ endtask
 // The source register and the amount of shift are both in registers.
 task process_register_specified_shift ( input [33:0] instruction );
 begin
-        `ifdef DECODE_DEBUG
+        `ifdef SIM
         $display("%m Process register specified shift...");
         `endif
 

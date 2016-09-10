@@ -371,6 +371,11 @@ begin: blk2
         reg [3:0] flags_out;
         reg       tmp_carry;
 
+        // Avoid accidental latch inference.
+        rd = 0;
+        flags_out = 0;
+        tmp_carry = 0;
+
         if ( rrx )
         begin
                 rm = {flags[_C], rm[31:1]};
@@ -400,7 +405,10 @@ begin: blk2
         CLZ: rd = count_leading_zeros(rm);
         default:
         begin
-                $display("This should never happen, check the RTL!");
+                `ifdef SIM
+                        $display("This should never happen, check the RTL!");
+                        $stop;
+                `endif
         end
         endcase           
 
@@ -428,6 +436,14 @@ begin: blk3
         reg n,z,c,v;
         reg [3:0] flags_out;
 
+        // Avoid accidental latch inference.
+        rd        = 0;
+        n         = 0;
+        z         = 0;
+        c         = 0;
+        v         = 0;
+        flags_out = 0;
+
         if ( rrx )
         begin
                 rm = {flags[_C], rm[31:1]}; // The flag from the shifter is not used anyway.
@@ -444,7 +460,10 @@ begin: blk3
         CMN: {c,rd} = rm + ~rn + 32'd1; // Target is not written.
         default:
         begin
-                $display("ALU__arith__:This should never happen op = %d, check the RTL!", op);
+                `ifdef SIM
+                        $display("ALU__arith__:This should never happen op = %d, check the RTL!", op);
+                        $stop;
+                `endif
         end
         endcase
 
