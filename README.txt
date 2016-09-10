@@ -8,6 +8,9 @@ processor is built around a 7 stage pipeline:
 
     FETCH => DECODE => ISSUE => SHIFTER => ALU => MEMORY => WRITEBACK
 
+ARM ISA Version         : v4 (SWAP yet to implement)
+THUMB ISA Version       : v1 (2 instructions yet to implement - Formats 12 and 13)
+
 The pipeline is fully interlocked and fed-back. Most dependent instructions
 execute without interlocks. A load accelerator allows instructions that require
 a loaded register to issue 1 cycle early. Multiplication takes 4 clock cycles.
@@ -15,7 +18,6 @@ a loaded register to issue 1 cycle early. Multiplication takes 4 clock cycles.
 Current limitations :
 - In Alpha stage of development.
 - No long multiply/MAC.
-- Limited Thumb support. Currently working on improving thumb support.
 - No MMU included.
 
 -------------------------------------------------------------------------------
