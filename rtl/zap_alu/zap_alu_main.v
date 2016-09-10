@@ -72,6 +72,13 @@ module zap_alu_main #(
         // Force 32.
         input wire                         i_force32align_ff,
 
+        // Use old carry.
+        input wire                         i_use_old_carry_ff,
+
+        // undefined instr.
+        input wire                         i_und_ff,
+        output reg                         o_und_ff,
+
         // Outputs
         output reg [31:0]                   o_alu_result_nxt,
         output reg [31:0]                   o_alu_result_ff,
@@ -155,6 +162,7 @@ begin
                 o_mem_srcdest_value_ff           <= 0;
                 sleep_ff                         <= 0;
                 o_flag_update_ff                 <= 0;
+                o_und_ff                         <= 0;
         end
         else if ( i_clear_from_writeback ) 
         begin
@@ -180,7 +188,7 @@ begin
                 o_mem_srcdest_value_ff           <= 0;
                 sleep_ff                         <= 0;
                 o_flag_update_ff                 <= 0; 
-
+                o_und_ff                         <= 0;
         end
         else if ( i_data_stall )
         begin
@@ -212,6 +220,7 @@ begin
                         o_mem_srcdest_value_ff           <= 0;
                         o_flag_update_ff                 <= 0;
                         sleep_ff                         <= 1'd1; // Keep sleeping.
+                        o_und_ff                         <= 0;
                 end
                 else
                 begin
@@ -237,6 +246,7 @@ begin
                         o_mem_srcdest_value_ff           <= i_mem_srcdest_value_ff;
                         sleep_ff                         <= sleep_nxt;
                         o_flag_update_ff                 <= i_flag_update_ff;
+                        o_und_ff                         <= i_und_ff;
                 end
         end
 end
@@ -301,15 +311,20 @@ begin: blk1
                 {flags_nxt[31:28], rd} = process_arithmetic_instructions ( rn, rm, flags_ff[31:28], opcode, i_rrx_ff, i_flag_update_ff );
         end
 
-        if ( i_irq_ff || i_fiq_ff || i_abt_ff || i_swi_ff ) // Any sign of an interrupt is present.
+        if ( i_irq_ff || i_fiq_ff || i_abt_ff || i_swi_ff || i_und_ff ) // Any sign of an interrupt is present.
         begin
-                $display($time, "ALU :: Interrupt detected! ALU put to sleep...");
+                `ifdef SIM
+                        $display($time, "ALU :: Interrupt detected! ALU put to sleep...");
+                `endif
+
                 o_dav_nxt = 1'd0;
                 sleep_nxt = 1'd1;
         end
         else if ( (flags_nxt[7:0] != flags_ff[7:0]) && o_dav_nxt ) // Critical change. Can occur only on FMOV.
         begin
-                $display($time, "ALU :: Major change to CPSR! Restarting from the next instruction...");
+                `ifdef SIM
+                        $display($time, "ALU :: Major change to CPSR! Restarting from the next instruction...");
+                `endif
                 o_clear_from_alu = 1'd1;
                 o_pc_from_alu    = i_pc_plus_8_ff - 32'd4;
                 flags_nxt[`CPSR_MODE] = (flags_nxt[`CPSR_MODE] == USR) ? USR : flags_nxt[`CPSR_MODE]; // Security.
@@ -318,12 +333,16 @@ begin: blk1
         begin
                 if ( i_flag_update_ff ) // Unit sleeps since this is handled in WB.
                 begin
-                        $display($time, "ALU :: PC write with flag update! Unit put to sleep...");
+                        `ifdef SIM
+                                $display($time, "ALU :: PC write with flag update! Unit put to sleep...");
+                        `endif
                         sleep_nxt = 1'd1;
                 end
                 else // Without flag updates!
                 begin
-                        $display($time, "ALU :: A quick branch! Possibly a BX i_switch_ff = %d...", i_switch_ff);
+                        `ifdef SIM
+                                $display($time, "ALU :: A quick branch! Possibly a BX i_switch_ff = %d...", i_switch_ff);
+                        `endif
                         // Quick branches!
                         o_destination_index_nxt = PHY_RAZ_REGISTER;                     // Dumping ground since PC change is done.
                         o_clear_from_alu        = 1'd1;
@@ -359,7 +378,14 @@ begin: blk2
         end
         else
         begin
-                tmp_carry = i_shift_carry_ff;
+                if ( i_use_old_carry_ff )
+                begin
+                        tmp_carry = flags[_C];
+                end
+                else
+                begin
+                        tmp_carry = i_shift_carry_ff;
+                end
         end
 
         case(op)
@@ -397,13 +423,14 @@ endfunction
 function [35:0] process_arithmetic_instructions 
 ( input [31:0] rn, rm, input [3:0] flags, input [$clog2(ALU_OPS)-1:0] op, input rrx, input i_flag_upd );
 begin: blk3
+
         reg [31:0] rd;
         reg n,z,c,v;
         reg [3:0] flags_out;
 
         if ( rrx )
         begin
-                rm = {flags[_C], rm[31:1]}; // The flag is not used anyway.
+                rm = {flags[_C], rm[31:1]}; // The flag from the shifter is not used anyway.
         end
 
         case ( op )

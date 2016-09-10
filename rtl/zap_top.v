@@ -149,6 +149,7 @@ wire                            decode_swi_ff;
 wire [31:0]                     decode_pc_plus_8_ff;
 wire                            decode_switch_ff;
 wire                            decode_force32_ff;
+wire                            decode_und_ff;
 
 // Issue
 wire [$clog2(PHY_REGS)-1:0]     issue_rd_index_0, 
@@ -185,6 +186,7 @@ wire [31:0]                     issue_pc_plus_8_ff;
 wire                            issue_shifter_disable_ff;
 wire                            issue_switch_ff;
 wire                            issue_force32_ff;
+wire                            issue_und_ff;
 
 wire [$clog2(PHY_REGS)-1:0]     rd_index_0;
 wire [$clog2(PHY_REGS)-1:0]     rd_index_1;
@@ -218,8 +220,9 @@ wire shifter_abt_ff;
 wire shifter_swi_ff;
 wire shifter_switch_ff;
 wire shifter_force32_ff;
-
+wire shifter_und_ff;
 wire stall_from_shifter;
+wire shifter_use_old_carry_ff;
 
 // ALU
 wire [$clog2(SHIFT_OPS)-1:0]    alu_shift_operation_ff;
@@ -238,6 +241,7 @@ wire [FLAG_WDT-1:0]             alu_flags_ff;
 wire [$clog2(PHY_REGS)-1:0]     alu_mem_srcdest_index_ff;
 wire                            alu_mem_load_ff;
 wire                            alu_flag_update_ff;
+wire                            alu_und_ff;
 
 // Memory
 wire [31:0]                     memory_alu_result_ff;
@@ -253,6 +257,7 @@ wire                            memory_mem_load_ff;
 wire  [FLAG_WDT-1:0]            memory_flags_ff;
 wire                            memory_flag_update_ff;
 wire  [31:0]                    memory_mem_rd_data_ff;
+wire                            memory_und_ff;
 
 // Writeback
 wire [31:0] rd_data_0;
@@ -339,6 +344,7 @@ u_zap_decode_main (
         .o_fiq_ff                       (decode_fiq_ff),
         .o_abt_ff                       (decode_abt_ff),
         .o_swi_ff                       (decode_swi_ff),
+        .o_und_ff                       (decode_und_ff),
         .o_force32align_ff              (decode_force32_ff)
 );
 
@@ -352,6 +358,9 @@ zap_issue_main #(
 )
 u_zap_issue_main
 (
+        .i_und_ff(decode_und_ff),
+        .o_und_ff(issue_und_ff),
+
         // Inputs
         .i_clk                          (i_clk),
         .i_reset                        (i_reset),
@@ -459,6 +468,9 @@ zap_shifter_main #(
 )
 u_zap_shifter_main
 (
+        .i_und_ff(issue_und_ff),
+        .o_und_ff(shifter_und_ff),
+
         // Inputs.
         .i_clk                          (i_clk),
         .i_reset                        (i_reset),
@@ -537,7 +549,9 @@ u_zap_shifter_main
         .o_swi_ff                       (shifter_swi_ff),
 
         // Stall
-        .o_stall_from_shifter           (stall_from_shifter)
+        .o_stall_from_shifter           (stall_from_shifter),
+
+        .o_use_old_carry_ff             (shifter_use_old_carry_ff)
 );
 
 // ALU STAGE //
@@ -549,10 +563,15 @@ zap_alu_main #(
 )
 u_zap_alu_main
 (
+        .i_und_ff(shifter_und_ff),
+        .o_und_ff(alu_und_ff),
+
          .i_clk                          (i_clk),
          .i_reset                        (i_reset),
          .i_clear_from_writeback         (clear_from_writeback),     // | High Priority
          .i_data_stall                   (i_data_stall),             // V Low Priority
+
+         .i_use_old_carry_ff             (shifter_use_old_carry_ff),
 
          .i_cpsr_ff                      (cpsr),
          .i_cpsr_nxt                     (cpsr_nxt),
@@ -627,6 +646,9 @@ zap_memory_main #(
 )
 u_zap_memory_main
 (
+        .i_und_ff (alu_und_ff),
+        .o_und_ff (memory_und_ff),
+
         .i_clk                          (i_clk),
         .i_reset                        (i_reset),
          
@@ -718,7 +740,7 @@ u_zap_regf
         .i_instr_abt            (memory_instr_abort_ff),
         .i_data_abt             (i_data_abort),
         .i_swi                  (memory_swi_ff),    
-        .i_und                  (1'd0),
+        .i_und                  (memory_und_ff),
 
         .i_pc_buf_ff            (memory_pc_plus_8_ff),
 

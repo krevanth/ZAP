@@ -51,6 +51,10 @@ module zap_memory_main
         // put the read data.
         input wire [$clog2(PHY_REGS)-1:0]   i_mem_srcdest_index_ff,     // Set to RAZ if invalid.
 
+        // undefined instr.
+        input wire                         i_und_ff,
+        output reg                         o_und_ff,
+
         // ALU result and flags.
         output reg  [31:0]                   o_alu_result_ff,
         output reg  [FLAG_WDT-1:0]           o_flags_ff,
@@ -97,6 +101,7 @@ begin
         o_mem_load_ff         <= 0;
         o_flag_update_ff      <= 0;
         o_mem_rd_data_ff      <= 0;
+        o_und_ff              <= 0;
 end
 else if ( i_clear_from_writeback )
 begin
@@ -113,6 +118,7 @@ begin
         o_mem_load_ff         <= 0;
         o_flag_update_ff      <= 0;
         o_mem_rd_data_ff      <= 0;
+        o_und_ff              <= 0;
 end
 else if ( i_data_stall )
 begin
@@ -134,6 +140,7 @@ begin
         o_mem_load_ff         <= i_mem_load_ff; 
         o_flag_update_ff      <= i_flag_update_ff;
         o_mem_rd_data_ff      <= i_mem_rd_data;
+        o_und_ff              <= i_und_ff;
 end
 
 endmodule

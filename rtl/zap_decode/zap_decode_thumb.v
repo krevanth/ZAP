@@ -88,7 +88,10 @@ begin
                         T_POP_PUSH              : decode_pop_push;
                         default:
                         begin
-                                $display($time, "%m: Not implemented in Thumb decoder!!!");
+                                `ifdef SIM
+                                        $display($time, "%m: Not implemented in Thumb decoder!!!");
+                                `endif
+
                                 o_und = 1;
                         end
                 endcase 
@@ -258,7 +261,9 @@ begin:dcAluHi
                 2: o_instruction[31:0] = {AL, 2'b00, 1'b0, MOV, 1'b0, rd, rd, 8'd0, rs}; // MOV Rd, Rs
                 3:
                 begin
-                        $display($time, "%m: This should never happen, should be taken by BX...!");
+                        `ifdef SIM
+                                $display($time, "%m: This should never happen, should be taken by BX...!");
+                        `endif
                         $finish;
                 end
         endcase

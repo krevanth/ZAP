@@ -89,6 +89,10 @@ module zap_issue_main
         input wire                              i_force32align_ff,
         output reg                              o_force32align_ff,
 
+        // undefined instr.
+        input wire                         i_und_ff,
+        output reg                         o_und_ff,
+
         // FEEDBACK INPUTS...
 
         // Destination index feedback. Each stage is represented as
@@ -230,6 +234,7 @@ begin
         o_mem_srcdest_value_ff            <= 0;
         o_switch_ff                       <= 0;
         o_force32align_ff                 <= 0;
+        o_und_ff                          <= 0;
 end
 else if ( i_data_stall )
 begin
@@ -266,6 +271,7 @@ begin
         o_mem_srcdest_value_ff            <= 0;
         o_switch_ff                       <= 0;
         o_force32align_ff                 <= 0;
+        o_und_ff                          <= 0;
 end
 else if ( i_stall_from_shifter )
 begin
@@ -302,6 +308,7 @@ begin
         o_mem_srcdest_value_ff            <= 0;
         o_switch_ff                       <= 0;
         o_force32align_ff                 <= 0;
+        o_und_ff                          <= 0;
 end
 else
 begin
@@ -334,6 +341,7 @@ begin
         o_mem_srcdest_value_ff            <= o_mem_srcdest_value_nxt;
         o_switch_ff                       <= i_switch_ff;
         o_force32align_ff                 <= i_force32align_ff;
+        o_und_ff                          <= i_und_ff;
 end
 end
 

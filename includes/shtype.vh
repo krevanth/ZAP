@@ -1,6 +1,6 @@
 // Shift type.
-parameter LSL = 0;
-parameter LSR = 1;
-parameter ASR = 2;
-parameter ROR = 3;
-parameter RORI = 4;
+parameter [1:0] LSL = 0;
+parameter [1:0] LSR = 1;
+parameter [1:0] ASR = 2;
+parameter [1:0] ROR = 3;
+parameter [2:0] RORI = 4;
