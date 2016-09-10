@@ -13,9 +13,9 @@ execute without interlocks. A load accelerator allows instructions that require
 a loaded register to issue 1 cycle early. Multiplication takes 4 clock cycles.
 
 Current limitations :
-- Still in Alpha stage of development. Not tested thoroughly. *Very buggy*.
+- In Alpha stage of development.
 - No long multiply/MAC.
-- Limited Thumb support.
+- Limited Thumb support. Currently working on improving thumb support.
 - No MMU included.
 
 -------------------------------------------------------------------------------

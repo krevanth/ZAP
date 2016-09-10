@@ -28,13 +28,21 @@ module zap_decode_thumb
         input wire [31:0]       i_instruction,
         input wire              i_instruction_valid,
 
+        // Interrupts.
+        input wire              i_irq,
+        input wire              i_fiq,
+
         // Ensure Thumb mode is active.
         input wire [31:0]       i_cpsr_ff, // To ensure Thumb mode is active.
 
         // Output to the ARM decoder.
         output reg [34:0]       o_instruction,
         output reg              o_instruction_valid,
-        output reg              o_und
+        output reg              o_und,
+
+        // Interrupt outputs.
+        output reg              o_irq,
+        output reg              o_fiq
 );
 
 reg [11:0] offset_ff, offset_nxt;       // Remember offset.
@@ -51,6 +59,8 @@ begin
         o_instruction           = i_instruction;
         state_nxt               = state_ff;
         offset_nxt              = i_instruction[11:0];
+        o_irq                   = i_irq;
+        o_fiq                   = i_fiq;
 
         if ( i_cpsr_ff[T] && i_instruction_valid ) // Thumb mode.
         begin
@@ -204,12 +214,16 @@ begin
                         // Store the offset and send out a dummy instruction.
                         offset_nxt      = i_instruction[11:0];
                         o_instruction   = 32'd0;
+                        o_irq           = 1'd0;
+                        o_fiq           = 1'd0;
                 end
                 1'd1:
                 begin
                         // Generate a full jump.
                         o_instruction = {1'd1, 2'b0, AL, 3'b101, 1'b1, 24'd0};
                         o_instruction[23:0] = ($signed(offset_nxt) << 12) | (offset_ff); 
+                        o_irq           = 1'd0;
+                        o_fiq           = 1'd0;
                 end
         endcase
 end
