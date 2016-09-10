@@ -20,6 +20,12 @@ Current limitations :
 - No long multiply/long MAC.
 - No MMU included.
 
+To run sample code...
+1. Enter /debug. Make sure you set $ZAP_HOME to the root directory of the project.
+2. Write some assembly code in prog.s
+3. Run 'perl ../sw/do_it.pl prog.s'
+4. Run 'iverilog -f files.list ../testbench/*.v -gstrict-ca-eval -g2005'
+5. View zap.vcd
 -------------------------------------------------------------------------------
 
 MIT License
