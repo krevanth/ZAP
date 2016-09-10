@@ -42,3 +42,15 @@ localparam      [15:0]  T_BX                                            =       
 // SWI
 localparam      [15:0]  T_SWI                                           =                                       16'b11011111_zzzzzzzz;
 
+// Shifts.
+localparam      [15:0]  T_SHIFT                                         =                                       16'b000_zz_zzzzz_zzz_zzz;
+
+// Add sub LO.
+localparam      [15:0]  T_ADD_SUB_LO                                    =                                       16'b00011_z_z_zzz_zzz_zzz;
+
+// MCAS Imm.
+localparam      [15:0]  T_MCAS_IMM                                      =                                       16'b001_zz_zzz_zzzzzzzz;
+
+// ALU Lo.
+localparam      [15:0]  T_ALU_LO                                        =                                       16'b010000_zzzz_zzz_zzz;
+

@@ -35,7 +35,10 @@ module zap_decode_bl_fsm (
                 // Interrupts
                 input wire i_fiq,       // FIQ level signal.
                 input wire i_irq,       // IRQ level signal.
-                
+
+                // CPSR from EX.               
+                input wire [31:0] i_cpsr_ff, 
+
                 // Clear and stall signals.
                 input wire i_clear_from_writeback, // | High Priority
                 input wire i_data_stall,           // |
@@ -101,8 +104,18 @@ begin
                                 // presenting new data.
                                 o_stall_from_decode = 1'd1;
 
-                                // Craft a SUB LR, PC, 4.
-                                o_instruction = {i_instruction[31:28], 28'h24FE004};
+                                if ( i_cpsr_ff[T] == 1'd0 ) // ARM
+                                begin
+                                        // PC is 8 bytes ahead.
+                                        // Craft a SUB LR, PC, 4.
+                                        o_instruction = {i_instruction[31:28], 28'h24FE004};
+                                end
+                                else
+                                begin
+                                        // PC is 4 bytes ahead...
+                                        // Craft a SUB LR, PC, 2 so that return goes to the next Thumb instruction.
+                                         o_instruction = {i_instruction[31:28], 28'h24FE002};
+                                end
 
                                 // Sell it as a valid instruction
                                 o_instruction_valid = 1;

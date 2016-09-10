@@ -218,7 +218,12 @@ begin: blk1
         begin
                 // Returns do LR - 8 to get back to the same instruction.
                 r_nxt[PHY_PC]                   = i_data_abort_vector; 
-                r_nxt[PHY_ABT_R14]              = i_pc_buf_ff;
+
+                if ( !r_ff[PHY_CPSR][T] ) // ARM mode.
+                        r_nxt[PHY_ABT_R14]              = i_pc_buf_ff;
+                else
+                        r_nxt[PHY_ABT_R14]              = i_pc_buf_ff + 32'd4;
+
                 r_nxt[PHY_ABT_SPSR]             = r_ff[PHY_CPSR];
                 r_nxt[PHY_CPSR][`CPSR_MODE]     = ABT;
                 r_nxt[PHY_CPSR][I]              = 1'd1; 
@@ -227,7 +232,12 @@ begin: blk1
         begin
                 // Returns do LR - 4 to get back to the same instruction.
                 r_nxt[PHY_PC]                   = i_fiq_vector;
-                r_nxt[PHY_FIQ_R14]              = i_pc_buf_ff - 32'd4;
+
+                if ( !r_ff[PHY_CPSR][T] ) // ARM mode.
+                        r_nxt[PHY_FIQ_R14]              = i_pc_buf_ff - 32'd4;
+                else
+                        r_nxt[PHY_FIQ_R14]              = i_pc_buf_ff;
+
                 r_nxt[PHY_FIQ_SPSR]             = r_ff[PHY_CPSR];
                 r_nxt[PHY_CPSR][`CPSR_MODE]     = FIQ;
                 r_nxt[PHY_CPSR][I]              = 1'd1;
@@ -238,7 +248,12 @@ begin: blk1
         begin
                 // Returns do LR - 4 to get back to the same instruction.
                 r_nxt[PHY_PC]           = i_irq_vector;
-                r_nxt[PHY_IRQ_R14]      = i_pc_buf_ff - 32'd4;
+
+                if ( !r_ff[PHY_CPSR][T] ) // ARM mode.
+                        r_nxt[PHY_IRQ_R14]      = i_pc_buf_ff - 32'd4;
+                else
+                        r_nxt[PHY_IRQ_R14]      = i_pc_buf_ff;
+
                 r_nxt[PHY_IRQ_SPSR]     = r_ff[PHY_CPSR];
                 r_nxt[PHY_CPSR][`CPSR_MODE] = IRQ;
                 r_nxt[PHY_CPSR][I]      = 1'd1;
@@ -248,7 +263,12 @@ begin: blk1
         begin
                 // Returns do LR - 4 to get back to the same instruction.
                 r_nxt[PHY_PC]                   = i_instruction_abort_vector;
-                r_nxt[PHY_ABT_R14]              = i_pc_buf_ff - 32'd4;
+
+                if ( !r_ff[PHY_CPSR][T] ) // ARM mode.
+                        r_nxt[PHY_ABT_R14]              = i_pc_buf_ff - 32'd4;
+                else
+                        r_nxt[PHY_ABT_R14]              = i_pc_buf_ff;
+
                 r_nxt[PHY_ABT_SPSR]             = r_ff[PHY_CPSR];
                 r_nxt[PHY_CPSR][`CPSR_MODE]     = ABT;
                 r_nxt[PHY_CPSR][I]              = 1'd1;
@@ -257,7 +277,12 @@ begin: blk1
         begin
                 // Returns do LR to return to the next instruction.
                 r_nxt[PHY_PC]                   = i_swi_vector;
-                r_nxt[PHY_SVC_R14]              = i_pc_buf_ff - 32'd4;
+
+                if ( !r_ff[PHY_CPSR][T] ) // ARM mode.
+                        r_nxt[PHY_SVC_R14]              = i_pc_buf_ff - 32'd4;
+                else            
+                        r_nxt[PHY_SVC_R14]              = i_pc_buf_ff;
+
                 r_nxt[PHY_SVC_SPSR]             = r_ff[PHY_CPSR];
                 r_nxt[PHY_CPSR][`CPSR_MODE]     = SVC;
                 r_nxt[PHY_CPSR][I]              = 1'd1;
@@ -266,7 +291,12 @@ begin: blk1
         begin
                 // Returns do LR to get back to the same instruction.
                 r_nxt[PHY_PC]                   = i_und_vector;
-                r_nxt[PHY_FIQ_R14]              = i_pc_buf_ff - 32'd4;
+
+                if ( !r_ff[PHY_CPSR][T] ) // ARM mode.
+                        r_nxt[PHY_FIQ_R14]              = i_pc_buf_ff - 32'd4;
+                else
+                        r_nxt[PHY_FIQ_R14]              = i_pc_buf_ff;
+
                 r_nxt[PHY_FIQ_SPSR]             = r_ff[PHY_CPSR];
                 r_nxt[PHY_CPSR][`CPSR_MODE]     = UND;
                 r_nxt[PHY_CPSR][I]              = 1'd1;

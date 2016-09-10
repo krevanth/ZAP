@@ -301,6 +301,7 @@ zap_decode_bl_fsm u_zap_bl_fsm (
         .i_fiq(mem_fiq),
         .i_irq(mem_irq),
 
+        .i_cpsr_ff(i_cpu_mode),
         .i_clear_from_writeback(i_clear_from_writeback),
         .i_data_stall(i_data_stall),          
         .i_clear_from_alu(i_clear_from_alu),      

@@ -164,7 +164,7 @@ begin
                         end
                 end
 
-                // If needed, we finally write to the program counter.
+                // If needed, we finally write to the program counter as either a MOV PC, LR or MOVS PC, LR.
                 WRITE_PC:
                 begin
                         // MOV(S) PC, ARCH_DUMMY_REG1
