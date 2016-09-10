@@ -113,7 +113,10 @@ module zap_decode_main #(
         output  reg                             o_fiq_ff,
         output  reg                             o_abt_ff,
         output  reg                             o_und_ff,
-        output  reg                             o_swi_ff  // EX tests for condition validity.
+        output  reg                             o_swi_ff,  // EX tests for condition validity.
+
+        // Force 32-bit alignment on memory accesses.
+        output reg                              o_force32align_ff
 );
 
 `include "cc.vh"
@@ -191,7 +194,7 @@ begin
                 o_fiq_ff                                <= o_fiq_nxt & !i_cpu_mode[F]; // If mask is 1, do not pass.
                 o_swi_ff                                <= o_swi_nxt;
                 o_abt_ff                                <= o_abt_nxt;                    
-                o_und_ff                                <= o_und_nxt && i_instruction_valid;
+                o_und_ff                                <= (o_und_nxt || o_thumb_und_nxt) && i_instruction_valid;
                 o_condition_code_ff                     <= o_condition_code_nxt;
                 o_destination_index_ff                  <= o_destination_index_nxt;
                 o_alu_source_ff                         <= o_alu_source_nxt;
@@ -211,6 +214,7 @@ begin
                 o_mem_translate_ff                      <= o_mem_translate_nxt;                
                 o_pc_plus_8_ff                          <= i_pc_plus_8_ff;
                 o_switch_ff                             <= o_switch_nxt;
+                o_force32align_ff                       <= o_force32align_nxt;
         end
 end
 
@@ -240,6 +244,7 @@ begin
                 o_pc_plus_8_ff                          <= 32'd8;
                 o_und_ff                                <= 0;
                 o_switch_ff                             <= 0; 
+                o_force32align_ff                       <= 0;
 end
 endtask
 
@@ -253,6 +258,10 @@ wire   [34:0]   bl_instruction;
 wire            bl_instruction_valid;
 wire            bl_fetch_stall;
 
+wire o_thumb_und_nxt;
+wire arm_irq;
+wire arm_fiq;
+
 always @*
 begin
         o_stall_from_decode = bl_fetch_stall || mem_fetch_stall;
@@ -260,16 +269,23 @@ end
 
 wire [34:0] arm_instruction;
 wire arm_instruction_valid;
+wire o_force32align_nxt;
 
 // This unit handles decompression.
 zap_decode_thumb u_zap_decode_thumb (
         .i_clk(i_clk),
         .i_reset(i_reset),
+        .i_irq(i_irq),
+        .i_fiq(i_fiq),
         .i_instruction(i_instruction),
         .i_instruction_valid(i_instruction_valid),
         .i_cpsr_ff(i_cpu_mode),
         .o_instruction(arm_instruction),
-        .o_instruction_valid(arm_instruction_valid)
+        .o_instruction_valid(arm_instruction_valid),
+        .o_irq(arm_irq),
+        .o_fiq(arm_fiq),
+        .o_force32_align(o_force32align_nxt),
+        .o_und(o_thumb_und_nxt)
 );
 
 // This FSM handles LDM/STM/SWAP/SWAPB
@@ -278,8 +294,8 @@ zap_decode_mem_fsm u_zap_mem_fsm (
         .i_reset(i_reset),
         .i_instruction(arm_instruction),
         .i_instruction_valid(arm_instruction_valid),
-        .i_fiq(i_fiq),
-        .i_irq(i_irq),
+        .i_fiq(arm_fiq),
+        .i_irq(arm_irq),
 
         .i_clear_from_writeback(i_clear_from_writeback),
         .i_data_stall(i_data_stall),          

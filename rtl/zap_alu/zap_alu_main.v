@@ -69,6 +69,9 @@ module zap_alu_main #(
         input wire  [$clog2(ALU_OPS)-1:0]  i_alu_operation_ff,      
         input wire                         i_flag_update_ff,
 
+        // Force 32.
+        input wire                         i_force32align_ff,
+
         // Outputs
         output reg [31:0]                   o_alu_result_nxt,
         output reg [31:0]                   o_alu_result_ff,
@@ -245,6 +248,9 @@ begin
                 mem_address_nxt = rn;   
         else                           // Pre-index. Update is done before memory access.
                 mem_address_nxt = o_alu_result_nxt;
+
+        if ( i_force32align_ff )
+                mem_address_nxt[1:0] = 2'b00;
 end
 
 always @*

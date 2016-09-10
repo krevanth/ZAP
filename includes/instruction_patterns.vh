@@ -54,3 +54,26 @@ localparam      [15:0]  T_MCAS_IMM                                      =       
 // ALU Lo.
 localparam      [15:0]  T_ALU_LO                                        =                                       16'b010000_zzzz_zzz_zzz;
 
+// ALU hi.
+localparam      [15:0]  T_ALU_HI                                        =                                       16'b010001_zz_z_z_zzz_zzz;
+
+// PC relative load.
+localparam      [15:0]  T_PC_REL_LOAD                                   =                                       16'b01001_zzz_zzzzzzzz;
+
+// LDR_STR_5BIT_OFF
+localparam      [15:0] T_LDR_STR_5BIT_OFF                               =                                       16'b011_z_z_zzzzz_zzz_zzz;
+
+// LDRH_STRH_5BIT_OFF
+localparam      [15:0] T_LDRH_STRH_5BIT_OFF                             =                                       16'b1000_z_zzzzz_zzz_zzz;
+
+// Signed LDR/STR
+localparam      [15:0]  T_LDRH_STRH_REG                                 =                                       16'b0101_zzz_zzz_zzz_zzz;
+
+// SP relative LDR/STR
+localparam      [15:0]  T_SP_REL_LDR_STR                                =                                       16'b1001_z_zzz_zzzzzzzz;
+
+// LDMIA/STMIA
+localparam      [15:0]  T_LDMIA_STMIA                                   =                                       16'b1100_z_zzz_zzzzzzzz;
+
+// PUSH POP
+localparam      [15:0]  T_POP_PUSH                                      =                                       16'b1011_z_10_z_zzzzzzzz;

@@ -255,7 +255,7 @@ function [3:0] pri_enc ( input [15:0] in );
 begin: priEncFn
         integer i;
         pri_enc = 4'd0;
-        for(i=16;i>=0;i=i-1)
+        for(i=15;i>=0;i=i-1)
                 if ( in[i] == 1'd1 )
                         pri_enc = i;
 end

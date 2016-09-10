@@ -79,6 +79,10 @@ module zap_shifter_main
         // ===============================
         input wire   [31:0]                     i_alu_value_nxt,
 
+        // Force 32.
+        input wire                         i_force32align_ff,
+        output reg                         o_force32align_ff,
+
         // AT indicator.
         input wire      i_switch_ff,
         output reg      o_switch_ff,
@@ -184,6 +188,8 @@ begin
            o_shift_carry_ff                  <= 0; 
            o_rrx_ff                          <= 0;
            o_switch_ff                       <= 0; 
+
+           o_force32align_ff                 <= 0;
         end
         else if ( i_clear_from_writeback )
         begin
@@ -212,6 +218,8 @@ begin
            o_shift_carry_ff                  <= 0; 
            o_rrx_ff                          <= 0;
            o_switch_ff                       <= 0;
+
+           o_force32align_ff                 <= 0;
         end
         else if ( i_data_stall )
         begin
@@ -244,6 +252,8 @@ begin
            o_shift_carry_ff                  <= 0; 
            o_rrx_ff                          <= 0; 
            o_switch_ff                       <= 0;
+
+           o_force32align_ff                 <= 0;
         end
         else
         begin
@@ -272,6 +282,8 @@ begin
            o_shift_carry_ff                  <= shcarry;
            o_rrx_ff                          <= rrx; 
            o_switch_ff                       <= i_switch_ff;
+
+           o_force32align_ff                 <= i_force32align_ff;
    end
 end
 

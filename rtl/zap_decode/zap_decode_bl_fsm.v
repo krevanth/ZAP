@@ -66,6 +66,8 @@ module zap_decode_bl_fsm (
                 output  reg                     o_irq                 // IRQ output.
 );
 
+`include "cpsr.vh"
+
 // State variables.
 reg     state_ff, state_nxt;
 
