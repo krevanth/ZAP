@@ -312,8 +312,16 @@ zap_shift_shifter U_SHIFT
 // For ALU source value (rn)
 always @*
 begin
+                `ifdef SIM
+                        $display($time, "==> %m: Resolving ALU source value...");
+                `endif
+
                 rn = resolve_conflict ( i_alu_source_ff, i_alu_source_value_ff, 
                                         o_destination_index_ff, i_alu_value_nxt ); 
+
+                `ifdef SIM
+                        $display($time, "%m: ************** DONE RESOLVING ALU SOURCE VALUE *********************");
+                `endif
 end
 
 // For shifter source value.
@@ -354,18 +362,40 @@ function [31:0] resolve_conflict (
         input    [31:0]                  result_from_alu         // From ALU output directly.
 );
 begin
+        `ifdef SIM
+                $display($time, "%m: ================ resolve_conflict ==================");
+                $display($time, "%m: index from issue = %d value from issue = %d index from this stage = %d result from alu = %d", index_from_issue, value_from_issue, index_from_this_stage, result_from_alu);
+                $display($time, "%m: ====================================================");
+        `endif
+
         if ( index_from_issue[32] == IMMED_EN )
         begin
                 resolve_conflict = index_from_issue[31:0];
+
+                `ifdef SIM
+                        $display($time, "%m: => It is an immediate value.");
+                `endif
         end 
         else if ( index_from_this_stage == index_from_issue[$clog2(PHY_REGS)-1:0] )
         begin
                 resolve_conflict = result_from_alu;
+
+                `ifdef SIM
+                        $display($time, "%m: => Getting result from ALU!");
+                `endif
         end
         else
         begin
                 resolve_conflict = value_from_issue[31:0];
+
+                `ifdef SIM
+                        $display($time, "%m: => No changes!");
+                `endif
         end
+
+        `ifdef SIM
+                $display($time, "%m: ==> Final result is %d", resolve_conflict);
+        `endif
 end
 endfunction
 

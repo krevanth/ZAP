@@ -211,6 +211,7 @@ begin
         map = map & ~(1<<22); // No byte access.
         map = map & ~(1<<25); // Constant Offset (of 4).
         map[11:0] = 12'd4;
+        map[27:26] = 2'b01;
         map[`SRCDEST] = enc;         
         {map[`BASE_EXTEND],map[`BASE]} = ARCH_DUMMY_REG0; // Use this as the base register.
         

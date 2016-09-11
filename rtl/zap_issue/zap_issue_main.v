@@ -355,10 +355,19 @@ reg [31:0] o_alu_source_value_nxt,
 // Get values from the feedback network.
 always @*
 begin
+
+`ifdef SIM
+        $display($time, "%m: ########### Getting ALU source value... ##################");
+`endif
+
 o_alu_source_value_nxt  = 
 get_register_value ( i_alu_source_ff,       0,i_shifter_destination_index_ff, i_alu_dav_nxt, i_alu_destination_value_nxt, i_alu_destination_value_ff, 
                      i_alu_destination_index_ff, i_alu_dav_ff, i_memory_destination_index_ff, i_memory_dav_ff, i_memory_mem_srcdest_index_ff, i_memory_mem_load_ff,
                      i_rd_data_0, i_rd_data_1, i_rd_data_2, i_rd_data_3 );
+
+`ifdef SIM
+        $display($time, "%m: ################## DONE! ######################");
+`endif
 
 o_shift_source_value_nxt= 
 get_register_value ( i_shift_source_ff,     1,i_shifter_destination_index_ff, i_alu_dav_nxt, i_alu_destination_value_nxt, i_alu_destination_value_ff,
