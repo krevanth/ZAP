@@ -423,7 +423,7 @@ endtask
 task decode_conditional_branch;
 begin
         // An MSB of 1 indicates a left shift of 1.
-        o_instruction           = {1'd1, 2'b0, AL, 3'b101, 1'b0, 24'd0}; 
+        o_instruction           = {1'd1, 2'b0, i_instruction[11:8], 3'b101, 1'b0, 24'd0}; 
         o_instruction[23:0]     = $signed(i_instruction[7:0]); 
 end        
 endtask

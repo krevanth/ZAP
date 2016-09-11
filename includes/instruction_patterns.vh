@@ -31,6 +31,9 @@ localparam      [31:0]  HALFWORD_LS                                     =       
 // Software interrupt.
 localparam      [31:0]  SOFTWARE_INTERRUPT                              =                                       32'bzzzz_1111_zzzz_zzzz_zzzz_zzzz_zzzz_zzzz;
 
+// Swap.
+localparam      [31:0]  SWAP                                            =                                       32'bzzzz_00010_z_00_zzzz_zzzz_00001001_zzzz;
+
 /* THUMB */
 
 //B

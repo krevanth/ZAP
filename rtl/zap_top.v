@@ -104,9 +104,9 @@ module zap_top #(
                 output wire[31:0]       o_pc,                   // Program counter.
 
                 // CPSR.
-                output wire [31:0]      o_cpsr,                 // CPSR. Cache must use this to determine size of code fetches, VM scheme etc.
+                output wire [31:0]      o_cpsr,                 // CPSR. Cache must use this to determine size of code fetches, VM scheme etc for instruction fetches.
 
-                // Memory reset.
+                // Memory reset. Used to unfreeze memory after a fault.
                 output wire             o_mem_reset
 );
 
@@ -266,7 +266,7 @@ wire [31:0] rd_data_2;
 wire [31:0] rd_data_3;
 wire [31:0] cpsr_nxt, cpsr;
 
-assign o_cpsr = alu_flags_ff;
+assign o_cpsr           = alu_flags_ff;
 
 // FETCH STAGE //
 

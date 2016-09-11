@@ -12,6 +12,13 @@
  abort model. Start instruction carries interrupt information so this cannot
  block interrupts if there is a sequence of these.
 
+Also handles SWAP instruction.
+
+SWAP steps:
+- Read data from [Rn] into DUMMY. - LDR DUMMY0, [Rn]
+- Write data in Rm to [Rn]        - STR Rm, [Rn]
+- Copy data from DUMMY to Rd.     - MOV Rd, DUMMY0
+
  Dependencies --
  None
 
@@ -78,6 +85,8 @@ wire [11:0] branch_offset = i_instruction[11:0];
 localparam IDLE         = 0;
 localparam MEMOP        = 1;
 localparam WRITE_PC     = 2;
+localparam SWAP1        = 3;
+localparam SWAP2        = 4;
 
 // Registers.
 reg     [2:0]   state_ff, state_nxt;
@@ -90,6 +99,11 @@ begin
         o_irq = 0;
         o_fiq = 0;
 
+        // Avoid latch inference.
+        state_nxt = state_ff;
+        o_instruction = i_instruction;
+        o_instruction_valid = i_instruction_valid;
+
         case ( state_ff )
                 IDLE:
                 begin
@@ -97,6 +111,10 @@ begin
                         begin
                                 // Backup base register.
                                 // MOV DUMMY0, Base
+
+                                `ifdef SIM
+                                        $display($time, "%m: Load/Store Multiple detected!");
+                                `endif
 
                                 o_instruction = {cc, 2'b00, 1'b0, MOV, 1'b0, 4'd0, 4'd0, 8'd0, base};
                                 {o_instruction[`DP_RD_EXTEND], o_instruction[`DP_RD]} = ARCH_DUMMY_REG0;
@@ -112,6 +130,27 @@ begin
                                 o_irq = i_irq;
                                 o_fiq = i_fiq;
                         end
+                        else if ( i_instruction[27:23] == 5'b00010 && i_instruction[21:20] == 2'b00 && i_instruction[11:4] == 4'b1001 )
+                        begin
+                                /* Swap */
+                                
+                                `ifdef SIM
+                                        $display($time, "%m: Detected SWAP instruction!");
+                                `endif
+
+
+                                o_irq = i_irq;
+                                o_fiq = i_fiq;
+
+                                // dummy = *(rn) - LDR ARCH_DUMMY_REG0, [rn, #0]
+                                state_nxt = SWAP1;
+
+                                o_instruction  = {cc, 3'b010, 1'd1, 1'd0, i_instruction[22], 1'd0, 1'd1, i_instruction[19:16], 4'b0000, 12'd0}; // The 0000 is replaced with dummy0 in next line.
+                                {o_instruction[`SRCDEST_EXTEND], o_instruction[`SRCDEST]} = ARCH_DUMMY_REG0;  
+                                o_instruction_valid     = 1'd1;      
+
+                                o_stall_from_decode = 1'd1;  
+                        end
                         else
                         begin
                                 // Be transparent.
@@ -126,6 +165,41 @@ begin
                         end
                 end
 
+                SWAP1:
+                begin
+                        // STR Rm, [Rn, #0]
+
+                        o_irq = 0;
+                        o_fiq = 0;
+
+                        o_stall_from_decode = 1'd1;
+
+                        o_instruction_valid = 1;
+                        o_instruction = {cc, 3'b010, 1'd1, 1'd0, i_instruction[22], 1'd0, 1'd0, i_instruction[19:16], i_instruction[3:0]};
+
+                        state_nxt = SWAP2;
+                end
+
+                SWAP2:
+                begin:SWP2BLK
+                        // MOV Rd, DUMMY0
+
+                        reg [3:0] rd;
+
+                        rd = i_instruction[15:12];
+
+                        o_stall_from_decode = 1'd0; // Let decode get the next instruction in on the upcoming cycle.
+                        o_instruction_valid = 1'd1;
+
+                        o_irq = 0;
+                        o_fiq = 0;
+
+                        o_instruction = {cc, 2'b00, 1'd0, MOV, 1'd0, 4'b0000, rd, 12'd0}; // ALU source does not matter.
+                        {o_instruction[`DP_RS_EXTEND], o_instruction[`DP_RS]} = ARCH_DUMMY_REG0;
+
+                        state_nxt = IDLE;
+                end
+
                 MEMOP:
                 begin: mem_op_blk_1
 
@@ -134,7 +208,7 @@ begin
                         reg [3:0] pri_enc_out;
 
 
-                        pri_enc_out = pri_enc(reglist_ff);
+                        pri_enc_out = pri_enc(reglist_ff, load);
                         reglist_nxt = reglist_ff & ~(1 << pri_enc_out); 
 
                         o_irq = 0;
@@ -252,13 +326,25 @@ end
 endfunction
 
 // Priority encoder.
-function [3:0] pri_enc ( input [15:0] in );
+function [3:0] pri_enc ( input [15:0] in, input load );
 begin: priEncFn
         integer i;
         pri_enc = 4'd0;
-        for(i=15;i>=0;i=i-1)
-                if ( in[i] == 1'd1 )
-                        pri_enc = i;
+
+        if ( load )
+        begin
+                // PC is the last to be loaded.
+                for(i=15;i>=0;i=i-1)
+                        if ( in[i] == 1'd1 )
+                                pri_enc = i;
+        end
+        else
+        begin
+                // PC is the first to be stored.
+                 for(i=0;i<=15;i=i+1)
+                        if ( in[i] == 1'd1 )
+                                pri_enc = i;
+        end
 end
 endfunction
 
