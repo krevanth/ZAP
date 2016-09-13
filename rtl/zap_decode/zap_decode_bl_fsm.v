@@ -115,8 +115,8 @@ begin
                                 else
                                 begin
                                         // PC is 4 bytes ahead...
-                                        // Craft a SUB LR, PC, 2 so that return goes to the next Thumb instruction.
-                                         o_instruction = {i_instruction[31:28], 28'h24FE002};
+                                        // Craft a SUB LR, PC, 1 so that return goes to the next Thumb instruction and making LSB of LR = 1.
+                                         o_instruction = {i_instruction[31:28], 28'h24FE001};
                                 end
 
                                 // Sell it as a valid instruction
