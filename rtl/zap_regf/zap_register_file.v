@@ -108,14 +108,17 @@ module zap_register_file #(
         output reg [31:0]                   o_cp15_r3_dac_rw,           // Domain access control.       - CP15_R3
         output reg [31:0]                   o_cp15_r5_fsr_ro,           // Fault status register.       - CP15_R5
         output reg [31:0]                   o_cp15_r6_far_ro,           // Fault address register.      - CP15_R6
-        output reg [31:0]                   o_cp15_r7_cacheops_wo,      // Write 0 to flush I-D cache.  - CP15_R7
-        output reg [31:0]                   o_cp15_r8_tlbops_wo,        // Write 0 to flush I-D TLB.    - CP15_R8
+
+        output reg                          o_inv_cache,                // Invalidate entire ID cache. (R7)
+        output reg                          o_inv_tlb,                  // Invalidate entire TLB. (R8)
+        output reg [31:0]                   o_inv_tlb_specific,         // Invalidate specific entry (Writes to R0).
+        output reg                          o_inv_tlb_specific_en,      // Enable specific invalidation.
 
         // FSR and FAR may be updated by CP15 coprocessor.
         input wire [31:0]                    i_fsr,
         input wire                           i_fsr_dav,
         input wire [31:0]                    i_far,
-        input wire                           i_far_dav   
+        input wire                           i_far_dav
 );
 
 `include "regs.vh"
@@ -129,14 +132,55 @@ reg     [31:0]  r_nxt      [PHY_REGS-1:0];
 // Connect CP15 registers.
 always @*
 begin
+        // Essentially registered.
         o_cp15_r0_id_reg_ro   = r_ff[CP15_R0];
         o_cp15_r1_control_rw  = r_ff[CP15_R1];
         o_cp15_r2_ttbase_rw   = r_ff[CP15_R2];
         o_cp15_r3_dac_rw      = r_ff[CP15_R3];
         o_cp15_r5_fsr_ro      = r_ff[CP15_R5];
         o_cp15_r6_far_ro      = r_ff[CP15_R6];
-        o_cp15_r7_cacheops_wo = r_ff[CP15_R7];
-        o_cp15_r8_tlbops_wo   = r_ff[CP15_R8];
+end
+
+// Cache and TLB invalidation stuff.
+always @ (posedge i_clk)
+begin
+        if ( i_reset )
+        begin
+                o_inv_cache             <= 1'd0;
+                o_inv_tlb               <= 1'd0;
+                o_inv_tlb_specific_en   <= 1'd0;
+                o_inv_tlb_specific      <= 32'd0;
+        end
+        else
+        begin
+                // Cache invalidate signal. All cache entries are invalidated.
+                // Prefetched instructions (the pipeline is pre-fetched with old cache entries)
+                if ( i_valid && i_wr_index == CP15_R7 )
+                        o_inv_cache <= 1'd1;
+                else
+                        o_inv_cache <= 1'd0;
+
+
+                // TLB invalidate signal. New translation looks up page table.
+                // (the pipeline is prefetched with old TLB based fetches)
+                if ( i_valid && i_wr_index == CP15_R8 )
+                        o_inv_tlb <= 1'h1; 
+                else
+                        o_inv_tlb <= 1'h0;
+
+                // Invalidate specific entry of the TLB if you see a write to CP15_R0.
+                // The decode presents a write to CP_R8 with Crm = 1 as a write to CP_R0.
+                if ( i_valid && i_wr_index == CP15_R0 )
+                begin
+                        o_inv_tlb_specific    <= i_wr_data;
+                        o_inv_tlb_specific_en <= 1'd1;
+                end
+                else
+                begin
+                        o_inv_tlb_specific_en <= 1'd0;
+                        o_inv_tlb_specific    <= 32'd0;
+                end
+        end
 end
 
 assign o_cpsr_nxt = r_nxt[PHY_CPSR];
@@ -417,6 +461,7 @@ begin
                 // supervisor mode.
                 r_ff[PHY_PC]            <= 32'd0;
                 r_ff[PHY_CPSR]          <= SVC;
+                r_ff[CP15_R0]           <= 32'h41807200;
         end
         else 
         begin: otherBlock
@@ -427,6 +472,9 @@ begin
 
                 // Hard code lower bit of PC to 0.
                 r_ff[PHY_PC][0] <= 1'd0;
+
+                // This never changes.
+                r_ff[CP15_R0]           <= 32'h41807200;
         end
 end
 

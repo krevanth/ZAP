@@ -114,8 +114,10 @@ module zap_top #(
                 output wire [31:0]                   o_cp15_r3_dac_rw,           // Domain access control.       - CP15_R3
                 output wire [31:0]                   o_cp15_r5_fsr_ro,           // Fault status register.       - CP15_R4
                 output wire [31:0]                   o_cp15_r6_far_ro,           // Fault address register.      - CP15_R5
-                output wire [31:0]                   o_cp15_r7_cacheops_wo,      // Write 0 to flush I-D cache.  - CP15_R6
-                output wire [31:0]                   o_cp15_r8_tlbops_wo,        // Write 0 to flush I-D TLB.    - CP15_R7
+                output wire                          o_inv_cache,                // Invalidate cache.
+                output wire                          o_inv_tlb,                  // Invalidate TLB.
+                output wire [31:0]                   o_inv_tlb_specific,         // SPecific TLB VA to inval.
+                output wire                          o_inv_tlb_specific_en,      // Specific inval enable (TLB).
 
                 // FSR and FAR may be updated by CP15 coprocessor.
                 input wire [31:0]                    i_fsr,
@@ -781,8 +783,12 @@ u_zap_regf
         .o_cp15_r3_dac_rw       (o_cp15_r3_dac_rw),         // Domain access control.       - CP15_R3
         .o_cp15_r5_fsr_ro       (o_cp15_r5_fsr_ro),         // Fault status register.       - CP15_R4
         .o_cp15_r6_far_ro       (o_cp15_r6_far_ro),         // Fault address register.      - CP15_R5
-        .o_cp15_r7_cacheops_wo  (o_cp15_r7_cacheops_wo),    // Write 0 to flush I-D cache.  - CP15_R6
-        .o_cp15_r8_tlbops_wo    (o_cp15_r8_tlbops_wo),      // Write 0 to flush I-D TLB.    - CP15_R7
+
+        // Cache and TLB outputs (invalidate).
+        .o_inv_cache(o_inv_cache),
+        .o_inv_tlb(o_inv_tlb),
+        .o_inv_tlb_specific(o_inv_tlb_specific),
+        .o_inv_tlb_specific_en(o_inv_tlb_specific_en),
 
         // FSR and FAR may be updated by CP15 coprocessor.
         .i_fsr(i_fsr),

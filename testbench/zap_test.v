@@ -55,6 +55,18 @@ wire o_mem_reset;
 // CPSR.
 wire [31:0]      o_cpsr;                 // CPSR
 
+// CP15 connections.
+wire [31:0]                   o_cp15_r0_id_reg_ro;        // ID register.                 - CP15_R0
+wire [31:0]                   o_cp15_r1_control_rw;       // Control register.            - CP15_R1
+wire [31:0]                   o_cp15_r2_ttbase_rw;        // Translation table base.      - CP15_R2
+wire [31:0]                   o_cp15_r3_dac_rw;           // Domain access control.       - CP15_R3
+wire [31:0]                   o_cp15_r5_fsr_ro;           // Fault status register.       - CP15_R4
+wire [31:0]                   o_cp15_r6_far_ro;           // Fault address register.      - CP15_R5
+wire                          o_inv_cache;                // Invalidate cache.
+wire                          o_inv_tlb;                  // Invalidate TLB.
+wire [31:0]                   o_inv_tlb_specific;         // SPecific TLB VA to inval.
+wire                          o_inv_tlb_specific_en;      // Specific inval enable (TLB).
+
 `include "cc.vh"
 
 wire [31:0] r0; assign r0 = u_zap_top.u_zap_regf.r_ff[0]; 
@@ -140,7 +152,18 @@ u_zap_top
         .i_fsr(32'd0),
         .i_fsr_dav(1'd0),
         .i_far(32'd0),
-        .i_far_dav(1'd0)
+        .i_far_dav(1'd0),
+
+        .o_cp15_r0_id_reg_ro(o_cp15_r0_id_reg_ro),        // ID register.                 - CP15_R0
+        .o_cp15_r1_control_rw(o_cp15_r1_control_rw),       // Control register.            - CP15_R1
+        .o_cp15_r2_ttbase_rw(o_cp15_r2_ttbase_rw),        // Translation table base.      - CP15_R2
+        .o_cp15_r3_dac_rw(o_cp15_r3_dac_rw),           // Domain access control.       - CP15_R3
+        .o_cp15_r5_fsr_ro(o_cp15_r5_fsr_ro),           // Fault status register.       - CP15_R4
+        .o_cp15_r6_far_ro(o_cp15_r6_far_ro),           // Fault address register.      - CP15_R5
+        .o_inv_cache(o_inv_cache),                // Invalidate cache.
+        .o_inv_tlb(o_inv_tlb),                  // Invalidate TLB.
+        .o_inv_tlb_specific(o_inv_tlb_specific),         // SPecific TLB VA to inval.
+        .o_inv_tlb_specific_en(o_inv_tlb_specific_en)      // Specific inval enable (TLB).
 );
 
 // Memory - Dual ported unified cache.

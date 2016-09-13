@@ -176,7 +176,14 @@ begin: decMcrTsk
 
         // MOV Rx, R
         instruction = {i_instruction[31:28], 2'b00, 1'b0, MOV, 1'd0, 4'd0, 4'd0, 8'd0, src_reg}; 
-        {instruction[`DP_RD_EXTEND], i_instruction[`DP_RD]} = coproc_reg;
+        {instruction[`DP_RD_EXTEND], instruction[`DP_RD]} = coproc_reg;
+
+        // If we are writing to CP8 with opcode2 = 1, redirect to CP15_R0 since that operation is invalid for CP15_R0.
+        // Taken as a local TLB invalidate.
+        if ( coproc_reg == CP15_R8 && i_instruction[3:0] == 4'd1 )
+                {instruction[`DP_RD_EXTEND],instruction[`DP_RD]} = CP15_R0;
+
+        // Decode that as a DPI.
         decode_data_processing(instruction);
 end
 endtask
@@ -205,6 +212,8 @@ begin: decMrcTsk
         // MOV R, Rx
         instruction = {i_instruction[31:28], 2'b00, 1'b0, MOV, 1'd0, 4'd0, dest_reg, 8'd0, 4'd0};
         {instruction[`DP_RS_EXTEND],instruction[`DP_RS]} = coproc_reg;
+
+        // Decode that as a DPI.
         decode_data_processing(instruction);
 end
 endtask
