@@ -34,6 +34,12 @@ localparam      [31:0]  SOFTWARE_INTERRUPT                              =       
 // Swap.
 localparam      [31:0]  SWAP                                            =                                       32'bzzzz_00010_z_00_zzzz_zzzz_00001001_zzzz;
 
+// Write to coprocessor.
+localparam      [31:0]  MCR                                             =                                       32'bzzzz_1110_zzz_0_zzzz_zzzz_1111_zzz_1_zzzz;        
+
+// Read from coprocessor.
+localparam      [31:0]  MRC                                             =                                       32'bzzzz_1110_zzz_1_zzzz_zzzz_1111_zzz_1_zzzz;
+
 /* THUMB */
 
 //B

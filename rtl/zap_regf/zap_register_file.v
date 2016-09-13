@@ -99,7 +99,23 @@ module zap_register_file #(
 
         // Acks.
         output reg                           o_fiq_ack,
-        output reg                           o_irq_ack
+        output reg                           o_irq_ack,
+
+        // CP15 registers. Connect these to MMU (ARM v4 System Control Coprocessor).
+        output reg [31:0]                   o_cp15_r0_id_reg_ro,        // ID register.                 - CP15_R0
+        output reg [31:0]                   o_cp15_r1_control_rw,       // Control register.            - CP15_R1
+        output reg [31:0]                   o_cp15_r2_ttbase_rw,        // Translation table base.      - CP15_R2
+        output reg [31:0]                   o_cp15_r3_dac_rw,           // Domain access control.       - CP15_R3
+        output reg [31:0]                   o_cp15_r5_fsr_ro,           // Fault status register.       - CP15_R5
+        output reg [31:0]                   o_cp15_r6_far_ro,           // Fault address register.      - CP15_R6
+        output reg [31:0]                   o_cp15_r7_cacheops_wo,      // Write 0 to flush I-D cache.  - CP15_R7
+        output reg [31:0]                   o_cp15_r8_tlbops_wo,        // Write 0 to flush I-D TLB.    - CP15_R8
+
+        // FSR and FAR may be updated by CP15 coprocessor.
+        input wire [31:0]                    i_fsr,
+        input wire                           i_fsr_dav,
+        input wire [31:0]                    i_far,
+        input wire                           i_far_dav   
 );
 
 `include "regs.vh"
@@ -109,6 +125,19 @@ module zap_register_file #(
 // Register file.
 reg     [31:0]  r_ff       [PHY_REGS-1:0];
 reg     [31:0]  r_nxt      [PHY_REGS-1:0];
+
+// Connect CP15 registers.
+always @*
+begin
+        o_cp15_r0_id_reg_ro   = r_ff[CP15_R0];
+        o_cp15_r1_control_rw  = r_ff[CP15_R1];
+        o_cp15_r2_ttbase_rw   = r_ff[CP15_R2];
+        o_cp15_r3_dac_rw      = r_ff[CP15_R3];
+        o_cp15_r5_fsr_ro      = r_ff[CP15_R5];
+        o_cp15_r6_far_ro      = r_ff[CP15_R6];
+        o_cp15_r7_cacheops_wo = r_ff[CP15_R7];
+        o_cp15_r8_tlbops_wo   = r_ff[CP15_R8];
+end
 
 assign o_cpsr_nxt = r_nxt[PHY_CPSR];
 
@@ -148,6 +177,21 @@ begin: blk1
         // Avoid latch inference.
         for ( i=0 ; i<PHY_REGS ; i=i+1 )
                 r_nxt[i] = r_ff[i];
+
+        // Write all 1s to CP15_R6 and CP15_R7. MMU must trigger only when it all goes to 0 for 1 cycle.
+        r_nxt[CP15_R7] = 32'hffff_ffff;
+        r_nxt[CP15_R8] = 32'hffff_ffff;
+
+        // CP15 can update FSR and FAR.
+        if ( i_far_dav )
+        begin
+                r_nxt[CP15_R6] = i_far;
+        end
+
+        if ( i_fsr_dav )
+        begin
+                r_nxt[CP15_R5] = i_fsr;
+        end
 
         `ifdef SIM
         $display($time, "PC_nxt before = %d", r_nxt[PHY_PC]);
@@ -241,7 +285,7 @@ begin: blk1
                 r_nxt[PHY_FIQ_SPSR]             = r_ff[PHY_CPSR];
                 r_nxt[PHY_CPSR][`CPSR_MODE]     = FIQ;
                 r_nxt[PHY_CPSR][I]              = 1'd1;
-                r_nxt[PHY_CPSR][F]              = 1'd1;
+                r_nxt[PHY_CPSR][F]              = 1'd1; // Mask FIQ too.
                 o_fiq_ack = 1;
         end
         else if ( i_irq )
@@ -381,6 +425,8 @@ begin
                 for(i=0;i<PHY_REGS;i=i+1)
                         r_ff[i] <= r_nxt[i];
 
+                // Hard code lower bit of PC to 0.
+                r_ff[PHY_PC][0] <= 1'd0;
         end
 end
 

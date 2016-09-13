@@ -132,33 +132,91 @@ begin
         casez ( i_instruction[31:0] )
         DATA_PROCESSING_IMMEDIATE, 
         DATA_PROCESSING_REGISTER_SPECIFIED_SHIFT, 
-        DATA_PROCESSING_INSTRUCTION_SPECIFIED_SHIFT:    decode_data_processing;
-        BRANCH_INSTRUCTION:                             decode_branch;   
-        MRS:                                            decode_mrs;   
-        MSR,MSR_IMMEDIATE:                              decode_msr;
-        LS_INSTRUCTION_SPECIFIED_SHIFT,LS_IMMEDIATE:    decode_ls;
-        CLZ_INST:                                       decode_clz;
-        BX_INST:                                        decode_bx;
-        MULT_INST:                                      decode_mult;
-        HALFWORD_LS:                                    decode_halfword_ls;
-        SOFTWARE_INTERRUPT:                             decode_swi;
+        DATA_PROCESSING_INSTRUCTION_SPECIFIED_SHIFT:    decode_data_processing ( i_instruction );
+        BRANCH_INSTRUCTION:                             decode_branch ( i_instruction );   
+        MRS:                                            decode_mrs ( i_instruction );   
+        MSR,MSR_IMMEDIATE:                              decode_msr ( i_instruction );
+        LS_INSTRUCTION_SPECIFIED_SHIFT,LS_IMMEDIATE:    decode_ls ( i_instruction );
+        CLZ_INST:                                       decode_clz ( i_instruction );
+        BX_INST:                                        decode_bx ( i_instruction );
+        MULT_INST:                                      decode_mult ( i_instruction );
+        HALFWORD_LS:                                    decode_halfword_ls ( i_instruction );
+        SOFTWARE_INTERRUPT:                             decode_swi ( i_instruction );
+        MCR:                                            decode_mcr ( i_instruction );
+        MRC:                                            decode_mrc ( i_instruction );
         default:
         begin
-                decode_und;
+                decode_und ( i_instruction );
         end
         endcase
 end
 
 // Task definitions.
 
-task decode_und;
+task decode_mcr ( input [34:0] i_instruction );
+begin: decMcrTsk
+        reg [4:0] coproc_reg;
+        reg [3:0] src_reg;
+        reg [34:0] instruction;
+
+        case ( i_instruction[19:16] )
+                0: coproc_reg = CP15_R0;
+                1: coproc_reg = CP15_R1;
+                2: coproc_reg = CP15_R2;
+                3: coproc_reg = CP15_R3;
+                4: coproc_reg = CP15_R4;
+                5: coproc_reg = CP15_R5;
+                6: coproc_reg = CP15_R6;
+                7: coproc_reg = CP15_R7;
+                8: coproc_reg = CP15_R8;
+          default: coproc_reg = PHY_RAZ_REGISTER;
+        endcase
+
+        src_reg = i_instruction[15:12];
+
+        // MOV Rx, R
+        instruction = {i_instruction[31:28], 2'b00, 1'b0, MOV, 1'd0, 4'd0, 4'd0, 8'd0, src_reg}; 
+        {instruction[`DP_RD_EXTEND], i_instruction[`DP_RD]} = coproc_reg;
+        decode_data_processing(instruction);
+end
+endtask
+
+task decode_mrc( input [34:0] i_instruction );
+begin: decMrcTsk
+        reg [3:0] coproc_reg;
+        reg [3:0] dest_reg;
+        reg [34:0] instruction;
+
+        case ( i_instruction[19:16] )
+                0: coproc_reg = CP15_R0;
+                1: coproc_reg = CP15_R1;
+                2: coproc_reg = CP15_R2;
+                3: coproc_reg = CP15_R3;
+                4: coproc_reg = CP15_R4;
+                5: coproc_reg = CP15_R5;
+                6: coproc_reg = CP15_R6;
+                7: coproc_reg = CP15_R7;
+                8: coproc_reg = CP15_R8;
+          default: coproc_reg = PHY_RAZ_REGISTER;
+        endcase
+
+        dest_reg = i_instruction[15:12];
+
+        // MOV R, Rx
+        instruction = {i_instruction[31:28], 2'b00, 1'b0, MOV, 1'd0, 4'd0, dest_reg, 8'd0, 4'd0};
+        {instruction[`DP_RS_EXTEND],instruction[`DP_RS]} = coproc_reg;
+        decode_data_processing(instruction);
+end
+endtask
+
+task decode_und( input [34:0] i_instruction );
 begin
         // Say instruction is undefined.
         o_und = 1;
 end
 endtask
 
-task decode_swi;
+task decode_swi( input [34:0] i_instruction );
 begin: tskDecodeSWI
         // Generate a MOV RAZ, SWI_number.
 
@@ -179,7 +237,7 @@ begin: tskDecodeSWI
 end
 endtask
 
-task decode_halfword_ls;
+task decode_halfword_ls( input [34:0] i_instruction );
 begin: tskDecodeHalfWordLs
         reg [11:0] temp, temp1;
 
@@ -240,7 +298,7 @@ begin: tskDecodeHalfWordLs
 end
 endtask
 
-task decode_mult;
+task decode_mult( input [34:0] i_instruction );
 begin: tskDecodeMult
 
         `ifdef SIM
@@ -265,7 +323,7 @@ endtask
 
 // Converted into a MOV to PC. The task of setting the T-bit in the CPSR is
 // the job of the writeback stage.
-task decode_bx;
+task decode_bx( input [34:0] i_instruction );
 begin: tskDecodeBx
         reg [31:0] temp;
         temp = i_instruction;
@@ -292,7 +350,7 @@ end
 endtask
 
 // Count leading zeroes... This is a v5T instruction.
-task decode_clz;
+task decode_clz( input [34:0] i_instruction );
 begin: tskDecodeClz
         // The raw ALU source does not matter.
 
@@ -318,7 +376,7 @@ end
 endtask
 
 // Task for decoding load-store instructions.
-task decode_ls;
+task decode_ls( input [34:0] i_instruction );
 begin: tskDecodeLs
 
         `ifdef SIM
@@ -370,7 +428,7 @@ begin: tskDecodeLs
 end
 endtask
 
-task decode_mrs;
+task decode_mrs( input [34:0] i_instruction );
 begin
 
         `ifdef SIM
@@ -387,7 +445,7 @@ begin
 end
 endtask
 
-task decode_msr;
+task decode_msr( input [34:0] i_instruction );
 begin
         `ifdef SIM
                 $display($time, "%m: MSR decode...");
@@ -413,7 +471,7 @@ begin
 end
 endtask
 
-task decode_branch;
+task decode_branch( input [34:0] i_instruction );
 begin
         `ifdef SIM
                 $display($time, "%m: B decode...");
@@ -435,7 +493,7 @@ endtask
 
 // Common data processing handles the common section of all 3 data processing
 // formats.
-task decode_data_processing;
+task decode_data_processing( input [34:0] i_instruction );
 begin
         `ifdef SIM
                 $display($time, "%m: Normal DP decode...");
@@ -486,7 +544,7 @@ end
 endtask
 
 // The shifter source is a register but the amount to shift is in the instruction itself.
-task process_instruction_specified_shift ( input [33:0] instruction );
+task process_instruction_specified_shift ( input [34:0] instruction );
 begin
         `ifdef SIM
         $display("%m Process instruction specified shift...");
@@ -508,7 +566,7 @@ end
 endtask
 
 // The source register and the amount of shift are both in registers.
-task process_register_specified_shift ( input [33:0] instruction );
+task process_register_specified_shift ( input [34:0] instruction );
 begin
         `ifdef SIM
         $display("%m Process register specified shift...");

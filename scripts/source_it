@@ -1,4 +1,6 @@
+#!/bin/tcsh
 # This script sets up a proper environment for simulations
 set noclobber
-alias iverilog "iverilog -gstrict-ca-eval -Wall -g2005 -gio-range-error -gstrict-expr-width -Winfloop" 
+alias iverilog "iverilog -gstrict-ca-eval -Wall -g2005 -gio-range-error -gstrict-expr-width -Winfloop"
+alias clean "rm *.out *.vcd *.log" 
 set prompt="ZAP_ENV :: %/ >"

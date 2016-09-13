@@ -31,6 +31,9 @@ module zap_memory_main
         // Data read from memory.
         input   wire [31:0]                 i_mem_rd_data,
 
+        input   wire                        i_mem_fault,        // Fault in.
+        output  reg                         o_mem_fault,        // Fault out.
+
         // Data valid and buffered PC.
         input wire                          i_dav_ff,
         input wire [31:0]                   i_pc_plus_8_ff,
@@ -102,6 +105,7 @@ begin
         o_flag_update_ff      <= 0;
         o_mem_rd_data_ff      <= 0;
         o_und_ff              <= 0;
+        o_mem_fault           <= 0;
 end
 else if ( i_clear_from_writeback )
 begin
@@ -119,6 +123,7 @@ begin
         o_flag_update_ff      <= 0;
         o_mem_rd_data_ff      <= 0;
         o_und_ff              <= 0;
+        o_mem_fault           <= 0;
 end
 else if ( i_data_stall )
 begin
@@ -141,6 +146,7 @@ begin
         o_flag_update_ff      <= i_flag_update_ff;
         o_mem_rd_data_ff      <= i_mem_rd_data;
         o_und_ff              <= i_und_ff;
+        o_mem_fault           <= i_mem_fault;
 end
 
 endmodule

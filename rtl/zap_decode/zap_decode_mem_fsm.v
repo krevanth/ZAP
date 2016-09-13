@@ -288,7 +288,12 @@ begin
         map[27:26] = 2'b01;
         map[`SRCDEST] = enc;         
         {map[`BASE_EXTEND],map[`BASE]} = ARCH_DUMMY_REG0; // Use this as the base register.
-        
+
+        if ( pre_index == 0 ) // Post index.
+        begin
+                map[21] = 1'd0; // Writeback is implicit.
+        end
+
         if ( list == 0 ) // Catch 0 list here itself...
         begin
                 // Restore base. MOV Rbase, DUMMY0

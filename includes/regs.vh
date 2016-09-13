@@ -82,4 +82,14 @@ parameter  PHY_UND_SPSR         =       40;
 parameter  PHY_ABT_SPSR         =       41;
 parameter  PHY_SWI_SPSR         =       42;
 
-parameter  TOTAL_PHY_REGS       =       43;
+parameter  CP15_R0              =       43;
+parameter  CP15_R1              =       44;
+parameter  CP15_R2              =       45;
+parameter  CP15_R3              =       46;
+parameter  CP15_R4              =       47;
+parameter  CP15_R5              =       48;
+parameter  CP15_R6              =       49;     
+parameter  CP15_R7              =       50;
+parameter  CP15_R8              =       51;
+
+parameter  TOTAL_PHY_REGS       =       52;

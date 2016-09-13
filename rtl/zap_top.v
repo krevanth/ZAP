@@ -45,7 +45,7 @@ module zap_top #(
 
         // Number of physical registers. Architectural registers map to
         // physical registers in a fixed way.
-        parameter PHY_REGS = 46,
+        parameter PHY_REGS = 64,
 
         // Width of the flags.
         parameter FLAG_WDT = 32,
@@ -106,8 +106,22 @@ module zap_top #(
                 // CPSR.
                 output wire [31:0]      o_cpsr,                 // CPSR. Cache must use this to determine size of code fetches, VM scheme etc for instruction fetches.
 
-                // Memory reset. Used to unfreeze memory after a fault.
-                output wire             o_mem_reset
+                // CP15 register access.
+                // CP15 registers. Connect these to MMU (ARM v4 System Control Coprocessor).
+                output wire [31:0]                   o_cp15_r0_id_reg_ro,        // ID register.                 - CP15_R0
+                output wire [31:0]                   o_cp15_r1_control_rw,       // Control register.            - CP15_R1
+                output wire [31:0]                   o_cp15_r2_ttbase_rw,        // Translation table base.      - CP15_R2
+                output wire [31:0]                   o_cp15_r3_dac_rw,           // Domain access control.       - CP15_R3
+                output wire [31:0]                   o_cp15_r5_fsr_ro,           // Fault status register.       - CP15_R4
+                output wire [31:0]                   o_cp15_r6_far_ro,           // Fault address register.      - CP15_R5
+                output wire [31:0]                   o_cp15_r7_cacheops_wo,      // Write 0 to flush I-D cache.  - CP15_R6
+                output wire [31:0]                   o_cp15_r8_tlbops_wo,        // Write 0 to flush I-D TLB.    - CP15_R7
+
+                // FSR and FAR may be updated by CP15 coprocessor.
+                input wire [31:0]                    i_fsr,
+                input wire                           i_fsr_dav,
+                input wire [31:0]                    i_far,
+                input wire                           i_far_dav  
 );
 
 // Clear and stall signals.
@@ -115,8 +129,6 @@ wire stall_from_decode;
 wire clear_from_alu;
 wire stall_from_issue;
 wire clear_from_writeback;
-
-assign o_mem_reset = clear_from_writeback;
 
 // Fetch
 wire [31:0] fetch_instruction;  // Instruction from the fetch unit.
@@ -258,6 +270,7 @@ wire  [FLAG_WDT-1:0]            memory_flags_ff;
 wire                            memory_flag_update_ff;
 wire  [31:0]                    memory_mem_rd_data_ff;
 wire                            memory_und_ff;
+wire                            memory_data_abt_ff;
 
 // Writeback
 wire [31:0] rd_data_0;
@@ -606,6 +619,8 @@ u_zap_alu_main
          .i_destination_index_ff        (shifter_destination_index_ff),
          .i_alu_operation_ff            (shifter_alu_operation_ff),  // { OP, S }
 
+         .i_data_mem_fault              (i_data_abort),
+
          .o_alu_result_nxt              (alu_alu_result_nxt),
          .o_alu_result_ff               (alu_alu_result_ff),
 
@@ -659,7 +674,9 @@ u_zap_memory_main
         
         .i_mem_load_ff                  (alu_mem_load_ff),
         .i_mem_rd_data                  (i_rd_data), // From memory.
-         
+        .i_mem_fault                    (i_data_abort),// From memory.
+        .o_mem_fault                    (memory_data_abt_ff),         
+
         .i_dav_ff                       (alu_dav_ff),
         .i_pc_plus_8_ff                 (alu_pc_plus_8_ff),
          
@@ -738,7 +755,7 @@ u_zap_regf
         .i_irq                  (memory_irq_ff),
         .i_fiq                  (memory_fiq_ff),
         .i_instr_abt            (memory_instr_abort_ff),
-        .i_data_abt             (i_data_abort),
+        .i_data_abt             (memory_data_abt_ff),
         .i_swi                  (memory_swi_ff),    
         .i_und                  (memory_und_ff),
 
@@ -755,7 +772,23 @@ u_zap_regf
         .o_clear_from_writeback (clear_from_writeback),
 
         .o_fiq_ack              (o_fiq_ack),
-        .o_irq_ack              (o_irq_ack)
+        .o_irq_ack              (o_irq_ack),
+
+        // CP15 registers. Connect these to MMU (ARM v4 System Control Coprocessor).
+        .o_cp15_r0_id_reg_ro    (o_cp15_r0_id_reg_ro),      // ID register.                 - CP15_R0
+        .o_cp15_r1_control_rw   (o_cp15_r1_control_rw),     // Control register.            - CP15_R1
+        .o_cp15_r2_ttbase_rw    (o_cp15_r2_ttbase_rw),      // Translation table base.      - CP15_R2
+        .o_cp15_r3_dac_rw       (o_cp15_r3_dac_rw),         // Domain access control.       - CP15_R3
+        .o_cp15_r5_fsr_ro       (o_cp15_r5_fsr_ro),         // Fault status register.       - CP15_R4
+        .o_cp15_r6_far_ro       (o_cp15_r6_far_ro),         // Fault address register.      - CP15_R5
+        .o_cp15_r7_cacheops_wo  (o_cp15_r7_cacheops_wo),    // Write 0 to flush I-D cache.  - CP15_R6
+        .o_cp15_r8_tlbops_wo    (o_cp15_r8_tlbops_wo),      // Write 0 to flush I-D TLB.    - CP15_R7
+
+        // FSR and FAR may be updated by CP15 coprocessor.
+        .i_fsr(i_fsr),
+        .i_fsr_dav(i_fsr_dav),
+        .i_far(i_far),
+        .i_far_dav(i_far_dav)  
 );
 
 endmodule

@@ -15,10 +15,19 @@ The pipeline is fully interlocked and fed-back. Most dependent instructions
 execute without interlocks. A load accelerator allows instructions that require
 a loaded register to issue 1 cycle early. Multiplication takes 4 clock cycles.
 
+Features:
+- Supports v4 ARM instructions (Only CP15 coprocessor instructions are supported).
+- Supports v1 Thumb instructions.
+- Auto indexed load and store issue as a single instruction (Uses a 2 write port, 4 read port register file).
+
+Assumes a dual ported unified cache with write-through (somewhat similar to ARM720T). The
+cache itself is not included but may be attached.
+
 Current limitations :
 - In Alpha stage of development. Very experimental and buggy at the moment.
 - No long multiply/long MAC.
-- No MMU included.
+- No branch prediction.
+- No MMU included but may be attached.
 
 To run sample code...
 1. Enter /debug. Make sure you set $ZAP_HOME to the root directory of the project.

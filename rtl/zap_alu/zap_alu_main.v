@@ -79,6 +79,9 @@ module zap_alu_main #(
         input wire                         i_und_ff,
         output reg                         o_und_ff,
 
+        // data abort.
+        input wire                         i_data_mem_fault,
+
         // Outputs
         output reg [31:0]                   o_alu_result_nxt,
         output reg [31:0]                   o_alu_result_ff,
@@ -193,6 +196,33 @@ begin
         else if ( i_data_stall )
         begin
                 // Preserve values.
+        end
+        else if ( i_data_mem_fault )
+        begin
+                        o_alu_result_ff                  <= 0; 
+                        o_dav_ff                         <= 0;    
+                        o_pc_plus_8_ff                   <= 0; 
+                        o_mem_address_ff                 <= 0; 
+                        o_destination_index_ff           <= 0; 
+                        flags_ff                         <= flags_ff; // Preserve flags.
+                        o_abt_ff                         <= 0; 
+                        o_irq_ff                         <= 0; 
+                        o_fiq_ff                         <= 0; 
+                        o_swi_ff                         <= 0; 
+                        o_mem_srcdest_index_ff           <= 0; 
+                        o_mem_srcdest_index_ff           <= 0; 
+                        o_mem_load_ff                    <= 0; 
+                        o_mem_store_ff                   <= 0; 
+                        o_mem_unsigned_byte_enable_ff    <= 0; 
+                        o_mem_signed_byte_enable_ff      <= 0; 
+                        o_mem_signed_halfword_enable_ff  <= 0; 
+                        o_mem_unsigned_halfword_enable_ff<= 0; 
+                        o_mem_translate_ff               <= 0; 
+                        o_mem_srcdest_value_ff           <= 0;
+                        o_flag_update_ff                 <= 0;
+                        sleep_ff                         <= 1'd1; // Initiate a sleep.
+                        o_und_ff                         <= 0;
+               
         end
         else
         begin

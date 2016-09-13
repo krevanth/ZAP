@@ -1,6 +1,6 @@
 module zap_test;
 
-parameter PHY_REGS  = 46;
+parameter PHY_REGS  = 64;
 parameter ALU_OPS   = 32;
 parameter SHIFT_OPS = 5;
 parameter ARCH_REGS = 32;
@@ -137,39 +137,28 @@ u_zap_top
         .o_irq_ack(o_irq_ack),
         .o_pc(o_pc),
         .o_cpsr(o_cpsr),
-        .o_mem_reset(o_mem_reset)
+        .i_fsr(32'd0),
+        .i_fsr_dav(1'd0),
+        .i_far(32'd0),
+        .i_far_dav(1'd0)
 );
 
-// Code memory.
-cache u_i_cache
-(
-        .i_clk(i_clk),
-        .i_reset(i_reset),
-        .i_address(o_pc),
-        .o_data(i_instruction),
-        .i_data('d0),
-        .o_hit(i_valid),
-        .o_miss(),
-        .o_abort(i_instr_abort),
-        .i_rd_en(1'd1),
-        .i_wr_en(1'd0),
-        .i_recover(1'd1)
-);
-
-// Data memory.
-cache u_d_cache
+// Memory - Dual ported unified cache.
+cache u_cache
 (
         .i_clk(i_clk),
         .i_reset(i_reset),
         .i_address(o_address),
+        .i_address1(o_pc),
         .i_data(o_wr_data),
         .o_data(i_rd_data),
-        .o_hit(),
+        .o_data1(i_instruction),
+        .o_hit1(i_valid),
         .o_miss(i_data_stall),
         .o_abort(i_data_abort),  
         .i_rd_en(o_read_en),
         .i_wr_en(o_write_en),
-        .i_recover(o_mem_reset)
+        .o_abort1(i_instr_abort)
 );
 
 initial i_clk = 0;
