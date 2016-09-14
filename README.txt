@@ -30,12 +30,9 @@ Current limitations :
 A simple dual port cache model is provided in testbench/cache.v for simulation
 purposes.
 
-To run sample code...
-1. Enter /debug. Make sure you set $ZAP_HOME to the root directory of the project.
-2. Write some assembly code in prog.s.
-3. Run 'perl ../sw/do_it.pl prog.s'. This will generate prog.v
-4. Run 'iverilog -f files.list ../testbench/*.v -gstrict-ca-eval -g2005 -DSIM'
-5. View zap.vcd
+Detailed instruction on simulating this may be found at...
+https://hackaday.io/project/14771/instructions
+
 -------------------------------------------------------------------------------
 
 MIT License

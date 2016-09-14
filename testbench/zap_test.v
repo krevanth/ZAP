@@ -187,6 +187,8 @@ cache u_cache
 initial i_clk = 0;
 always #10 i_clk = !i_clk;
 
+integer i;
+
 initial
 begin
         i_irq = 0;
@@ -202,6 +204,9 @@ begin
         i_reset = 0;
 
         repeat(1000) @(negedge i_clk);
+
+        for(i=300;i<340;i=i+4)
+        $display("mem[%d] = %d", i, {u_cache.mem[i+3],u_cache.mem[i+2],u_cache.mem[i+1],u_cache.mem[i]});
 
         $finish;
 end
