@@ -100,6 +100,8 @@ module zap_decode #(
 `include "index_immed.vh"
 `include "fields.vh"
 
+reg clz, bx, dp, br, mrs, msr, ls, mult, halfword_ls, swi, mcr, mrc;
+
 // Main reg is here...
 
 always @*
@@ -127,9 +129,17 @@ begin
         o_und           = 0;
         o_switch        = 0;
 
+        clz = 0; 
+        bx = 0;
+        dp = 0; br = 0; mrs = 0; msr = 0; ls = 0; mult = 0; 
+        halfword_ls = 0; swi = 0; mcr = 0; mrc = 0;
+
+
         // Based on our pattern match, call the appropriate task
         if ( i_instruction_valid )
         casez ( i_instruction[31:0] )
+        CLZ_INST:                                       decode_clz ( i_instruction );
+        BX_INST:                                        decode_bx ( i_instruction );
         DATA_PROCESSING_IMMEDIATE, 
         DATA_PROCESSING_REGISTER_SPECIFIED_SHIFT, 
         DATA_PROCESSING_INSTRUCTION_SPECIFIED_SHIFT:    decode_data_processing ( i_instruction );
@@ -137,8 +147,6 @@ begin
         MRS:                                            decode_mrs ( i_instruction );   
         MSR,MSR_IMMEDIATE:                              decode_msr ( i_instruction );
         LS_INSTRUCTION_SPECIFIED_SHIFT,LS_IMMEDIATE:    decode_ls ( i_instruction );
-        CLZ_INST:                                       decode_clz ( i_instruction );
-        BX_INST:                                        decode_bx ( i_instruction );
         MULT_INST:                                      decode_mult ( i_instruction );
         HALFWORD_LS:                                    decode_halfword_ls ( i_instruction );
         SOFTWARE_INTERRUPT:                             decode_swi ( i_instruction );
@@ -149,6 +157,33 @@ begin
                 decode_und ( i_instruction );
         end
         endcase
+
+        `ifdef SIM
+        // Debugging purposes.
+        if ( i_instruction_valid )
+        casez ( i_instruction[31:0] )
+        CLZ_INST:                                       clz = 1;
+        BX_INST:                                        bx  = 1;
+        DATA_PROCESSING_IMMEDIATE, 
+        DATA_PROCESSING_REGISTER_SPECIFIED_SHIFT, 
+        DATA_PROCESSING_INSTRUCTION_SPECIFIED_SHIFT:    dp  = 1;
+        BRANCH_INSTRUCTION:                             br  = 1;   
+        MRS:                                            mrs = 1;
+        MSR,MSR_IMMEDIATE:                              msr = 1; 
+        LS_INSTRUCTION_SPECIFIED_SHIFT,LS_IMMEDIATE:    
+        begin
+                if ( i_instruction[20] )
+                        ls  = 1; // Load
+                else
+                        ls  = 2;  // Store
+        end
+        MULT_INST:                                     mult = 1;
+        HALFWORD_LS:                                    halfword_ls = 1; 
+        SOFTWARE_INTERRUPT:                             swi = 1;         
+        MCR:                                            mcr = 1;         
+        MRC:                                            mrc = 1;         
+        endcase
+        `endif
 end
 
 // Task definitions.

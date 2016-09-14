@@ -201,7 +201,7 @@ begin
         @(negedge i_clk);
         i_reset = 0;
 
-        repeat(100) @(negedge i_clk);
+        repeat(1000) @(negedge i_clk);
 
         $finish;
 end

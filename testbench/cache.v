@@ -32,7 +32,7 @@ begin:blk1
         o_abort = 0;
         o_abort1 = 0;
 
-        for(i=0;i<1024;i=i+1)
+        for(i=0;i<8192;i=i+1)
         begin
                 mem[i] = 8'd0;
                 $display($time, "mem[%d]=%d",i,mem[i]);

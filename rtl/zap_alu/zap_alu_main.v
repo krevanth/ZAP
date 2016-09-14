@@ -312,7 +312,10 @@ begin: blk1
                         opcode == MOV || 
                         opcode == MVN || 
                         opcode == BIC || 
-                        opcode == ORR 
+                        opcode == ORR ||
+                        opcode == TST ||
+                        opcode == TEQ ||
+                        opcode == CLZ 
                 )
         begin
                 {flags_nxt[31:28], rd} = process_logical_instructions ( rn, rm, flags_ff[31:28], opcode, i_rrx_ff, i_flag_update_ff  );

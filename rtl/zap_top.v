@@ -431,7 +431,7 @@ u_zap_issue_main
         .i_shifter_mem_load_ff          (shifter_mem_load_ff),
         .i_alu_mem_load_ff              (alu_mem_load_ff),
         .i_memory_mem_load_ff           (memory_mem_load_ff),
-        .i_memory_mem_srcdest_value_ff  (i_rd_data),
+        .i_memory_mem_srcdest_value_ff  (memory_mem_rd_data_ff),
 
         // Switch indicator.
         .i_switch_ff                    (decode_switch_ff),
