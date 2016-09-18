@@ -18,14 +18,12 @@ a loaded register to issue 1 cycle early. Multiplication takes 4 clock cycles.
 Features:
 - Supports v4 ARM instructions.
 - Supports v1 Thumb instructions.
-- A CP15 interface is provided for attaching MMU/Write buffer/cache (not included).
 
 Current limitations :
 - In Alpha stage of development. Very experimental and buggy at the moment.
 - No long multiply, long MAC, LDC, STC, CDP.
 - No branch prediction.
-- No MMU included but may be attached.
-- No cache included but may be attached.
+- No MMU.
 
 A simple dual port cache model is provided in testbench/cache.v for simulation
 purposes.
