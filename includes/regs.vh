@@ -72,24 +72,19 @@ parameter  PHY_ABT_R14          =       32;
 parameter  PHY_SWI_R13          =       33;
 parameter  PHY_SWI_R14          =       34;
 
+// Dummy registers for various purposes.
 parameter  PHY_DUMMY_REG0       =       35;
 parameter  PHY_DUMMY_REG1       =       36;
 
+// SPSRs.
 parameter  PHY_FIQ_SPSR         =       37;
 parameter  PHY_IRQ_SPSR         =       38;
 parameter  PHY_SVC_SPSR         =       39;
 parameter  PHY_UND_SPSR         =       40;
 parameter  PHY_ABT_SPSR         =       41;
 parameter  PHY_SWI_SPSR         =       42;
+parameter  PHY_UCODE_SPSR       =       43;
 
-parameter  CP15_R0              =       43;
-parameter  CP15_R1              =       44;
-parameter  CP15_R2              =       45;
-parameter  CP15_R3              =       46;
-parameter  CP15_R4              =       47;
-parameter  CP15_R5              =       48;
-parameter  CP15_R6              =       49;     
-parameter  CP15_R7              =       50;
-parameter  CP15_R8              =       51;
+// Count of total registers (Can go up to 64 with no problems).
+parameter  TOTAL_PHY_REGS       =       44;
 
-parameter  TOTAL_PHY_REGS       =       52;

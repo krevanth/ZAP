@@ -48,15 +48,7 @@ module zap_top #(
         parameter PHY_REGS = 64,
 
         // Width of the flags.
-        parameter FLAG_WDT = 32,
-
-        // Vectors.
-        parameter DATA_ABORT_VECTOR     =       32'h10,
-        parameter FIQ_VECTOR            =       32'h1C,
-        parameter IRQ_VECTOR            =       32'h18,
-        parameter INSTRUCTION_ABORT_VECTOR =    32'hC,
-        parameter SWI_VECTOR =                  32'h8,
-        parameter UND_VECTOR =                  32'h4
+        parameter FLAG_WDT = 32
 )
 (
                 // Clock and reset.
@@ -64,7 +56,7 @@ module zap_top #(
                 input wire              i_reset,                // Active high synchronous reset.
                                 
                 // From I-cache.
-                input wire [31:0]       i_instruction,          // A 32-bit ZAP instruction.
+                input wire [31:0]       i_instruction,          // A 32-bit ZAP instruction or a microcode instruction.
                 input wire              i_valid,                // Instruction valid.
                 input wire              i_instr_abort,          // Instruction abort fault.
 
@@ -104,26 +96,7 @@ module zap_top #(
                 output wire[31:0]       o_pc,                   // Program counter.
 
                 // CPSR.
-                output wire [31:0]      o_cpsr,                 // CPSR. Cache must use this to determine size of code fetches, VM scheme etc for instruction fetches.
-
-                // CP15 register access.
-                // CP15 registers. Connect these to MMU (ARM v4 System Control Coprocessor).
-                output wire [31:0]                   o_cp15_r0_id_reg_ro,        // ID register.                 - CP15_R0
-                output wire [31:0]                   o_cp15_r1_control_rw,       // Control register.            - CP15_R1
-                output wire [31:0]                   o_cp15_r2_ttbase_rw,        // Translation table base.      - CP15_R2
-                output wire [31:0]                   o_cp15_r3_dac_rw,           // Domain access control.       - CP15_R3
-                output wire [31:0]                   o_cp15_r5_fsr_ro,           // Fault status register.       - CP15_R4
-                output wire [31:0]                   o_cp15_r6_far_ro,           // Fault address register.      - CP15_R5
-                output wire                          o_inv_cache,                // Invalidate cache.
-                output wire                          o_inv_tlb,                  // Invalidate TLB.
-                output wire [31:0]                   o_inv_tlb_specific,         // SPecific TLB VA to inval.
-                output wire                          o_inv_tlb_specific_en,      // Specific inval enable (TLB).
-
-                // FSR and FAR may be updated by CP15 coprocessor.
-                input wire [31:0]                    i_fsr,
-                input wire                           i_fsr_dav,
-                input wire [31:0]                    i_far,
-                input wire                           i_far_dav  
+                output wire [31:0]      o_cpsr                  // CPSR. Cache must use this to determine size of code fetches, VM scheme etc for instruction fetches.
 );
 
 // Clear and stall signals.
@@ -734,13 +707,6 @@ u_zap_regf
 
         .i_flag_update_ff       (memory_flag_update_ff),
 
-        .i_data_abort_vector        (DATA_ABORT_VECTOR),
-        .i_fiq_vector               (FIQ_VECTOR),
-        .i_irq_vector               (IRQ_VECTOR),
-        .i_instruction_abort_vector (INSTRUCTION_ABORT_VECTOR),
-        .i_swi_vector               (SWI_VECTOR),
-        .i_und_vector               (UND_VECTOR),
-
         .i_mem_load_ff          (memory_mem_load_ff), // Used to valid writes on i_wr_index1.
 
         .i_rd_index_0           (rd_index_0), 
@@ -774,27 +740,7 @@ u_zap_regf
         .o_clear_from_writeback (clear_from_writeback),
 
         .o_fiq_ack              (o_fiq_ack),
-        .o_irq_ack              (o_irq_ack),
-
-        // CP15 registers. Connect these to MMU (ARM v4 System Control Coprocessor).
-        .o_cp15_r0_id_reg_ro    (o_cp15_r0_id_reg_ro),      // ID register.                 - CP15_R0
-        .o_cp15_r1_control_rw   (o_cp15_r1_control_rw),     // Control register.            - CP15_R1
-        .o_cp15_r2_ttbase_rw    (o_cp15_r2_ttbase_rw),      // Translation table base.      - CP15_R2
-        .o_cp15_r3_dac_rw       (o_cp15_r3_dac_rw),         // Domain access control.       - CP15_R3
-        .o_cp15_r5_fsr_ro       (o_cp15_r5_fsr_ro),         // Fault status register.       - CP15_R4
-        .o_cp15_r6_far_ro       (o_cp15_r6_far_ro),         // Fault address register.      - CP15_R5
-
-        // Cache and TLB outputs (invalidate).
-        .o_inv_cache(o_inv_cache),
-        .o_inv_tlb(o_inv_tlb),
-        .o_inv_tlb_specific(o_inv_tlb_specific),
-        .o_inv_tlb_specific_en(o_inv_tlb_specific_en),
-
-        // FSR and FAR may be updated by CP15 coprocessor.
-        .i_fsr(i_fsr),
-        .i_fsr_dav(i_fsr_dav),
-        .i_far(i_far),
-        .i_far_dav(i_far_dav)  
+        .o_irq_ack              (o_irq_ack)
 );
 
 endmodule

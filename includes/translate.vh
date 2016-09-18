@@ -1,8 +1,10 @@
 // ===========================
 // Translate FUNCTION.
 // ===========================
-function [$clog2(PHY_REGS)-1:0] translate ( input [$clog2(ARCH_REGS)-1:0] index, input [4:0] cpu_mode );
+function [$clog2(PHY_REGS)-1:0] translate ( input [$clog2(PHY_REGS)-1:0] index, input [4:0] cpu_mode );
 begin
+        translate = index; // Avoid latch inference. For UCODE mode, just a pure translation.
+
         case ( index )
                       0:      translate = PHY_USR_R0; 
                       1:      translate = PHY_USR_R1;                            
@@ -20,7 +22,7 @@ begin
                       13:     translate = PHY_USR_R13;
                       14:     translate = PHY_USR_R14;
                       15:     translate = PHY_PC;
-                RAZ_REGISTER: translate = PHY_RAZ_REGISTER;
+            RAZ_REGISTER:     translate = PHY_RAZ_REGISTER;
                ARCH_CPSR:     translate = PHY_CPSR;
           ARCH_CURR_SPSR:     translate = PHY_CPSR;
               ARCH_USR2_R8:   translate = PHY_USR_R8;
@@ -85,6 +87,10 @@ begin
                         endcase
                 end
         endcase
+
+        // If we are in microcode mode, bypass it.
+        if ( i_cpu_mode == UCD )
+                translate = index;
 end
 endfunction
 

@@ -9,7 +9,9 @@ module cache
         input wire      [31:0]  i_address1,    // For instructions.
 
         output reg      [31:0]  o_data,
-        output reg      [31:0]  o_data1,        // Instruction data.
+        output reg      [31:0]  o_data1,        // Instruction data - 36-bit.
+
+        input wire      [31:0]  i_cpsr,         // CPSR.
 
         input wire      [31:0]  i_data,
         output reg              o_miss,
@@ -22,8 +24,12 @@ module cache
         input wire              i_wr_en
 );
 
-// Create an 8KB memory.
-reg [7:0] mem [8191:0];
+integer iacc;
+
+`include "modes.vh"
+
+// Create a 4KB  memory.
+reg [7:0] mem  [4095:0];
 
 initial
 begin:blk1
@@ -32,14 +38,14 @@ begin:blk1
         o_abort = 0;
         o_abort1 = 0;
 
-        for(i=0;i<8192;i=i+1)
+        for(i=0;i<4096;i=i+1)
         begin
-                mem[i] = 8'd0;
+                mem[i]  = 8'd0;
                 $display($time, "mem[%d]=%d",i,mem[i]);
         end
 
         // Initialize memory with the program.
-       `include "prog.v"
+        `include "prog.v"
 end
 
 // Data write port.
@@ -74,6 +80,8 @@ always @*
 begin
         o_hit1 = 1;
         o_data1 = {mem[i_address1+3],mem[i_address1+2],mem[i_address1+1],mem[i_address1]};
+        o_abort1 = 0;
+        iacc = 0;
 end
 
 endmodule

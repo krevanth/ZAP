@@ -11,32 +11,27 @@ void prog(void)
         while(1);
 }
 
-void undef(void)
-{
+void undef(void) {
         return;
 } 
 
-void swi (void)
-{
+void swi (void) {
         return;
 }
 
-void pabt (void)
-{
+void pabt (void) {
         return;
 }
 
-void dabt (void)
-{
+void dabt (void) {
         return;
 }
 
-void irq (void)
-{
+void irq (void) {
         return;
 }
 
-void fiq (void)
-{
+void fiq (void) {
         return;
 }
+

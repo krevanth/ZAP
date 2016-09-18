@@ -37,7 +37,7 @@ module zap_fetch_main
                 input wire [31:0] i_cpsr_ff,            // CPSR.
 
                 // From I-cache.
-                input wire [31:0] i_instruction,         // A 32-bit ZAP instruction.
+                input wire [31:0] i_instruction,         // A 32-bit ZAP instruction + some bits.
                 input wire        i_valid,               // Instruction valid indicator.
                 input wire        i_instr_abort,         // Instruction abort fault.
                 

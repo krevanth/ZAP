@@ -208,7 +208,7 @@ begin
                         reg [3:0] pri_enc_out;
 
 
-                        pri_enc_out = pri_enc(reglist_ff, load);
+                        pri_enc_out = pri_enc(reglist_ff, up);
                         reglist_nxt = reglist_ff & ~(1 << pri_enc_out); 
 
                         o_irq = 0;
@@ -331,21 +331,21 @@ end
 endfunction
 
 // Priority encoder.
-function [3:0] pri_enc ( input [15:0] in, input load );
+function [3:0] pri_enc ( input [15:0] in, input up );
 begin: priEncFn
         integer i;
         pri_enc = 4'd0;
 
-        if ( load )
+        if ( up )
         begin
-                // PC is the last to be loaded.
+                // PC is the last.
                 for(i=15;i>=0;i=i-1)
                         if ( in[i] == 1'd1 )
                                 pri_enc = i;
         end
         else
         begin
-                // PC is the first to be stored.
+                // PC is the first.
                  for(i=0;i<=15;i=i+1)
                         if ( in[i] == 1'd1 )
                                 pri_enc = i;

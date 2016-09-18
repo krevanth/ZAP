@@ -45,14 +45,6 @@ module zap_register_file #(
         // Flag update.
         input wire                           i_flag_update_ff,
 
-        // Configurable intertupt vector positions.
-        input wire      [31:0]              i_data_abort_vector,
-        input wire      [31:0]              i_fiq_vector,
-        input wire      [31:0]              i_irq_vector,
-        input wire      [31:0]              i_instruction_abort_vector,
-        input wire      [31:0]              i_swi_vector,
-        input wire      [31:0]              i_und_vector,
-
         // 4 read ports for high performance.
         input wire   [$clog2(PHY_REGS)-1:0] i_rd_index_0, 
         input wire   [$clog2(PHY_REGS)-1:0] i_rd_index_1, 
@@ -99,26 +91,7 @@ module zap_register_file #(
 
         // Acks.
         output reg                           o_fiq_ack,
-        output reg                           o_irq_ack,
-
-        // CP15 registers. Connect these to MMU (ARM v4 System Control Coprocessor).
-        output reg [31:0]                   o_cp15_r0_id_reg_ro,        // ID register.                 - CP15_R0
-        output reg [31:0]                   o_cp15_r1_control_rw,       // Control register.            - CP15_R1
-        output reg [31:0]                   o_cp15_r2_ttbase_rw,        // Translation table base.      - CP15_R2
-        output reg [31:0]                   o_cp15_r3_dac_rw,           // Domain access control.       - CP15_R3
-        output reg [31:0]                   o_cp15_r5_fsr_ro,           // Fault status register.       - CP15_R5
-        output reg [31:0]                   o_cp15_r6_far_ro,           // Fault address register.      - CP15_R6
-
-        output reg                          o_inv_cache,                // Invalidate entire ID cache. (R7)
-        output reg                          o_inv_tlb,                  // Invalidate entire TLB. (R8)
-        output reg [31:0]                   o_inv_tlb_specific,         // Invalidate specific entry (Writes to R0).
-        output reg                          o_inv_tlb_specific_en,      // Enable specific invalidation.
-
-        // FSR and FAR may be updated by CP15 coprocessor.
-        input wire [31:0]                    i_fsr,
-        input wire                           i_fsr_dav,
-        input wire [31:0]                    i_far,
-        input wire                           i_far_dav
+        output reg                           o_irq_ack
 );
 
 `include "regs.vh"
@@ -128,60 +101,6 @@ module zap_register_file #(
 // Register file.
 reg     [31:0]  r_ff       [PHY_REGS-1:0];
 reg     [31:0]  r_nxt      [PHY_REGS-1:0];
-
-// Connect CP15 registers.
-always @*
-begin
-        // Essentially registered.
-        o_cp15_r0_id_reg_ro   = r_ff[CP15_R0];
-        o_cp15_r1_control_rw  = r_ff[CP15_R1];
-        o_cp15_r2_ttbase_rw   = r_ff[CP15_R2];
-        o_cp15_r3_dac_rw      = r_ff[CP15_R3];
-        o_cp15_r5_fsr_ro      = r_ff[CP15_R5];
-        o_cp15_r6_far_ro      = r_ff[CP15_R6];
-end
-
-// Cache and TLB invalidation stuff.
-always @ (posedge i_clk)
-begin
-        if ( i_reset )
-        begin
-                o_inv_cache             <= 1'd0;
-                o_inv_tlb               <= 1'd0;
-                o_inv_tlb_specific_en   <= 1'd0;
-                o_inv_tlb_specific      <= 32'd0;
-        end
-        else
-        begin
-                // Cache invalidate signal. All cache entries are invalidated.
-                // Prefetched instructions (the pipeline is pre-fetched with old cache entries)
-                if ( i_valid && i_wr_index == CP15_R7 )
-                        o_inv_cache <= 1'd1;
-                else
-                        o_inv_cache <= 1'd0;
-
-
-                // TLB invalidate signal. New translation looks up page table.
-                // (the pipeline is prefetched with old TLB based fetches)
-                if ( i_valid && i_wr_index == CP15_R8 )
-                        o_inv_tlb <= 1'h1; 
-                else
-                        o_inv_tlb <= 1'h0;
-
-                // Invalidate specific entry of the TLB if you see a write to CP15_R0.
-                // The decode presents a write to CP_R8 with Crm = 1 as a write to CP_R0.
-                if ( i_valid && i_wr_index == CP15_R0 )
-                begin
-                        o_inv_tlb_specific    <= i_wr_data;
-                        o_inv_tlb_specific_en <= 1'd1;
-                end
-                else
-                begin
-                        o_inv_tlb_specific_en <= 1'd0;
-                        o_inv_tlb_specific    <= 32'd0;
-                end
-        end
-end
 
 assign o_cpsr_nxt = r_nxt[PHY_CPSR];
 
@@ -222,23 +141,8 @@ begin: blk1
         for ( i=0 ; i<PHY_REGS ; i=i+1 )
                 r_nxt[i] = r_ff[i];
 
-        // Write all 1s to CP15_R6 and CP15_R7. MMU must trigger only when it all goes to 0 for 1 cycle.
-        r_nxt[CP15_R7] = 32'hffff_ffff;
-        r_nxt[CP15_R8] = 32'hffff_ffff;
-
-        // CP15 can update FSR and FAR.
-        if ( i_far_dav )
-        begin
-                r_nxt[CP15_R6] = i_far;
-        end
-
-        if ( i_fsr_dav )
-        begin
-                r_nxt[CP15_R5] = i_fsr;
-        end
-
         `ifdef SIM
-        $display($time, "PC_nxt before = %d", r_nxt[PHY_PC]);
+                $display($time, "PC_nxt before = %d", r_nxt[PHY_PC]);
         `endif
 
         // PC control sequence.
@@ -305,7 +209,7 @@ begin: blk1
         if ( i_data_abt )
         begin
                 // Returns do LR - 8 to get back to the same instruction.
-                r_nxt[PHY_PC]                   = i_data_abort_vector; 
+                r_nxt[PHY_PC]                   = 32'h10; 
 
                 if ( !r_ff[PHY_CPSR][T] ) // ARM mode.
                         r_nxt[PHY_ABT_R14]              = i_pc_buf_ff;
@@ -319,7 +223,7 @@ begin: blk1
         else if ( i_fiq )
         begin
                 // Returns do LR - 4 to get back to the same instruction.
-                r_nxt[PHY_PC]                   = i_fiq_vector;
+                r_nxt[PHY_PC]                   = 32'h1c;
 
                 if ( !r_ff[PHY_CPSR][T] ) // ARM mode.
                         r_nxt[PHY_FIQ_R14]              = i_pc_buf_ff - 32'd4;
@@ -335,7 +239,7 @@ begin: blk1
         else if ( i_irq )
         begin
                 // Returns do LR - 4 to get back to the same instruction.
-                r_nxt[PHY_PC]           = i_irq_vector;
+                r_nxt[PHY_PC]           = 32'h18;
 
                 if ( !r_ff[PHY_CPSR][T] ) // ARM mode.
                         r_nxt[PHY_IRQ_R14]      = i_pc_buf_ff - 32'd4;
@@ -350,7 +254,7 @@ begin: blk1
         else if ( i_instr_abt )
         begin
                 // Returns do LR - 4 to get back to the same instruction.
-                r_nxt[PHY_PC]                   = i_instruction_abort_vector;
+                r_nxt[PHY_PC]                   = 32'hc;
 
                 if ( !r_ff[PHY_CPSR][T] ) // ARM mode.
                         r_nxt[PHY_ABT_R14]              = i_pc_buf_ff - 32'd4;
@@ -364,7 +268,7 @@ begin: blk1
         else if ( i_swi )
         begin
                 // Returns do LR to return to the next instruction.
-                r_nxt[PHY_PC]                   = i_swi_vector;
+                r_nxt[PHY_PC]                   = 32'h8;
 
                 if ( !r_ff[PHY_CPSR][T] ) // ARM mode.
                         r_nxt[PHY_SVC_R14]              = i_pc_buf_ff - 32'd4;
@@ -377,15 +281,15 @@ begin: blk1
         end
         else if ( i_und )
         begin
-                // Returns do LR to get back to the same instruction.
-                r_nxt[PHY_PC]                   = i_und_vector;
+                // Returns do LR to get back to the next instruction.
+                r_nxt[PHY_PC]                   = 32'h4;
 
                 if ( !r_ff[PHY_CPSR][T] ) // ARM mode.
-                        r_nxt[PHY_FIQ_R14]              = i_pc_buf_ff - 32'd4;
+                        r_nxt[PHY_UND_R14]              = i_pc_buf_ff - 32'd4;
                 else
-                        r_nxt[PHY_FIQ_R14]              = i_pc_buf_ff;
+                        r_nxt[PHY_UND_R14]              = i_pc_buf_ff;
 
-                r_nxt[PHY_FIQ_SPSR]             = r_ff[PHY_CPSR];
+                r_nxt[PHY_UND_SPSR]             = r_ff[PHY_CPSR];
                 r_nxt[PHY_CPSR][`CPSR_MODE]     = UND;
                 r_nxt[PHY_CPSR][I]              = 1'd1;
         end
@@ -461,7 +365,6 @@ begin
                 // supervisor mode.
                 r_ff[PHY_PC]            <= 32'd0;
                 r_ff[PHY_CPSR]          <= SVC;
-                r_ff[CP15_R0]           <= 32'h41807200;
         end
         else 
         begin: otherBlock
@@ -473,8 +376,8 @@ begin
                 // Hard code lower bit of PC to 0.
                 r_ff[PHY_PC][0] <= 1'd0;
 
-                // This never changes.
-                r_ff[CP15_R0]           <= 32'h41807200;
+                // The RAZ register reads as 0.
+                r_ff[PHY_RAZ_REGISTER] <= 32'd0;
         end
 end
 

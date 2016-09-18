@@ -50,9 +50,12 @@ module zap_decode #(
                 // I/O Ports.
                 
                 // From the FSM.
-                input    wire   [34:0]                  i_instruction,          // The upper 2-bit are {rd/ptr,rm/srcdest}
+                input    wire   [34:0]                  i_instruction,          // The upper 2-bit [34:33] are {rd/ptr,rm/srcdest} 
                 input    wire                           i_instruction_valid,
-                
+
+                // CPSR.
+                input   wire    [31:0]                  i_cpsr_ff, 
+ 
                 // This signal is used to check the validity of a pipeline stage.
                 output   reg    [3:0]                   o_condition_code,
                 
@@ -100,12 +103,12 @@ module zap_decode #(
 `include "index_immed.vh"
 `include "fields.vh"
 
-reg clz, bx, dp, br, mrs, msr, ls, mult, halfword_ls, swi, mcr, mrc;
+reg clz, bx, dp, br, mrs, msr, ls, mult, halfword_ls, swi;
 
 // Main reg is here...
 
 always @*
-begin
+begin: mainBlk1
         // If an unrecognized instruction enters this, the output
         // signals an NV state i.e., invalid.
         o_condition_code        = NV;
@@ -130,128 +133,65 @@ begin
         o_switch        = 0;
 
         clz = 0; 
-        bx = 0;
-        dp = 0; br = 0; mrs = 0; msr = 0; ls = 0; mult = 0; 
-        halfword_ls = 0; swi = 0; mcr = 0; mrc = 0;
+        bx  = 0;
+        dp  = 0; 
+        br  = 0; 
+        mrs = 0; 
+        msr = 0; 
+        ls = 0; 
+        mult = 0; 
+        halfword_ls = 0; 
+        swi = 0; 
 
 
-        // Based on our pattern match, call the appropriate task
-        if ( i_instruction_valid )
-        casez ( i_instruction[31:0] )
-        CLZ_INST:                                       decode_clz ( i_instruction );
-        BX_INST:                                        decode_bx ( i_instruction );
-        DATA_PROCESSING_IMMEDIATE, 
-        DATA_PROCESSING_REGISTER_SPECIFIED_SHIFT, 
-        DATA_PROCESSING_INSTRUCTION_SPECIFIED_SHIFT:    decode_data_processing ( i_instruction );
-        BRANCH_INSTRUCTION:                             decode_branch ( i_instruction );   
-        MRS:                                            decode_mrs ( i_instruction );   
-        MSR,MSR_IMMEDIATE:                              decode_msr ( i_instruction );
-        LS_INSTRUCTION_SPECIFIED_SHIFT,LS_IMMEDIATE:    decode_ls ( i_instruction );
-        MULT_INST:                                      decode_mult ( i_instruction );
-        HALFWORD_LS:                                    decode_halfword_ls ( i_instruction );
-        SOFTWARE_INTERRUPT:                             decode_swi ( i_instruction );
-        MCR:                                            decode_mcr ( i_instruction );
-        MRC:                                            decode_mrc ( i_instruction );
-        default:
-        begin
-                decode_und ( i_instruction );
-        end
-        endcase
+                // Based on our pattern match, call the appropriate task
+                if ( i_instruction_valid )
+                casez ( i_instruction[31:0] )
+                CLZ_INST:                                       decode_clz ( i_instruction );
+                BX_INST:                                        decode_bx ( i_instruction );
+                DATA_PROCESSING_IMMEDIATE, 
+                DATA_PROCESSING_REGISTER_SPECIFIED_SHIFT, 
+                DATA_PROCESSING_INSTRUCTION_SPECIFIED_SHIFT:    decode_data_processing ( i_instruction );
+                BRANCH_INSTRUCTION:                             decode_branch ( i_instruction );   
+                MRS:                                            decode_mrs ( i_instruction );   
+                MSR,MSR_IMMEDIATE:                              decode_msr ( i_instruction );
+                LS_INSTRUCTION_SPECIFIED_SHIFT,LS_IMMEDIATE:    decode_ls ( i_instruction );
+                MULT_INST:                                      decode_mult ( i_instruction );
+                HALFWORD_LS:                                    decode_halfword_ls ( i_instruction );
+                SOFTWARE_INTERRUPT:                             decode_swi ( i_instruction );
+                default:
+                begin
+                        decode_und ( i_instruction );
+                end
+                endcase
 
-        `ifdef SIM
-        // Debugging purposes.
-        if ( i_instruction_valid )
-        casez ( i_instruction[31:0] )
-        CLZ_INST:                                       clz = 1;
-        BX_INST:                                        bx  = 1;
-        DATA_PROCESSING_IMMEDIATE, 
-        DATA_PROCESSING_REGISTER_SPECIFIED_SHIFT, 
-        DATA_PROCESSING_INSTRUCTION_SPECIFIED_SHIFT:    dp  = 1;
-        BRANCH_INSTRUCTION:                             br  = 1;   
-        MRS:                                            mrs = 1;
-        MSR,MSR_IMMEDIATE:                              msr = 1; 
-        LS_INSTRUCTION_SPECIFIED_SHIFT,LS_IMMEDIATE:    
-        begin
-                if ( i_instruction[20] )
-                        ls  = 1; // Load
-                else
-                        ls  = 2;  // Store
-        end
-        MULT_INST:                                     mult = 1;
-        HALFWORD_LS:                                    halfword_ls = 1; 
-        SOFTWARE_INTERRUPT:                             swi = 1;         
-        MCR:                                            mcr = 1;         
-        MRC:                                            mrc = 1;         
-        endcase
-        `endif
+                `ifdef SIM
+                        // Debugging purposes.
+                        if ( i_instruction_valid )
+                        casez ( i_instruction[31:0] )
+                        CLZ_INST:                                       clz = 1;
+                        BX_INST:                                        bx  = 1;
+                        DATA_PROCESSING_IMMEDIATE, 
+                        DATA_PROCESSING_REGISTER_SPECIFIED_SHIFT, 
+                        DATA_PROCESSING_INSTRUCTION_SPECIFIED_SHIFT:    dp  = 1;
+                        BRANCH_INSTRUCTION:                             br  = 1;   
+                        MRS:                                            mrs = 1;
+                        MSR,MSR_IMMEDIATE:                              msr = 1; 
+                        LS_INSTRUCTION_SPECIFIED_SHIFT,LS_IMMEDIATE:    
+                        begin
+                                if ( i_instruction[20] )
+                                        ls  = 1; // Load
+                                else
+                                        ls  = 2;  // Store
+                        end
+                        MULT_INST:                                      mult            = 1;
+                        HALFWORD_LS:                                    halfword_ls     = 1; 
+                        SOFTWARE_INTERRUPT:                             swi             = 1;         
+                        endcase
+                `endif
 end
 
 // Task definitions.
-
-task decode_mcr ( input [34:0] i_instruction );
-begin: decMcrTsk
-        reg [4:0] coproc_reg;
-        reg [3:0] src_reg;
-        reg [34:0] instruction;
-
-        case ( i_instruction[19:16] )
-                0: coproc_reg = CP15_R0;
-                1: coproc_reg = CP15_R1;
-                2: coproc_reg = CP15_R2;
-                3: coproc_reg = CP15_R3;
-                4: coproc_reg = CP15_R4;
-                5: coproc_reg = CP15_R5;
-                6: coproc_reg = CP15_R6;
-                7: coproc_reg = CP15_R7;
-                8: coproc_reg = CP15_R8;
-          default: coproc_reg = PHY_RAZ_REGISTER;
-        endcase
-
-        src_reg = i_instruction[15:12];
-
-        // MOV Rx, R
-        instruction = {i_instruction[31:28], 2'b00, 1'b0, MOV, 1'd0, 4'd0, 4'd0, 8'd0, src_reg}; 
-        {instruction[`DP_RD_EXTEND], instruction[`DP_RD]} = coproc_reg;
-
-        // If we are writing to CP8 with opcode2 = 1, redirect to CP15_R0 since that operation is invalid for CP15_R0.
-        // Taken as a local TLB invalidate.
-        if ( coproc_reg == CP15_R8 && i_instruction[3:0] == 4'd1 )
-                {instruction[`DP_RD_EXTEND],instruction[`DP_RD]} = CP15_R0;
-
-        // Decode that as a DPI.
-        decode_data_processing(instruction);
-end
-endtask
-
-task decode_mrc( input [34:0] i_instruction );
-begin: decMrcTsk
-        reg [3:0] coproc_reg;
-        reg [3:0] dest_reg;
-        reg [34:0] instruction;
-
-        case ( i_instruction[19:16] )
-                0: coproc_reg = CP15_R0;
-                1: coproc_reg = CP15_R1;
-                2: coproc_reg = CP15_R2;
-                3: coproc_reg = CP15_R3;
-                4: coproc_reg = CP15_R4;
-                5: coproc_reg = CP15_R5;
-                6: coproc_reg = CP15_R6;
-                7: coproc_reg = CP15_R7;
-                8: coproc_reg = CP15_R8;
-          default: coproc_reg = PHY_RAZ_REGISTER;
-        endcase
-
-        dest_reg = i_instruction[15:12];
-
-        // MOV R, Rx
-        instruction = {i_instruction[31:28], 2'b00, 1'b0, MOV, 1'd0, 4'd0, dest_reg, 8'd0, 4'd0};
-        {instruction[`DP_RS_EXTEND],instruction[`DP_RS]} = coproc_reg;
-
-        // Decode that as a DPI.
-        decode_data_processing(instruction);
-end
-endtask
 
 task decode_und( input [34:0] i_instruction );
 begin
@@ -540,7 +480,7 @@ endtask
 task decode_data_processing( input [34:0] i_instruction );
 begin
         `ifdef SIM
-                $display($time, "%m: Normal DP decode...");
+                $display($time, "%m: Normal DP decode... Received %x %b", i_instruction, i_instruction);
         `endif
 
         o_condition_code        = i_instruction[31:28];
@@ -559,20 +499,20 @@ begin
         end
 
         casez ( {i_instruction[25],i_instruction[7],i_instruction[4]} )
-        3'b1zz: process_immediate ( i_instruction[11:0] );
-        3'b0z0: process_instruction_specified_shift ( i_instruction[11:0] );
-        3'b001: process_register_specified_shift ( i_instruction[11:0] );
+        3'b1zz: process_immediate ( i_instruction );
+        3'b0z0: process_instruction_specified_shift ( i_instruction );
+        3'b001: process_register_specified_shift ( i_instruction );
         default:
         begin
                 $display("This should never happen! Check the RTL..!");
-                $finish;
+                $stop;
         end
         endcase
 end
 endtask
 
 // If an immediate value is to be rotated right by an immediate value, this mode is used.
-task process_immediate ( input [11:0] instruction );
+task process_immediate ( input [34:0] instruction );
 begin
 
         `ifdef SIM

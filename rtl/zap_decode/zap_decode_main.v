@@ -62,7 +62,7 @@ module zap_decode_main #(
         input   wire    [31:0]                   i_cpu_mode,
 
         // Instruction input.
-        input     wire  [31:0]                  i_instruction,          
+        input     wire  [31:0]                  i_instruction,    
         // The upper 2-bit are {rd/ptr,rm/srcdest}
         input     wire                          i_instruction_valid,
        
@@ -154,7 +154,7 @@ wire                            o_switch_nxt;
 always @*
 begin
         // The actual decision whether or not to execute this is taken in EX stage.
-        o_swi_nxt = &i_instruction[27:24];
+        o_swi_nxt = &i_instruction[27:24] && i_cpu_mode[`CPSR_MODE] != UCD;
 end
 
         // Abort
@@ -340,8 +340,8 @@ wire [32:0] shift_source_nxt;
 wire [32:0] shift_length_nxt;
 wire [$clog2(ARCH_REGS)-1:0] mem_srcdest_index_nxt;
 
-// This section translates the indices from the decode converts
-// into a physical index.
+// This section translates the indices from the decode stage converts
+// into a physical index. In UCODE mode, no translation is done.
 assign  o_destination_index_nxt = 
         translate ( destination_index_nxt, i_cpu_mode[4:0] );
         
@@ -372,6 +372,7 @@ zap_decode #(
 u_zap_decode (
         .i_instruction(bl_instruction),          
         .i_instruction_valid(bl_instruction_valid),
+        .i_cpsr_ff(i_cpu_mode),
         .o_condition_code(o_condition_code_nxt),
         .o_destination_index(destination_index_nxt),
         .o_alu_source(alu_source_nxt),

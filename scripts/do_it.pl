@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 
-die "Usage: perl binc.pl <asm_file> <c_file> <linker_script> <target_bin> <target_verilog_file>" if (@ARGV != 5);
+die "Usage: perl do_it.pl <asm_file> <c_file> <linker_script> <target_bin> <target_verilog_file>" if (@ARGV != 5);
 
 my $asm_file            =            $ARGV[0];
 my $c_file              =            $ARGV[1];

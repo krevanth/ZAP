@@ -55,18 +55,6 @@ wire o_mem_reset;
 // CPSR.
 wire [31:0]      o_cpsr;                 // CPSR
 
-// CP15 connections.
-wire [31:0]                   o_cp15_r0_id_reg_ro;        // ID register.                 - CP15_R0
-wire [31:0]                   o_cp15_r1_control_rw;       // Control register.            - CP15_R1
-wire [31:0]                   o_cp15_r2_ttbase_rw;        // Translation table base.      - CP15_R2
-wire [31:0]                   o_cp15_r3_dac_rw;           // Domain access control.       - CP15_R3
-wire [31:0]                   o_cp15_r5_fsr_ro;           // Fault status register.       - CP15_R4
-wire [31:0]                   o_cp15_r6_far_ro;           // Fault address register.      - CP15_R5
-wire                          o_inv_cache;                // Invalidate cache.
-wire                          o_inv_tlb;                  // Invalidate TLB.
-wire [31:0]                   o_inv_tlb_specific;         // SPecific TLB VA to inval.
-wire                          o_inv_tlb_specific_en;      // Specific inval enable (TLB).
-
 `include "cc.vh"
 
 wire [31:0] r0; assign r0 = u_zap_top.u_zap_regf.r_ff[0]; 
@@ -148,22 +136,7 @@ u_zap_top
         .o_fiq_ack(o_fiq_ack),
         .o_irq_ack(o_irq_ack),
         .o_pc(o_pc),
-        .o_cpsr(o_cpsr),
-        .i_fsr(32'd0),
-        .i_fsr_dav(1'd0),
-        .i_far(32'd0),
-        .i_far_dav(1'd0),
-
-        .o_cp15_r0_id_reg_ro(o_cp15_r0_id_reg_ro),        // ID register.                 - CP15_R0
-        .o_cp15_r1_control_rw(o_cp15_r1_control_rw),       // Control register.            - CP15_R1
-        .o_cp15_r2_ttbase_rw(o_cp15_r2_ttbase_rw),        // Translation table base.      - CP15_R2
-        .o_cp15_r3_dac_rw(o_cp15_r3_dac_rw),           // Domain access control.       - CP15_R3
-        .o_cp15_r5_fsr_ro(o_cp15_r5_fsr_ro),           // Fault status register.       - CP15_R4
-        .o_cp15_r6_far_ro(o_cp15_r6_far_ro),           // Fault address register.      - CP15_R5
-        .o_inv_cache(o_inv_cache),                // Invalidate cache.
-        .o_inv_tlb(o_inv_tlb),                  // Invalidate TLB.
-        .o_inv_tlb_specific(o_inv_tlb_specific),         // SPecific TLB VA to inval.
-        .o_inv_tlb_specific_en(o_inv_tlb_specific_en)      // Specific inval enable (TLB).
+        .o_cpsr(o_cpsr)
 );
 
 // Memory - Dual ported unified cache.
@@ -181,7 +154,8 @@ cache u_cache
         .o_abort(i_data_abort),  
         .i_rd_en(o_read_en),
         .i_wr_en(o_write_en),
-        .o_abort1(i_instr_abort)
+        .o_abort1(i_instr_abort),
+        .i_cpsr(o_cpsr)
 );
 
 initial i_clk = 0;
@@ -193,6 +167,11 @@ initial
 begin
         i_irq = 0;
         i_fiq = 0;
+
+        for(i=300;i<340;i=i+4)
+        begin
+                $display("INITIAL :: mem[%d] = %d", i, {u_cache.mem[i+3],u_cache.mem[i+2],u_cache.mem[i+1],u_cache.mem[i]});
+        end
 
         $dumpfile("zap.vcd");
         $dumpvars;
