@@ -28,6 +28,9 @@ Current limitations :
 A simple dual port cache model is provided in testbench/cache.v for simulation
 purposes.
 
+Progress:
+I am currently working on emulating CP15 via microcode.
+
 Detailed instruction on simulating this may be found at...
 https://hackaday.io/project/14771/instructions
 
