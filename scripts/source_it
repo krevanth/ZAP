@@ -1,7 +1,0 @@
-#!/bin/tcsh
-
-# This script sets up a proper environment for simulations. Assumes a TCSH environment.
-
-set noclobber
-alias iverilog "iverilog -Wall -g2005"
-alias clean "rm *.out *.vcd *.log" 
