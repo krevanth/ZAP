@@ -21,7 +21,7 @@
 
 module zap_register_file #(
         parameter FLAG_WDT = 32, // Flags width a.k.a CPSR.
-        parameter PHY_REGS  = 46 // Number of physical registers.
+        parameter PHY_REGS = 46  // Number of physical registers.
 )
 (
         // Clock and reset.
@@ -93,6 +93,14 @@ module zap_register_file #(
         output reg                           o_fiq_ack,
         output reg                           o_irq_ack
 );
+
+localparam RST_VECTOR   = 32'h00000000;
+localparam UND_VECTOR   = 32'h00000004;
+localparam SWI_VECTOR   = 32'h00000008;
+localparam PABT_VECTOR  = 32'h0000000C;
+localparam DABT_VECTOR  = 32'h00000010;
+localparam IRQ_VECTOR   = 32'h00000018;
+localparam FIQ_VECTOR   = 32'h0000001C;
 
 `include "regs.vh"
 `include "modes.vh"
@@ -209,7 +217,7 @@ begin: blk1
         if ( i_data_abt )
         begin
                 // Returns do LR - 8 to get back to the same instruction.
-                r_nxt[PHY_PC]                   = 32'h10; 
+                r_nxt[PHY_PC]                   = DABT_VECTOR; 
 
                 if ( !r_ff[PHY_CPSR][T] ) // ARM mode.
                         r_nxt[PHY_ABT_R14]              = i_pc_buf_ff;
@@ -218,12 +226,11 @@ begin: blk1
 
                 r_nxt[PHY_ABT_SPSR]             = r_ff[PHY_CPSR];
                 r_nxt[PHY_CPSR][`CPSR_MODE]     = ABT;
-                r_nxt[PHY_CPSR][I]              = 1'd1; 
         end
         else if ( i_fiq )
         begin
                 // Returns do LR - 4 to get back to the same instruction.
-                r_nxt[PHY_PC]                   = 32'h1c;
+                r_nxt[PHY_PC]                   = FIQ_VECTOR;
 
                 if ( !r_ff[PHY_CPSR][T] ) // ARM mode.
                         r_nxt[PHY_FIQ_R14]              = i_pc_buf_ff - 32'd4;
@@ -232,14 +239,13 @@ begin: blk1
 
                 r_nxt[PHY_FIQ_SPSR]             = r_ff[PHY_CPSR];
                 r_nxt[PHY_CPSR][`CPSR_MODE]     = FIQ;
-                r_nxt[PHY_CPSR][I]              = 1'd1;
-                r_nxt[PHY_CPSR][F]              = 1'd1; // Mask FIQ too.
+                r_nxt[PHY_CPSR][F]              = 1'd1;
                 o_fiq_ack = 1;
         end
         else if ( i_irq )
         begin
                 // Returns do LR - 4 to get back to the same instruction.
-                r_nxt[PHY_PC]           = 32'h18;
+                r_nxt[PHY_PC]           = IRQ_VECTOR;
 
                 if ( !r_ff[PHY_CPSR][T] ) // ARM mode.
                         r_nxt[PHY_IRQ_R14]      = i_pc_buf_ff - 32'd4;
@@ -248,13 +254,12 @@ begin: blk1
 
                 r_nxt[PHY_IRQ_SPSR]     = r_ff[PHY_CPSR];
                 r_nxt[PHY_CPSR][`CPSR_MODE] = IRQ;
-                r_nxt[PHY_CPSR][I]      = 1'd1;
                 o_irq_ack = 1;
         end
         else if ( i_instr_abt )
         begin
                 // Returns do LR - 4 to get back to the same instruction.
-                r_nxt[PHY_PC]                   = 32'hc;
+                r_nxt[PHY_PC]                   = DABT_VECTOR;
 
                 if ( !r_ff[PHY_CPSR][T] ) // ARM mode.
                         r_nxt[PHY_ABT_R14]              = i_pc_buf_ff - 32'd4;
@@ -263,12 +268,11 @@ begin: blk1
 
                 r_nxt[PHY_ABT_SPSR]             = r_ff[PHY_CPSR];
                 r_nxt[PHY_CPSR][`CPSR_MODE]     = ABT;
-                r_nxt[PHY_CPSR][I]              = 1'd1;
         end
         else if ( i_swi )
         begin
                 // Returns do LR to return to the next instruction.
-                r_nxt[PHY_PC]                   = 32'h8;
+                r_nxt[PHY_PC]                   = SWI_VECTOR;
 
                 if ( !r_ff[PHY_CPSR][T] ) // ARM mode.
                         r_nxt[PHY_SVC_R14]              = i_pc_buf_ff - 32'd4;
@@ -277,12 +281,11 @@ begin: blk1
 
                 r_nxt[PHY_SVC_SPSR]             = r_ff[PHY_CPSR];
                 r_nxt[PHY_CPSR][`CPSR_MODE]     = SVC;
-                r_nxt[PHY_CPSR][I]              = 1'd1;
         end
         else if ( i_und )
         begin
                 // Returns do LR to get back to the next instruction.
-                r_nxt[PHY_PC]                   = 32'h4;
+                r_nxt[PHY_PC]                   = UND_VECTOR;
 
                 if ( !r_ff[PHY_CPSR][T] ) // ARM mode.
                         r_nxt[PHY_UND_R14]              = i_pc_buf_ff - 32'd4;
@@ -291,7 +294,6 @@ begin: blk1
 
                 r_nxt[PHY_UND_SPSR]             = r_ff[PHY_CPSR];
                 r_nxt[PHY_CPSR][`CPSR_MODE]     = UND;
-                r_nxt[PHY_CPSR][I]              = 1'd1;
         end
         else if ( i_valid )
         begin

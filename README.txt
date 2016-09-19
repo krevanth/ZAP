@@ -29,11 +29,14 @@ A simple dual port cache model is provided in testbench/cache.v for simulation
 purposes.
 
 Progress:
-I am currently working on emulating CP15 via microcode.
+I am currently working CP15.
 
 Detailed instruction on simulating this may be found at...
 https://hackaday.io/project/14771/instructions
 
+To see a demo of the processing executing some simple code, source the
+do_it.csh script in the /debug folder. You must have arm-none-eabi-* toolchain
+installed on your system along with iverilog.
 -------------------------------------------------------------------------------
 
 MIT License

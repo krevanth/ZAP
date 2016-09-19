@@ -450,7 +450,7 @@ begin
         o_condition_code = i_instruction[31:28];
         o_alu_operation  = i_instruction[22] ? FMOV : MMOV;
         o_alu_source     = i_instruction[25] ? (i_instruction[19:16] & 4'b1000) 
-                                : i_instruction[19:16];
+                           : (i_instruction[19:16] & 4'b1001);
         o_alu_source[32] = IMMED_EN; 
 end
 endtask

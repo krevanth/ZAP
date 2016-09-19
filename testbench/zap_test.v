@@ -168,7 +168,7 @@ begin
         i_irq = 0;
         i_fiq = 0;
 
-        for(i=300;i<340;i=i+4)
+        for(i=500;i<540;i=i+4)
         begin
                 $display("INITIAL :: mem[%d] = %d", i, {u_cache.mem[i+3],u_cache.mem[i+2],u_cache.mem[i+1],u_cache.mem[i]});
         end
@@ -184,7 +184,7 @@ begin
 
         repeat(1000) @(negedge i_clk);
 
-        for(i=300;i<340;i=i+4)
+        for(i=500;i<540;i=i+4)
         $display("mem[%d] = %d", i, {u_cache.mem[i+3],u_cache.mem[i+2],u_cache.mem[i+1],u_cache.mem[i]});
 
         $finish;

@@ -120,7 +120,6 @@ module zap_decode_main #(
 );
 
 `include "cc.vh"
-`include "translate.vh"
 `include "regs.vh"
 `include "modes.vh"
 `include "index_immed.vh"
@@ -151,10 +150,29 @@ reg                             o_swi_nxt;
 wire                            o_und_nxt;
 wire                            o_switch_nxt;
 
+wire            mem_irq;
+wire            mem_fiq;
+wire    [34:0]  mem_instruction;
+wire            mem_instruction_valid;
+wire            mem_fetch_stall;
+
+wire   [34:0]   bl_instruction;
+wire            bl_instruction_valid;
+wire            bl_fetch_stall;
+
+wire o_thumb_und_nxt;
+wire arm_irq;
+wire arm_fiq;
+
+wire [34:0] arm_instruction;
+wire arm_instruction_valid;
+wire o_force32align_nxt;
+
 always @*
 begin
         // The actual decision whether or not to execute this is taken in EX stage.
-        o_swi_nxt = &i_instruction[27:24] && i_cpu_mode[`CPSR_MODE] != UCD;
+        // Passed instructions are pointless anyway since they will not be executed.
+        o_swi_nxt = &i_instruction[27:24]; 
 end
 
         // Abort
@@ -248,28 +266,10 @@ begin
 end
 endtask
 
-wire            mem_irq;
-wire            mem_fiq;
-wire    [34:0]  mem_instruction;
-wire            mem_instruction_valid;
-wire            mem_fetch_stall;
-
-wire   [34:0]   bl_instruction;
-wire            bl_instruction_valid;
-wire            bl_fetch_stall;
-
-wire o_thumb_und_nxt;
-wire arm_irq;
-wire arm_fiq;
-
 always @*
 begin
         o_stall_from_decode = bl_fetch_stall || mem_fetch_stall;
 end
-
-wire [34:0] arm_instruction;
-wire arm_instruction_valid;
-wire o_force32align_nxt;
 
 // This unit handles decompression.
 zap_decode_thumb u_zap_decode_thumb (
@@ -393,5 +393,98 @@ u_zap_decode (
         .o_und(o_und_nxt),
         .o_switch(o_switch_nxt)
 );      
+
+// ===========================
+// Translate FUNCTION.
+// ===========================
+function [$clog2(PHY_REGS)-1:0] translate ( input [$clog2(PHY_REGS)-1:0] index, input [4:0] cpu_mode );
+begin
+        translate = index; // Avoid latch inference.
+
+        case ( index )
+                      0:      translate = PHY_USR_R0; 
+                      1:      translate = PHY_USR_R1;                            
+                      2:      translate = PHY_USR_R2; 
+                      3:      translate = PHY_USR_R3;
+                      4:      translate = PHY_USR_R4;
+                      5:      translate = PHY_USR_R5;
+                      6:      translate = PHY_USR_R6;
+                      7:      translate = PHY_USR_R7;
+                      8:      translate = PHY_USR_R8;
+                      9:      translate = PHY_USR_R9;
+                      10:     translate = PHY_USR_R10;
+                      11:     translate = PHY_USR_R11;
+                      12:     translate = PHY_USR_R12;
+                      13:     translate = PHY_USR_R13;
+                      14:     translate = PHY_USR_R14;
+                      15:     translate = PHY_PC;
+            RAZ_REGISTER:     translate = PHY_RAZ_REGISTER;
+               ARCH_CPSR:     translate = PHY_CPSR;
+          ARCH_CURR_SPSR:     translate = PHY_CPSR;
+              ARCH_USR2_R8:   translate = PHY_USR_R8;
+              ARCH_USR2_R9:   translate = PHY_USR_R9;
+              ARCH_USR2_R10:  translate = PHY_USR_R10;
+              ARCH_USR2_R11:  translate = PHY_USR_R11;
+              ARCH_USR2_R12:  translate = PHY_USR_R12;
+              ARCH_USR2_R13:  translate = PHY_USR_R13;
+              ARCH_USR2_R14:  translate = PHY_USR_R14;
+              ARCH_DUMMY_REG0:translate = PHY_DUMMY_REG0;
+              ARCH_DUMMY_REG1:translate = PHY_DUMMY_REG1;
+        endcase
+
+        case ( cpu_mode )
+                FIQ:
+                begin
+                        case ( index )
+                                8:      translate = PHY_FIQ_R8;
+                                9:      translate = PHY_FIQ_R9;
+                                10:     translate = PHY_FIQ_R10;
+                                11:     translate = PHY_FIQ_R11;
+                                12:     translate = PHY_FIQ_R12;
+                                13:     translate = PHY_FIQ_R13;
+                                14:     translate = PHY_FIQ_R14;
+                    ARCH_CURR_SPSR:     translate = PHY_FIQ_SPSR;
+                        endcase
+                end
+
+                IRQ:
+                begin
+                        case ( index )
+                                13:     translate = PHY_IRQ_R13;
+                                14:     translate = PHY_IRQ_R14;
+                    ARCH_CURR_SPSR:     translate = PHY_IRQ_SPSR;
+                        endcase
+                end
+
+                ABT:
+                begin
+                        case ( index )
+                                13:     translate = PHY_ABT_R13;
+                                14:     translate = PHY_ABT_R14;
+                    ARCH_CURR_SPSR:     translate = PHY_ABT_SPSR;
+                        endcase
+                end
+
+                UND:
+                begin
+                        case ( index )
+                                13:     translate = PHY_UND_R13;
+                                14:     translate = PHY_UND_R14;
+                    ARCH_CURR_SPSR:     translate = PHY_UND_SPSR;
+                        endcase
+                end
+
+                SVC:
+                begin
+                        case ( index )
+                                13:     translate = PHY_SVC_R13;
+                                14:     translate = PHY_SVC_R14;
+                    ARCH_CURR_SPSR:     translate = PHY_SVC_SPSR;
+                        endcase
+                end
+        endcase
+end
+endfunction
+
 
 endmodule

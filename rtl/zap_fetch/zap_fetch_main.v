@@ -50,6 +50,9 @@ module zap_fetch_main
 
 `include "cpsr.vh"
 
+// Microcode data.
+reg [31:0] microcode_data;
+
 // If an instruction abort occurs, this unit sleeps until it is woken up.
 reg sleep_ff;
 
@@ -100,7 +103,7 @@ begin
                 // Instruction aborts occur only when i_valid
                 // is 0 since we are using a VIVT cache that
                 // faults only on a miss. However, to maintain
-                // pipeline synchronization, we asserted valid
+                // pipeline synchronization, we assert valid
                 // for aborted instructions too.
                 o_valid         <= i_valid;
                 o_instruction   <= i_instruction;

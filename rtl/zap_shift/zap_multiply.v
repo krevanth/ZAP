@@ -1,3 +1,5 @@
+`default_nettype none
+
 /*
 Filename --
 zap_multiply.v
@@ -22,7 +24,7 @@ module zap_multiply
         input wire [31:0]    i_rn,
         input wire [31:0]    i_rs, // rm.rs + rn
 
-        output [31:0]   o_rd,
+        output wire [31:0]   o_rd,
         output reg      o_busy
 );
 

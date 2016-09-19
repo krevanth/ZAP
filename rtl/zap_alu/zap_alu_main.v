@@ -353,9 +353,7 @@ begin: blk1
                 o_dav_nxt = 1'd0;
                 sleep_nxt = 1'd1;
         end
-        else if ( (flags_nxt[7:0] != flags_ff[7:0]) && o_dav_nxt && opcode == FMOV ) // Critical change. FMOV based thing automates pipeline flush and goes to the NEXT instruction.
-                                                                                     // If you change the CPSR via any other instruction, no pipeline flush happens allowing the 
-                                                                                     // PC instruction that follows to change to the new code.
+        else if ( (flags_nxt[7:0] != flags_ff[7:0]) && o_dav_nxt ) // Critical change to modes, interrupts or something. 
         begin
                 `ifdef SIM
                         $display($time, "ALU :: Major change to CPSR! Restarting from the next instruction...");

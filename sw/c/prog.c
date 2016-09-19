@@ -3,7 +3,7 @@ void prog(void)
         int i = 0;
         int j = 23;
 
-        int *x = (int *)300;
+        int *x = (int *)500;
 
         for(i=0;i<10;i++)
                 x[i] = j++;
