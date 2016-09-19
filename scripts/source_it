@@ -3,5 +3,5 @@
 # This script sets up a proper environment for simulations. Assumes a TCSH environment.
 
 set noclobber
-alias iverilog "iverilog -gstrict-ca-eval -Wall -g2005 -gio-range-error -gstrict-expr-width -Winfloop"
+alias iverilog "iverilog -Wall -g2005"
 alias clean "rm *.out *.vcd *.log" 
