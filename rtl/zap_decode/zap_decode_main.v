@@ -55,6 +55,10 @@ module zap_decode_main #(
         input   wire                    i_fiq,
         input   wire                    i_abt,
 
+        // Coprocessor module related.
+        input   wire                    i_pipeline_dav, // Is 0 if all pipeline is INVALID.
+        input   wire                    i_copro_done,
+
         // PC input.
         input wire  [31:0]              i_pc_plus_8_ff,
 
@@ -116,7 +120,13 @@ module zap_decode_main #(
         output  reg                             o_swi_ff,  // EX tests for condition validity.
 
         // Force 32-bit alignment on memory accesses.
-        output reg                              o_force32align_ff
+        output reg                              o_force32align_ff,
+
+        // Coprocessor interface.
+        output wire  [31:0]                     o_copro_mode_ff,
+        output wire                             o_copro_dav_ff,
+        output wire  [31:0]                     o_copro_word_ff,
+        output wire  [$clog2(PHY_REGS)-1:0]     o_copro_reg_ff
 );
 
 `include "cc.vh"
@@ -167,6 +177,12 @@ wire arm_fiq;
 wire [34:0] arm_instruction;
 wire arm_instruction_valid;
 wire o_force32align_nxt;
+
+wire cp_stall;
+wire [31:0] cp_instruction;
+wire cp_instruction_valid;
+wire cp_irq;
+wire cp_fiq;
 
 always @*
 begin
@@ -268,18 +284,64 @@ endtask
 
 always @*
 begin
-        o_stall_from_decode = bl_fetch_stall || mem_fetch_stall;
+        o_stall_from_decode = bl_fetch_stall || mem_fetch_stall || cp_stall;
 end
 
-// This unit handles decompression.
-zap_decode_thumb u_zap_decode_thumb (
+// This unit handles coprocessor stuff.
+zap_decode_coproc 
+#(
+        .PHY_REGS(PHY_REGS)
+)
+u_zap_decode_coproc
+(
+        // Inputs from outside world.
         .i_clk(i_clk),
         .i_reset(i_reset),
         .i_irq(i_irq),
         .i_fiq(i_fiq),
         .i_instruction(i_instruction),
-        .i_instruction_valid(i_instruction_valid),
+        .i_valid(i_instruction_valid),
         .i_cpsr_ff(i_cpu_mode),
+
+        // Clear and stall signals.
+        .i_clear_from_writeback(i_clear_from_writeback),
+        .i_data_stall(i_data_stall),          
+        .i_clear_from_alu(i_clear_from_alu),      
+        .i_stall_from_issue(i_stall_from_issue), 
+        .i_stall_from_shifter(i_stall_from_shifter),
+
+        // Valid signals.
+        .i_pipeline_dav (i_pipeline_dav),
+
+        // Coprocessor
+        .i_copro_done(i_copro_done),
+
+        // Output to next block.
+        .o_instruction(cp_instruction),
+        .o_valid(cp_instruction_valid),
+        .o_irq(cp_irq),
+        .o_fiq(cp_fiq),
+
+        // Stall.
+        .o_stall_from_decode(cp_stall),
+
+        // Coprocessor interface.
+        .o_copro_mode_ff(o_copro_mode_ff),
+        .o_copro_dav_ff(o_copro_dav_ff),
+        .o_copro_word_ff(o_copro_word_ff),
+        .o_copro_reg_ff(o_copro_reg_ff)
+);
+
+// This unit handles decompression.
+zap_decode_thumb u_zap_decode_thumb (
+        .i_clk(i_clk),
+        .i_reset(i_reset),
+        .i_irq(cp_irq),
+        .i_fiq(cp_fiq),
+        .i_instruction(cp_instruction),
+        .i_instruction_valid(cp_instruction_valid),
+        .i_cpsr_ff(i_cpu_mode),
+
         .o_instruction(arm_instruction),
         .o_instruction_valid(arm_instruction_valid),
         .o_irq(arm_irq),

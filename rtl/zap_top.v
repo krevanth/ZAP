@@ -60,6 +60,9 @@ module zap_top #(
                 input wire              i_valid,                // Instruction valid.
                 input wire              i_instr_abort,          // Instruction abort fault.
 
+                // Coprocessor.
+                input wire              i_copro_done,
+
                 // Memory access.
                 output wire             o_read_en,              // Memory load
                 output wire             o_write_en,             // Memory store.
@@ -88,6 +91,21 @@ module zap_top #(
                 input wire              i_fiq,                  // FIQ signal.
                 input wire              i_irq,                  // IRQ signal.
 
+                // Coprocessor.
+                output wire  [31:0]                     o_copro_mode,
+                output wire                             o_copro_dav,
+                output wire  [31:0]                     o_copro_word,
+                output wire  [$clog2(PHY_REGS)-1:0]     o_copro_reg,
+
+                // Coprocessor direct register access.
+                input wire                              i_copro_reg_en,         // Coprocessor controls register file.
+                input wire      [$clog2(PHY_REGS)-1:0]  i_copro_reg_wr_index,   // Register write index.
+                input wire      [$clog2(PHY_REGS)-1:0]  i_copro_reg_rd_index,   // Register read index.
+                input wire      [31:0]                  i_copro_reg_wr_data,    // Register write data.
+
+                // Data from register file to coprocessor.
+                output wire     [31:0]                  o_copro_reg_rd_data,    // Coprocessor read data from register file.
+
                 // Interrupt acknowledge.
                 output wire             o_fiq_ack,              // FIQ acknowledge.
                 output wire             o_irq_ack,              // IRQ acknowledge.
@@ -98,6 +116,8 @@ module zap_top #(
                 // CPSR.
                 output wire [31:0]      o_cpsr                  // CPSR. Cache must use this to determine size of code fetches, VM scheme etc for instruction fetches.
 );
+
+`include "cc.vh"
 
 // Clear and stall signals.
 wire stall_from_decode;
@@ -307,6 +327,15 @@ u_zap_decode_main (
         .i_instruction                  (fetch_instruction),
         .i_instruction_valid            (fetch_valid),
 
+        .i_copro_done                   (i_copro_done),
+        .i_pipeline_dav                 (
+                                                (decode_condition_code    != NV)   ||
+                                                (issue_condition_code_ff  != NV)   ||
+                                                (shifter_condition_code_ff!= NV)   ||
+                                                alu_dav_ff                         ||
+                                                memory_dav_ff                      
+                                        ),
+
         // Output.
         .o_condition_code_ff            (decode_condition_code),
         .o_destination_index_ff         (decode_destination_index),
@@ -333,7 +362,12 @@ u_zap_decode_main (
         .o_abt_ff                       (decode_abt_ff),
         .o_swi_ff                       (decode_swi_ff),
         .o_und_ff                       (decode_und_ff),
-        .o_force32align_ff              (decode_force32_ff)
+        .o_force32align_ff              (decode_force32_ff),
+
+        .o_copro_mode_ff                (o_copro_mode),
+        .o_copro_dav_ff                 (o_copro_dav),
+        .o_copro_word_ff                (o_copro_word),
+        .o_copro_reg_ff                 (o_copro_reg)
 );
 
 // ISSUE //
@@ -729,6 +763,13 @@ u_zap_regf
 
         .i_pc_buf_ff            (memory_pc_plus_8_ff),
 
+        .i_copro_reg_en         (i_copro_reg_en),
+        .i_copro_reg_wr_index   (i_copro_reg_wr_index),
+        .i_copro_reg_rd_index   (i_copro_reg_rd_index),
+        .i_copro_reg_wr_data    (i_copro_reg_wr_data),
+
+        .o_copro_reg_rd_data_ff (o_copro_reg_rd_data),
+        
         .o_rd_data_0            (rd_data_0),         
         .o_rd_data_1            (rd_data_1),         
         .o_rd_data_2            (rd_data_2),         

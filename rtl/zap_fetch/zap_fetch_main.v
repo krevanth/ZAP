@@ -105,8 +105,8 @@ begin
                 // faults only on a miss. However, to maintain
                 // pipeline synchronization, we assert valid
                 // for aborted instructions too.
-                o_valid         <= i_valid;
-                o_instruction   <= i_instruction;
+                o_valid         <= i_instr_abort ? 1'd1  : i_valid;
+                o_instruction   <= i_instr_abort ? 32'd0 : i_instruction;
                 o_instr_abort   <= i_instr_abort;
 
                 // Put unit to sleep on an abort.

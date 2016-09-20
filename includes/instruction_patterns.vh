@@ -4,91 +4,91 @@
 
 /* ARM */
 
-localparam      [31:0]  DATA_PROCESSING_IMMEDIATE                       =                                       32'bzzzz_00_1_zzzz_z_zzzz_zzzz_zzzzzzzzzzzz;
-localparam      [31:0]  DATA_PROCESSING_REGISTER_SPECIFIED_SHIFT        =                                       32'bzzzz_00_0_zzzz_z_zzzz_zzzz_zzzz0zz1zzzz;
-localparam      [31:0]  DATA_PROCESSING_INSTRUCTION_SPECIFIED_SHIFT     =                                       32'bzzzz_00_0_zzzz_z_zzzz_zzzz_zzzzzzz0zzzz;       
+localparam      [31:0]  DATA_PROCESSING_IMMEDIATE                       =                                       32'b????_00_1_????_?_????_????_????????????;
+localparam      [31:0]  DATA_PROCESSING_REGISTER_SPECIFIED_SHIFT        =                                       32'b????_00_0_????_?_????_????_????0??1????;
+localparam      [31:0]  DATA_PROCESSING_INSTRUCTION_SPECIFIED_SHIFT     =                                       32'b????_00_0_????_?_????_????_???????0????;       
 
 // BL never reaches the unit.
-localparam      [31:0]  BRANCH_INSTRUCTION                              =                                       32'bzzzz_101z_zzzz_zzzz_zzzz_zzzz_zzzz_zzzz;
+localparam      [31:0]  BRANCH_INSTRUCTION                              =                                       32'b????_101?_????_????_????_????_????_????;
 
-localparam      [31:0]  MRS                                             =                                       32'bzzzz_00010_z_001111_zzzz_zzzz_zzzz_zzzz;
-localparam      [31:0]  MSR_IMMEDIATE                                   =                                       32'bzzzz_00_1_10z10_zzzz_1111_zzzz_zzzz_zzzz;
+localparam      [31:0]  MRS                                             =                                       32'b????_00010_?_001111_????_????_????_????;
+localparam      [31:0]  MSR_IMMEDIATE                                   =                                       32'b????_00_1_10?10_????_1111_????_????_????;
 
-localparam      [31:0]  MSR                                             =                                       32'bzzzz_00_0_10z10_zzzz_1111_zzzz_zzzz_zzzz;
+localparam      [31:0]  MSR                                             =                                       32'b????_00_0_10?10_????_1111_????_????_????;
 
-localparam      [31:0]  LS_INSTRUCTION_SPECIFIED_SHIFT                  =                                       32'bzzzz_01_1_zzzzz_zzzz_zzzz_zzzz_zzzz_zzzz; 
-localparam      [31:0]  LS_IMMEDIATE                                    =                                       32'bzzzz_01_0_zzzzz_zzzz_zzzz_zzzz_zzzz_zzzz;
+localparam      [31:0]  LS_INSTRUCTION_SPECIFIED_SHIFT                  =                                       32'b????_01_1_?????_????_????_????_????_????; 
+localparam      [31:0]  LS_IMMEDIATE                                    =                                       32'b????_01_0_?????_????_????_????_????_????;
 
-localparam      [31:0]  CLZ_INST                                        =                                       32'bzzzz_00010110000_zzzz_00000001_zzzz;
+localparam      [31:0]  CLZ_INST                                        =                                       32'b????_00010110000_????_00000001_????;
 
-localparam      [31:0]  BX_INST                                         =                                       32'bzzzz_0001_0010_1111_1111_1111_0001_zzzz;
+localparam      [31:0]  BX_INST                                         =                                       32'b????_0001_0010_1111_1111_1111_0001_????;
 // Includes MLA too. No xMULLx support (M not implemented)
-localparam      [31:0]  MULT_INST                                       =                                       32'bzzzz_0000_00z_z_zzzz_zzzz_zzzz_1001_zzzz;
+localparam      [31:0]  MULT_INST                                       =                                       32'b????_0000_00?_?_????_????_????_1001_????;
 
 // Halfword memory.
-localparam      [31:0]  HALFWORD_LS                                     =                                       32'bzzzz_000_zzzzz_zzzz_zzzz_zzzz_1zz1_zzzz;
+localparam      [31:0]  HALFWORD_LS                                     =                                       32'b????_000_?????_????_????_????_1??1_????;
 
 // Software interrupt.
-localparam      [31:0]  SOFTWARE_INTERRUPT                              =                                       32'bzzzz_1111_zzzz_zzzz_zzzz_zzzz_zzzz_zzzz;
+localparam      [31:0]  SOFTWARE_INTERRUPT                              =                                       32'b????_1111_????_????_????_????_????_????;
 
 // Swap.
-localparam      [31:0]  SWAP                                            =                                       32'bzzzz_00010_z_00_zzzz_zzzz_00001001_zzzz;
+localparam      [31:0]  SWAP                                            =                                       32'b????_00010_?_00_????_????_00001001_????;
 
 // Write to coprocessor.
-localparam      [31:0]  MCR                                             =                                       32'bzzzz_1110_zzz_0_zzzz_zzzz_1111_zzz_1_zzzz;        
+localparam      [31:0]  MCR                                             =                                       32'b????_1110_???_0_????_????_1111_???_1_????;        
 
 // Read from coprocessor.
-localparam      [31:0]  MRC                                             =                                       32'bzzzz_1110_zzz_1_zzzz_zzzz_1111_zzz_1_zzzz;
+localparam      [31:0]  MRC                                             =                                       32'b????_1110_???_1_????_????_1111_???_1_????;
 
 /* THUMB */
 
 //B
-localparam      [15:0]  T_BRANCH_COND                                   =                                       16'b1101_zzzz_zzzzzzzz;
-localparam      [15:0]  T_BRANCH_NOCOND                                 =                                       16'b11100_zzzzzzzzzzz;
-localparam      [15:0]  T_BL                                            =                                       16'b1111_z_zzzzzzzzzzz;
-localparam      [15:0]  T_BX                                            =                                       16'b01000111_0_z_zzz_000;
+localparam      [15:0]  T_BRANCH_COND                                   =                                       16'b1101_????_????????;
+localparam      [15:0]  T_BRANCH_NOCOND                                 =                                       16'b11100_???????????;
+localparam      [15:0]  T_BL                                            =                                       16'b1111_?_???????????;
+localparam      [15:0]  T_BX                                            =                                       16'b01000111_0_?_???_000;
 
 // SWI
-localparam      [15:0]  T_SWI                                           =                                       16'b11011111_zzzzzzzz;
+localparam      [15:0]  T_SWI                                           =                                       16'b11011111_????????;
 
 // Shifts.
-localparam      [15:0]  T_SHIFT                                         =                                       16'b000_zz_zzzzz_zzz_zzz;
+localparam      [15:0]  T_SHIFT                                         =                                       16'b000_??_?????_???_???;
 
 // Add sub LO.
-localparam      [15:0]  T_ADD_SUB_LO                                    =                                       16'b00011_z_z_zzz_zzz_zzz;
+localparam      [15:0]  T_ADD_SUB_LO                                    =                                       16'b00011_?_?_???_???_???;
 
 // MCAS Imm.
-localparam      [15:0]  T_MCAS_IMM                                      =                                       16'b001_zz_zzz_zzzzzzzz;
+localparam      [15:0]  T_MCAS_IMM                                      =                                       16'b001_??_???_????????;
 
 // ALU Lo.
-localparam      [15:0]  T_ALU_LO                                        =                                       16'b010000_zzzz_zzz_zzz;
+localparam      [15:0]  T_ALU_LO                                        =                                       16'b010000_????_???_???;
 
 // ALU hi.
-localparam      [15:0]  T_ALU_HI                                        =                                       16'b010001_zz_z_z_zzz_zzz;
+localparam      [15:0]  T_ALU_HI                                        =                                       16'b010001_??_?_?_???_???;
 
 // *Get address.
-localparam      [15:0]  T_GET_ADDR                                      =                                       16'b1010_z_zzz_zzzzzzzz;
+localparam      [15:0]  T_GET_ADDR                                      =                                       16'b1010_?_???_????????;
 
 // *Add offset to SP.
-localparam      [15:0]  T_MOD_SP                                        =                                       16'b10110000_z_zzzz_zzz;
+localparam      [15:0]  T_MOD_SP                                        =                                       16'b10110000_?_????_???;
 
 // PC relative load.
-localparam      [15:0]  T_PC_REL_LOAD                                   =                                       16'b01001_zzz_zzzzzzzz;
+localparam      [15:0]  T_PC_REL_LOAD                                   =                                       16'b01001_???_????????;
 
 // LDR_STR_5BIT_OFF
-localparam      [15:0] T_LDR_STR_5BIT_OFF                               =                                       16'b011_z_z_zzzzz_zzz_zzz;
+localparam      [15:0] T_LDR_STR_5BIT_OFF                               =                                       16'b011_?_?_?????_???_???;
 
 // LDRH_STRH_5BIT_OFF
-localparam      [15:0] T_LDRH_STRH_5BIT_OFF                             =                                       16'b1000_z_zzzzz_zzz_zzz;
+localparam      [15:0] T_LDRH_STRH_5BIT_OFF                             =                                       16'b1000_?_?????_???_???;
 
 // Signed LDR/STR
-localparam      [15:0]  T_LDRH_STRH_REG                                 =                                       16'b0101_zzz_zzz_zzz_zzz;
+localparam      [15:0]  T_LDRH_STRH_REG                                 =                                       16'b0101_???_???_???_???;
 
 // SP relative LDR/STR
-localparam      [15:0]  T_SP_REL_LDR_STR                                =                                       16'b1001_z_zzz_zzzzzzzz;
+localparam      [15:0]  T_SP_REL_LDR_STR                                =                                       16'b1001_?_???_????????;
 
 // LDMIA/STMIA
-localparam      [15:0]  T_LDMIA_STMIA                                   =                                       16'b1100_z_zzz_zzzzzzzz;
+localparam      [15:0]  T_LDMIA_STMIA                                   =                                       16'b1100_?_???_????????;
 
 // PUSH POP
-localparam      [15:0]  T_POP_PUSH                                      =                                       16'b1011_z_10_z_zzzzzzzz;
+localparam      [15:0]  T_POP_PUSH                                      =                                       16'b1011_?_10_?_????????;

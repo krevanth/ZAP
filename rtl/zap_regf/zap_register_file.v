@@ -73,6 +73,16 @@ module zap_register_file #(
         // stage and is buffered all the way through.
         input   wire    [31:0]               i_pc_buf_ff,
 
+        // Coprocessor.
+        input wire                              i_copro_reg_en,
+
+        input wire      [$clog2(PHY_REGS)-1:0]  i_copro_reg_wr_index,
+        input wire      [$clog2(PHY_REGS)-1:0]  i_copro_reg_rd_index,
+
+        input wire      [31:0]                  i_copro_reg_wr_data,
+
+        output reg      [31:0]                  o_copro_reg_rd_data_ff,
+
         // Read data from the register file.
         output reg      [31:0]               o_rd_data_0,         
         output reg      [31:0]               o_rd_data_1,         
@@ -93,6 +103,12 @@ module zap_register_file #(
         output reg                           o_fiq_ack,
         output reg                           o_irq_ack
 );
+
+// Coprocessor accesses.
+always @ (posedge i_clk) 
+begin
+        o_copro_reg_rd_data_ff = o_rd_data_0;
+end
 
 localparam RST_VECTOR   = 32'h00000000;
 localparam UND_VECTOR   = 32'h00000004;
@@ -129,7 +145,7 @@ end
 // 4 read decoders.
 always @*
 begin
-        o_rd_data_0 = r_ff [ i_rd_index_0 ];
+        o_rd_data_0 = r_ff [ i_copro_reg_en ? i_copro_reg_rd_index : i_rd_index_0 ];
         o_rd_data_1 = r_ff [ i_rd_index_1 ];
         o_rd_data_2 = r_ff [ i_rd_index_2 ];
         o_rd_data_3 = r_ff [ i_rd_index_3 ];
@@ -294,6 +310,11 @@ begin: blk1
 
                 r_nxt[PHY_UND_SPSR]             = r_ff[PHY_CPSR];
                 r_nxt[PHY_CPSR][`CPSR_MODE]     = UND;
+        end
+        else if ( i_copro_reg_en )
+        begin
+               // Write to register.
+               r_nxt[i_copro_reg_wr_index] = i_copro_reg_wr_data; 
         end
         else if ( i_valid )
         begin

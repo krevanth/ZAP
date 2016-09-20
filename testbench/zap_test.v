@@ -24,6 +24,12 @@ wire             o_signed_byte_en;       // Signed byte enable.
 wire             o_unsigned_halfword_en; // Unsiged halfword enable.
 wire             o_signed_halfword_en;   // Signed halfword enable.
 
+//Coproc wires.
+wire  [31:0]                     o_copro_mode;
+wire                             o_copro_dav;
+wire  [31:0]                     o_copro_word;
+wire  [$clog2(PHY_REGS)-1:0]     o_copro_reg;
+
 // User view.
 wire             o_mem_translate;
 
@@ -54,6 +60,20 @@ wire o_mem_reset;
 
 // CPSR.
 wire [31:0]      o_cpsr;                 // CPSR
+
+reg             i_copro_reg_en;
+reg [5:0]       i_copro_reg_wr_index;
+reg [5:0]       i_copro_reg_rd_index;
+reg [31:0]      i_copro_reg_wr_data;
+wire [31:0]     o_copro_reg_rd_data;
+
+initial
+begin
+        i_copro_reg_en          = 0;
+        i_copro_reg_wr_index    = 16;
+        i_copro_reg_rd_index    = 16;
+        i_copro_reg_wr_data     = 0;
+end
 
 `include "cc.vh"
 
@@ -136,7 +156,19 @@ u_zap_top
         .o_fiq_ack(o_fiq_ack),
         .o_irq_ack(o_irq_ack),
         .o_pc(o_pc),
-        .o_cpsr(o_cpsr)
+        .o_cpsr(o_cpsr),
+
+        .i_copro_done (1'd1),           // Assume coprocessor completes its task.
+        .o_copro_mode (o_copro_mode),
+        .o_copro_dav  (o_copro_dav),
+        .o_copro_word (o_copro_word),
+        .o_copro_reg  (o_copro_reg),
+
+        .i_copro_reg_en(i_copro_reg_en),
+        .i_copro_reg_wr_index(i_copro_reg_wr_index),
+        .i_copro_reg_rd_index(i_copro_reg_rd_index),
+        .i_copro_reg_wr_data(i_copro_reg_wr_data),
+        .o_copro_reg_rd_data(o_copro_reg_rd_data)
 );
 
 // Memory - Dual ported unified cache.
