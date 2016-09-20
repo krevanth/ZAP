@@ -48,6 +48,8 @@ module zap_decode_thumb
 
 reg [11:0] offset_ff, offset_nxt;       // Remember offset.
 
+always @ (posedge i_clk) offset_ff <= offset_nxt;
+
 `include "cc.vh"
 `include "cpsr.vh"
 `include "instruction_patterns.vh"

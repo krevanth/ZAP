@@ -103,6 +103,7 @@ begin
         state_nxt = state_ff;
         o_instruction = i_instruction;
         o_instruction_valid = i_instruction_valid;
+        reglist_nxt = reglist_ff;
 
         case ( state_ff )
                 IDLE:

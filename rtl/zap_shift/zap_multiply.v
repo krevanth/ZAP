@@ -53,6 +53,7 @@ begin
         prodhilo_nxt = prodhilo_ff;
         state_nxt    = state_ff;
         out_nxt      = out_ff;
+        o_busy       = 1'd0;
 
         case ( state_ff )
                 IDLE:

@@ -23,9 +23,9 @@ mov r6, #12
 mov r7, #22
 mov r8, #43
 mov r9, #43
-mov r10, #11
-mov r11, #12
-mov r12, #14
+mov r10, #121
+mov r11, #122
+mov r12, #123
 bl undef
 ldmfd r13!, {r0-r12, pc}
 
