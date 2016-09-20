@@ -32,8 +32,8 @@ module zap_multiply
 reg [2:0] state_ff, state_nxt;
 
 // Partial products.
-reg [15:0] prodlolo_ff, prodlohi_ff, prodhilo_ff;
-reg [15:0] prodlolo_nxt, prodlohi_nxt, prodhilo_nxt;
+reg [31:0] prodlolo_ff, prodlohi_ff, prodhilo_ff;
+reg [31:0] prodlolo_nxt, prodlohi_nxt, prodhilo_nxt;
 reg [31:0] out_ff, out_nxt;
 
 assign o_rd = out_nxt; // Output.
@@ -93,7 +93,7 @@ begin
                 begin
                        state_nxt = S3;
                        o_busy    = 1'd1;
-                       out_nxt   = out_ff + (prodlohi_ff << 16); 
+                       out_nxt   = out_ff + (prodhilo_ff << 16); 
                 end
                 S3:
                 begin
