@@ -92,7 +92,7 @@ module zap_top #(
                 input wire              i_irq,                  // IRQ signal.
 
                 // Coprocessor.
-                output wire  [31:0]                     o_copro_mode,
+                output wire  [31:0]                     o_copro_mode,   // THE CPSR Exposed to the CoProcessor. Copro must do conditional checks if needed.
                 output wire                             o_copro_dav,
                 output wire  [31:0]                     o_copro_word,
                 output wire  [$clog2(PHY_REGS)-1:0]     o_copro_reg,

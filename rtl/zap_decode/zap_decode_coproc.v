@@ -1,3 +1,5 @@
+`default_nettype none
+
 module zap_decode_coproc #(
         parameter PHY_REGS = 46
 )
@@ -71,7 +73,7 @@ begin
         IDLE:
                 // Activate only if no thumb.
                 casez ( (!i_cpsr_ff[T]) ? i_instruction : 32'd0 )
-                MRC, MCR:
+                MRC, MCR, LDC, STC, CDP:
                 begin
                         // As long as there is an instruction to process
                         if ( i_pipeline_dav )
@@ -89,7 +91,11 @@ begin
                                 cp_word_nxt             = i_instruction;
                                 cp_dav_nxt              = 1'd1;
                                 state_nxt               = BUSY;
-                                cp_reg_nxt              = translate ( i_instruction[15:12], i_cpsr_ff[`CPSR_MODE] );
+
+                                if ( i_instruction[27:25] != 3'b110 ) // MCR, MRC.
+                                        cp_reg_nxt              = translate ( i_instruction[15:12], i_cpsr_ff[`CPSR_MODE] );
+                                else                                  // LDC, STC, CDP(Useless)  
+                                        cp_reg_nxt              = translate ( i_instruction[19:16], i_cpsr_ff[`CPSR_MODE] );
                         end
                 end
                 default:

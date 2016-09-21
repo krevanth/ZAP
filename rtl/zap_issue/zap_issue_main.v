@@ -190,6 +190,13 @@ module zap_issue_main
 `include "shtype.vh"
 `include "opcodes.vh"
 
+reg o_shifter_disable_nxt;
+
+reg [31:0] o_alu_source_value_nxt, 
+           o_shift_source_value_nxt, 
+           o_shift_length_value_nxt, 
+           o_mem_srcdest_value_nxt;
+
 // Individual lock signals. These are ORed to get the final lock.
 reg shift_lock;
 reg load_lock;
@@ -344,13 +351,6 @@ begin
         o_und_ff                          <= i_und_ff;
 end
 end
-
-reg o_shifter_disable_nxt;
-
-reg [31:0] o_alu_source_value_nxt, 
-           o_shift_source_value_nxt, 
-           o_shift_length_value_nxt, 
-           o_mem_srcdest_value_nxt;
 
 // Get values from the feedback network.
 always @*

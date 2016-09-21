@@ -12,7 +12,7 @@ ARM ISA Version         : v4
 THUMB ISA Version       : v1 
 
 The pipeline is fully interlocked and fed-back. Most dependent instructions
-execute without interlocks. A load accelerator allows instructions that require
+execute without requiring stalls. A load accelerator allows instructions that require
 a loaded register to issue 1 cycle early. Multiplication takes 4 clock cycles.
 
 Features:
@@ -21,15 +21,12 @@ Features:
 
 Current limitations :
 - In Alpha stage of development. Very experimental and buggy at the moment.
-- No long multiply, long MAC, LDC, STC, CDP.
+- Not supported: UMLAL, UMULL, SMULL, SMLAL.
 - No branch prediction.
-- No MMU.
+- No MMU or cache is provided but may be attached.
 
 A simple dual port cache model is provided in testbench/cache.v for simulation
 purposes.
-
-Progress:
-I am currently working CP15.
 
 Detailed instruction on simulating this may be found at...
 https://hackaday.io/project/14771/instructions
