@@ -243,6 +243,10 @@ begin
         o_force32align_ff                 <= 0;
         o_und_ff                          <= 0;
 end
+else if ( i_clear_from_writeback )
+begin
+        // Preserve values.
+end
 else if ( i_data_stall )
 begin
         // Preserve values.
