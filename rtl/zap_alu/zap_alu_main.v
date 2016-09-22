@@ -100,7 +100,10 @@ module zap_alu_main #(
         output reg                          o_clear_from_alu,
         output reg [31:0]                   o_pc_from_alu,
         output reg [$clog2(PHY_REGS)-1:0]   o_destination_index_ff,
+
         output reg [FLAG_WDT-1:0]           o_flags_ff,                 // Output flags (CPSR).
+        output reg [FLAG_WDT-1:0]           o_flags_nxt,                // Next output flags (CPSR) - For multiply.
+
         output reg                          o_flag_update_ff,
 
         output reg  [$clog2(PHY_REGS)-1:0]  o_mem_srcdest_index_ff,     
@@ -137,6 +140,7 @@ begin
         rm         = i_shifted_source_value_ff;
         rn         = i_alu_source_value_ff;
         o_flags_ff = flags_ff;
+        o_flags_nxt = flags_nxt;
 end
 
 always @ (posedge i_clk)

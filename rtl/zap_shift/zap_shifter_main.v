@@ -29,6 +29,11 @@ module zap_shifter_main
         input wire i_data_stall,           // |
         input wire i_clear_from_alu,       // V Low Priority.
 
+        // ------------------------------
+        // Next CPSR.
+        // ------------------------------
+        input wire [31:0] i_cpsr_nxt, // Next CPSR
+
         // ==============================
         // Things from Issue.
         // ==============================
@@ -149,13 +154,21 @@ reg [31:0] rm, rn;
 wire [31:0] mult_out;
 wire        old_carry_nxt;
 
-zap_multiply u_zap_multiply
+// The MAC unit.
+zap_multiply
+#(
+        .PHY_REGS(PHY_REGS)
+)
+u_zap_multiply
 (
         .i_clk(i_clk),
         .i_reset(i_reset),
 
         .i_clear(i_clear_from_writeback || i_clear_from_alu),
         .i_start( i_alu_operation_ff == MLA ),
+
+        .i_cc(i_condition_code_ff),
+        .i_cpsr_nxt(i_cpsr_nxt),
 
         .i_rm(i_alu_source_value_ff),
         .i_rn(i_shift_length_value_ff),
@@ -297,7 +310,7 @@ begin
    end
 end
 
-// A 32x32+32=32 MAC unit.
+// Barrel shifter.
 zap_shift_shifter U_SHIFT
 (
         .i_source       ( i_shift_source_value_ff ),

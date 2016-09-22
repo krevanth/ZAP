@@ -249,6 +249,7 @@ wire [$clog2(PHY_REGS)-1:0]     alu_mem_srcdest_index_ff;
 wire                            alu_mem_load_ff;
 wire                            alu_flag_update_ff;
 wire                            alu_und_ff;
+wire [31:0]                     alu_cpsr_nxt; //TODO: Eliminate this  and place MAC in ALU itself.
 
 // Memory
 wire [31:0]                     memory_alu_result_ff;
@@ -527,6 +528,9 @@ u_zap_shifter_main
         .i_pc_plus_8_ff                 (issue_pc_plus_8_ff),
         .i_disable_shifter_ff           (issue_shifter_disable_ff),
 
+        // Next CPSR.
+        .i_cpsr_nxt                     (alu_cpsr_nxt),
+
         // Feedback
         .i_alu_value_nxt                (alu_alu_result_nxt),
 
@@ -647,6 +651,7 @@ u_zap_alu_main
          .o_pc_from_alu                 (pc_from_alu),
          .o_destination_index_ff        (alu_destination_index_ff),
          .o_flags_ff                    (alu_flags_ff),           // Output flags.
+         .o_flags_nxt                   (alu_cpsr_nxt),
 
          .o_mem_srcdest_value_ff           (o_wr_data),
          .o_mem_srcdest_index_ff           (alu_mem_srcdest_index_ff),     

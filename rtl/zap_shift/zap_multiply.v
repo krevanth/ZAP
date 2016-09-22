@@ -13,6 +13,9 @@ Revanth Kamaraj
 */
 
 module zap_multiply
+#(
+        parameter PHY_REGS = 46
+)
 (
         input wire           i_clk,
         input wire           i_reset,
@@ -20,12 +23,15 @@ module zap_multiply
         input wire           i_clear,
         input wire           i_start,
 
+        input wire  [3:0]    i_cc,
+        input wire  [31:0]   i_cpsr_nxt,  // Should have placed multiplication in ALU ...
+
         input wire [31:0]    i_rm,
         input wire [31:0]    i_rn,
-        input wire [31:0]    i_rs, // rm.rs + rn
+        input wire [31:0]    i_rs,        // rm.rs + rn
 
         output wire [31:0]   o_rd,
-        output reg      o_busy
+        output reg           o_busy
 );
 
 // Machine state.
@@ -36,6 +42,8 @@ reg [31:0] prodlolo_ff, prodlohi_ff, prodhilo_ff;
 reg [31:0] prodlolo_nxt, prodlohi_nxt, prodhilo_nxt;
 reg [31:0] out_ff, out_nxt;
 
+reg ok_to_execute;
+
 assign o_rd = out_nxt; // Output.
 
 // Parameter
@@ -45,6 +53,17 @@ parameter S0   = 2;
 parameter S1   = 3;
 parameter S2   = 4;
 parameter S3   = 5;
+
+`include "regs.vh"
+`include "cc.vh"
+`include "cpsr.vh"
+`include "modes.vh"
+`include "global_functions.vh"
+
+always @*
+begin
+        ok_to_execute = is_cc_satisfied ( i_cc, i_cpsr_nxt[31:28]  );
+end
 
 always @*
 begin
@@ -58,7 +77,7 @@ begin
         case ( state_ff )
                 IDLE:
                 begin
-                        if ( i_start )
+                        if ( i_start && ok_to_execute )
                         begin
                                 state_nxt       = SX;
                                 o_busy          = 1'd1;
