@@ -170,7 +170,12 @@ begin: blk1
         `endif
 
         // PC control sequence.
-        if ( i_code_stall )
+        if ( i_clear_from_alu )
+        begin
+                r_nxt[PHY_PC] = i_pc_from_alu;
+                $display("Clear from ALU!");
+        end
+        else if ( i_code_stall )
         begin
                 r_nxt[PHY_PC] = r_ff[PHY_PC];
                 $display("Code Stall!");
@@ -179,11 +184,6 @@ begin: blk1
         begin
                 r_nxt[PHY_PC] = r_ff[PHY_PC];                        
                 $display("Data Stall!");
-        end
-        else if ( i_clear_from_alu )
-        begin
-                r_nxt[PHY_PC] = i_pc_from_alu;
-                $display("Clear from ALU!");
         end
         else if ( i_stall_from_decode )
         begin
