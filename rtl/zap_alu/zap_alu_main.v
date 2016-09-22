@@ -450,11 +450,14 @@ begin: blk2
         end
         endcase           
 
+        // Assume flags are not going to change at ALL.
         flags_out = flags;
 
+        // Assign values to the flags only if an update is requested. Note that V
+        // is not touched even if change is requested.
         if ( i_flag_upd )
         begin
-                // V is preserved.
+                // V is preserved since flags_out = flags assignment.
                 flags_out[_C] = tmp_carry;
                 flags_out[_Z] = (rd == 0);
                 flags_out[_N] = rd[31];
@@ -502,35 +505,34 @@ begin: blk3
         end
         endcase
 
-        if ( i_flag_upd )
-        begin
-                if ( rd == 0 )                  z = 1;
-                if ( rd[31] )                   n = 1;
-                if ( c )                        c = 1;
+        // Compute Z and N (C computed before).
+        z = (rd == 0);
+        n = rd[31];
 
-                // Overflow.
-                if ( ( op == ADD || op == ADC || op == CMN ) && (rn[31] == rm[31]) && (rd[31] != rn[31]) )
-                begin
-                        v = 1;
-                end 
-                else if ( (op == RSB || op == RSC) && (rm[31] == !rn[31]) && (rd[31] != rm[31] ) )
-                begin
-                        v = 1;
-                end
-                else if ( (op == SUB || op == SBC || op == CMP) && (rn[31] == !rm[31]) && (rd[31] != rn[31]) )
-                begin
-                        v = 1;
-                end
-                else
-                begin
-                        v = 0;
-                end
+        // Overflow.
+        if ( ( op == ADD || op == ADC || op == CMN ) && (rn[31] == rm[31]) && (rd[31] != rn[31]) )
+        begin
+                v = 1;
+        end 
+        else if ( (op == RSB || op == RSC) && (rm[31] == !rn[31]) && (rd[31] != rm[31] ) )
+        begin
+                v = 1;
+        end
+        else if ( (op == SUB || op == SBC || op == CMP) && (rn[31] == !rm[31]) && (rd[31] != rn[31]) )
+        begin
+                v = 1;
         end
         else
         begin
-                {n,z,c,v} = flags;
+                v = 0;
         end
+       
+        // If you choose not to update flags, force n,z,c,v to previous values. 
+        // Otherwise, they will contain their newly computed values.
+        if ( !i_flag_upd )
+                {n,z,c,v} = flags;
 
+        // Write out the result.
         process_arithmetic_instructions = {n, z, c, v, rd};
 
 end
