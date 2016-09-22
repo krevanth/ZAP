@@ -122,6 +122,7 @@ module zap_alu_main #(
 `include "opcodes.vh"
 `include "cpsr.vh"
 `include "modes.vh"
+`include "global_functions.vh"
 
 // These override global N,Z,C,V definitions which are on CPSR.
 localparam _N = 3;
@@ -452,13 +453,12 @@ begin: blk2
         flags_out = flags;
 
         if ( i_flag_upd )
+        begin
+                // V is preserved.
                 flags_out[_C] = tmp_carry;
-
-        if ( rd == 0 && i_flag_upd )
-                flags_out[_Z] = 1'd1;
-
-        if ( rd[31] && i_flag_upd )
-                flags_out[_N] = 1'd1;
+                flags_out[_Z] = (rd == 0);
+                flags_out[_N] = rd[31];
+        end
 
         process_logical_instructions = {flags_out, rd};     
 end
@@ -471,7 +471,6 @@ begin: blk3
 
         reg [31:0] rd;
         reg n,z,c,v;
-        reg [3:0] flags_out;
 
         // Avoid accidental latch inference.
         rd        = 0;
@@ -479,7 +478,6 @@ begin: blk3
         z         = 0;
         c         = 0;
         v         = 0;
-        flags_out = 0;
 
         if ( rrx )
         begin
@@ -490,11 +488,11 @@ begin: blk3
         ADD: {c,rd} = rn +  rm + 32'd0;
         ADC: {c,rd} = rn +  rm + flags[_C];
         SUB: {c,rd} = rn + ~rm + 32'd1;
-        RSB: {c,rd} = rn + ~rm + 32'd1;
+        RSB: {c,rd} = rm + ~rn + 32'd1;
         SBC: {c,rd} = rn + ~rm + !flags[_C];
         RSC: {c,rd} = rm + ~rn + !flags[_C];
-        CMP: {c,rd} = rm + ~rn + 32'd0; // Target is not written.
-        CMN: {c,rd} = rm + ~rn + 32'd1; // Target is not written.
+        CMP: {c,rd} = rn + ~rm + 32'd1; // Target is not written.
+        CMN: {c,rd} = rn +  rm + 32'd0; // Target is not written.
         default:
         begin
                 `ifdef SIM
@@ -504,56 +502,37 @@ begin: blk3
         end
         endcase
 
-        flags_out = flags;
-
         if ( i_flag_upd )
         begin
-                if ( rd == 0 )                  flags_out[_Z] = 1;
-                if ( rd[31] )                   flags_out[_N] = 1;
-                if ( c )                        flags_out[_C] = 1;
+                if ( rd == 0 )                  z = 1;
+                if ( rd[31] )                   n = 1;
+                if ( c )                        c = 1;
 
                 // Overflow.
-                if ( rn[31] == rm[31] && (rd[31] != rn[31]) )
+                if ( ( op == ADD || op == ADC || op == CMN ) && (rn[31] == rm[31]) && (rd[31] != rn[31]) )
                 begin
-                        flags_out[_V] = 1;
+                        v = 1;
                 end 
+                else if ( (op == RSB || op == RSC) && (rm[31] == !rn[31]) && (rd[31] != rm[31] ) )
+                begin
+                        v = 1;
+                end
+                else if ( (op == SUB || op == SBC || op == CMP) && (rn[31] == !rm[31]) && (rd[31] != rn[31]) )
+                begin
+                        v = 1;
+                end
+                else
+                begin
+                        v = 0;
+                end
+        end
+        else
+        begin
+                {n,z,c,v} = flags;
         end
 
-        process_arithmetic_instructions = {flags_out, rd};
+        process_arithmetic_instructions = {n, z, c, v, rd};
 
-end
-endfunction
-
-// Determines if the current instruction is worthy of execution.
-function is_cc_satisfied 
-( 
-        input [3:0] cc,         // 31:28 of the instruction. 
-        input [3:0] fl          // CPSR flags.
-);
-reg ok,n,z,c,v;
-begin
-        {n,z,c,v} = fl;
-
-        case(cc)
-        EQ:     ok =  z;
-        NE:     ok = !z;
-        CS:     ok = c;
-        CC:     ok = !c;
-        MI:     ok = n;
-        PL:     ok = !n;
-        VS:     ok = v;
-        VC:     ok = !v;
-        HI:     ok = c && !z;
-        LS:     ok = !c || z;
-        GE:     ok = n^v;
-        LT:     ok = !(n^v);
-        GT:     ok = (n^v) && !z;
-        LE:     ok = (!(n^v)) || z;
-        AL:     ok = 1'd1;
-        NV:     ok = 1'd0;                    
-        endcase   
-
-        is_cc_satisfied = ok;
 end
 endfunction
 

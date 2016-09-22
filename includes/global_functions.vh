@@ -98,7 +98,7 @@ function is_cc_satisfied
         input [3:0] fl          // CPSR flags.
 );
 reg ok,n,z,c,v;
-begin
+begin: blk1
         {n,z,c,v} = fl;
 
         case(cc)
@@ -112,10 +112,10 @@ begin
         VC:     ok = !v;
         HI:     ok = c && !z;
         LS:     ok = !c || z;
-        GE:     ok = n^v;
-        LT:     ok = !(n^v);
-        GT:     ok = (n^v) && !z;
-        LE:     ok = (!(n^v)) || z;
+        GE:     ok = (n == v);
+        LT:     ok = (n != v);
+        GT:     ok = (n == v) && !z;
+        LE:     ok = (n != v) || z;
         AL:     ok = 1'd1;
         NV:     ok = 1'd0;                    
         endcase   

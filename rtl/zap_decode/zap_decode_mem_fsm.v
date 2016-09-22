@@ -104,6 +104,7 @@ begin
         o_instruction = i_instruction;
         o_instruction_valid = i_instruction_valid;
         reglist_nxt = reglist_ff;
+        o_stall_from_decode = 1'd0;
 
         case ( state_ff )
                 IDLE:

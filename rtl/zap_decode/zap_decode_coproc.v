@@ -56,7 +56,7 @@ localparam BUSY = 1;
 reg state_ff, state_nxt;
 reg cp_dav_nxt;
 reg [31:0] cp_word_nxt;
-reg cp_reg_nxt;
+reg [$clog2(PHY_REGS)-1:0] cp_reg_nxt;
 
 always @*
 begin
