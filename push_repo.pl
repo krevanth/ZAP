@@ -1,9 +1,11 @@
 #!/usr/bin/perl
 
-system('git add .');
+die "*E: Failed to perform GIT ADD...\n" if system('git add .');
 
-print "Enter commit message...\n";
+print "*I: Enter commit message...\n";
 my $message = <STDIN>;
 
-system("git commit -m \"$message\"");
-system('git push origin master');
+die "*E: Failed to perform GIT COMMIT...\n" if system("git commit -m \"$message\"");
+die "*E: Failed to push changes to master...\n" if system('git push origin master');
+
+print "All OK...\n";
