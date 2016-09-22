@@ -271,8 +271,8 @@ begin
                         o_swi_ff                         <= i_swi_ff;
                         o_mem_srcdest_index_ff           <= i_mem_srcdest_index_ff;
                         o_mem_srcdest_index_ff           <= i_mem_srcdest_index_ff;           
-                        o_mem_load_ff                    <= i_mem_load_ff;                    
-                        o_mem_store_ff                   <= i_mem_store_ff;                   
+                        o_mem_load_ff                    <= o_dav_nxt ? i_mem_load_ff : 1'd0;                    
+                        o_mem_store_ff                   <= o_dav_nxt ? i_mem_store_ff: 1'd0;                   
                         o_mem_unsigned_byte_enable_ff    <= i_mem_unsigned_byte_enable_ff;    
                         o_mem_signed_byte_enable_ff      <= i_mem_signed_byte_enable_ff;      
                         o_mem_signed_halfword_enable_ff  <= i_mem_signed_halfword_enable_ff;  
