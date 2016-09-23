@@ -329,7 +329,7 @@ u_zap_branch_predict
         .i_data_stall                   (i_data_stall),
         .i_clear_from_alu               (clear_from_alu),
         .i_confirm_from_alu             (confirm_from_alu),
-        .i_pc_from_alu                  (pc_from_alu),
+        .i_pc_from_alu                  (shifter_pc_plus_8_ff - 32'd8),     
         .i_inst                         (fetch_instruction),
         .i_val                          (fetch_valid),
         .i_abt                          (fetch_instr_abort),

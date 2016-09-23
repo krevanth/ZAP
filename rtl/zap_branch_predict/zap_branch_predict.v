@@ -164,24 +164,22 @@ begin: blk2
         // Based on feedback, we modify stuff.
         if ( i_clear_from_alu )
         begin
-                // Saturating adder.
                 case ( mem_ff[x] )
                 SNT: mem_nxt[x] = WNT;
                 WNT: mem_nxt[x] = WT;
-                WT:  mem_nxt[x] = ST;
-                ST:  mem_nxt[x] = ST;
+                WT:  mem_nxt[x] = WNT;
+                ST:  mem_nxt[x] = WT;
                 endcase
 
                 $display("BRANCH :: Branch predictor mispredicted local address %d, changing from %d to %d...", x, mem_ff[x], mem_nxt[x]);
         end
         else if ( i_confirm_from_alu )
         begin
-                // Saturating subtracter.
                 case ( mem_ff[x] )
                 SNT: mem_nxt[x] = SNT;
                 WNT: mem_nxt[x] = SNT;
-                WT:  mem_nxt[x] = WNT;
-                ST:  mem_nxt[x] = WT;
+                WT:  mem_nxt[x] = ST;
+                ST:  mem_nxt[x] = ST;
                 endcase
 
                 $display("BRANCH :: Branch predictor correctly predicted local address %d, changing from %d to %d...", x, mem_ff[x], mem_nxt[x]);

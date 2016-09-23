@@ -380,7 +380,7 @@ begin:bprblk1
         taken_nxt               = 1'd0;
         addr                    = $signed(arm_instruction[23:0]);
 
-        if ( arm_instruction[27:25] == 3'b101 )
+        if ( arm_instruction[27:25] == 3'b101 && arm_instruction_valid )
         begin
                 if ( i_bstate == WT || i_bstate == ST || arm_instruction[31:28] == AL ) // Taken or Strongly Taken or Always taken.
                 begin

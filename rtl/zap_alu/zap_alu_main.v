@@ -418,7 +418,7 @@ begin: blk1
                                         flags_nxt[T]     = i_switch_ff ? rd[0] : flags_ff[T];
 
                                         // Send confirmation message to branch predictor.
-                                        o_pc_from_alu      = i_pc_plus_8_ff - 32'd8;
+                                        o_pc_from_alu      = 32'd0;
                                         o_confirm_from_alu = 1'd1; 
                                 end
                         end
