@@ -43,6 +43,9 @@ module zap_decode_main #(
         input   wire                    i_clk,
         input   wire                    i_reset,
 
+        // Branch state.
+        input   wire    [1:0]           i_bstate,
+
         // Clear and stall signals. 
         input wire                      i_clear_from_writeback, // | Priority
         input wire                      i_data_stall,           // |
@@ -126,7 +129,14 @@ module zap_decode_main #(
         output wire  [31:0]                     o_copro_mode_ff,
         output wire                             o_copro_dav_ff,
         output wire  [31:0]                     o_copro_word_ff,
-        output wire  [$clog2(PHY_REGS)-1:0]     o_copro_reg_ff
+        output wire  [$clog2(PHY_REGS)-1:0]     o_copro_reg_ff,
+
+        // Branch.
+        output reg                              o_taken_ff,
+
+        // Clear from decode.
+        output reg                              o_clear_from_decode,
+        output reg [31:0]                       o_pc_from_decode
 );
 
 `include "cc.vh"
@@ -184,6 +194,8 @@ wire [31:0] cp_instruction;
 wire cp_instruction_valid;
 wire cp_irq;
 wire cp_fiq;
+
+reg taken_nxt;
 
 always @*
 begin
@@ -250,6 +262,7 @@ begin
                 o_pc_plus_8_ff                          <= i_pc_plus_8_ff;
                 o_switch_ff                             <= o_switch_nxt;
                 o_force32align_ff                       <= o_force32align_nxt;
+                o_taken_ff                              <= taken_nxt;
         end
 end
 
@@ -280,6 +293,7 @@ begin
                 o_und_ff                                <= 0;
                 o_switch_ff                             <= 0; 
                 o_force32align_ff                       <= 0;
+                o_taken_ff                              <= 0;
 end
 endtask
 
@@ -350,6 +364,41 @@ zap_decode_thumb u_zap_decode_thumb (
         .o_force32_align(o_force32align_nxt),
         .o_und(o_thumb_und_nxt)
 );
+
+// Branch states.
+localparam      SNT     =       0; // Strongly Not Taken.
+localparam      WNT     =       1; // Weakly Not Taken.
+localparam      WT      =       2; // Weakly Taken.
+localparam      ST      =       3; // Strongly Taken.
+
+always @*
+begin
+        o_clear_from_decode     = 1'd0;
+        o_pc_from_decode        = 32'd0;
+        taken_nxt               = 1'd0;
+
+        if ( arm_instruction[27:25] == 3'b101 )
+        begin
+                if ( i_bstate == WT || i_bstate == ST ) // Taken or Strongly Taken.
+                begin
+                        // Take the branch.
+                        o_clear_from_decode = 1'd1;
+
+                        // Predict new PC.
+                        o_pc_from_decode    = i_pc_plus_8_ff + (arm_instruction[23:0] << (arm_instruction[34] ? 1 : 2));
+
+                        // Set as taken.
+                        taken_nxt           = 1'd1;
+                end
+                else // Not Taken or Weakly Not Taken.
+                begin
+                        // Else dont.
+                        o_clear_from_decode = 1'd0;
+                        o_pc_from_decode    = 32'd0;
+                        taken_nxt           = 1'd0;
+                end
+        end
+end
 
 // This FSM handles LDM/STM/SWAP/SWAPB
 zap_decode_mem_fsm u_zap_mem_fsm (

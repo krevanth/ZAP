@@ -29,6 +29,7 @@ module zap_fetch_main
                 input wire i_stall_from_shifter,   // |
                 input wire i_stall_from_issue,     // |
                 input wire i_stall_from_decode,    // V Low Priority.
+                input wire i_clear_from_decode,    // V
 
                 // Comes from Wb.
                 input wire [31:0] i_pc_ff,               // Program counter.
@@ -45,7 +46,8 @@ module zap_fetch_main
                 output reg [31:0]  o_instruction,       // The 32-bit instruction.
                 output reg         o_valid,             // Instruction valid.
                 output reg         o_instr_abort,       // Indication of an abort.       
-                output reg [31:0]  o_pc_plus_8_ff       // PC ouput.
+                output reg [31:0]  o_pc_plus_8_ff,      // PC +8 ouput.
+                output reg [31:0]  o_pc_ff              // PC output.
 );
 
 `include "cpsr.vh"
@@ -69,6 +71,7 @@ begin
                 o_instr_abort   <= 1'd0;
                 sleep_ff        <= 1'd0;        // Wake unit up.
                 o_pc_plus_8_ff  <= 32'd8;
+                o_pc_ff         <= 32'd0;
         end
         else if ( i_clear_from_writeback )       
         begin   
@@ -88,6 +91,13 @@ begin
         else if ( i_stall_from_shifter )         begin end // Save state.
         else if ( i_stall_from_issue )           begin end // Save state.
         else if ( i_stall_from_decode)           begin end // Save state.
+        else if ( i_clear_from_decode )
+        begin
+                o_valid         <= 1'd0;
+                o_instr_abort   <= 1'd0;
+                o_instruction   <= 32'd0;
+                sleep_ff        <= 1'd0;
+        end
         else if ( sleep_ff )
         begin
                 o_valid         <= 1'd0;
@@ -113,6 +123,7 @@ begin
                 // Pump PC + 8 or 4 down the pipeline. The number depends on
                 // ARM/Thumb mode.
                 o_pc_plus_8_ff <= i_pc_ff + (i_cpsr_ff[T] ? 32'd4 : 32'd8);
+                o_pc_ff        <= i_pc_ff;
         end
 end
 

@@ -130,6 +130,7 @@ wire [31:0] fetch_instruction;  // Instruction from the fetch unit.
 wire        fetch_valid;        // Instruction valid from the fetch unit.
 wire        fetch_instr_abort;  // abort indicator.
 wire [31:0] fetch_pc_plus_8_ff; // PC + 8 generated from the fetch unit.
+wire [31:0] fetch_pc_ff;        // PC generated from fetch unit.
 
 // Decode
 wire [3:0]                      decode_condition_code;
@@ -157,6 +158,9 @@ wire [31:0]                     decode_pc_plus_8_ff;
 wire                            decode_switch_ff;
 wire                            decode_force32_ff;
 wire                            decode_und_ff;
+wire                            clear_from_decode;
+wire [31:0]                     pc_from_decode;
+wire                            decode_taken_ff;
 
 // Issue
 wire [$clog2(PHY_REGS)-1:0]     issue_rd_index_0, 
@@ -194,6 +198,7 @@ wire                            issue_shifter_disable_ff;
 wire                            issue_switch_ff;
 wire                            issue_force32_ff;
 wire                            issue_und_ff;
+wire                            issue_taken_ff;
 
 wire [$clog2(PHY_REGS)-1:0]     rd_index_0;
 wire [$clog2(PHY_REGS)-1:0]     rd_index_1;
@@ -230,6 +235,7 @@ wire shifter_force32_ff;
 wire shifter_und_ff;
 wire stall_from_shifter;
 wire shifter_use_old_carry_ff;
+wire shifter_taken_ff;
 
 // ALU
 wire [$clog2(SHIFT_OPS)-1:0]    alu_shift_operation_ff;
@@ -250,6 +256,7 @@ wire                            alu_mem_load_ff;
 wire                            alu_flag_update_ff;
 wire                            alu_und_ff;
 wire [31:0]                     alu_cpsr_nxt; //TODO: Eliminate this  and place MAC in ALU itself.
+wire                            confirm_from_alu;
 
 // Memory
 wire [31:0]                     memory_alu_result_ff;
@@ -275,16 +282,23 @@ wire [31:0] rd_data_2;
 wire [31:0] rd_data_3;
 wire [31:0] cpsr_nxt, cpsr;
 
+// Predictor.
+wire [31:0] bp_inst;
+wire bp_val;
+wire bp_abt;
+wire [31:0] bp_pc_plus_8;
+wire [1:0] bp_state;
+
 assign o_cpsr           = alu_flags_ff;
 
 // FETCH STAGE //
-
 zap_fetch_main 
 u_zap_fetch_main (
         // Input.
         .i_clk                          (i_clk),
         .i_reset                        (i_reset),
         .i_clear_from_writeback         (clear_from_writeback),
+        .i_clear_from_decode            (clear_from_decode),
         .i_data_stall                   (i_data_stall),
         .i_clear_from_alu               (clear_from_alu),
         .i_stall_from_shifter           (stall_from_shifter),
@@ -300,7 +314,39 @@ u_zap_fetch_main (
         .o_instruction                  (fetch_instruction),
         .o_valid                        (fetch_valid),
         .o_instr_abort                  (fetch_instr_abort),
-        .o_pc_plus_8_ff                 (fetch_pc_plus_8_ff)
+        .o_pc_plus_8_ff                 (fetch_pc_plus_8_ff),
+        .o_pc_ff                        (fetch_pc_ff)
+);
+
+// PREDICTOR STAGE //
+zap_branch_predict
+u_zap_branch_predict
+(
+        // Input.
+        .i_clk                          (i_clk),
+        .i_reset                        (i_reset),
+        .i_clear_from_writeback         (clear_from_writeback),
+        .i_data_stall                   (i_data_stall),
+        .i_clear_from_alu               (clear_from_alu),
+        .i_confirm_from_alu             (confirm_from_alu),
+        .i_pc_from_alu                  (pc_from_alu),
+        .i_inst                         (fetch_instruction),
+        .i_val                          (fetch_valid),
+        .i_abt                          (fetch_instr_abort),
+        .i_pc_plus_8                    (fetch_pc_plus_8_ff),
+        .i_pc                           (fetch_pc_ff),
+
+        .i_stall_from_shifter           (stall_from_shifter),
+        .i_stall_from_issue             (stall_from_issue),
+        .i_stall_from_decode            (stall_from_decode),
+        .i_clear_from_decode            (clear_from_decode),
+
+        // Output.
+        .o_inst_ff                      (bp_inst),
+        .o_val_ff                       (bp_val),
+        .o_abt_ff                       (bp_abt),
+        .o_pc_plus_8_ff                 (bp_pc_plus_8),
+        .o_bstate_ff                    (bp_state)
 );
 
 // DECODE STAGE //
@@ -322,11 +368,13 @@ u_zap_decode_main (
         .i_stall_from_issue             (stall_from_issue),
         .i_irq                          (i_irq),
         .i_fiq                          (i_fiq),
-        .i_abt                          (fetch_instr_abort),
-        .i_pc_plus_8_ff                 (fetch_pc_plus_8_ff),
+
+        .i_abt                          (bp_abt),
+        .i_pc_plus_8_ff                 (bp_pc_plus_8),
         .i_cpu_mode                     (o_cpsr),
-        .i_instruction                  (fetch_instruction),
-        .i_instruction_valid            (fetch_valid),
+        .i_instruction                  (bp_inst),
+        .i_instruction_valid            (bp_val),
+        .i_bstate                       (bp_state),
 
         .i_copro_done                   (i_copro_done),
         .i_pipeline_dav                 (
@@ -368,7 +416,12 @@ u_zap_decode_main (
         .o_copro_mode_ff                (o_copro_mode),
         .o_copro_dav_ff                 (o_copro_dav),
         .o_copro_word_ff                (o_copro_word),
-        .o_copro_reg_ff                 (o_copro_reg)
+        .o_copro_reg_ff                 (o_copro_reg),
+
+        .o_clear_from_decode            (clear_from_decode),
+        .o_pc_from_decode               (pc_from_decode),
+
+        .o_taken_ff                     (decode_taken_ff)
 );
 
 // ISSUE //
@@ -383,6 +436,9 @@ u_zap_issue_main
 (
         .i_und_ff(decode_und_ff),
         .o_und_ff(issue_und_ff),
+
+        .i_taken_ff(decode_taken_ff),
+        .o_taken_ff(issue_taken_ff),
 
         // Inputs
         .i_clk                          (i_clk),
@@ -491,6 +547,9 @@ zap_shifter_main #(
 )
 u_zap_shifter_main
 (
+        .i_taken_ff(issue_taken_ff),
+        .o_taken_ff(shifter_taken_ff),
+
         .i_und_ff(issue_und_ff),
         .o_und_ff(shifter_und_ff),
 
@@ -589,6 +648,9 @@ zap_alu_main #(
 )
 u_zap_alu_main
 (
+        .i_taken_ff                      (shifter_taken_ff),
+        .o_confirm_from_alu              (confirm_from_alu),
+
         .i_und_ff(shifter_und_ff),
         .o_und_ff(alu_und_ff),
 

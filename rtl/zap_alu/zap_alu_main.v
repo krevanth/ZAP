@@ -33,6 +33,9 @@ module zap_alu_main #(
         input wire                         i_clk,                  // ZAP clock.
         input wire                         i_reset,                // ZAP synchronous active high reset.
 
+        // Taken.
+        input wire                         i_taken_ff,
+
         // From CPSR. ( I, F, T, Mode ) - From WB.
         input wire  [31:0]                 i_cpsr_ff,
         input wire  [31:0]                 i_cpsr_nxt,
@@ -105,6 +108,8 @@ module zap_alu_main #(
         output reg [FLAG_WDT-1:0]           o_flags_nxt,                // Next output flags (CPSR) - For multiply.
 
         output reg                          o_flag_update_ff,
+
+        output reg                          o_confirm_from_alu,
 
         output reg  [$clog2(PHY_REGS)-1:0]  o_mem_srcdest_index_ff,     
         output reg                          o_mem_load_ff,                     
@@ -310,6 +315,8 @@ begin: blk1
        flags_nxt                = flags_ff;
        o_destination_index_nxt  = i_destination_index_ff;
 
+        o_confirm_from_alu      = 1'd0;
+
        o_dav_nxt = is_cc_satisfied ( i_condition_code_ff, flags_ff[31:28] );
 
         if (            opcode == AND || 
@@ -375,17 +382,46 @@ begin: blk1
                                 $display($time, "ALU :: PC write with flag update! Unit put to sleep...");
                         `endif
                         sleep_nxt = 1'd1;
+
+                        // No need to tell the predictor anything.
                 end
                 else // Without flag updates!
                 begin
                         `ifdef SIM
                                 $display($time, "ALU :: A quick branch! Possibly a BX i_switch_ff = %d...", i_switch_ff);
                         `endif
-                        // Quick branches!
-                        o_destination_index_nxt = PHY_RAZ_REGISTER;                     // Dumping ground since PC change is done.
-                        o_clear_from_alu        = 1'd1;
-                        o_pc_from_alu           = rd;
-                        flags_nxt[T]            = i_switch_ff ? rd[0] : flags_ff[T];   // Thumb/ARM state if i_switch_ff = 1.
+
+                        if ( !i_taken_ff ) // Incorrectly predicted.
+                        begin
+                                // Quick branches - Flush everything before.
+                                o_destination_index_nxt = PHY_RAZ_REGISTER;                     // Dumping ground since PC change is done.
+                                o_clear_from_alu        = 1'd1;
+                                o_pc_from_alu           = rd;
+                                flags_nxt[T]            = i_switch_ff ? rd[0] : flags_ff[T];   // Thumb/ARM state if i_switch_ff = 1.
+                        end
+                        else    // Correctly predicted.
+                        begin
+                                // If thumb bit changes, flush everything before
+                                if ( i_switch_ff )
+                                begin
+                                        // Quick branches!
+                                        o_destination_index_nxt = PHY_RAZ_REGISTER;                     // Dumping ground since PC change is done.
+                                        o_clear_from_alu        = 1'd1;
+                                        o_pc_from_alu           = rd;
+                                        flags_nxt[T]            = i_switch_ff ? rd[0] : flags_ff[T];   // Thumb/ARM state if i_switch_ff = 1.
+                                end
+                                else
+                                begin
+                                        // No mode change, do not change anything.
+                                        o_destination_index_nxt = PHY_RAZ_REGISTER;
+                                        o_clear_from_alu = 1'd0;
+                                        flags_nxt[T]     = i_switch_ff ? rd[0] : flags_ff[T];
+
+                                        // Send confirmation message to branch predictor.
+                                        o_pc_from_alu      = i_pc_plus_8_ff - 32'd8;
+                                        o_confirm_from_alu = 1'd1; 
+                                end
+                        end
                 end
         end
         else if ( i_mem_srcdest_index_ff == ARCH_PC && o_dav_nxt && i_mem_load_ff)

@@ -35,6 +35,9 @@ module zap_issue_main
         parameter SHIFT_OPS = 5
 )
 (
+        input wire                              i_taken_ff,
+        output reg                              o_taken_ff,
+
         // Clock and reset.
         input  wire                             i_clk,    // ZAP clock.
         input  wire                             i_reset, // Active high sync.
@@ -242,6 +245,7 @@ begin
         o_switch_ff                       <= 0;
         o_force32align_ff                 <= 0;
         o_und_ff                          <= 0;
+        o_taken_ff                        <= 0;
 end
 else if ( i_clear_from_writeback )
 begin
@@ -283,6 +287,7 @@ begin
         o_switch_ff                       <= 0;
         o_force32align_ff                 <= 0;
         o_und_ff                          <= 0;
+        o_taken_ff                        <= 0;
 end
 else if ( i_stall_from_shifter )
 begin
@@ -320,6 +325,7 @@ begin
         o_switch_ff                       <= 0;
         o_force32align_ff                 <= 0;
         o_und_ff                          <= 0;
+        o_taken_ff                        <= 0;
 end
 else
 begin
@@ -353,6 +359,7 @@ begin
         o_switch_ff                       <= i_switch_ff;
         o_force32align_ff                 <= i_force32align_ff;
         o_und_ff                          <= i_und_ff;
+        o_taken_ff                        <= i_taken_ff;
 end
 end
 

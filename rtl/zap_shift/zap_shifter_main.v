@@ -22,6 +22,10 @@ module zap_shifter_main
         input wire                               i_clk,
         input wire                               i_reset,
 
+        // Taken.
+        input wire                               i_taken_ff,
+        output reg                               o_taken_ff,
+
         // ==============================
         // Stall and clear.
         // ==============================
@@ -210,6 +214,7 @@ begin
            o_und_ff                          <= 0;
            o_force32align_ff                 <= 0;
            o_use_old_carry_ff                <= 0;
+           o_taken_ff                        <= 0;
         end
         else if ( i_clear_from_writeback )
         begin
@@ -241,6 +246,7 @@ begin
            o_und_ff                          <= 0;
            o_force32align_ff                 <= 0;
            o_use_old_carry_ff                <= 0;
+           o_taken_ff                        <= 0;
         end
         else if ( i_data_stall )
         begin
@@ -276,6 +282,7 @@ begin
            o_und_ff                          <= 0;
            o_force32align_ff                 <= 0;
            o_use_old_carry_ff                <= 0;
+           o_taken_ff                        <= 0;
         end
         else
         begin
@@ -307,6 +314,7 @@ begin
            o_und_ff                          <= i_und_ff;
            o_force32align_ff                 <= i_force32align_ff;
            o_use_old_carry_ff                <= old_carry_nxt;
+           o_taken_ff                        <= i_taken_ff;
    end
 end
 
