@@ -286,7 +286,7 @@ task decode_mult( input [34:0] i_instruction );
 begin: tskDecodeMult
 
         `ifdef SIM
-                $display($time, "%m: MLT decode...");
+                $display($time, "%m: MLT 32x32 -> 32 decode...");
         `endif
 
         o_condition_code        =       i_instruction[31:28];
