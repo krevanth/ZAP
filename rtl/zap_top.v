@@ -804,6 +804,9 @@ u_zap_regf
         .i_stall_from_issue     (stall_from_issue),
         .i_stall_from_shifter   (stall_from_shifter),
 
+        .i_clear_from_decode    (clear_from_decode),
+        .i_pc_from_decode       (pc_from_decode),
+
         .i_code_stall           (!i_valid),
 
         .i_flag_update_ff       (memory_flag_update_ff),

@@ -41,6 +41,8 @@ module zap_register_file #(
         input wire                           i_stall_from_decode,
         input wire                           i_stall_from_issue,
         input wire                           i_stall_from_shifter,
+        input wire                           i_clear_from_decode,
+        input wire      [31:0]               i_pc_from_decode,
 
         // Flag update.
         input wire                           i_flag_update_ff,
@@ -175,6 +177,11 @@ begin: blk1
                 r_nxt[PHY_PC] = i_pc_from_alu;
                 $display("Clear from ALU!");
         end
+        else if ( i_clear_from_decode )
+        begin
+                r_nxt[PHY_PC] = i_pc_from_decode;
+                $display("Clear from decode!");
+        end
         else if ( i_code_stall )
         begin
                 r_nxt[PHY_PC] = r_ff[PHY_PC];
@@ -185,11 +192,6 @@ begin: blk1
                 r_nxt[PHY_PC] = r_ff[PHY_PC];                        
                 $display("Data Stall!");
         end
-        else if ( i_stall_from_decode )
-        begin
-                r_nxt[PHY_PC] = r_ff[PHY_PC];
-                $display("Stall from decode!");
-        end
         else if ( i_stall_from_issue )
         begin
                 r_nxt[PHY_PC] = r_ff[PHY_PC];
@@ -199,6 +201,11 @@ begin: blk1
         begin
                 r_nxt[PHY_PC] = r_ff[PHY_PC];
                 $display("Stall from shifter!");
+        end
+        else if ( i_stall_from_decode )
+        begin
+                r_nxt[PHY_PC] = r_ff[PHY_PC];
+                $display("Stall from decode!");
         end
         else
         begin

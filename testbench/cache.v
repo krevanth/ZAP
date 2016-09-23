@@ -59,18 +59,28 @@ begin
         end
 end
 
+initial
+begin
+        o_miss = 1'd1;
+        o_hit1 = 1'd0;
+end
+
+always @ (negedge i_clk)
+begin
+        o_miss = $random;               // Data cache misses are fine!!!
+        o_hit1 = $random;
+end
+
 // Data read port.
 always @*
 begin
         // Reads are combinational.
         if ( i_rd_en || i_wr_en )
         begin
-                o_miss = 0;
                 o_data = {mem[i_address+3],mem[i_address+2],mem[i_address+1],mem[i_address]};
         end
         else
         begin
-                o_miss = 0;
                 o_data = 0;
         end
 end
@@ -78,7 +88,6 @@ end
 // Instruction read port.
 always @*
 begin
-        o_hit1 = 1;
         o_data1 = {mem[i_address1+3],mem[i_address1+2],mem[i_address1+1],mem[i_address1]};
         o_abort1 = 0;
         iacc = 0;

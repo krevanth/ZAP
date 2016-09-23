@@ -171,6 +171,8 @@ begin: blk2
                 WT:  mem_nxt[x] = ST;
                 ST:  mem_nxt[x] = ST;
                 endcase
+
+                $display("BRANCH :: Branch predictor mispredicted local address %d, changing from %d to %d...", x, mem_ff[x], mem_nxt[x]);
         end
         else if ( i_confirm_from_alu )
         begin
@@ -181,6 +183,8 @@ begin: blk2
                 WT:  mem_nxt[x] = WNT;
                 ST:  mem_nxt[x] = WT;
                 endcase
+
+                $display("BRANCH :: Branch predictor correctly predicted local address %d, changing from %d to %d...", x, mem_ff[x], mem_nxt[x]);
         end
 end
 
