@@ -4,9 +4,9 @@ License: MIT License.
 ------------------------------------------------------------------------------
 
 ZAP is an ARM processor compatible with v4T of the ARM instruction set. The
-processor is built around a 7 stage pipeline:
+processor is built around an 8 stage pipeline:
 
-    FETCH => DECODE => ISSUE => SHIFTER => ALU => MEMORY => WRITEBACK
+    FETCH => PREDICT => DECODE => ISSUE => SHIFTER => ALU => MEMORY => WRITEBACK
 
 ARM ISA Version         : v4 
 THUMB ISA Version       : v1 
