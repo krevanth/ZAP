@@ -18,11 +18,11 @@ a loaded register to issue 1 cycle early. Multiplication takes 4 clock cycles.
 Features:
 - Supports v4 ARM instructions.
 - Supports v1 Thumb instructions.
+- Branch prediction supported.
 
 Current limitations :
 - In Alpha stage of development. Very experimental and buggy at the moment.
 - Not supported: UMLAL, UMULL, SMULL, SMLAL.
-- No branch prediction.
 - No MMU or cache is provided but may be attached.
 
 A simple dual port cache model is provided in testbench/cache.v for simulation
