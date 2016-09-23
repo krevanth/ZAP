@@ -379,7 +379,7 @@ begin
 
         if ( arm_instruction[27:25] == 3'b101 )
         begin
-                if ( i_bstate == WT || i_bstate == ST ) // Taken or Strongly Taken.
+                if ( i_bstate == WT || i_bstate == ST || arm_instruction[31:28] == AL ) // Taken or Strongly Taken or Always taken.
                 begin
                         // Take the branch.
                         o_clear_from_decode = 1'd1;
