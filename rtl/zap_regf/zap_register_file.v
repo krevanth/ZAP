@@ -177,16 +177,6 @@ begin: blk1
                 r_nxt[PHY_PC] = i_pc_from_alu;
                 $display("Clear from ALU!");
         end
-        else if ( i_clear_from_decode )
-        begin
-                r_nxt[PHY_PC] = i_pc_from_decode;
-                $display("Clear from decode!");
-        end
-        else if ( i_code_stall )
-        begin
-                r_nxt[PHY_PC] = r_ff[PHY_PC];
-                $display("Code Stall!");
-        end
         else if ( i_data_stall )
         begin
                 r_nxt[PHY_PC] = r_ff[PHY_PC];                        
@@ -202,10 +192,20 @@ begin: blk1
                 r_nxt[PHY_PC] = r_ff[PHY_PC];
                 $display("Stall from shifter!");
         end
+        else if ( i_clear_from_decode )
+        begin
+                r_nxt[PHY_PC] = i_pc_from_decode;
+                $display("Clear from decode!");
+        end
         else if ( i_stall_from_decode )
         begin
                 r_nxt[PHY_PC] = r_ff[PHY_PC];
                 $display("Stall from decode!");
+        end
+        else if ( i_code_stall )
+        begin
+                r_nxt[PHY_PC] = r_ff[PHY_PC];
+                $display("Code Stall!");
         end
         else
         begin

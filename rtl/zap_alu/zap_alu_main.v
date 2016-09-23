@@ -314,8 +314,7 @@ begin: blk1
        sleep_nxt                = sleep_ff;
        flags_nxt                = flags_ff;
        o_destination_index_nxt  = i_destination_index_ff;
-
-        o_confirm_from_alu      = 1'd0;
+       o_confirm_from_alu      = 1'd0;
 
        o_dav_nxt = is_cc_satisfied ( i_condition_code_ff, flags_ff[31:28] );
 

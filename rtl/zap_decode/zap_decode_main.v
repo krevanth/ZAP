@@ -374,11 +374,17 @@ localparam      ST      =       3; // Strongly Taken.
 always @*
 begin:bprblk1
         reg [31:0] addr;
+        reg [31:0] addr_final;
 
         o_clear_from_decode     = 1'd0;
         o_pc_from_decode        = 32'd0;
         taken_nxt               = 1'd0;
         addr                    = $signed(arm_instruction[23:0]);
+        
+        if ( arm_instruction[34] )
+                addr_final = addr << 1;
+        else
+                addr_final = addr << 2;
 
         if ( arm_instruction[27:25] == 3'b101 && arm_instruction_valid )
         begin
@@ -388,7 +394,7 @@ begin:bprblk1
                         o_clear_from_decode = 1'd1;
 
                         // Predict new PC.
-                        o_pc_from_decode    = i_pc_plus_8_ff + (addr << (arm_instruction[34] ? 1 : 2));
+                        o_pc_from_decode    = i_pc_plus_8_ff + addr_final;
 
                         // Set as taken.
                         taken_nxt           = 1'd1;

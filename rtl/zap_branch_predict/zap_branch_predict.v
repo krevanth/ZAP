@@ -22,9 +22,9 @@ module zap_branch_predict
         input wire              i_clear_from_writeback,
         input wire              i_data_stall,
         input wire              i_clear_from_alu,
-        input wire   [31:0]     i_pc,
+        input wire   [31:0]     i_pc,                   // PC from fetch. Not added 8!.
         input wire              i_confirm_from_alu,
-        input wire   [31:0]     i_pc_from_alu,          // PC sent from ALU on both clear and confirm. For confirm, ALU subtracts 8 internally.
+        input wire   [31:0]     i_pc_from_alu,          // PC sent from ALU on both clear and confirm. For confirm, ALU subtracts 8 internally before giving this.
 
         input wire              i_stall_from_issue,
         input wire              i_stall_from_shifter,
@@ -44,11 +44,15 @@ module zap_branch_predict
         output reg [31:0]       o_pc_plus_8_ff,
 
         // Branch state.
-        output reg  [1:0]       o_bstate_ff        //00 - No prediction, 01 - Not taken, 10 - Taken, 11 - RESERVED(NO PREDICTION).
+        output reg  [1:0]       o_bstate_ff        
 );
 
 // For Thumb bit position.
 `include "cpsr.vh"
+
+`ifdef SIM
+        reg [1:0] w134;
+`endif
 
 // Branch states.
 localparam      SNT     =       0; // Strongly Not Taken.
@@ -62,6 +66,10 @@ reg     [11:0] offset_ff, offset_nxt;
 // Branch memory. Common for ARM and Thumb.
 reg [1:0] mem_ff  [511:0];
 reg [1:0] mem_nxt [511:0];
+
+`ifdef SIM
+        assign w134 = mem_ff[134];
+`endif
 
 // Mundane outputs.
 always @ (posedge i_clk)
@@ -128,6 +136,8 @@ always @ (posedge i_clk)
 begin:blkBRAMSeq
         integer i;
 
+        // Update ONLY if there is a confirm from ALU and no data stall.
+          
         for(i=0;i<512;i=i+1)
                 mem_ff[i] <= mem_nxt[i];
 end
@@ -161,28 +171,35 @@ begin: blk2
                 mem_nxt[i] = mem_ff[i];
         end
 
-        // Based on feedback, we modify stuff.
-        if ( i_clear_from_alu )
+        if ( !i_data_stall ) // If there isn't a data stall.
         begin
-                case ( mem_ff[x] )
-                SNT: mem_nxt[x] = WNT;
-                WNT: mem_nxt[x] = WT;
-                WT:  mem_nxt[x] = WNT;
-                ST:  mem_nxt[x] = WT;
-                endcase
+                // Based on feedback, we modify stuff.
+                if ( i_clear_from_alu )
+                begin
+                        case ( mem_ff[x] )
+                        SNT: mem_nxt[x] = WNT;
+                        WNT: mem_nxt[x] = WT;
+                        WT:  mem_nxt[x] = WNT;
+                        ST:  mem_nxt[x] = WT;
+                        endcase
 
-                $display("BRANCH :: Branch predictor mispredicted local address %d, changing from %d to %d...", x, mem_ff[x], mem_nxt[x]);
-        end
-        else if ( i_confirm_from_alu )
-        begin
-                case ( mem_ff[x] )
-                SNT: mem_nxt[x] = SNT;
-                WNT: mem_nxt[x] = SNT;
-                WT:  mem_nxt[x] = ST;
-                ST:  mem_nxt[x] = ST;
-                endcase
+                        `ifdef SIM
+                                $display($time, "BRANCH :: Branch predictor mispredicted local address %d, changing from %d to %d...", i_pc_from_alu, mem_ff[x], mem_nxt[x]);
+                        `endif
+                end
+                else if ( i_confirm_from_alu )
+                begin
+                        case ( mem_ff[x] )
+                        SNT: mem_nxt[x] = SNT;
+                        WNT: mem_nxt[x] = SNT;
+                        WT:  mem_nxt[x] = ST;
+                        ST:  mem_nxt[x] = ST;
+                        endcase
 
-                $display("BRANCH :: Branch predictor correctly predicted local address %d, changing from %d to %d...", x, mem_ff[x], mem_nxt[x]);
+                        `ifdef SIM
+                                $display($time, "BRANCH :: Branch predictor correctly predicted local address %d, changing from %d to %d...", i_pc_from_alu, mem_ff[x], mem_nxt[x]);
+                        `endif
+                end
         end
 end
 
