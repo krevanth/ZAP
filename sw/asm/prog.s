@@ -44,6 +44,13 @@ mov r9, #10
 mov r10, #11
 mov r11, #12
 mov r12, #13
+
+// Make R10 and R11 = 13.
+str r12, [sp]
+ldr r11, [sp]
+str r11, [sp]
+ldr r10, [sp]
+
 mcr p15, 0, r0, c7, c7, 0
 b prog
 
