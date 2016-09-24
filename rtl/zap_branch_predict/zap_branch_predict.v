@@ -44,7 +44,7 @@ module zap_branch_predict
         output reg [31:0]       o_pc_plus_8_ff,
 
         // Branch state.
-        output reg  [1:0]       o_bstate_ff        
+        output reg              o_taken_ff        
 );
 
 // For Thumb bit position.
@@ -62,6 +62,9 @@ localparam      ST      =       3; // Strongly Taken.
 
 // Offset (For Thumb)
 reg     [11:0] offset_ff, offset_nxt;
+
+// Taken nxt.
+reg            taken_nxt;
 
 // Branch memory. Common for ARM and Thumb.
 reg [1:0] mem_ff  [511:0];
@@ -113,6 +116,7 @@ begin
                 o_val_ff        <= i_val;
                 o_abt_ff        <= i_abt;
                 o_pc_plus_8_ff  <= i_pc_plus_8; 
+                o_taken_ff      <= taken_nxt;
         end
 end
 
@@ -123,13 +127,14 @@ begin
         o_val_ff        <= 1'd0;
         o_abt_ff        <= 1'd0;
         o_pc_plus_8_ff  <= 32'd8;
+        o_taken_ff      <= 1'd0;
 end
 endtask
 
 // The output is stock read from memory.
-always @ (posedge i_clk)  
+always @*
 begin      
-        o_bstate_ff <= mem_ff [ i_pc[9:1] ];
+        taken_nxt = (mem_ff [ i_pc[9:1] ]) >> 1;
 end
 
 always @ (posedge i_clk)     

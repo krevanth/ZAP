@@ -44,7 +44,7 @@ module zap_decode_main #(
         input   wire                    i_reset,
 
         // Branch state.
-        input   wire    [1:0]           i_bstate,
+        input   wire                    i_taken,
 
         // Clear and stall signals. 
         input wire                      i_clear_from_writeback, // | Priority
@@ -314,7 +314,7 @@ u_zap_decode_coproc
         .i_reset(i_reset),
         .i_irq(i_irq),
         .i_fiq(i_fiq),
-        .i_instruction(i_instruction),
+        .i_instruction(i_instruction_valid ? i_instruction : 32'd0),
         .i_valid(i_instruction_valid),
         .i_cpsr_ff(i_cpu_mode),
 
@@ -388,7 +388,7 @@ begin:bprblk1
 
         if ( arm_instruction[27:25] == 3'b101 && arm_instruction_valid )
         begin
-                if ( i_bstate == WT || i_bstate == ST || arm_instruction[31:28] == AL ) // Taken or Strongly Taken or Always taken.
+                if ( i_taken || arm_instruction[31:28] == AL ) // Taken or Strongly Taken or Always taken.
                 begin
                         // Take the branch.
                         o_clear_from_decode = 1'd1;

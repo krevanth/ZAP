@@ -287,7 +287,7 @@ wire [31:0] bp_inst;
 wire bp_val;
 wire bp_abt;
 wire [31:0] bp_pc_plus_8;
-wire [1:0] bp_state;
+wire       bp_state;
 
 assign o_cpsr           = alu_flags_ff;
 
@@ -346,7 +346,7 @@ u_zap_branch_predict
         .o_val_ff                       (bp_val),
         .o_abt_ff                       (bp_abt),
         .o_pc_plus_8_ff                 (bp_pc_plus_8),
-        .o_bstate_ff                    (bp_state)
+        .o_taken_ff                     (bp_state)
 );
 
 // DECODE STAGE //
@@ -374,7 +374,7 @@ u_zap_decode_main (
         .i_cpu_mode                     (o_cpsr),
         .i_instruction                  (bp_inst),
         .i_instruction_valid            (bp_val),
-        .i_bstate                       (bp_state),
+        .i_taken                        (bp_state),
 
         .i_copro_done                   (i_copro_done),
         .i_pipeline_dav                 (

@@ -373,9 +373,9 @@ begin: blk1
                 o_pc_from_alu           = i_pc_plus_8_ff - 32'd4;
                 flags_nxt[`CPSR_MODE]   = (flags_nxt[`CPSR_MODE] == USR) ? USR : flags_nxt[`CPSR_MODE]; // Security.
         end
-        else if ( i_destination_index_ff == ARCH_PC && o_dav_nxt)
+        else if ( i_destination_index_ff == ARCH_PC )
         begin
-                if ( i_flag_update_ff ) // Unit sleeps since this is handled in WB.
+                if ( i_flag_update_ff && o_dav_nxt ) // Unit sleeps since this is handled in WB. Taken :: flag_update
                 begin
                         `ifdef SIM
                                 $display($time, "ALU :: PC write with flag update! Unit put to sleep...");
@@ -384,7 +384,7 @@ begin: blk1
 
                         // No need to tell the predictor anything.
                 end
-                else // Without flag updates!
+                else if ( o_dav_nxt ) // Taken :: Without flag updates!
                 begin
                         `ifdef SIM
                                 $display($time, "ALU :: A quick branch! Possibly a BX i_switch_ff = %d...", i_switch_ff);
@@ -420,6 +420,20 @@ begin: blk1
                                         o_pc_from_alu      = 32'd0;
                                         o_confirm_from_alu = 1'd1; 
                                 end
+                        end
+                end
+                else    // Branch not taken
+                begin
+                        if ( i_taken_ff ) // Wrong prediction.
+                        begin
+                                o_clear_from_alu = 1'd1;
+                                o_pc_from_alu    = i_pc_plus_8_ff - 32'd4; // Go to the next instruction.
+                        end
+                        else
+                        begin
+                                // Correct prediction.
+                                o_clear_from_alu = 1'd0;
+                                o_pc_from_alu    = 32'd0;
                         end
                 end
         end
