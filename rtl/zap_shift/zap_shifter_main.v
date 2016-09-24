@@ -152,6 +152,9 @@ module zap_shifter_main
 `include "opcodes.vh"
 `include "index_immed.vh"
 `include "cc.vh"
+`include "regs.vh"
+`include "modes.vh"
+`include "global_functions.vh"
 
 wire [31:0] shout;
 wire shcarry;
@@ -165,22 +168,26 @@ wire        old_carry_nxt;
 // The MAC unit.
 zap_multiply
 #(
-        .PHY_REGS(PHY_REGS)
+        .PHY_REGS(PHY_REGS),
+        .ALU_OPS(ALU_OPS)
 )
 u_zap_multiply
 (
         .i_clk(i_clk),
         .i_reset(i_reset),
 
-        .i_clear(i_clear_from_writeback || i_clear_from_alu),
-        .i_start( i_alu_operation_ff == MLA ),
+        .i_data_stall(i_data_stall),
+        .i_clear_from_writeback(i_clear_from_writeback),
+        .i_clear_from_alu(i_clear_from_alu),
 
-        .i_cc(i_condition_code_ff),
-        .i_cpsr_nxt(i_cpsr_nxt),
+        .i_alu_operation_ff(i_alu_operation_ff),
+
+        .i_cc_satisfied ( is_cc_satisfied ( i_condition_code_ff, i_cpsr_nxt[31:28] ) ),
 
         .i_rm(i_alu_source_value_ff),
         .i_rn(i_shift_length_value_ff),
-        .i_rs(i_shift_source_value_ff), // rm.rs + rn
+        .i_rs(i_shift_source_value_ff), // rm.rs + {rh,rn}
+        .i_rh(i_mem_srcdest_value_ff),
 
         .o_rd(mult_out),
         .o_busy(o_stall_from_shifter)

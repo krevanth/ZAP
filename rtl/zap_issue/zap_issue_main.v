@@ -394,7 +394,16 @@ begin
 
                         get = index[31:0]; 
         end
-        else if   ( index == ARCH_PC )          // Catch PC here.
+        else if ( index == PHY_RAZ_REGISTER )
+        begin
+               // Return 0. 
+                `ifdef SIM
+                        $display($time, "RAZ returned 0...");
+                `endif 
+
+                get = 32'd0;
+        end
+        else if   ( index == ARCH_PC )          // Catch PC here. ARCH = PHY so no problem.
         begin
                         get = i_pc_plus_8_ff;
 
@@ -467,7 +476,7 @@ end
 
 always @*
 begin
-        // Look for reads from registers to be loaded from memory. Three
+        // Look for reads from registers to be loaded from memory. Four
         // register sources may cause a load lock.
         load_lock =     determine_load_lock 
                         ( i_alu_source_ff  , o_mem_srcdest_index_ff, o_condition_code_ff, 
@@ -483,6 +492,12 @@ begin
                         ||
                         determine_load_lock 
                         ( i_shift_length_ff, o_mem_srcdest_index_ff, 
+                        o_condition_code_ff, o_mem_load_ff, i_shifter_mem_srcdest_index_ff, 
+                        i_alu_dav_nxt, i_shifter_mem_load_ff, i_alu_mem_srcdest_index_ff, 
+                        i_alu_dav_ff, i_alu_mem_load_ff )
+                        ||
+                        determine_load_lock
+                        ( i_mem_srcdest_index_ff, o_mem_srcdest_index_ff, 
                         o_condition_code_ff, o_mem_load_ff, i_shifter_mem_srcdest_index_ff, 
                         i_alu_dav_nxt, i_shifter_mem_load_ff, i_alu_mem_srcdest_index_ff, 
                         i_alu_dav_ff, i_alu_mem_load_ff );
@@ -508,10 +523,12 @@ begin
                         )) || 
                         (
                                 // If it is a multiply and stuff is locked.
-                                i_alu_operation_ff == MLA && (
-                                shifter_lock_check ( i_shift_source_ff, o_destination_index_ff, o_condition_code_ff ) ||
-                                shifter_lock_check ( i_shift_length_ff, o_destination_index_ff, o_condition_code_ff ) ||
-                                shifter_lock_check ( i_alu_source_ff  , o_destination_index_ff, o_condition_code_ff )   
+                                (i_alu_operation_ff == UMLALL || i_alu_operation_ff == UMLALH || i_alu_operation_ff == SMLALL || i_alu_operation_ff == SMLALH) && 
+                                (
+                                        shifter_lock_check ( i_shift_source_ff, o_destination_index_ff, o_condition_code_ff ) ||
+                                        shifter_lock_check ( i_shift_length_ff, o_destination_index_ff, o_condition_code_ff ) ||
+                                        shifter_lock_check ( i_alu_source_ff  , o_destination_index_ff, o_condition_code_ff ) ||
+                                        shifter_lock_check ( i_mem_srcdest_index_ff, o_destination_index_ff, o_condition_code_ff )  
                                 )
                         ); // If it is multiply (MAC). 
 
@@ -539,7 +556,7 @@ begin
                 shifter_lock_check = 1'd0;
 
         // If immediate, no lock obviously.
-        if ( index[32] == IMMED_EN )
+        if ( index[32] == IMMED_EN || index == PHY_RAZ_REGISTER )
                 shifter_lock_check = 1'd0;
 end        
 endfunction
@@ -576,7 +593,7 @@ begin
                 determine_load_lock = 1'd1;
 
         // Locks occur only for indices...
-        if ( index[32] == IMMED_EN )
+        if ( index[32] == IMMED_EN || index == PHY_RAZ_REGISTER )
                 determine_load_lock = 1'd0;
 end
 endfunction

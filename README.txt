@@ -13,7 +13,8 @@ THUMB ISA Version       : v1
 
 The pipeline is fully interlocked and fed-back. Most dependent instructions
 execute without requiring stalls. A load accelerator allows instructions that require
-a loaded register to issue 1 cycle early. Multiplication takes 4 clock cycles.
+a loaded register to issue 1 cycle early. Multiplication takes 4 clock cycles. Shift
+and multiplication operations require registers a cycle early.
 
 Features:
 - Supports v4 ARM instructions.
@@ -22,7 +23,6 @@ Features:
 
 Current limitations :
 - In Alpha stage of development. Very experimental and buggy at the moment.
-- Not supported: UMLAL, UMULL, SMULL, SMLAL.
 - No MMU or cache is provided but may be attached.
 
 A simple dual port cache model is provided in testbench/cache.v for simulation
@@ -30,10 +30,6 @@ purposes.
 
 Detailed instruction on simulating this may be found at...
 https://hackaday.io/project/14771/instructions
-
-To see a demo of the processing executing some simple code, source the
-do_it.csh script in the /debug folder. You must have arm-none-eabi-* toolchain
-installed on your system along with iverilog.
 -------------------------------------------------------------------------------
 
 MIT License

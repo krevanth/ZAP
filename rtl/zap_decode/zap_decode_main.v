@@ -13,6 +13,8 @@ ZAP decode stage. This is the top level decode stage of the ZAP.
 Dependencies --
 zap_decode_mem_fsm
 zap_decode_bl_fsm
+zap_decode_coproc_fsm
+zap_decode_mult_fsm
 zap_decode
 
 Author --
@@ -182,6 +184,12 @@ wire            mem_fetch_stall;
 wire   [34:0]   bl_instruction;
 wire            bl_instruction_valid;
 wire            bl_fetch_stall;
+wire            bl_irq;
+wire            bl_fiq;
+
+wire   [35:0]   mult_instruction;
+wire            mult_instruction_valid;
+wire            mult_stall;
 
 wire o_thumb_und_nxt;
 wire arm_irq;
@@ -303,7 +311,7 @@ endtask
 
 always @*
 begin
-        o_stall_from_decode = bl_fetch_stall || mem_fetch_stall || cp_stall;
+        o_stall_from_decode = bl_fetch_stall || mem_fetch_stall || cp_stall || mult_stall;
 end
 
 // This unit handles coprocessor stuff.
@@ -455,8 +463,29 @@ zap_decode_bl_fsm u_zap_bl_fsm (
         .o_instruction(bl_instruction),
         .o_instruction_valid(bl_instruction_valid),
         .o_stall_from_decode(bl_fetch_stall),
-        .o_fiq(o_fiq_nxt),
-        .o_irq(o_irq_nxt)
+        .o_fiq(bl_fiq),
+        .o_irq(bl_irq)
+);
+
+// Multiplication FSM - Breaks long multiplies into smaller things..
+zap_decode_mult_fsm u_zap_decode_mult_fsm (
+        .i_clk(i_clk),
+        .i_reset(i_reset),
+        .i_fiq(bl_fiq),
+        .i_irq(bl_irq),
+        .i_clear_from_writeback(i_clear_from_writeback),
+        .i_data_stall(i_data_stall),
+        .i_clear_from_alu(i_clear_from_alu),
+        .i_stall_from_issue(i_stall_from_issue),
+        .i_stall_from_shifter(i_stall_from_shifter),
+        .i_instruction(bl_instruction),
+        .i_instruction_valid(bl_instruction_valid),
+
+        .o_instruction      (mult_instruction),
+        .o_instruction_valid(mult_instruction_valid),
+        .o_stall_from_decode(mult_stall), 
+        .o_irq              (o_irq_nxt),
+        .o_fiq              (o_fiq_nxt)
 );
 
 wire [$clog2(ARCH_REGS)-1:0] destination_index_nxt;
@@ -495,8 +524,8 @@ zap_decode #(
         .SHIFT_OPS      (SHIFT_OPS)
 ) 
 u_zap_decode (
-        .i_instruction(bl_instruction),          
-        .i_instruction_valid(bl_instruction_valid),
+        .i_instruction(mult_instruction),          
+        .i_instruction_valid(mult_instruction_valid),
         .i_cpsr_ff(i_cpu_mode),
         .o_condition_code(o_condition_code_nxt),
         .o_destination_index(destination_index_nxt),

@@ -50,7 +50,7 @@ module zap_decode #(
                 // I/O Ports.
                 
                 // From the FSM.
-                input    wire   [34:0]                  i_instruction,          // The upper 2-bit [34:33] are {rd/ptr,rm/srcdest} 
+                input    wire   [35:0]                  i_instruction,          // The upper 2-bit [34:33] are {rd/ptr,rm/srcdest}. The upper most bit is for opcode extend.
                 input    wire                           i_instruction_valid,
 
                 // CPSR.
@@ -119,7 +119,7 @@ begin: mainBlk1
         o_shift_operation       = 0;
         o_shift_length          = 0;
         o_flag_update           = 0;
-        o_mem_srcdest_index     = 0;
+        o_mem_srcdest_index     = RAZ_REGISTER;
         o_mem_load              = 0;
         o_mem_store             = 0;
         o_mem_translate         = 0;
@@ -157,6 +157,7 @@ begin: mainBlk1
                 MSR,MSR_IMMEDIATE:                              decode_msr ( i_instruction );
                 LS_INSTRUCTION_SPECIFIED_SHIFT,LS_IMMEDIATE:    decode_ls ( i_instruction );
                 MULT_INST:                                      decode_mult ( i_instruction );
+                LMULT_INST:                                     decode_lmult( i_instruction );
                 HALFWORD_LS:                                    decode_halfword_ls ( i_instruction );
                 SOFTWARE_INTERRUPT:                             decode_swi ( i_instruction );
                 default:
@@ -193,8 +194,75 @@ end
 
 // Task definitions.
 
+task decode_lmult ( input [35:0] i_instruction ); // Only this uses bit 35. rm.rs + {rh, rn}
+begin: tskLDecodeMult
+
+        o_condition_code        =       i_instruction[31:28];
+        o_flag_update           =       i_instruction[20];
+
+        // ARM rd.
+        o_destination_index     =       {i_instruction[`DP_RD_EXTEND], i_instruction[19:16]};
+        // For MUL, Rd and Rn are interchanged. For 64bit, this is normally high register.
+
+        o_alu_source            =       i_instruction[11:8]; // ARM rs
+        o_alu_source[32]        =       INDEX_EN;
+
+        o_shift_source          =       {i_instruction[`DP_RS_EXTEND], i_instruction[`DP_RS]};
+        o_shift_source[32]      =       INDEX_EN;            // ARM rm 
+
+        // ARM rn
+        o_shift_length          =       i_instruction[24] ? 
+                                        {i_instruction[`DP_RN_EXTEND], i_instruction[`DP_RD]} : 32'd0;
+
+        o_shift_length[32]      =       i_instruction[24] ? INDEX_EN : IMMED_EN;
+
+        `ifdef SIM
+                $display($time, "Long multiplication detected!");
+        `endif
+
+        // We need to generate output code.
+        case ( i_instruction[22:21] )
+        2'b00:
+        begin
+                // Unsigned MULT64
+                o_alu_operation = UMLALH;
+                o_mem_srcdest_index = RAZ_REGISTER; // rh.
+        end
+        2'b01:
+        begin
+                // Unsigned MAC64. Need mem_srcdest as source for RdHi.
+                o_alu_operation = UMLALH;
+                o_mem_srcdest_index = i_instruction[19:16];
+        end
+        2'b10:
+        begin
+                // Signed MULT64
+                o_alu_operation = SMLALH;
+                o_mem_srcdest_index = RAZ_REGISTER;
+        end
+        2'b11:
+        begin
+                // Signed MAC64. Need mem_srcdest as source of RdHi.
+                o_alu_operation = SMLALH;
+                o_mem_srcdest_index = i_instruction[19:16];
+        end
+        endcase
+
+        if ( i_instruction[`OPCODE_EXTEND] == 1'd0 ) // Low request.
+        begin
+                        o_destination_index = i_instruction[15:12]; // Low register.
+                        o_alu_operation[0]  = 1'd0;                 // Request low operation.
+        end
+end
+endtask
+
 task decode_und( input [34:0] i_instruction );
 begin
+        `ifdef SIM
+                $display($time, "Undefined instruction detected! You may continue the simulation...");
+                $stop;
+        `endif
+
         // Say instruction is undefined.
         o_und = 1;
 end
@@ -290,8 +358,10 @@ begin: tskDecodeMult
         `endif
 
         o_condition_code        =       i_instruction[31:28];
-        o_alu_operation         =       MLA;
+        o_flag_update           =       i_instruction[20];
+        o_alu_operation         =       UMLALL;
         o_destination_index     =       {i_instruction[`DP_RD_EXTEND], i_instruction[19:16]};
+
         // For MUL, Rd and Rn are interchanged.
         o_alu_source            =       i_instruction[11:8]; // ARM rs
         o_alu_source[32]        =       INDEX_EN;
@@ -299,9 +369,14 @@ begin: tskDecodeMult
         o_shift_source          =       {i_instruction[`DP_RS_EXTEND], i_instruction[`DP_RS]};
         o_shift_source[32]      =       INDEX_EN;            // ARM rm 
 
-        // ARM rn
-        o_shift_length          =       i_instruction[24] ? {i_instruction[`DP_RN_EXTEND], i_instruction[`DP_RD]} : 32'd0;
-        o_shift_length[32]      =       i_instruction[24] ? INDEX_EN : IMMED_EN;
+        // ARM rn - Set for accumulate.
+        o_shift_length          =       i_instruction[21] ? 
+                                        {i_instruction[`DP_RN_EXTEND], i_instruction[`DP_RD]} : 32'd0;
+
+        o_shift_length[32]      =       i_instruction[21] ? INDEX_EN : IMMED_EN;
+
+        // Set rh = 0.
+        o_mem_srcdest_index = RAZ_REGISTER;
 end
 endtask
 

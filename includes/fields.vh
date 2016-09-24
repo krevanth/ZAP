@@ -8,3 +8,4 @@
 `define DP_RS                   3:0     // Shift source. ARM refers to this as rm.
 `define DP_RN                   19:16   // ALU source.
 `define DP_RN_EXTEND            34      // ALU source extend.
+`define OPCODE_EXTEND           35      // To differential lower and higher -> 1 means higher.

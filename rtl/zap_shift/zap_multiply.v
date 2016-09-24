@@ -14,111 +14,107 @@ Revanth Kamaraj
 
 module zap_multiply
 #(
-        parameter PHY_REGS = 46
+        parameter PHY_REGS = 46,
+        parameter ALU_OPS   = 32
 )
 (
-        input wire           i_clk,
-        input wire           i_reset,
+        input wire                              i_clk,
+        input wire                              i_reset,
 
-        input wire           i_clear,
-        input wire           i_start,
+        input wire                              i_clear_from_writeback,
+        input wire                              i_data_stall,
+        input wire                              i_clear_from_alu,
 
-        input wire  [3:0]    i_cc,
-        input wire  [31:0]   i_cpsr_nxt,  // Should have placed multiplication in ALU ...
+        input wire   [$clog2(ALU_OPS)-1:0]      i_alu_operation_ff,
+        input wire                              i_cc_satisfied,
 
-        input wire [31:0]    i_rm,
-        input wire [31:0]    i_rn,
-        input wire [31:0]    i_rs,        // rm.rs + rn
+        input wire [31:0]                       i_rm,
+        input wire [31:0]                       i_rn,
+        input wire [31:0]                       i_rh,
+        input wire [31:0]                       i_rs,        // rm.rs + {rh,rn}. For non ACC versions, rn = 0x0 and rh = 0x0.
 
-        output wire [31:0]   o_rd,
-        output reg           o_busy
+        output reg  [31:0]                      o_rd,
+        output reg                              o_busy
 );
 
-// Machine state.
-reg [2:0] state_ff, state_nxt;
+`include "opcodes.vh"
 
-// Partial products.
-reg [31:0] prodlolo_ff, prodlohi_ff, prodhilo_ff;
-reg [31:0] prodlolo_nxt, prodlohi_nxt, prodhilo_nxt;
-reg [31:0] out_ff, out_nxt;
+wire higher = i_alu_operation_ff[0];
+wire sign   = (i_alu_operation_ff == SMLALL || i_alu_operation_ff == SMLALH);
 
-reg ok_to_execute;
+wire signed [16:0] a;
+wire signed [16:0] b;
+wire signed [16:0] c;
+wire signed [16:0] d;
+reg signed [63:0] x_ff, x_nxt;
+reg signed [63:0] ab, ad, bc, cd;
 
-assign o_rd = out_nxt; // Output.
+reg [4:0] state_ff, state_nxt;
 
-// Parameter
-parameter IDLE = 0;
-parameter SX   = 1;
-parameter S0   = 2;
-parameter S1   = 3;
-parameter S2   = 4;
-parameter S3   = 5;
+assign a = sign ? {i_rm[31], i_rm[31:16]} : {1'd0, i_rm[31:16]};
+assign b = sign ? {i_rs[31], i_rs[31:16]} : {1'd0, i_rs[31:16]};
+assign c = {1'd0, i_rm[15:0]}; 
+assign d = {1'd0, i_rs[15:0]};
 
-`include "regs.vh"
-`include "cc.vh"
-`include "cpsr.vh"
-`include "modes.vh"
-`include "global_functions.vh"
+// Aliases.
+assign ab = a * b;
+assign ad = a * d;
+assign bc = b * c;
+assign cd = c * d;
+
+// States
+localparam IDLE = 0;
+localparam S1   = 1;
+localparam S2   = 2;
+localparam S3   = 3;
+localparam S4   = 4;
+localparam S5   = 5;
 
 always @*
 begin
-        ok_to_execute = is_cc_satisfied ( i_cc, i_cpsr_nxt[31:28]  );
-end
-
-always @*
-begin
-        prodlolo_nxt = prodlolo_ff;
-        prodlohi_nxt = prodlohi_ff;
-        prodhilo_nxt = prodhilo_ff;
-        state_nxt    = state_ff;
-        out_nxt      = out_ff;
-        o_busy       = 1'd0;
+        o_busy = 1'd1;
+        o_rd   = 32'd0;
+        state_nxt = state_ff;
+        x_nxt = x_ff;        
 
         case ( state_ff )
                 IDLE:
                 begin
-                        if ( i_start && ok_to_execute )
+                        o_busy = 1'd0;
+                        x_nxt  = 32'd0;
+
+                        // If we have the go signal.
+                        if ( i_cc_satisfied && (i_alu_operation_ff == UMLALL || i_alu_operation_ff == UMLALH || i_alu_operation_ff == SMLALL || i_alu_operation_ff == SMLALH) )
                         begin
-                                state_nxt       = SX;
-                                o_busy          = 1'd1;
-                        end
-                        else
-                        begin
-                                state_nxt       = IDLE;
-                                o_busy          = 1'd0;
+                                o_busy = 1'd1;
+                                state_nxt = S1;
                         end
                 end
-                SX:
-                begin
-                        o_busy          = 1'd1;
-                        state_nxt       = S0;
-                        prodlolo_nxt    = i_rm[15:0] * i_rs[15:0];
-                        out_nxt         = 32'd0;
-                end
-                S0:
-                begin
-                        o_busy          = 1'd1;
-                        state_nxt       = S1;
-                        prodlohi_nxt    = i_rm[15:0] * i_rs[31:16];
-                end 
                 S1:
                 begin
-                        o_busy          = 1'd1;
-                        state_nxt       = S2;
-                        prodhilo_nxt    = i_rm[31:16] * i_rs[15:0];
-                        out_nxt         = prodlolo_ff + (prodlohi_ff << 16);
+                        x_nxt     = x_ff + (cd << 0);                        
+                        state_nxt = S2;
                 end
                 S2:
                 begin
-                       state_nxt = S3;
-                       o_busy    = 1'd1;
-                       out_nxt   = out_ff + (prodhilo_ff << 16); 
+                        state_nxt = S3;
+                        x_nxt     = x_ff + (ab << 32);
                 end
                 S3:
                 begin
-                        state_nxt = IDLE; 
-                        out_nxt   = out_ff + i_rn;
+                        state_nxt = S4;
+                        x_nxt     = x_ff + (ad << 16);
+                end
+                S4:
+                begin
+                        state_nxt = S5;
+                        x_nxt    = x_ff + (bc << 16);
+                end
+                S5:
+                begin
+                        state_nxt = IDLE;
                         o_busy    = 1'd0;
+                        o_rd      = higher ? x_ff[63:32] : x_ff[31:0];
                 end
         endcase
 end
@@ -127,19 +123,27 @@ always @ (posedge i_clk)
 begin
         if ( i_reset )
         begin
-                out_ff   <= 0;
+                x_ff     <= 63'd0;
                 state_ff <= IDLE;
-	        prodlolo_ff <= 0;
-        	prodlohi_ff <= 0;
-	        prodhilo_ff <= 0;
+        end
+        else if ( i_clear_from_writeback )
+        begin
+                x_ff     <= 63'd0;
+                state_ff <= IDLE; 
+        end
+        else if ( i_data_stall )
+        begin
+                // Hold values
+        end
+        else if ( i_clear_from_alu )
+        begin
+                x_ff     <= 63'd0;
+                state_ff <= IDLE;
         end
         else
         begin
+                x_ff <= x_nxt;
                 state_ff <= state_nxt;
-                out_ff   <= out_nxt;
-	        prodlolo_ff <= prodlolo_nxt;
-        	prodlohi_ff <= prodlohi_nxt;
-	        prodhilo_ff <= prodhilo_nxt;
         end
 end
 
