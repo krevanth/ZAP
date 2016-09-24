@@ -54,6 +54,10 @@ ldr r11, [sp]
 str r11, [sp]
 ldr r10, [sp]
 
+// Multiply.
+mulcs r10, r10, r10
+mov r9, r10
+
 mcr p15, 0, r0, c7, c7, 0
 b prog
 

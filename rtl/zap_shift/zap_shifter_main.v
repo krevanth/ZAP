@@ -250,7 +250,8 @@ begin
         begin
            o_condition_code_ff               <= i_condition_code_ff;                                     
            o_destination_index_ff            <= i_destination_index_ff;
-           o_alu_operation_ff                <= (i_alu_operation_ff == MLA) ? MOV : i_alu_operation_ff; // Multiplication needs transformation.
+           o_alu_operation_ff                <= (i_alu_operation_ff == UMLALL || i_alu_operation_ff == UMLALH || i_alu_operation_ff == SMLALL || i_alu_operation_ff == SMLALH) ? 
+                                                MOV : i_alu_operation_ff; // Multiplication needs transformation.
            o_shift_operation_ff              <= i_shift_operation_ff;
            o_flag_update_ff                  <= i_flag_update_ff;
            o_mem_srcdest_index_ff            <= i_mem_srcdest_index_ff;           
@@ -311,8 +312,8 @@ end
 // For shifter source value.
 always @*
 begin
-        // If we issue an MLA.
-        if ( i_alu_operation_ff == MLA )
+        // If we issue a multiply.
+        if ( i_alu_operation_ff == UMLALL || i_alu_operation_ff == UMLALH || i_alu_operation_ff == SMLALL || i_alu_operation_ff == SMLALH )
         begin
                 // Get result from multiplier.
                 rm = mult_out;
