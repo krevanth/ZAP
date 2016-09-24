@@ -807,7 +807,7 @@ zap_register_file #(
 )
 u_zap_regf
 (
-        .i_clk                  (i_clk),   // ZAP clock.
+        .i_clk                  (i_clk),     // ZAP clock.
         .i_reset                (i_reset),   // ZAP reset.
         .i_valid                (memory_dav_ff),
         .i_data_stall           (i_data_stall),
