@@ -324,8 +324,8 @@ u_zap_decode_coproc
         // Inputs from outside world.
         .i_clk(i_clk),
         .i_reset(i_reset),
-        .i_irq(i_irq),
-        .i_fiq(i_fiq),
+        .i_irq(i_instruction_valid ? i_irq : 1'd0),
+        .i_fiq(i_instruction_valid ? i_fiq : 1'd0),
         .i_instruction(i_instruction_valid ? i_instruction : 32'd0),
         .i_valid(i_instruction_valid),
         .i_cpsr_ff(i_cpu_mode),

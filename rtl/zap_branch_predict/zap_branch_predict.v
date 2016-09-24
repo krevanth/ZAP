@@ -118,6 +118,7 @@ begin
                 o_abt_ff        <= i_abt;
                 o_pc_plus_8_ff  <= i_pc_plus_8; 
                 o_taken_ff      <= taken_nxt;
+                o_pc_ff         <= i_pc;
         end
 end
 
@@ -128,6 +129,7 @@ begin
         o_val_ff        <= 1'd0;
         o_abt_ff        <= 1'd0;
         o_pc_plus_8_ff  <= 32'd8;
+        o_pc_ff         <= 32'd0;
         o_taken_ff      <= 1'd0;
 end
 endtask

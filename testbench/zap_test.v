@@ -124,6 +124,10 @@ wire [31:0] r43; assign r43 = u_zap_top.u_zap_regf.r_ff[43];
 wire [31:0] r44; assign r44 = u_zap_top.u_zap_regf.r_ff[44];
 wire [31:0] r45; assign r45 = u_zap_top.u_zap_regf.r_ff[45];
 
+// Testing interrupts.
+always @ (negedge i_clk)
+        i_irq = $random;
+
 // Processor core.
 zap_top 
 #(
@@ -190,10 +194,13 @@ cache u_cache
         .i_cpsr(o_cpsr)
 );
 
+
 initial i_clk = 0;
 always #10 i_clk = !i_clk;
 
 integer i;
+
+
 
 initial
 begin
@@ -214,7 +221,7 @@ begin
         @(negedge i_clk);
         i_reset = 0;
 
-        repeat(5000) @(negedge i_clk);
+        repeat(10000) @(negedge i_clk);
 
         for(i=496;i<=548;i=i+4)
         $display("mem[%d] = %d", i, {u_cache.mem[i+3],u_cache.mem[i+2],u_cache.mem[i+1],u_cache.mem[i]});

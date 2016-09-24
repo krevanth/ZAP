@@ -7,7 +7,7 @@ _Swi     : b swi
 _Pabt    : b pabt
 _Dabt    : b dabt
 reserved : b _Reset
-irq      : b irq
+irq      : b asm_irq
 fiq      : b fiq
 
 asm_undef:
@@ -28,6 +28,9 @@ mov r11, #122
 mov r12, #123
 bl undef
 ldmfd r13!, {r0-r12, pc}
+
+asm_irq:
+subs pc, lr, #4 // Return from IRQ.
 
 there:
 mov sp, #1000
