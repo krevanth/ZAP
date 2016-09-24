@@ -606,7 +606,7 @@ endtask
 task process_instruction_specified_shift ( input [34:0] instruction );
 begin
         `ifdef SIM
-        $display("%m Process instruction specified shift...");
+                $display("%m Process instruction specified shift...");
         `endif
 
         // ROR #0 = ROR #32, ASR #0 = ASR #23, LSL #0 = LSL #0.
@@ -617,8 +617,8 @@ begin
         o_shift_operation       = instruction[6:5];
 
         case ( o_shift_operation )
-        LSR: if ( !o_shift_length) o_shift_length = 32;
-        ASR: if ( !o_shift_length) o_shift_length = 32;
+                LSR: if ( !o_shift_length) o_shift_length = 32;
+                ASR: if ( !o_shift_length) o_shift_length = 32;
         endcase
 
 end

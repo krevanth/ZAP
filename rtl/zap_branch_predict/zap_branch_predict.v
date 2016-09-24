@@ -51,9 +51,7 @@ module zap_branch_predict
 // For Thumb bit position.
 `include "cpsr.vh"
 
-`ifdef SIM
-        wire [1:0] w134;
-`endif
+
 
 // Branch states.
 localparam      SNT     =       0; // Strongly Not Taken.
@@ -71,9 +69,7 @@ reg            taken_nxt;
 reg [1:0] mem_ff  [511:0];
 reg [1:0] mem_nxt [511:0];
 
-`ifdef SIM
-        assign w134 = mem_ff[134];
-`endif
+
 
 // Mundane outputs.
 always @ (posedge i_clk)
