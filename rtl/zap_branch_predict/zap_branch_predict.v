@@ -52,7 +52,7 @@ module zap_branch_predict
 `include "cpsr.vh"
 
 `ifdef SIM
-        reg [1:0] w134;
+        wire [1:0] w134;
 `endif
 
 // Branch states.

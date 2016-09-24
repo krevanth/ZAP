@@ -47,7 +47,7 @@ wire signed [16:0] b;
 wire signed [16:0] c;
 wire signed [16:0] d;
 reg signed [63:0] x_ff, x_nxt;
-reg signed [63:0] ab, ad, bc, cd;
+wire signed [63:0] ab, ad, bc, cd;
 
 reg [4:0] state_ff, state_nxt;
 
