@@ -63,6 +63,7 @@ module zap_decode_main #(
         input   wire                    i_copro_done,
 
         // PC input.
+        input wire  [31:0]              i_pc_ff,
         input wire  [31:0]              i_pc_plus_8_ff,
 
         // CPU mode. Taken from CPSR.
@@ -111,6 +112,7 @@ module zap_decode_main #(
 
         // PC output.
         output  reg  [31:0]                     o_pc_plus_8_ff,       
+        output  reg  [31:0]                     o_pc_ff,
 
         // Switch.
         output  reg                             o_switch_ff,
@@ -260,6 +262,7 @@ begin
                 o_mem_unsigned_halfword_enable_ff       <= o_mem_unsigned_halfword_enable_nxt;
                 o_mem_translate_ff                      <= o_mem_translate_nxt;                
                 o_pc_plus_8_ff                          <= i_pc_plus_8_ff;
+                o_pc_ff                                 <= i_pc_ff;
                 o_switch_ff                             <= o_switch_nxt;
                 o_force32align_ff                       <= o_force32align_nxt;
                 o_taken_ff                              <= taken_nxt;
@@ -294,6 +297,7 @@ begin
                 o_switch_ff                             <= 0; 
                 o_force32align_ff                       <= 0;
                 o_taken_ff                              <= 0;
+                o_pc_ff                                 <= 0;
 end
 endtask
 

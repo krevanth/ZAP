@@ -22,6 +22,10 @@ module zap_shifter_main
         input wire                               i_clk,
         input wire                               i_reset,
 
+        // PC
+        input wire [31:0]                       i_pc_ff,
+        output reg [31:0]                       o_pc_ff,
+
         // Taken.
         input wire                               i_taken_ff,
         output reg                               o_taken_ff,
@@ -182,10 +186,8 @@ u_zap_multiply
         .o_busy(o_stall_from_shifter)
 );
 
-always @ (posedge i_clk)
+task clear;
 begin
-        if ( i_reset )
-        begin
            o_condition_code_ff               <= NV;
            o_destination_index_ff            <= 0; 
            o_alu_operation_ff                <= 0; 
@@ -215,38 +217,19 @@ begin
            o_force32align_ff                 <= 0;
            o_use_old_carry_ff                <= 0;
            o_taken_ff                        <= 0;
+           o_pc_ff                           <= 0;
+end
+endtask
+
+always @ (posedge i_clk)
+begin
+        if ( i_reset )
+        begin
+                clear;
         end
         else if ( i_clear_from_writeback )
         begin
-           o_condition_code_ff               <= NV;
-           o_destination_index_ff            <= 0; 
-           o_alu_operation_ff                <= 0; 
-           o_shift_operation_ff              <= 0; 
-           o_flag_update_ff                  <= 0; 
-           o_mem_srcdest_index_ff            <= 0; 
-           o_mem_load_ff                     <= 0; 
-           o_mem_store_ff                    <= 0; 
-           o_mem_pre_index_ff                <= 0; 
-           o_mem_unsigned_byte_enable_ff     <= 0; 
-           o_mem_signed_byte_enable_ff       <= 0; 
-           o_mem_signed_halfword_enable_ff   <= 0; 
-           o_mem_unsigned_halfword_enable_ff <= 0; 
-           o_mem_translate_ff                <= 0; 
-           o_irq_ff                          <= 0; 
-           o_fiq_ff                          <= 0; 
-           o_abt_ff                          <= 0;                
-           o_swi_ff                          <= 0; 
-           o_pc_plus_8_ff                    <= 0; 
-           o_mem_srcdest_value_ff            <= 0; 
-           o_alu_source_value_ff             <= 0; 
-           o_shifted_source_value_ff         <= 0; 
-           o_shift_carry_ff                  <= 0; 
-           o_rrx_ff                          <= 0;
-           o_switch_ff                       <= 0;
-           o_und_ff                          <= 0;
-           o_force32align_ff                 <= 0;
-           o_use_old_carry_ff                <= 0;
-           o_taken_ff                        <= 0;
+                clear;
         end
         else if ( i_data_stall )
         begin
@@ -254,35 +237,7 @@ begin
         end
         else if ( i_clear_from_alu )
         begin
-           o_condition_code_ff               <= NV;
-           o_destination_index_ff            <= 0; 
-           o_alu_operation_ff                <= 0; 
-           o_shift_operation_ff              <= 0; 
-           o_flag_update_ff                  <= 0; 
-           o_mem_srcdest_index_ff            <= 0; 
-           o_mem_load_ff                     <= 0; 
-           o_mem_store_ff                    <= 0; 
-           o_mem_pre_index_ff                <= 0; 
-           o_mem_unsigned_byte_enable_ff     <= 0; 
-           o_mem_signed_byte_enable_ff       <= 0; 
-           o_mem_signed_halfword_enable_ff   <= 0; 
-           o_mem_unsigned_halfword_enable_ff <= 0; 
-           o_mem_translate_ff                <= 0; 
-           o_irq_ff                          <= 0; 
-           o_fiq_ff                          <= 0; 
-           o_abt_ff                          <= 0;                
-           o_swi_ff                          <= 0; 
-           o_pc_plus_8_ff                    <= 0; 
-           o_mem_srcdest_value_ff            <= 0; 
-           o_alu_source_value_ff             <= 0; 
-           o_shifted_source_value_ff         <= 0; 
-           o_shift_carry_ff                  <= 0; 
-           o_rrx_ff                          <= 0; 
-           o_switch_ff                       <= 0;
-           o_und_ff                          <= 0;
-           o_force32align_ff                 <= 0;
-           o_use_old_carry_ff                <= 0;
-           o_taken_ff                        <= 0;
+                clear;
         end
         else
         begin
@@ -315,6 +270,7 @@ begin
            o_force32align_ff                 <= i_force32align_ff;
            o_use_old_carry_ff                <= old_carry_nxt;
            o_taken_ff                        <= i_taken_ff;
+           o_pc_ff                           <= i_pc_ff;
    end
 end
 

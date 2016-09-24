@@ -84,12 +84,7 @@ module zap_memory_main
 
 `include "regs.vh"
 
-/*
-        On reset or on a clear from WB, we will disable the vectors
-        in this unit. Else, we will just flop everything out.
-*/
-always @ (posedge i_clk)
-if ( i_reset )
+task clear;
 begin
         o_alu_result_ff       <= 0;
         o_flags_ff            <= 0;
@@ -107,23 +102,20 @@ begin
         o_und_ff              <= 0;
         o_mem_fault           <= 0;
 end
+endtask
+
+/*
+        On reset or on a clear from WB, we will disable the vectors
+        in this unit. Else, we will just flop everything out.
+*/
+always @ (posedge i_clk)
+if ( i_reset )
+begin
+        clear;
+end
 else if ( i_clear_from_writeback )
 begin
-        o_alu_result_ff       <= 0;
-        o_flags_ff            <= 0;
-        o_mem_srcdest_index_ff<= 0;
-        o_dav_ff              <= 0;
-        o_destination_index_ff<= 0;
-        o_pc_plus_8_ff        <= 0;
-        o_irq_ff              <= 0;
-        o_fiq_ff              <= 0;
-        o_swi_ff              <= 0;
-        o_instr_abort_ff      <= 0;
-        o_mem_load_ff         <= 0;
-        o_flag_update_ff      <= 0;
-        o_mem_rd_data_ff      <= 0;
-        o_und_ff              <= 0;
-        o_mem_fault           <= 0;
+        clear;
 end
 else if ( i_data_stall )
 begin

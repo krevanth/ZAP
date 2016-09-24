@@ -42,6 +42,7 @@ module zap_branch_predict
         output reg              o_val_ff,   
         output reg              o_abt_ff,
         output reg [31:0]       o_pc_plus_8_ff,
+        output reg [31:0]       o_pc_ff,
 
         // Branch state.
         output reg              o_taken_ff        

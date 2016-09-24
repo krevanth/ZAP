@@ -155,6 +155,7 @@ wire                            decode_fiq_ff;
 wire                            decode_abt_ff;
 wire                            decode_swi_ff;
 wire [31:0]                     decode_pc_plus_8_ff;
+wire [31:0]                     decode_pc_ff;
 wire                            decode_switch_ff;
 wire                            decode_force32_ff;
 wire                            decode_und_ff;
@@ -194,6 +195,7 @@ wire [32:0]                     issue_alu_source_ff;
 wire [32:0]                     issue_shift_source_ff;
 wire [32:0]                     issue_shift_length_ff;
 wire [31:0]                     issue_pc_plus_8_ff;
+wire [31:0]                     issue_pc_ff;
 wire                            issue_shifter_disable_ff;
 wire                            issue_switch_ff;
 wire                            issue_force32_ff;
@@ -226,6 +228,7 @@ wire [31:0] shifter_shifted_source_value_ff;
 wire shifter_shift_carry_ff;
 wire shifter_rrx_ff;
 wire [31:0] shifter_pc_plus_8_ff;
+wire [31:0] shifter_pc_ff;
 wire shifter_irq_ff;
 wire shifter_fiq_ff;
 wire shifter_abt_ff;
@@ -283,11 +286,12 @@ wire [31:0] rd_data_3;
 wire [31:0] cpsr_nxt, cpsr;
 
 // Predictor.
-wire [31:0] bp_inst;
-wire bp_val;
-wire bp_abt;
-wire [31:0] bp_pc_plus_8;
-wire       bp_state;
+wire [31:0]     bp_inst;
+wire            bp_val;
+wire            bp_abt;
+wire [31:0]     bp_pc_plus_8;
+wire            bp_state;
+wire [31:0]     bp_pc;
 
 assign o_cpsr           = alu_flags_ff;
 
@@ -329,7 +333,7 @@ u_zap_branch_predict
         .i_data_stall                   (i_data_stall),
         .i_clear_from_alu               (clear_from_alu),
         .i_confirm_from_alu             (confirm_from_alu),
-        .i_pc_from_alu                  (shifter_pc_plus_8_ff - 32'd8),     
+        .i_pc_from_alu                  (shifter_pc_ff),     
         .i_inst                         (fetch_instruction),
         .i_val                          (fetch_valid),
         .i_abt                          (fetch_instr_abort),
@@ -346,6 +350,7 @@ u_zap_branch_predict
         .o_val_ff                       (bp_val),
         .o_abt_ff                       (bp_abt),
         .o_pc_plus_8_ff                 (bp_pc_plus_8),
+        .o_pc_ff                        (bp_pc),
         .o_taken_ff                     (bp_state)
 );
 
@@ -371,6 +376,7 @@ u_zap_decode_main (
 
         .i_abt                          (bp_abt),
         .i_pc_plus_8_ff                 (bp_pc_plus_8),
+        .i_pc_ff                        (bp_pc),
         .i_cpu_mode                     (o_cpsr),
         .i_instruction                  (bp_inst),
         .i_instruction_valid            (bp_val),
@@ -405,6 +411,7 @@ u_zap_decode_main (
         .o_mem_translate_ff             (decode_mem_translate_ff),
         .o_stall_from_decode            (stall_from_decode),
         .o_pc_plus_8_ff                 (decode_pc_plus_8_ff),
+        .o_pc_ff                        (decode_pc_ff),
         .o_switch_ff                    (decode_switch_ff), 
         .o_irq_ff                       (decode_irq_ff),
         .o_fiq_ff                       (decode_fiq_ff),
@@ -439,6 +446,9 @@ u_zap_issue_main
 
         .i_taken_ff(decode_taken_ff),
         .o_taken_ff(issue_taken_ff),
+
+        .i_pc_ff(decode_pc_ff),
+        .o_pc_ff(issue_pc_ff),
 
         // Inputs
         .i_clk                          (i_clk),
@@ -547,6 +557,9 @@ zap_shifter_main #(
 )
 u_zap_shifter_main
 (
+        .i_pc_ff(issue_pc_ff),
+        .o_pc_ff(shifter_pc_ff),
+
         .i_taken_ff(issue_taken_ff),
         .o_taken_ff(shifter_taken_ff),
 
