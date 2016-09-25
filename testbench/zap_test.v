@@ -125,8 +125,10 @@ wire [31:0] r44; assign r44 = u_zap_top.u_zap_regf.r_ff[44];
 wire [31:0] r45; assign r45 = u_zap_top.u_zap_regf.r_ff[45];
 
 // Testing interrupts.
-//always @ (negedge i_clk)
-//        i_irq = $random;
+`ifdef IRQ_EN
+always @ (negedge i_clk)
+        i_irq = $random;
+`endif
 
 // Processor core.
 zap_top 
