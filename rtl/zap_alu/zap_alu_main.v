@@ -145,6 +145,11 @@ wire [31:0] not_rm, not_rn;
 assign not_rm = ~rm;
 assign not_rn = ~rn;
 
+// Wires to connect to the adder.
+reg [31:0] op1, op2;
+reg cin;
+wire [32:0] sum;
+
 always @*
 begin
         rm         = i_shifted_source_value_ff;
@@ -542,14 +547,14 @@ begin: blk3
         end
 
         case ( op )
-        ADD: {c,rd} = rn +  rm + 32'd0;
-        ADC: {c,rd} = rn +  rm + flags[_C];
-        SUB: {c,rd} = rn + not_rm + 32'd1;
-        RSB: {c,rd} = rm + not_rn + 32'd1;
-        SBC: {c,rd} = rn + not_rm + !flags[_C];
-        RSC: {c,rd} = rm + not_rn + !flags[_C];
-        CMP: {c,rd} = rn + not_rm + 32'd1; // Target is not written.
-        CMN: {c,rd} = rn +  rm + 32'd0; // Target is not written.
+        ADD: begin op1 = rn ; op2 = rm     ; cin =   32'd0;     end
+        ADC: begin op1 = rn ; op2 = rm     ; cin =   flags[_C]; end
+        SUB: begin op1 = rn ; op2 = not_rm ; cin =   32'd1;     end
+        RSB: begin op1 = rm ; op2 = not_rn ; cin =   32'd1;     end
+        SBC: begin op1 = rn ; op2 = not_rm ; cin =   !flags[_C];end
+        RSC: begin op1 = rm ; op2 = not_rn ; cin =   !flags[_C];end
+        CMP: begin op1 = rn ; op2 = not_rm ; cin =   32'd1;     end // Target is not written.
+        CMN: begin op1 = rn ; op2 = rm     ; cin =   32'd0;     end // Target is not written.
         default:
         begin
                 `ifdef SIM
@@ -559,6 +564,9 @@ begin: blk3
                 `endif
         end
         endcase
+
+        // Assign output of adder to variables
+        {c,rd} = sum;
 
         // Compute Z and N (C computed before).
         z = (rd == 0);
@@ -626,5 +634,14 @@ begin: clzBlk
         
 end
 endfunction
+
+// Instantiate adder
+zap_adder UUT_ZAP_ADDER
+(
+        .i_op1(op1),
+        .i_op2(op2),
+        .i_cin(cin),
+        .o_sum(sum)
+);
 
 endmodule
