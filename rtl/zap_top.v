@@ -63,7 +63,7 @@ module zap_top #(
                 // Coprocessor.
                 input wire              i_copro_done,
 
-                // Memory access.
+                // Memory access - ALL ARE REGISTERED..
                 output wire             o_read_en,              // Memory load
                 output wire             o_write_en,             // Memory store.
                 output wire[31:0]       o_address,              // Memory address.
@@ -72,7 +72,7 @@ module zap_top #(
                 output wire             o_unsigned_halfword_en, // Unsiged halfword enable.
                 output wire             o_signed_halfword_en,   // Signed halfword enable.
 
-                // User view.
+                // User view - REGISTERED.
                 output wire             o_mem_translate,
 
                 // Memory stall.
@@ -84,14 +84,14 @@ module zap_top #(
                 // Memory read data.
                 input wire  [31:0]      i_rd_data,
 
-                // Memory write data.
+                // Memory write data - REGISTERED..
                 output wire [31:0]      o_wr_data,
 
                 // Interrupts.
                 input wire              i_fiq,                  // FIQ signal.
                 input wire              i_irq,                  // IRQ signal.
 
-                // Coprocessor.
+                // Coprocessor - REGISTERED.
                 output wire  [31:0]                     o_copro_mode,   // THE CPSR Exposed to the CoProcessor. Copro must do conditional checks if needed.
                 output wire                             o_copro_dav,
                 output wire  [31:0]                     o_copro_word,
@@ -103,17 +103,17 @@ module zap_top #(
                 input wire      [$clog2(PHY_REGS)-1:0]  i_copro_reg_rd_index,   // Register read index.
                 input wire      [31:0]                  i_copro_reg_wr_data,    // Register write data.
 
-                // Data from register file to coprocessor.
+                // Data from register file to coprocessor. - REGISTERED.
                 output wire     [31:0]                  o_copro_reg_rd_data,    // Coprocessor read data from register file.
 
-                // Interrupt acknowledge.
+                // Interrupt acknowledge - NOT REGISTERED. TODO: Fix this.
                 output wire             o_fiq_ack,              // FIQ acknowledge.
                 output wire             o_irq_ack,              // IRQ acknowledge.
 
-                // Program counter.
+                // Program counter - REGISTERED.
                 output wire[31:0]       o_pc,                   // Program counter.
 
-                // CPSR.
+                // CPSR - REGISTERED.
                 output wire [31:0]      o_cpsr                  // CPSR. Cache must use this to determine size of code fetches, VM scheme etc for instruction fetches.
 );
 

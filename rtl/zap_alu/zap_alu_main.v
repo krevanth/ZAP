@@ -140,6 +140,10 @@ reg [31:0] flags_ff, flags_nxt;
 reg [31:0] rm, rn;
 reg [31:0] mem_address_nxt;
 reg [$clog2(PHY_REGS)-1:0] o_destination_index_nxt;
+wire [31:0] not_rm, not_rn;
+
+assign not_rm = ~rm;
+assign not_rn = ~rn;
 
 always @*
 begin
@@ -540,11 +544,11 @@ begin: blk3
         case ( op )
         ADD: {c,rd} = rn +  rm + 32'd0;
         ADC: {c,rd} = rn +  rm + flags[_C];
-        SUB: {c,rd} = rn + ~rm + 32'd1;
-        RSB: {c,rd} = rm + ~rn + 32'd1;
-        SBC: {c,rd} = rn + ~rm + !flags[_C];
-        RSC: {c,rd} = rm + ~rn + !flags[_C];
-        CMP: {c,rd} = rn + ~rm + 32'd1; // Target is not written.
+        SUB: {c,rd} = rn + not_rm + 32'd1;
+        RSB: {c,rd} = rm + not_rn + 32'd1;
+        SBC: {c,rd} = rn + not_rm + !flags[_C];
+        RSC: {c,rd} = rm + not_rn + !flags[_C];
+        CMP: {c,rd} = rn + not_rm + 32'd1; // Target is not written.
         CMN: {c,rd} = rn +  rm + 32'd0; // Target is not written.
         default:
         begin
