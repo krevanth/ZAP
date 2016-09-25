@@ -147,7 +147,7 @@ begin: mainBlk1
                 // Based on our pattern match, call the appropriate task
                 if ( i_instruction_valid )
                 casez ( i_instruction[31:0] )
-                CLZ_INST:                                       decode_clz ( i_instruction );
+                //CLZ_INST:                                       decode_clz ( i_instruction );  /* v4T does not need CLZ. Leaving function here anyway. */
                 BX_INST:                                        decode_bx ( i_instruction );
                 DATA_PROCESSING_IMMEDIATE, 
                 DATA_PROCESSING_REGISTER_SPECIFIED_SHIFT, 
@@ -170,7 +170,7 @@ begin: mainBlk1
                         // Debugging purposes.
                         if ( i_instruction_valid )
                         casez ( i_instruction[31:0] )
-                        CLZ_INST:                                       clz = 1;
+                        //CLZ_INST:                                       clz = 1;
                         BX_INST:                                        bx  = 1;
                         DATA_PROCESSING_IMMEDIATE, 
                         DATA_PROCESSING_REGISTER_SPECIFIED_SHIFT, 

@@ -324,6 +324,9 @@ begin: blk1
        flags_nxt                = flags_ff;
        o_destination_index_nxt  = i_destination_index_ff;
        o_confirm_from_alu      = 1'd0;
+       op1 = 0;
+       op2 = 0;
+       cin = 0;
 
        o_dav_nxt = is_cc_satisfied ( i_condition_code_ff, flags_ff[31:28] );
 
@@ -498,7 +501,7 @@ begin: blk2
         ORR: rd = rn | rm;
         TST: rd = rn & rm; // Target is not written.
         TEQ: rd = rn ^ rn; // Target is not written.
-        CLZ: rd = count_leading_zeros(rm);
+//        CLZ: rd = count_leading_zeros(rm); /* v4T does not need CLZ support. Leaving the function here anyway. */
         default:
         begin
                 `ifdef SIM
@@ -540,6 +543,9 @@ begin: blk3
         z         = 0;
         c         = 0;
         v         = 0;
+        op1       = 0;
+        op2       = 0;
+        cin       = 0;
 
         if ( rrx )
         begin
