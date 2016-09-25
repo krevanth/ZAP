@@ -1,12 +1,12 @@
 void prog(void)
 {
         int i = 0;
-        int j = 23;
+        int j = 32;
 
-        int *x = (int *)500;
+        int *x = (int *)536;
 
-        for(i=0;i<10;i++)
-                x[i] = j++;
+        for(i=0;i>=-9;i--)
+                x[i] = j--;
         
         while(1);
 }
