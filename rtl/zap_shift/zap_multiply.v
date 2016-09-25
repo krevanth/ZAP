@@ -69,6 +69,7 @@ localparam S2   = 2;
 localparam S3   = 3;
 localparam S4   = 4;
 localparam S5   = 5;
+localparam S6   = 6;
 
 always @*
 begin
@@ -111,6 +112,11 @@ begin
                         x_nxt    = x_ff + (bc << 16);
                 end
                 S5:
+                begin
+                        state_nxt = S6;
+                        x_nxt     = x_ff + {i_rh, i_rn};
+                end
+                S6:
                 begin
                         state_nxt = IDLE;
                         o_busy    = 1'd0;
