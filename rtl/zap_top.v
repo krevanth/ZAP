@@ -52,47 +52,47 @@ module zap_top #(
 )
 (
                 // Clock and reset.
-                input wire              i_clk,                  // ZAP clock.        
-                input wire              i_reset,                // Active high synchronous reset.
+                input wire                              i_clk,                  // ZAP clock.        
+                input wire                              i_reset,                // Active high synchronous reset.
                                 
                 // From I-cache.
-                input wire [31:0]       i_instruction,          // A 32-bit ZAP instruction or a microcode instruction.
-                input wire              i_valid,                // Instruction valid.
-                input wire              i_instr_abort,          // Instruction abort fault.
+                input wire [31:0]                       i_instruction,          // A 32-bit ZAP instruction or a microcode instruction.
+                input wire                              i_valid,                // Instruction valid.
+                input wire                              i_instr_abort,          // Instruction abort fault.
 
                 // Coprocessor.
-                input wire              i_copro_done,
+                input wire                              i_copro_done,
 
                 // Memory access - ALL ARE REGISTERED..
-                output wire             o_read_en,              // Memory load
-                output wire             o_write_en,             // Memory store.
-                output wire[31:0]       o_address,              // Memory address.
-                output wire             o_unsigned_byte_en,      // Unsigned byte enable.
-                output wire             o_signed_byte_en,       // Signed byte enable.
-                output wire             o_unsigned_halfword_en, // Unsiged halfword enable.
-                output wire             o_signed_halfword_en,   // Signed halfword enable.
+                output wire                             o_read_en,              // Memory load
+                output wire                             o_write_en,             // Memory store.
+                output wire[31:0]                       o_address,              // Memory address.
+                output wire                             o_unsigned_byte_en,     // Unsigned byte enable.
+                output wire                             o_signed_byte_en,       // Signed byte enable.
+                output wire                             o_unsigned_halfword_en, // Unsiged halfword enable.
+                output wire                             o_signed_halfword_en,   // Signed halfword enable.
 
                 // User view - REGISTERED.
-                output wire             o_mem_translate,
+                output wire                             o_mem_translate,
 
                 // Memory stall.
-                input wire              i_data_stall,
+                input wire                              i_data_stall,
                 
                 // Memory abort.
-                input wire              i_data_abort,
+                input wire                              i_data_abort,
 
                 // Memory read data.
-                input wire  [31:0]      i_rd_data,
+                input wire  [31:0]                      i_rd_data,
 
                 // Memory write data - REGISTERED..
-                output wire [31:0]      o_wr_data,
+                output wire [31:0]                      o_wr_data,
 
                 // Interrupts.
-                input wire              i_fiq,                  // FIQ signal.
-                input wire              i_irq,                  // IRQ signal.
+                input wire                              i_fiq,                  // FIQ signal.
+                input wire                              i_irq,                  // IRQ signal.
 
                 // Coprocessor - REGISTERED.
-                output wire  [31:0]                     o_copro_mode,   // THE CPSR Exposed to the CoProcessor. Copro must do conditional checks if needed.
+                output wire  [3:0]                      o_copro_flags,   // THE CPSR[31:28] Exposed to the CoProcessor. Copro must do conditional checks if needed.
                 output wire                             o_copro_dav,
                 output wire  [31:0]                     o_copro_word,
                 output wire  [$clog2(PHY_REGS)-1:0]     o_copro_reg,
@@ -106,18 +106,22 @@ module zap_top #(
                 // Data from register file to coprocessor. - REGISTERED.
                 output wire     [31:0]                  o_copro_reg_rd_data,    // Coprocessor read data from register file.
 
-                // Interrupt acknowledge - NOT REGISTERED. TODO: Fix this.
-                output wire             o_fiq_ack,              // FIQ acknowledge.
-                output wire             o_irq_ack,              // IRQ acknowledge.
+                // Interrupt acknowledge - NOT REGISTERED.
+                output wire                             o_fiq_ack,              // FIQ acknowledge.
+                output wire                             o_irq_ack,              // IRQ acknowledge.
 
                 // Program counter - REGISTERED.
-                output wire[31:0]       o_pc,                   // Program counter.
+                output wire     [31:0]                  o_pc,                   // Program counter.
 
-                // CPSR - REGISTERED.
-                output wire [31:0]      o_cpsr                  // CPSR. Cache must use this to determine size of code fetches, VM scheme etc for instruction fetches.
+                // Determines user or supervisory mode. - REGISTERED.
+                output wire                             o_user                  // CPSR. Cache must use this to determine VM scheme for instruction fetches.
 );
 
 `include "cc.vh"
+`include "modes.vh"
+
+wire [31:0] copro_mode;
+wire [31:0] user;
 
 // Clear and stall signals.
 wire stall_from_decode;
@@ -293,7 +297,8 @@ wire [31:0]     bp_pc_plus_8;
 wire            bp_state;
 wire [31:0]     bp_pc;
 
-assign o_cpsr           = alu_flags_ff;
+assign o_user           = (alu_flags_ff[4:0] == USR);
+assign o_copro_flags    = copro_mode[31:28];
 
 // FETCH STAGE //
 zap_fetch_main 
@@ -312,7 +317,7 @@ u_zap_fetch_main (
         .i_instruction                  (i_instruction),
         .i_valid                        (i_valid),
         .i_instr_abort                  (i_instr_abort),
-        .i_cpsr_ff                      (o_cpsr),
+        .i_cpsr_ff                      (alu_flags_ff),
 
         // Output.
         .o_instruction                  (fetch_instruction),
@@ -377,7 +382,7 @@ u_zap_decode_main (
         .i_abt                          (bp_abt),
         .i_pc_plus_8_ff                 (bp_pc_plus_8),
         .i_pc_ff                        (bp_pc),
-        .i_cpu_mode                     (o_cpsr),
+        .i_cpu_mode                     (alu_flags_ff),
         .i_instruction                  (bp_inst),
         .i_instruction_valid            (bp_val),
         .i_taken                        (bp_state),
@@ -420,7 +425,7 @@ u_zap_decode_main (
         .o_und_ff                       (decode_und_ff),
         .o_force32align_ff              (decode_force32_ff),
 
-        .o_copro_mode_ff                (o_copro_mode),
+        .o_copro_mode_ff                (copro_mode),
         .o_copro_dav_ff                 (o_copro_dav),
         .o_copro_word_ff                (o_copro_word),
         .o_copro_reg_ff                 (o_copro_reg),

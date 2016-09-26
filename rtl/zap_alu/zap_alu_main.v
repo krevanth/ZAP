@@ -168,7 +168,7 @@ begin
                 o_pc_plus_8_ff                   <= 0;
                 o_mem_address_ff                 <= 0;
                 o_destination_index_ff           <= 0;
-                flags_ff                         <= SVC;
+                flags_ff                         <= {1'd1,1'd1,1'd0,SVC};
                 o_abt_ff                         <= 0;
                 o_irq_ff                         <= 0;
                 o_fiq_ff                         <= 0;

@@ -25,7 +25,7 @@ wire             o_unsigned_halfword_en; // Unsiged halfword enable.
 wire             o_signed_halfword_en;   // Signed halfword enable.
 
 //Coproc wires.
-wire  [31:0]                     o_copro_mode;
+wire  [3:0]                      o_copro_flags;
 wire                             o_copro_dav;
 wire  [31:0]                     o_copro_word;
 wire  [$clog2(PHY_REGS)-1:0]     o_copro_reg;
@@ -50,16 +50,13 @@ reg              i_fiq;                  // FIQ signal.
 reg              i_irq;                  // IRQ signal.
 
 // Interrupt acknowledge.
- wire              o_fiq_ack;              // FIQ acknowledge.
- wire              o_irq_ack;              // IRQ acknowledge.
+ wire             o_fiq_ack;              // FIQ acknowledge.
+ wire             o_irq_ack;              // IRQ acknowledge.
 
 // Program counter.
-wire[31:0]       o_pc;                   // Program counter.
+wire[31:0]      o_pc;                   // Program counter.
 
-wire o_mem_reset;
-
-// CPSR.
-wire [31:0]      o_cpsr;                 // CPSR
+wire            o_user;                 // CPSR
 
 reg             i_copro_reg_en;
 reg [5:0]       i_copro_reg_wr_index;
@@ -162,10 +159,10 @@ u_zap_top
         .o_fiq_ack(o_fiq_ack),
         .o_irq_ack(o_irq_ack),
         .o_pc(o_pc),
-        .o_cpsr(o_cpsr),
+        .o_user(o_user),
 
         .i_copro_done (1'd1),           // Assume coprocessor completes its task.
-        .o_copro_mode (o_copro_mode),
+        .o_copro_flags (o_copro_flags),
         .o_copro_dav  (o_copro_dav),
         .o_copro_word (o_copro_word),
         .o_copro_reg  (o_copro_reg),
@@ -193,7 +190,7 @@ cache u_cache
         .i_rd_en(o_read_en),
         .i_wr_en(o_write_en),
         .o_abort1(i_instr_abort),
-        .i_cpsr(o_cpsr)
+        .i_cpsr(o_user)
 );
 
 
@@ -223,7 +220,7 @@ begin
         @(negedge i_clk);
         i_reset = 0;
 
-        repeat(1000) @(negedge i_clk);
+        repeat(10000) @(negedge i_clk);
 
         for(i=496;i<=548;i=i+4)
         $display("mem[%d] = %d", i, {u_cache.mem[i+3],u_cache.mem[i+2],u_cache.mem[i+1],u_cache.mem[i]});

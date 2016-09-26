@@ -149,12 +149,12 @@ begin: mainBlk1
                 casez ( i_instruction[31:0] )
                 //CLZ_INST:                                       decode_clz ( i_instruction );  /* v4T does not need CLZ. Leaving function here anyway. */
                 BX_INST:                                        decode_bx ( i_instruction );
+                MRS:                                            decode_mrs ( i_instruction );   
+                MSR,MSR_IMMEDIATE:                              decode_msr ( i_instruction );
                 DATA_PROCESSING_IMMEDIATE, 
                 DATA_PROCESSING_REGISTER_SPECIFIED_SHIFT, 
                 DATA_PROCESSING_INSTRUCTION_SPECIFIED_SHIFT:    decode_data_processing ( i_instruction );
                 BRANCH_INSTRUCTION:                             decode_branch ( i_instruction );   
-                MRS:                                            decode_mrs ( i_instruction );   
-                MSR,MSR_IMMEDIATE:                              decode_msr ( i_instruction );
                 LS_INSTRUCTION_SPECIFIED_SHIFT,LS_IMMEDIATE:    decode_ls ( i_instruction );
                 MULT_INST:                                      decode_mult ( i_instruction );
                 LMULT_INST:                                     decode_lmult( i_instruction );
@@ -172,12 +172,15 @@ begin: mainBlk1
                         casez ( i_instruction[31:0] )
                         //CLZ_INST:                                       clz = 1;
                         BX_INST:                                        bx  = 1;
+
+                        MRS:                                            mrs = 1;
+                        MSR,MSR_IMMEDIATE:                              msr = 1;
+
                         DATA_PROCESSING_IMMEDIATE, 
                         DATA_PROCESSING_REGISTER_SPECIFIED_SHIFT, 
                         DATA_PROCESSING_INSTRUCTION_SPECIFIED_SHIFT:    dp  = 1;
                         BRANCH_INSTRUCTION:                             br  = 1;   
-                        MRS:                                            mrs = 1;
-                        MSR,MSR_IMMEDIATE:                              msr = 1; 
+ 
                         LS_INSTRUCTION_SPECIFIED_SHIFT,LS_IMMEDIATE:    
                         begin
                                 if ( i_instruction[20] )
@@ -520,10 +523,10 @@ begin
         end
 
         // Destination.
-        o_destination_index = i_instruction[22] ? ARCH_CPSR : ARCH_CURR_SPSR;
+        o_destination_index = i_instruction[22] ? ARCH_CURR_SPSR : ARCH_CPSR;
 
         o_condition_code = i_instruction[31:28];
-        o_alu_operation  = i_instruction[22] ? FMOV : MMOV;
+        o_alu_operation  = i_instruction[22] ? MMOV : FMOV;
         o_alu_source     = i_instruction[25] ? (i_instruction[19:16] & 4'b1000) 
                            : (i_instruction[19:16] & 4'b1001);
         o_alu_source[32] = IMMED_EN; 

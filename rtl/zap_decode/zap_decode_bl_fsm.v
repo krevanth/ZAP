@@ -158,6 +158,8 @@ begin
                 state_ff <= S0;
         else if ( i_clear_from_writeback )
                 state_ff <= S0;
+        else if ( i_data_stall )
+                state_ff <= state_ff;
         else if ( i_clear_from_alu )
                 state_ff <= S0;
         else if ( i_stall_from_shifter )

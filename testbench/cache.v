@@ -11,7 +11,7 @@ module cache
         output reg      [31:0]  o_data,
         output reg      [31:0]  o_data1,        // Instruction data - 36-bit.
 
-        input wire      [31:0]  i_cpsr,         // CPSR.
+        input wire              i_cpsr,         // CPSR.
 
         input wire      [31:0]  i_data,
         output reg              o_miss,
@@ -67,8 +67,8 @@ end
 
 always @ (negedge i_clk)
 begin
-        o_miss = 0; //$random;               // Data cache misses are fine!!!
-        o_hit1 = 1; //$random;
+        o_miss = $random;               
+        o_hit1 = $random;                       
 end
 
 // Data read port.
