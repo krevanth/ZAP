@@ -223,7 +223,7 @@ begin
         @(negedge i_clk);
         i_reset = 0;
 
-        repeat(10000) @(negedge i_clk);
+        repeat(1000) @(negedge i_clk);
 
         for(i=496;i<=548;i=i+4)
         $display("mem[%d] = %d", i, {u_cache.mem[i+3],u_cache.mem[i+2],u_cache.mem[i+1],u_cache.mem[i]});

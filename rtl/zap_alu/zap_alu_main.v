@@ -87,6 +87,7 @@ module zap_alu_main #(
 
         // Outputs
         output reg [31:0]                   o_alu_result_nxt,
+
         output reg [31:0]                   o_alu_result_ff,
 
         // Interrupt outputs.

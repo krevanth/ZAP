@@ -1,37 +1,40 @@
-void prog(void)
+void factorial (void)
 {
-        int i = 0;
-        int j = 32;
-
-        int *x = (int *)536;
-
-        for(i=0;i>=-9;i--)
-                x[i] = j--;
-        
+        int *x = (int *)500;
+        x[0] = 5;
+        x[1] = fact(x[0]);               
         while(1);
 }
 
-void undef(void) {
+int fact (int x)
+{
+        if ( x == 0 )
+                return 1;
+        else
+                return x * fact(x-1);
+}
+
+void __undef(void) {
         return;
 } 
 
-void swi (void) {
+void __swi (void) {
         return;
 }
 
-void pabt (void) {
+void __pabt (void) {
         return;
 }
 
-void dabt (void) {
+void __dabt (void) {
         return;
 }
 
-void irq (void) {
+void __irq (void) {
         return;
 }
 
-void fiq (void) {
+void __fiq (void) {
         return;
 }
 

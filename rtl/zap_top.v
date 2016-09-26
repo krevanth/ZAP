@@ -605,6 +605,7 @@ u_zap_shifter_main
 
         // Feedback
         .i_alu_value_nxt                (alu_alu_result_nxt),
+        .i_alu_dav_nxt                  (alu_dav_nxt),
 
         // Switch indicator.
         .i_switch_ff                    (issue_switch_ff),
@@ -710,6 +711,7 @@ u_zap_alu_main
          .i_data_mem_fault              (i_data_abort),
 
          .o_alu_result_nxt              (alu_alu_result_nxt),
+
          .o_alu_result_ff               (alu_alu_result_ff),
 
          .o_abt_ff                      (alu_abt_ff),

@@ -8,6 +8,7 @@
 //
 // Description --
 // This stage contains the barrel shifter and the conflict resolver system.
+// TODO: Fix the feedback function. Take valid from ALU.
 
 module zap_shifter_main
 #(
@@ -69,6 +70,7 @@ module zap_shifter_main
 
         // Indices/immediates enter here.
         input wire      [32:0]                  i_alu_source_ff,
+        input wire                              i_alu_dav_nxt,
         input wire      [32:0]                  i_shift_source_ff,
         input wire      [32:0]                  i_shift_length_ff,
 
@@ -302,7 +304,7 @@ begin
                 `endif
 
                 rn = resolve_conflict ( i_alu_source_ff, i_alu_source_value_ff, 
-                                        o_destination_index_ff, i_alu_value_nxt ); 
+                                        o_destination_index_ff, i_alu_value_nxt, i_alu_dav_nxt ); 
 
                 `ifdef SIM
                         $display($time, "%m: ************** DONE RESOLVING ALU SOURCE VALUE *********************");
@@ -325,7 +327,7 @@ begin
         else
         begin
                 rm = resolve_conflict ( i_shift_source_ff, i_shift_source_value_ff,
-                                        o_destination_index_ff, i_alu_value_nxt );
+                                        o_destination_index_ff, i_alu_value_nxt, i_alu_dav_nxt );
         end
 end
 
@@ -334,7 +336,7 @@ end
 always @*
 begin
         mem_srcdest_value = resolve_conflict ( i_mem_srcdest_index_ff, i_mem_srcdest_value_ff,
-                                               o_destination_index_ff, i_alu_value_nxt );  
+                                               o_destination_index_ff, i_alu_value_nxt, i_alu_dav_nxt );  
 end
 
 
@@ -344,7 +346,8 @@ function [31:0] resolve_conflict (
         input    [32:0]                  index_from_issue,       // Index from issue stage. Could have immed too.
         input    [31:0]                  value_from_issue,       // Issue speculatively read value.
         input    [$clog2(PHY_REGS)-1:0]  index_from_this_stage,  // From shift (This) stage output flops.
-        input    [31:0]                  result_from_alu         // From ALU output directly.
+        input    [31:0]                  result_from_alu,        // From ALU output directly.
+        input                            result_from_alu_valid   // Result from ALU is VALID.
 );
 begin
         `ifdef SIM
@@ -361,7 +364,7 @@ begin
                         $display($time, "%m: => It is an immediate value.");
                 `endif
         end 
-        else if ( index_from_this_stage == index_from_issue[$clog2(PHY_REGS)-1:0] )
+        else if ( index_from_this_stage == index_from_issue[$clog2(PHY_REGS)-1:0] && result_from_alu_valid )
         begin
                 resolve_conflict = result_from_alu;
 

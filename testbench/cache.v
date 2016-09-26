@@ -28,8 +28,8 @@ integer iacc;
 
 `include "modes.vh"
 
-// Create a 4KB  memory.
-reg [7:0] mem  [4095:0];
+// Create an 8KB unified cache memory.
+reg [7:0] mem  [8192-1:0];
 
 initial
 begin:blk1
@@ -38,7 +38,7 @@ begin:blk1
         o_abort = 0;
         o_abort1 = 0;
 
-        for(i=0;i<4096;i=i+1)
+        for(i=0;i<8192;i=i+1)
         begin
                 mem[i]  = 8'd0;
                 $display($time, "mem[%d]=%d",i,mem[i]);
@@ -67,8 +67,8 @@ end
 
 always @ (negedge i_clk)
 begin
-        o_miss = $random;               // Data cache misses are fine!!!
-        o_hit1 = $random;
+        o_miss = 0; //$random;               // Data cache misses are fine!!!
+        o_hit1 = 1; //$random;
 end
 
 // Data read port.
