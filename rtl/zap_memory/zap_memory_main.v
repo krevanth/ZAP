@@ -54,6 +54,12 @@ module zap_memory_main
         // put the read data.
         input wire [$clog2(PHY_REGS)-1:0]   i_mem_srcdest_index_ff,     // Set to RAZ if invalid.
 
+        // memory size.
+        input wire                          i_sbyte_ff, 
+                                            i_ubyte_ff, 
+                                            i_shalf_ff, 
+                                            i_uhalf_ff,
+
         // undefined instr.
         input wire                         i_und_ff,
         output reg                         o_und_ff,
@@ -136,9 +142,60 @@ begin
         o_instr_abort_ff      <= i_instr_abort_ff;
         o_mem_load_ff         <= i_mem_load_ff; 
         o_flag_update_ff      <= i_flag_update_ff;
-        o_mem_rd_data_ff      <= i_mem_rd_data;
+        o_mem_rd_data_ff      <= transform(i_mem_rd_data, i_sbyte_ff, i_ubyte_ff, i_shalf_ff, i_uhalf_ff);
         o_und_ff              <= i_und_ff;
         o_mem_fault           <= i_mem_fault;
 end
+
+/*
+ * Memory always reads 32-bit. We will rotate that here as we wish.
+ */
+function [31:0] transform ( input [31:0] data, input sbyte, input ubyte, input shalf, input uhalf );
+begin: trFn
+        reg [31:0] d;
+
+        transform = 0;
+        d         = data;
+
+        if ( ubyte == 1'd1 )
+        begin
+                case ( data[1:0] )
+                0: transform = (d >> 0)  & 8'hff;
+                1: transform = (d >> 8)  & 8'hff;
+                2: transform = (d >> 16) & 8'hff;
+                3: transform = (d >> 24) & 8'hff;
+                endcase
+        end
+        else if ( sbyte == 1'd1 )
+        begin
+                case ( data[1:0] )
+                0: transform = (d >> 0)  & 8'hff; 
+                1: transform = (d >> 8)  & 8'hff;
+                2: transform = (d >> 16) & 8'hff;
+                3: transform = (d >> 24) & 8'hff;
+                endcase
+
+                transform = $signed(transform[7:0]);
+        end
+        else if ( shalf == 1'd1 )
+        begin
+                case ( data[1] )
+                0: transform = (d >>  0) & 16'hffff;
+                1: transform = (d >> 16) & 16'hffff;
+                endcase
+
+                transform = $signed(transform[15:0]);
+        end
+        else if ( uhalf == 1'd1 )
+        begin
+                case ( data[1] )
+                0: transform = (d >>  0) & 16'hffff;
+                1: transform = (d >> 16) & 16'hffff;
+                endcase
+        end
+        else
+                transform = data;
+end
+endfunction
 
 endmodule

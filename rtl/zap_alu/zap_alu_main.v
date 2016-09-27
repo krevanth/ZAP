@@ -120,7 +120,10 @@ module zap_alu_main #(
         output reg                          o_mem_signed_halfword_enable_ff,        
         output reg                          o_mem_unsigned_halfword_enable_ff,      
         output reg [31:0]                   o_mem_srcdest_value_ff,
-        output reg                          o_mem_translate_ff 
+        output reg                          o_mem_translate_ff,
+
+        /* Byte enables useful for writes. */
+        output reg [3:0]                    o_ben_ff 
 );
 
 `include "cc.vh"
@@ -136,20 +139,20 @@ localparam _Z = 2;
 localparam _C = 1;
 localparam _V = 0;
 
-reg sleep_ff, sleep_nxt;
-reg [31:0] flags_ff, flags_nxt;
-reg [31:0] rm, rn;
-reg [31:0] mem_address_nxt;
-reg [$clog2(PHY_REGS)-1:0] o_destination_index_nxt;
-wire [31:0] not_rm, not_rn;
+reg                             sleep_ff, sleep_nxt;
+reg [31:0]                      flags_ff, flags_nxt;
+reg [31:0]                      rm, rn;
+reg [31:0]                      mem_address_nxt;
+reg [$clog2(PHY_REGS)-1:0]      o_destination_index_nxt;
+wire [31:0]                     not_rm, not_rn;
 
 assign not_rm = ~rm;
 assign not_rn = ~rn;
 
 // Wires to connect to the adder.
-reg [31:0] op1, op2;
-reg cin;
-wire [32:0] sum;
+reg [31:0]      op1, op2;
+reg             cin;
+wire [32:0]     sum;
 
 always @*
 begin
@@ -293,13 +296,64 @@ begin
                         o_mem_signed_halfword_enable_ff  <= i_mem_signed_halfword_enable_ff;  
                         o_mem_unsigned_halfword_enable_ff<= i_mem_unsigned_halfword_enable_ff;
                         o_mem_translate_ff               <= i_mem_translate_ff;  
-                        o_mem_srcdest_value_ff           <= i_mem_srcdest_value_ff;
+                        o_mem_srcdest_value_ff           <= duplicate   (i_mem_unsigned_byte_enable_ff, i_mem_signed_byte_enable_ff, i_mem_unsigned_halfword_enable_ff, i_mem_unsigned_halfword_enable_ff, i_mem_srcdest_value_ff); 
                         sleep_ff                         <= sleep_nxt;
                         o_flag_update_ff                 <= i_flag_update_ff;
                         o_und_ff                         <= i_und_ff;
+                        o_ben_ff                         <= generate_ben(i_mem_unsigned_byte_enable_ff, i_mem_signed_byte_enable_ff, i_mem_unsigned_halfword_enable_ff, i_mem_unsigned_halfword_enable_ff, mem_address_nxt);
                 end
         end
 end
+
+function [31:0] duplicate (input ub, input sb, input uh, input sh, input [31:0] val);
+reg [31:0] x;
+begin
+        if ( ub || sb)
+        begin
+                // Byte.
+                x = {val[7:0], val[7:0], val[7:0], val[7:0]};    
+        end
+        else if (uh || sh)
+        begin
+                // Halfword.
+                x = {val[15:0], val[15:0]};
+        end
+        else
+        begin
+                x = val;
+        end
+
+        duplicate = x;
+end
+endfunction
+
+function [3:0] generate_ben (input ub, input sb, input uh, input sh, input [31:0] addr);
+reg [3:0] x;
+begin
+        if ( ub || sb )
+        begin
+                case ( addr[1:0] )
+                0: x = 1;
+                1: x = 1 << 1;
+                2: x = 1 << 2;
+                3: x = 1 << 3;
+                endcase
+        end 
+        else if ( uh || sh )
+        begin
+                case ( addr[1] )
+                0: x = 4'b0011;
+                1: x = 4'b1100;
+                endcase
+        end
+        else
+        begin
+                x = 4'b1111;
+        end
+
+        generate_ben = x;
+end
+endfunction
 
 always @*
 begin
@@ -535,11 +589,11 @@ function [35:0] process_arithmetic_instructions
 ( input [31:0] rn, rm, input [3:0] flags, input [$clog2(ALU_OPS)-1:0] op, input rrx, input i_flag_upd );
 begin: blk3
 
-        reg [31:0] rd;
-        reg n,z,c,v;
+        reg [31:0]      r_d;
+        reg             n,z,c,v;
 
         // Avoid accidental latch inference.
-        rd        = 0;
+        r_d       = 0;
         n         = 0;
         z         = 0;
         c         = 0;
@@ -573,22 +627,22 @@ begin: blk3
         endcase
 
         // Assign output of adder to variables
-        {c,rd} = sum;
+        {c,r_d} = sum;
 
         // Compute Z and N (C computed before).
-        z = (rd == 0);
-        n = rd[31];
+        z = (r_d == 0);
+        n = r_d[31];
 
         // Overflow.
-        if ( ( op == ADD || op == ADC || op == CMN ) && (rn[31] == rm[31]) && (rd[31] != rn[31]) )
+        if ( ( op == ADD || op == ADC || op == CMN ) && (rn[31] == rm[31]) && (r_d[31] != rn[31]) )
         begin
                 v = 1;
         end 
-        else if ( (op == RSB || op == RSC) && (rm[31] == !rn[31]) && (rd[31] != rm[31] ) )
+        else if ( (op == RSB || op == RSC) && (rm[31] == !rn[31]) && (r_d[31] != rm[31] ) )
         begin
                 v = 1;
         end
-        else if ( (op == SUB || op == SBC || op == CMP) && (rn[31] == !rm[31]) && (rd[31] != rn[31]) )
+        else if ( (op == SUB || op == SBC || op == CMP) && (rn[31] == !rm[31]) && (r_d[31] != rn[31]) )
         begin
                 v = 1;
         end
@@ -603,7 +657,7 @@ begin: blk3
                 {n,z,c,v} = flags;
 
         // Write out the result.
-        process_arithmetic_instructions = {n, z, c, v, rd};
+        process_arithmetic_instructions = {n, z, c, v, r_d};
 
 end
 endfunction

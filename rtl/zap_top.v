@@ -67,10 +67,6 @@ module zap_top #(
                 output wire                             o_read_en,              // Memory load
                 output wire                             o_write_en,             // Memory store.
                 output wire[31:0]                       o_address,              // Memory address.
-                output wire                             o_unsigned_byte_en,     // Unsigned byte enable.
-                output wire                             o_signed_byte_en,       // Signed byte enable.
-                output wire                             o_unsigned_halfword_en, // Unsiged halfword enable.
-                output wire                             o_signed_halfword_en,   // Signed halfword enable.
 
                 // User view - REGISTERED.
                 output wire                             o_mem_translate,
@@ -84,8 +80,11 @@ module zap_top #(
                 // Memory read data.
                 input wire  [31:0]                      i_rd_data,
 
-                // Memory write data - REGISTERED..
+                // Memory write data - REGISTERED. duplicate as needed.
                 output wire [31:0]                      o_wr_data,
+
+                // Memory write byte enables. Implement this as 1-hot BYTE 2-hot - HALF 4hot - WORD.
+                output wire  [3:0]                      o_ben,                  // Byte enables for memory write.
 
                 // Interrupts.
                 input wire                              i_fiq,                  // FIQ signal.
@@ -264,6 +263,10 @@ wire                            alu_flag_update_ff;
 wire                            alu_und_ff;
 wire [31:0]                     alu_cpsr_nxt; //TODO: Eliminate this  and place MAC in ALU itself.
 wire                            confirm_from_alu;
+wire                            alu_sbyte_ff;
+wire                            alu_ubyte_ff;
+wire                            alu_shalf_ff;
+wire                            alu_uhalf_ff;
 
 // Memory
 wire [31:0]                     memory_alu_result_ff;
@@ -728,21 +731,24 @@ u_zap_alu_main
          .o_dav_nxt                     (alu_dav_nxt),
 
          .o_pc_plus_8_ff                (alu_pc_plus_8_ff),
-         .o_mem_address_ff              (o_address),          // Memory addresss sent. 
+         .o_mem_address_ff              (o_address),                    // Memory addresss sent. Memory system should ignore lower 2 bits.
          .o_clear_from_alu              (clear_from_alu),
          .o_pc_from_alu                 (pc_from_alu),
          .o_destination_index_ff        (alu_destination_index_ff),
-         .o_flags_ff                    (alu_flags_ff),           // Output flags.
+         .o_flags_ff                    (alu_flags_ff),                 // Output flags.
          .o_flags_nxt                   (alu_cpsr_nxt),
 
-         .o_mem_srcdest_value_ff           (o_wr_data),
+         .o_mem_srcdest_value_ff           (o_wr_data),        
          .o_mem_srcdest_index_ff           (alu_mem_srcdest_index_ff),     
          .o_mem_load_ff                    (alu_mem_load_ff),                     
-         .o_mem_store_ff                   (o_write_en),                         
-         .o_mem_unsigned_byte_enable_ff    (o_unsigned_byte_en),     
-         .o_mem_signed_byte_enable_ff      (o_signed_byte_en),       
-         .o_mem_signed_halfword_enable_ff  (o_signed_halfword_en),        
-         .o_mem_unsigned_halfword_enable_ff(o_unsigned_halfword_en),      
+         .o_mem_store_ff                   (o_write_en), 
+
+         .o_ben_ff                         (o_ben),         
+ 
+         .o_mem_unsigned_byte_enable_ff    (alu_ubyte_ff),     
+         .o_mem_signed_byte_enable_ff      (alu_sbyte_ff),       
+         .o_mem_signed_halfword_enable_ff  (alu_shalf_ff),        
+         .o_mem_unsigned_halfword_enable_ff(alu_uhalf_ff),      
          .o_mem_translate_ff               (o_mem_translate),
 
         .o_flag_update_ff                  (alu_flag_update_ff) 
@@ -762,15 +768,20 @@ u_zap_memory_main
 
         .i_clk                          (i_clk),
         .i_reset                        (i_reset),
-         
+
+        .i_sbyte_ff                     (alu_sbyte_ff),     // Signed byte.
+        .i_ubyte_ff                     (alu_ubyte_ff),     // Unsigned byte.
+        .i_shalf_ff                     (alu_shalf_ff),     // Signed half word.
+        .i_uhalf_ff                     (alu_uhalf_ff),     // Unsigned half word.
+        
         .i_clear_from_writeback         (clear_from_writeback),
         .i_data_stall                   (i_data_stall),
         .i_alu_result_ff                (alu_alu_result_ff),
         .i_flags_ff                     (alu_flags_ff), 
         
         .i_mem_load_ff                  (alu_mem_load_ff),
-        .i_mem_rd_data                  (i_rd_data), // From memory.
-        .i_mem_fault                    (i_data_abort),// From memory.
+        .i_mem_rd_data                  (i_rd_data),            // From memory <----- EXTERNAL.
+        .i_mem_fault                    (i_data_abort),         // From memory <----- EXTERNAL.
         .o_mem_fault                    (memory_data_abt_ff),         
 
         .i_dav_ff                       (alu_dav_ff),

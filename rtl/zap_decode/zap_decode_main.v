@@ -10,13 +10,6 @@ Revanth Kamaraj
 Description --
 ZAP decode stage. This is the top level decode stage of the ZAP.
 
-Dependencies --
-zap_decode_mem_fsm
-zap_decode_bl_fsm
-zap_decode_coproc_fsm
-zap_decode_mult_fsm
-zap_decode
-
 Author --
 Revanth Kamaraj
 

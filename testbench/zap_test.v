@@ -19,10 +19,6 @@ wire             i_instr_abort;          // Instruction abort fault.
 wire             o_read_en;              // Memory load
 wire             o_write_en;             // Memory store.
 wire[31:0]       o_address;              // Memory address.
-wire             o_unsigned_byte_en;      // Unsigned byte enable.
-wire             o_signed_byte_en;       // Signed byte enable.
-wire             o_unsigned_halfword_en; // Unsiged halfword enable.
-wire             o_signed_halfword_en;   // Signed halfword enable.
 
 //Coproc wires.
 wire  [3:0]                      o_copro_flags;
@@ -63,6 +59,8 @@ reg [5:0]       i_copro_reg_wr_index;
 reg [5:0]       i_copro_reg_rd_index;
 reg [31:0]      i_copro_reg_wr_data;
 wire [31:0]     o_copro_reg_rd_data;
+
+wire [3:0] o_ben;
 
 initial
 begin
@@ -145,11 +143,8 @@ u_zap_top
         .o_read_en(o_read_en),
         .o_write_en(o_write_en),
         .o_address(o_address),
-        .o_unsigned_byte_en(o_unsigned_byte_en),
-        .o_signed_byte_en(o_signed_byte_en),
-        .o_unsigned_halfword_en(o_unsigned_halfword_en),
-        .o_signed_halfword_en(o_signed_halfword_en),
         .o_mem_translate(o_mem_translate),
+        .o_ben(o_ben),
         .i_data_stall(i_data_stall),
         .i_data_abort(i_data_abort),
         .i_rd_data(i_rd_data),
@@ -186,6 +181,7 @@ cache u_cache
         .o_data1(i_instruction),
         .o_hit1(i_valid),
         .o_miss(i_data_stall),
+        .i_ben(o_ben),
         .o_abort(i_data_abort),  
         .i_rd_en(o_read_en),
         .i_wr_en(o_write_en),

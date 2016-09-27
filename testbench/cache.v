@@ -11,6 +11,8 @@ module cache
         output reg      [31:0]  o_data,
         output reg      [31:0]  o_data1,        // Instruction data - 36-bit.
 
+        input wire      [3:0]   i_ben,
+
         input wire              i_cpsr,         // CPSR.
 
         input wire      [31:0]  i_data,
@@ -54,8 +56,14 @@ begin
         // Cache write.
         if ( i_wr_en )
         begin
-                    // Only data unit can write to cache.
-                    {mem[i_address+3],mem[i_address+2],mem[i_address+1],mem[i_address]} <= i_data;
+                if ( i_ben[0] )                        
+                        mem[i_address] <= i_data;
+                if ( i_ben[1] )
+                        mem[i_address+1] <= i_data >> 8;
+                if ( i_ben[2] )
+                        mem[i_address+2] <= i_data >> 16;
+                if ( i_ben[3] )
+                        mem[i_address+3] <= i_data >> 24;
         end
 end
 
@@ -88,9 +96,9 @@ end
 // Instruction read port.
 always @*
 begin
-        o_data1 = {mem[i_address1+3],mem[i_address1+2],mem[i_address1+1],mem[i_address1]};
+        o_data1  = {mem[i_address1+3],mem[i_address1+2],mem[i_address1+1],mem[i_address1]};
         o_abort1 = 0;
-        iacc = 0;
+        iacc     = 0;
 end
 
 endmodule
