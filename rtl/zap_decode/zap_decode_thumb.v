@@ -151,6 +151,7 @@ begin: decodePopPush
         reg [15:0] reglist; 
 
         o_instruction = 0;
+        base = 13;
 
         reglist = i_instruction[7:0];
 

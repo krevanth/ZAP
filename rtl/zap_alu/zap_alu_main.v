@@ -189,6 +189,7 @@ begin
                 sleep_ff                         <= 0;
                 o_flag_update_ff                 <= 0;
                 o_und_ff                         <= 0;
+                o_ben_ff                         <= 0;
         end
         else if ( i_clear_from_writeback ) 
         begin
@@ -215,6 +216,7 @@ begin
                 sleep_ff                         <= 0;
                 o_flag_update_ff                 <= 0; 
                 o_und_ff                         <= 0;
+                o_ben_ff                         <= 0;
         end
         else if ( i_data_stall )
         begin
@@ -245,6 +247,7 @@ begin
                         o_flag_update_ff                 <= 0;
                         sleep_ff                         <= 1'd1; // Initiate a sleep.
                         o_und_ff                         <= 0;
+                        o_ben_ff                         <= 0;
                
         end
         else

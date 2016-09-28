@@ -393,8 +393,8 @@ begin
 
                 // On reset, the CPU starts at 0 in
                 // supervisor mode.
-                r_ff[PHY_PC]            <= 32'd0;
-                r_ff[PHY_CPSR]          <= SVC;
+                r_ff[PHY_PC]                      <= 32'd0;
+                r_ff[PHY_CPSR]                    <= SVC;
                 r_ff[PHY_CPSR][I]                 <= 1'd1; // Mask IRQ.
                 r_ff[PHY_CPSR][F]                 <= 1'd1; // Mask FIQ.
                 r_ff[PHY_CPSR][T]                 <= 1'd0; // Start CPU in ARM mode.
