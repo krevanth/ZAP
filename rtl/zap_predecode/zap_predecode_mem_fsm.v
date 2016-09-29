@@ -26,7 +26,7 @@ SWAP steps:
  Revanth Kamaraj 
 */
 
-module zap_decode_mem_fsm
+module zap_predecode_mem_fsm
 (
         // Clock and reset.
         input wire              i_clk,                  // ZAP clock.

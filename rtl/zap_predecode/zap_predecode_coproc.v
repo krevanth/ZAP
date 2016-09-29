@@ -1,6 +1,6 @@
 `default_nettype none
 
-module zap_decode_coproc #(
+module zap_predecode_coproc #(
         parameter PHY_REGS = 46
 )
 (

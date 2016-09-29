@@ -567,6 +567,7 @@ begin
         o_destination_index     = {i_instruction[`DP_RD_EXTEND], i_instruction[`DP_RD]};
         o_alu_source            = i_instruction[19:16];
         o_alu_source[32]        = INDEX_EN;
+        o_mem_srcdest_index     = ARCH_CURR_SPSR;
 
         if (    o_alu_operation == CMP || 
                 o_alu_operation == CMN || 

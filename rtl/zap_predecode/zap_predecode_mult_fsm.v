@@ -7,7 +7,7 @@
 
 `default_nettype none
 
-module zap_decode_mult_fsm
+module zap_predecode_mult_fsm
 (
         // Clock and reset.
         input wire           i_clk,

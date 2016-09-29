@@ -18,7 +18,7 @@ License --
 Released under the MIT License.
 */
 
-module zap_decode_thumb
+module zap_predecode_thumb
 (
         // Clock and reset.
         input wire              i_clk,

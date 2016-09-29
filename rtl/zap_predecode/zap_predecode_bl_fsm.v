@@ -27,7 +27,7 @@ License --
 Released under the MIT license.
 */
 
-module zap_decode_bl_fsm (
+module zap_predecode_bl_fsm (
                 // Clock and reset.
                 input wire i_clk,       // ZAP clock.
                 input wire i_reset,     // ZAP reset.

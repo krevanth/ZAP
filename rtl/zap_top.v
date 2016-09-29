@@ -135,6 +135,18 @@ wire        fetch_instr_abort;  // abort indicator.
 wire [31:0] fetch_pc_plus_8_ff; // PC + 8 generated from the fetch unit.
 wire [31:0] fetch_pc_ff;        // PC generated from fetch unit.
 
+// Predecode
+wire [31:0]     predecode_pc_plus_8;
+wire [31:0]     predecode_pc;
+wire            predecode_irq;
+wire            predecode_fiq;
+wire            predecode_abt; 
+wire [35:0]     predecode_inst;
+wire            predecode_val;
+wire            predecode_force32;
+wire            predecode_und;
+wire            predecode_taken;
+
 // Decode
 wire [3:0]                      decode_condition_code;
 wire [$clog2(PHY_REGS)-1:0]     decode_destination_index;
@@ -362,15 +374,15 @@ u_zap_branch_predict
         .o_taken_ff                     (bp_state)
 );
 
-// DECODE STAGE //
-
-zap_decode_main #(
+// PREDECODE STAGE //
+zap_predecode_main #(
         .ARCH_REGS(ARCH_REGS),
         .PHY_REGS(PHY_REGS),
         .SHIFT_OPS(SHIFT_OPS),
         .ALU_OPS(ALU_OPS)
+
 )
-u_zap_decode_main (
+u_zap_predecode (
         // Input.
         .i_clk                          (i_clk),
         .i_reset                        (i_reset),
@@ -392,12 +404,68 @@ u_zap_decode_main (
 
         .i_copro_done                   (i_copro_done),
         .i_pipeline_dav                 (
+                                                (predecode_inst[31:28]    != NV)   ||     
                                                 (decode_condition_code    != NV)   ||
                                                 (issue_condition_code_ff  != NV)   ||
                                                 (shifter_condition_code_ff!= NV)   ||
                                                 alu_dav_ff                         ||
                                                 memory_dav_ff                      
                                         ),
+
+        // Output.
+        .o_stall_from_decode            (stall_from_decode),
+        .o_pc_plus_8_ff                 (predecode_pc_plus_8),
+
+        .o_pc_ff                        (predecode_pc),
+        .o_irq_ff                       (predecode_irq),
+        .o_fiq_ff                       (predecode_fiq),
+        .o_abt_ff                       (predecode_abt),
+        .o_und_ff                       (predecode_und),
+
+        .o_force32align_ff              (predecode_force32),
+
+        .o_copro_mode_ff                (copro_mode),
+        .o_copro_dav_ff                 (o_copro_dav),
+        .o_copro_word_ff                (o_copro_word),
+        .o_copro_reg_ff                 (o_copro_reg),
+
+        .o_clear_from_decode            (clear_from_decode),
+        .o_pc_from_decode               (pc_from_decode),
+
+        .o_instruction_ff               (predecode_inst),
+        .o_instruction_valid_ff         (predecode_val),
+
+        .o_taken_ff                     (predecode_taken)
+);
+
+// DECODE STAGE //
+
+zap_decode_main #(
+        .ARCH_REGS(ARCH_REGS),
+        .PHY_REGS(PHY_REGS),
+        .SHIFT_OPS(SHIFT_OPS),
+        .ALU_OPS(ALU_OPS)
+)
+u_zap_decode_main (
+        // Input.
+        .i_clk                          (i_clk),
+        .i_reset                        (i_reset),
+        .i_clear_from_writeback         (clear_from_writeback),
+        .i_data_stall                   (i_data_stall),
+        .i_clear_from_alu               (clear_from_alu),
+        .i_stall_from_shifter           (stall_from_shifter),
+        .i_stall_from_issue             (stall_from_issue),
+        .i_thumb_und                    (predecode_und),
+        .i_irq                          (predecode_irq),
+        .i_fiq                          (predecode_fiq),
+        .i_abt                          (predecode_abt),
+        .i_pc_plus_8_ff                 (predecode_pc_plus_8),
+        .i_pc_ff                        (predecode_pc),
+        .i_cpu_mode                     (alu_flags_ff),
+        .i_instruction                  (predecode_inst),
+        .i_instruction_valid            (predecode_val),
+        .i_taken                        (predecode_taken),
+        .i_force32align                 (predecode_force32),
 
         // Output.
         .o_condition_code_ff            (decode_condition_code),
@@ -417,7 +485,6 @@ u_zap_decode_main (
         .o_mem_signed_halfword_enable_ff(decode_mem_signed_halfword_enable_ff),
         .o_mem_unsigned_halfword_enable_ff (decode_mem_unsigned_halfword_enable_ff),
         .o_mem_translate_ff             (decode_mem_translate_ff),
-        .o_stall_from_decode            (stall_from_decode),
         .o_pc_plus_8_ff                 (decode_pc_plus_8_ff),
         .o_pc_ff                        (decode_pc_ff),
         .o_switch_ff                    (decode_switch_ff), 
@@ -427,15 +494,6 @@ u_zap_decode_main (
         .o_swi_ff                       (decode_swi_ff),
         .o_und_ff                       (decode_und_ff),
         .o_force32align_ff              (decode_force32_ff),
-
-        .o_copro_mode_ff                (copro_mode),
-        .o_copro_dav_ff                 (o_copro_dav),
-        .o_copro_word_ff                (o_copro_word),
-        .o_copro_reg_ff                 (o_copro_reg),
-
-        .o_clear_from_decode            (clear_from_decode),
-        .o_pc_from_decode               (pc_from_decode),
-
         .o_taken_ff                     (decode_taken_ff)
 );
 
