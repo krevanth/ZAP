@@ -434,7 +434,7 @@ begin: blk1
                 o_dav_nxt = 1'd0;
                 sleep_nxt = 1'd1;
         end
-        else if ( (flags_nxt[7:0] != flags_ff[7:0]) && o_dav_nxt ) // Critical change to modes, interrupts or something. 
+        else if ( (opcode == FMOV) && o_dav_nxt ) // Writes to CPSR.
         begin
                 `ifdef SIM
                         $display($time, "ALU :: Major change to CPSR! Restarting from the next instruction...");

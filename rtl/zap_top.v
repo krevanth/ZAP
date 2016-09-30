@@ -545,6 +545,7 @@ u_zap_issue_main
         .i_fiq_ff                       (decode_fiq_ff),
         .i_abt_ff                       (decode_abt_ff),
         .i_swi_ff                       (decode_swi_ff),
+        .i_cpu_mode                     (alu_flags_ff), // Needed to resolve CPSR refs.
 
         .i_force32align_ff              (decode_force32_ff),
         .o_force32align_ff              (issue_force32_ff),
@@ -853,13 +854,14 @@ u_zap_memory_main
         .i_swi_ff                       (alu_swi_ff),
          
         .i_mem_srcdest_index_ff         (alu_mem_srcdest_index_ff), // Used to accelerate loads.
-         
+        .i_mem_srcdest_value_ff         (o_wr_data),                // Can come in handy.        
+ 
         .o_alu_result_ff                (memory_alu_result_ff),
         .o_flags_ff                     (memory_flags_ff),         
 
         .o_destination_index_ff         (memory_destination_index_ff),
         .o_mem_srcdest_index_ff         (memory_mem_srcdest_index_ff),
-         
+ 
         .o_dav_ff                       (memory_dav_ff),
         .o_pc_plus_8_ff                 (memory_pc_plus_8_ff),
          

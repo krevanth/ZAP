@@ -54,6 +54,9 @@ module zap_memory_main
         // put the read data.
         input wire [$clog2(PHY_REGS)-1:0]   i_mem_srcdest_index_ff,     // Set to RAZ if invalid.
 
+        // SRCDEST value too.
+        input wire [31:0]                   i_mem_srcdest_value_ff,
+
         // memory size.
         input wire                          i_sbyte_ff, 
                                             i_ubyte_ff, 
@@ -142,13 +145,13 @@ begin
         o_instr_abort_ff      <= i_instr_abort_ff;
         o_mem_load_ff         <= i_mem_load_ff; 
         o_flag_update_ff      <= i_flag_update_ff;
-        o_mem_rd_data_ff      <= transform(i_mem_rd_data, i_sbyte_ff, i_ubyte_ff, i_shalf_ff, i_uhalf_ff);
+        o_mem_rd_data_ff      <= transform(i_mem_load_ff ? i_mem_rd_data : i_mem_srcdest_value_ff, i_sbyte_ff, i_ubyte_ff, i_shalf_ff, i_uhalf_ff);
         o_und_ff              <= i_und_ff;
         o_mem_fault           <= i_mem_fault;
 end
 
 /*
- * Memory always reads 32-bit. We will rotate that here as we wish.
+ * Memory always loads 32-bit to processor. We will rotate that here as we wish.
  */
 function [31:0] transform ( input [31:0] data, input sbyte, input ubyte, input shalf, input uhalf );
 begin: trFn
@@ -195,6 +198,8 @@ begin: trFn
         end
         else
                 transform = data;
+
+        if ( !i_mem_load_ff ) transform = data; // No memory load means pass it on.
 end
 endfunction
 

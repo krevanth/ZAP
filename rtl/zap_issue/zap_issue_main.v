@@ -47,6 +47,9 @@ module zap_issue_main
         input  wire                             i_clk,    // ZAP clock.
         input  wire                             i_reset, // Active high sync.
 
+        // CPSR.
+        input wire       [31:0]                 i_cpu_mode,
+
         // Clear and stall signals.
         input wire                              i_clear_from_writeback,
         input wire                              i_data_stall,          
@@ -394,7 +397,7 @@ begin
 
                         get = index[31:0]; 
         end
-        else if ( index == PHY_RAZ_REGISTER )
+        else if ( index == PHY_RAZ_REGISTER )   // Catch RAZ here.
         begin
                // Return 0. 
                 `ifdef SIM
@@ -405,11 +408,15 @@ begin
         end
         else if   ( index == ARCH_PC )          // Catch PC here. ARCH = PHY so no problem.
         begin
-                        get = i_pc_plus_8_ff;
+                 get = i_pc_plus_8_ff;
 
-                        `ifdef SIM
+                 `ifdef SIM
                         $display($time, "PC requested... given as %x", get);
-                        `endif
+                 `endif
+        end
+        else if ( index == PHY_CPSR )   // Catch CPSR here.
+        begin
+                get = i_cpu_mode; 
         end
         else if   ( index == i_shifter_destination_index_ff && i_alu_dav_nxt  )                 
         begin

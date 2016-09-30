@@ -96,7 +96,7 @@ module zap_register_file #(
 
         // CPSR output
         output reg       [31:0]              o_cpsr,
-        output wire      [31:0]              o_cpsr_nxt,
+        output reg       [31:0]              o_cpsr_nxt,
 
         // Clear from writeback
         output reg                           o_clear_from_writeback,
@@ -128,7 +128,9 @@ localparam FIQ_VECTOR   = 32'h0000001C;
 reg     [31:0]  r_ff       [PHY_REGS-1:0];
 reg     [31:0]  r_nxt      [PHY_REGS-1:0];
 
-assign o_cpsr_nxt = r_nxt[PHY_CPSR];
+// PC and CPSR are separate registers.
+reg     [31:0]  cpsr_ff, cpsr_nxt;
+reg     [31:0]  pc_ff, pc_nxt;
 
 `ifdef SIM
 always @ (posedge i_clk)
@@ -140,8 +142,9 @@ end
 // CPSR dedicated output.
 always @*
 begin
-        o_cpsr = r_ff[PHY_CPSR];
-        o_pc   = r_ff[PHY_PC];
+        o_pc            = pc_ff;
+        o_cpsr          = cpsr_ff;
+        o_cpsr_nxt      = cpsr_nxt;
 end
 
 // 4 read decoders.
@@ -163,59 +166,62 @@ begin: blk1
         o_fiq_ack = 0;
         o_irq_ack = 0;
 
+        pc_nxt = pc_ff;
+        cpsr_nxt = cpsr_ff;
+
         // Avoid latch inference.
         for ( i=0 ; i<PHY_REGS ; i=i+1 )
                 r_nxt[i] = r_ff[i];
 
         `ifdef SIM
-                $display($time, "PC_nxt before = %d", r_nxt[PHY_PC]);
+                $display($time, "PC_nxt before = %d", pc_nxt);
         `endif
 
         // PC control sequence.
         if ( i_data_stall )
         begin
-                r_nxt[PHY_PC] = r_ff[PHY_PC];                        
+                pc_nxt = pc_ff;                        
                 $display("Data Stall!");
         end
         else if ( i_clear_from_alu )
         begin
-                r_nxt[PHY_PC] = i_pc_from_alu;
+                pc_nxt = i_pc_from_alu;
                 $display("Clear from ALU!");
         end
         else if ( i_stall_from_issue )
         begin
-                r_nxt[PHY_PC] = r_ff[PHY_PC];
+                pc_nxt = pc_ff;
                 $display("Stall from issue!");
         end
         else if ( i_stall_from_shifter )
         begin
-                r_nxt[PHY_PC] = r_ff[PHY_PC];
+                pc_nxt = pc_ff;
                 $display("Stall from shifter!");
         end
         else if ( i_clear_from_decode )
         begin
-                r_nxt[PHY_PC] = i_pc_from_decode;
+                pc_nxt = i_pc_from_decode;
                 $display("Clear from decode!");
         end
         else if ( i_stall_from_decode )
         begin
-                r_nxt[PHY_PC] = r_ff[PHY_PC];
+                pc_nxt = pc_ff;
                 $display("Stall from decode!");
         end
         else if ( i_code_stall )
         begin
-                r_nxt[PHY_PC] = r_ff[PHY_PC];
+                pc_nxt = pc_ff;
                 $display("Code Stall!");
         end
         else
         begin
                 $display("Normal PC update!");
                 // Based on ARM or Thumb, we decide how much to increment.
-                r_nxt[PHY_PC] = r_ff[PHY_PC] + ((r_ff[PHY_CPSR][T]) ? 32'd2 : 32'd4);
+                pc_nxt = pc_ff + ((cpsr_ff[T]) ? 32'd2 : 32'd4);
         end
 
         `ifdef SIM
-        $display($time, "PC_nxt after = %d", r_nxt[PHY_PC]);
+        $display($time, "PC_nxt after = %d", pc_nxt);
         `endif
 
         // The stuff below has more priority than the above. This means even in
@@ -231,8 +237,8 @@ begin: blk1
                 i_und )
         begin
                 o_clear_from_writeback  = 1'd1;
-                r_nxt[PHY_CPSR][I]      = 1'd1; // Mask interrupts.
-                r_nxt[PHY_CPSR][T]      = 1'd0; // Go to ARM mode.
+                cpsr_nxt[I]      = 1'd1; // Mask interrupts.
+                cpsr_nxt[T]      = 1'd0; // Go to ARM mode.
                 $display("Interrupt detected! Clearing from writeback...");
         end
                 
@@ -240,83 +246,83 @@ begin: blk1
         if ( i_data_abt )
         begin
                 // Returns do LR - 8 to get back to the same instruction.
-                r_nxt[PHY_PC]                   = DABT_VECTOR; 
+                pc_nxt                   = DABT_VECTOR; 
 
-                if ( !r_ff[PHY_CPSR][T] ) // ARM mode.
+                if ( !cpsr_ff[T] ) // ARM mode.
                         r_nxt[PHY_ABT_R14]              = i_pc_buf_ff;
                 else
                         r_nxt[PHY_ABT_R14]              = i_pc_buf_ff + 32'd4;
 
-                r_nxt[PHY_ABT_SPSR]             = r_ff[PHY_CPSR];
-                r_nxt[PHY_CPSR][`CPSR_MODE]     = ABT;
+                r_nxt[PHY_ABT_SPSR]                     = cpsr_ff;
+                cpsr_nxt[`CPSR_MODE]                    = ABT;
         end
         else if ( i_fiq )
         begin
                 // Returns do LR - 4 to get back to the same instruction.
-                r_nxt[PHY_PC]                   = FIQ_VECTOR;
+                pc_nxt                   = FIQ_VECTOR;
 
-                if ( !r_ff[PHY_CPSR][T] ) // ARM mode.
+                if ( !cpsr_ff[T] ) // ARM mode.
                         r_nxt[PHY_FIQ_R14]              = i_pc_buf_ff - 32'd4;
                 else
                         r_nxt[PHY_FIQ_R14]              = i_pc_buf_ff;
 
-                r_nxt[PHY_FIQ_SPSR]             = r_ff[PHY_CPSR];
-                r_nxt[PHY_CPSR][`CPSR_MODE]     = FIQ;
-                r_nxt[PHY_CPSR][F]              = 1'd1;
+                r_nxt[PHY_FIQ_SPSR]                     = cpsr_ff;
+                cpsr_nxt[`CPSR_MODE]                    = FIQ;
+                cpsr_nxt[F]                             = 1'd1;
                 o_fiq_ack = 1;
         end
         else if ( i_irq )
         begin
                 // Returns do LR - 4 to get back to the same instruction.
-                r_nxt[PHY_PC]           = IRQ_VECTOR;
+                pc_nxt           = IRQ_VECTOR;
 
-                if ( !r_ff[PHY_CPSR][T] ) // ARM mode.
+                if ( !cpsr_ff[T] ) // ARM mode.
                         r_nxt[PHY_IRQ_R14]      = i_pc_buf_ff - 32'd4;
                 else
                         r_nxt[PHY_IRQ_R14]      = i_pc_buf_ff;
 
-                r_nxt[PHY_IRQ_SPSR]     = r_ff[PHY_CPSR];
-                r_nxt[PHY_CPSR][`CPSR_MODE] = IRQ;
-                o_irq_ack = 1;
+                r_nxt[PHY_IRQ_SPSR]             = cpsr_ff;
+                cpsr_nxt[`CPSR_MODE]            = IRQ;
+                o_irq_ack                       = 1;
         end
         else if ( i_instr_abt )
         begin
                 // Returns do LR - 4 to get back to the same instruction.
-                r_nxt[PHY_PC]                   = DABT_VECTOR;
+                pc_nxt                   = DABT_VECTOR;
 
-                if ( !r_ff[PHY_CPSR][T] ) // ARM mode.
+                if ( !cpsr_ff[T] ) // ARM mode.
                         r_nxt[PHY_ABT_R14]              = i_pc_buf_ff - 32'd4;
                 else
                         r_nxt[PHY_ABT_R14]              = i_pc_buf_ff;
 
-                r_nxt[PHY_ABT_SPSR]             = r_ff[PHY_CPSR];
-                r_nxt[PHY_CPSR][`CPSR_MODE]     = ABT;
+                r_nxt[PHY_ABT_SPSR]                     = cpsr_ff;
+                cpsr_nxt[`CPSR_MODE]                    = ABT;
         end
         else if ( i_swi )
         begin
                 // Returns do LR to return to the next instruction.
-                r_nxt[PHY_PC]                   = SWI_VECTOR;
+                pc_nxt                   = SWI_VECTOR;
 
-                if ( !r_ff[PHY_CPSR][T] ) // ARM mode.
+                if ( !cpsr_ff[T] ) // ARM mode.
                         r_nxt[PHY_SVC_R14]              = i_pc_buf_ff - 32'd4;
                 else            
                         r_nxt[PHY_SVC_R14]              = i_pc_buf_ff;
 
-                r_nxt[PHY_SVC_SPSR]             = r_ff[PHY_CPSR];
-                r_nxt[PHY_CPSR][`CPSR_MODE]     = SVC;
+                r_nxt[PHY_SVC_SPSR]                     = cpsr_ff;
+                cpsr_nxt[`CPSR_MODE]                    = SVC;
         end
         else if ( i_und )
         begin
                 // Returns do LR to get back to the next instruction.
-                r_nxt[PHY_PC]                   = UND_VECTOR;
+                pc_nxt                   = UND_VECTOR;
 
-                if ( !r_ff[PHY_CPSR][T] ) // ARM mode.
+                if ( !cpsr_ff[T] ) // ARM mode.
                         r_nxt[PHY_UND_R14]              = i_pc_buf_ff - 32'd4;
                 else
                         r_nxt[PHY_UND_R14]              = i_pc_buf_ff;
 
-                r_nxt[PHY_UND_SPSR]             = r_ff[PHY_CPSR];
-                r_nxt[PHY_CPSR][`CPSR_MODE]     = UND;
+                r_nxt[PHY_UND_SPSR]                     = cpsr_ff;
+                cpsr_nxt[`CPSR_MODE]                    = UND;
         end
         else if ( i_copro_reg_en )
         begin
@@ -326,49 +332,24 @@ begin: blk1
         else if ( i_valid )
         begin
                 // Only then execute the instruction at hand...
-                r_nxt[PHY_CPSR]         = i_flags;                 
-                r_nxt[i_wr_index]       = i_wr_data;
+                cpsr_nxt                = (i_wr_index == ARCH_PC) ? i_wr_data_1 : 
+                                          ( i_wr_index == PHY_CPSR ? i_wr_data : 
+                                            ((i_wr_index_1 == PHY_CPSR && i_mem_load_ff) ? i_wr_data_1 : i_flags)
+                                          );                 
 
-                if ( i_mem_load_ff )
-                        r_nxt[i_wr_index_1]     = i_wr_data_1;
+                // Dual write port.
+                r_nxt[i_wr_index]       = i_wr_data;
+                r_nxt[i_wr_index_1]     = i_mem_load_ff ? i_wr_data_1 : r_ff[i_wr_index_1];
+
+                // Update PC if needed.
+                if ( i_wr_index == ARCH_PC )
+                        pc_nxt = i_wr_data;
+                else if ( i_mem_load_ff && i_wr_index_1 == ARCH_PC)
+                        pc_nxt = i_wr_data_1;
 
                 // A write to PC will trigger a clear from writeback.
-                // PC writes reach this only if flag update bit is set.
-                if ( i_wr_index == ARCH_PC )
-                begin
-                        // If flag update is set, then restore state.
-                        if ( i_flag_update_ff )
-                        begin
-
-                                `ifdef SIM
-                                        $display($time, "Restoring mode...");
-                                `endif
-
-                                // Restore mode.
-                                case ( r_ff[PHY_CPSR][`CPSR_MODE] )
-                                        FIQ: r_nxt[PHY_CPSR] = r_ff[PHY_FIQ_SPSR]; 
-                                        IRQ: r_nxt[PHY_CPSR] = r_ff[PHY_IRQ_SPSR]; 
-                                        UND: r_nxt[PHY_CPSR] = r_ff[PHY_UND_SPSR];
-                                        ABT: r_nxt[PHY_CPSR] = r_ff[PHY_ABT_SPSR];
-                                        SVC: r_nxt[PHY_CPSR] = r_ff[PHY_SVC_SPSR];
-                                endcase
-                        end
-                        else /* Architecture should not allow this to happen. No latch inference since regs are looped at the start. */
-                        begin
-                                `ifdef SIM
-                                        $display($time, "Register File :: PC reached without flag update! Check RTL!");
-                                        $stop;
-                                `endif
-                        end
-
-                        o_clear_from_writeback = 1'd1;
-                end
-
-                // Independently check PC writes from other source.
-                if ( i_wr_index_1 == ARCH_PC && i_mem_load_ff )
-                begin
-                        o_clear_from_writeback = 1'd1;
-                end
+                if ( i_wr_index == ARCH_PC || ( i_wr_index_1 == ARCH_PC && i_mem_load_ff) )
+                        o_clear_from_writeback  = 1'd1;
         end
 
         `ifdef SIM
@@ -378,39 +359,40 @@ end
 
 // Sequential Logic.
 always @ (posedge i_clk)
-begin
+begin: seqregfblk
+        integer i;
+
         if ( i_reset )
-        begin: rstBlk
-
-                integer i;
-
-                `ifdef SIM
-                        $display($time, "Register file in reset...");
-                `endif
-
+        begin
                 for(i=0;i<PHY_REGS;i=i+1)
                         r_ff[i] <= 32'd0;
-
-                // On reset, the CPU starts at 0 in
-                // supervisor mode.
-                r_ff[PHY_PC]                      <= 32'd0;
-                r_ff[PHY_CPSR]                    <= SVC;
-                r_ff[PHY_CPSR][I]                 <= 1'd1; // Mask IRQ.
-                r_ff[PHY_CPSR][F]                 <= 1'd1; // Mask FIQ.
-                r_ff[PHY_CPSR][T]                 <= 1'd0; // Start CPU in ARM mode.
         end
         else 
-        begin: otherBlock
-                integer i;
-
+        begin
                 for(i=0;i<PHY_REGS;i=i+1)
                         r_ff[i] <= r_nxt[i];
+        end
+end
 
+always @ (posedge i_clk)
+begin
+        if ( i_reset )
+        begin
+                // On reset, the CPU starts at 0 in
+                // supervisor mode.
+                pc_ff                      <= 32'd0;
+                cpsr_ff                    <= SVC;
+                cpsr_ff[I]                 <= 1'd1; // Mask IRQ.
+                cpsr_ff[F]                 <= 1'd1; // Mask FIQ.
+                cpsr_ff[T]                 <= 1'd0; // Start CPU in ARM mode.
+        end
+        else
+        begin
                 // Hard code lower bit of PC to 0.
-                r_ff[PHY_PC][0] <= 1'd0;
+                pc_ff   <= pc_nxt & 32'hfffffffe;
 
-                // The RAZ register reads as 0.
-                r_ff[PHY_RAZ_REGISTER] <= 32'd0;
+                // CPSR.
+                cpsr_ff <= cpsr_nxt;
         end
 end
 
