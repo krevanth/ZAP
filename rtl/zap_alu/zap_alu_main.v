@@ -283,7 +283,7 @@ begin
                         o_alu_result_ff                  <= o_alu_result_nxt;
                         o_dav_ff                         <= o_dav_nxt;                
                         o_pc_plus_8_ff                   <= i_pc_plus_8_ff;
-                        o_mem_address_ff                 <= mem_address_nxt;
+                        o_mem_address_ff                 <= mem_address_nxt & 32'hffff_fffe; // Processor always generates 32-bit aligned addresses.
                         o_destination_index_ff           <= o_destination_index_nxt;
                         flags_ff                         <= flags_nxt;
                         o_abt_ff                         <= i_abt_ff;
@@ -366,6 +366,8 @@ begin
         else                           // Pre-index. Update is done before memory access.
                 mem_address_nxt = o_alu_result_nxt;
 
+        // If a force 32 align is set, make the lower 2 bits as zero.
+        // Valid for Thumb.
         if ( i_force32align_ff )
                 mem_address_nxt[1:0] = 2'b00;
 end

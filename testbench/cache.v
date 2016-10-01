@@ -26,12 +26,13 @@ module cache
         input wire              i_wr_en
 );
 
-integer iacc;
-
 `include "modes.vh"
 
 // Create an 8KB unified cache memory.
 reg [7:0] mem  [8192-1:0];
+
+// Create a seed at the start of simulation.
+integer seed = `SEED ;
 
 initial
 begin:blk1
@@ -75,8 +76,8 @@ end
 
 always @ (negedge i_clk)
 begin
-        o_miss = $random;               
-        o_hit1 = $random;                       
+        o_miss = $random(seed);               
+        o_hit1 = $random(seed);                       
 end
 
 // Data read port.
@@ -98,7 +99,6 @@ always @*
 begin
         o_data1  = {mem[i_address1+3],mem[i_address1+2],mem[i_address1+1],mem[i_address1]};
         o_abort1 = 0;
-        iacc     = 0;
 end
 
 endmodule
