@@ -7,6 +7,7 @@ parameter ARCH_REGS = 32;
 
 // Clock and reset.
 reg              i_clk;                  // ZAP clock.        
+reg              i_clk_2x;
 reg              i_reset;                // Active high synchronous reset.
                 
 // From I-cache.
@@ -72,53 +73,6 @@ end
 
 `include "cc.vh"
 
-wire [31:0] r0; assign r0 = u_zap_top.u_zap_regf.r_ff[0]; 
-wire [31:0] r1; assign r1 = u_zap_top.u_zap_regf.r_ff[1];
-wire [31:0] r2; assign r2 = u_zap_top.u_zap_regf.r_ff[2];
-wire [31:0] r3; assign r3 = u_zap_top.u_zap_regf.r_ff[3];
-wire [31:0] r4; assign r4 = u_zap_top.u_zap_regf.r_ff[4];
-wire [31:0] r5; assign r5 = u_zap_top.u_zap_regf.r_ff[5];
-wire [31:0] r6; assign r6 = u_zap_top.u_zap_regf.r_ff[6];
-wire [31:0] r7; assign r7 = u_zap_top.u_zap_regf.r_ff[7];
-wire [31:0] r8; assign r8 = u_zap_top.u_zap_regf.r_ff[8];
-wire [31:0] r9; assign r9 = u_zap_top.u_zap_regf.r_ff[9];
-wire [31:0] r10; assign r10 = u_zap_top.u_zap_regf.r_ff[10];
-wire [31:0] r11; assign r11 = u_zap_top.u_zap_regf.r_ff[11];
-wire [31:0] r12; assign r12 = u_zap_top.u_zap_regf.r_ff[12];
-wire [31:0] r13; assign r13 = u_zap_top.u_zap_regf.r_ff[13];
-wire [31:0] r14; assign r14 = u_zap_top.u_zap_regf.r_ff[14];
-wire [31:0] r15; assign r15 = u_zap_top.u_zap_regf.r_ff[15];
-wire [31:0] r16; assign r16 = u_zap_top.u_zap_regf.r_ff[16];
-wire [31:0] r17; assign r17 = u_zap_top.u_zap_regf.r_ff[17];
-wire [31:0] r18; assign r18 = u_zap_top.u_zap_regf.r_ff[18];
-wire [31:0] r19; assign r19 = u_zap_top.u_zap_regf.r_ff[19];
-wire [31:0] r20; assign r20 = u_zap_top.u_zap_regf.r_ff[20];
-wire [31:0] r21; assign r21 = u_zap_top.u_zap_regf.r_ff[21];
-wire [31:0] r22; assign r22 = u_zap_top.u_zap_regf.r_ff[22];
-wire [31:0] r23; assign r23 = u_zap_top.u_zap_regf.r_ff[23];
-wire [31:0] r24; assign r24 = u_zap_top.u_zap_regf.r_ff[24];
-wire [31:0] r25; assign r25 = u_zap_top.u_zap_regf.r_ff[25];
-wire [31:0] r26; assign r26 = u_zap_top.u_zap_regf.r_ff[26];
-wire [31:0] r27; assign r27 = u_zap_top.u_zap_regf.r_ff[27];
-wire [31:0] r28; assign r28 = u_zap_top.u_zap_regf.r_ff[28];
-wire [31:0] r29; assign r29 = u_zap_top.u_zap_regf.r_ff[29];
-wire [31:0] r30; assign r30 = u_zap_top.u_zap_regf.r_ff[30];
-wire [31:0] r31; assign r31 = u_zap_top.u_zap_regf.r_ff[31];
-wire [31:0] r32; assign r32 = u_zap_top.u_zap_regf.r_ff[32];
-wire [31:0] r33; assign r33 = u_zap_top.u_zap_regf.r_ff[33];
-wire [31:0] r34; assign r34 = u_zap_top.u_zap_regf.r_ff[34];
-wire [31:0] r35; assign r35 = u_zap_top.u_zap_regf.r_ff[35];
-wire [31:0] r36; assign r36 = u_zap_top.u_zap_regf.r_ff[36];
-wire [31:0] r37; assign r37 = u_zap_top.u_zap_regf.r_ff[37];
-wire [31:0] r38; assign r38 = u_zap_top.u_zap_regf.r_ff[38];
-wire [31:0] r39; assign r39 = u_zap_top.u_zap_regf.r_ff[39];
-wire [31:0] r40; assign r40 = u_zap_top.u_zap_regf.r_ff[40];
-wire [31:0] r41; assign r41 = u_zap_top.u_zap_regf.r_ff[41];
-wire [31:0] r42; assign r42 = u_zap_top.u_zap_regf.r_ff[42];
-wire [31:0] r43; assign r43 = u_zap_top.u_zap_regf.r_ff[43];
-wire [31:0] r44; assign r44 = u_zap_top.u_zap_regf.r_ff[44];
-wire [31:0] r45; assign r45 = u_zap_top.u_zap_regf.r_ff[45];
-
 // Testing interrupts.
 `ifdef IRQ_EN
 always @ (negedge i_clk)
@@ -136,6 +90,7 @@ zap_top
 u_zap_top 
 (
         .i_clk(i_clk),
+        .i_clk_2x(i_clk_2x),
         .i_reset(i_reset),
         .i_instruction(i_instruction),
         .i_valid(i_valid),
@@ -193,9 +148,14 @@ cache u_cache
 initial i_clk = 0;
 always #10 i_clk = !i_clk;
 
+initial
+begin
+        i_clk_2x = 0;
+        #5;
+        forever #5 i_clk_2x = !i_clk_2x;        
+end
+
 integer i;
-
-
 
 initial
 begin

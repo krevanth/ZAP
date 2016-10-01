@@ -25,7 +25,7 @@ module zap_register_file #(
 )
 (
         // Clock and reset.
-        input wire                           i_clk,     // ZAP clock.
+        input wire                           i_clk, i_clk_2x,    // ZAP clock and 2x clock.
         input wire                           i_reset,   // ZAP reset.
 
         // Inputs from memory unit valid signal.
@@ -86,10 +86,10 @@ module zap_register_file #(
         output reg      [31:0]                  o_copro_reg_rd_data_ff,
 
         // Read data from the register file.
-        output reg      [31:0]               o_rd_data_0,         
-        output reg      [31:0]               o_rd_data_1,         
-        output reg      [31:0]               o_rd_data_2,         
-        output reg      [31:0]               o_rd_data_3,
+        output wire     [31:0]               o_rd_data_0,         
+        output wire     [31:0]               o_rd_data_1,         
+        output wire     [31:0]               o_rd_data_2,         
+        output wire     [31:0]               o_rd_data_3,
 
         // Program counter (dedicated port).
         output reg      [31:0]               o_pc,
@@ -132,13 +132,6 @@ reg     [31:0]  r_nxt      [PHY_REGS-1:0];
 reg     [31:0]  cpsr_ff, cpsr_nxt;
 reg     [31:0]  pc_ff, pc_nxt;
 
-`ifdef SIM
-always @ (posedge i_clk)
-begin
-        $monitor($time, "PC next = %d PC current = %d", r_nxt[15], r_ff[15]);
-end
-`endif
-
 // CPSR dedicated output.
 always @*
 begin
@@ -147,20 +140,81 @@ begin
         o_cpsr_nxt      = cpsr_nxt;
 end
 
-// 4 read decoders.
-always @*
+reg [$clog2(PHY_REGS)-1:0]     wa1, wa2;
+reg [31:0]                     wdata1, wdata2;
+reg                            wen;
+
+`ifdef ASIC
+        ram u_ram
+        (
+                .i_clk          (       i_clk           ),
+                .i_clk_2x       (       i_clk_2x        ),
+
+                .i_reset        (       i_reset         ),       
+ 
+                .i_wr_addr_a    (       wa1             ),
+                .i_wr_addr_b    (       wa2             ),
+        
+                .i_wr_data_a    (       wdata1          ),
+                .i_wr_data_b    (       wdata2          ),
+        
+                .i_wen          (       wen             ),        
+        
+                .i_rd_addr_a    ( i_copro_reg_en ? i_copro_reg_rd_index : i_rd_index_0 ),
+                .i_rd_addr_b    (       i_rd_index_1    ),
+                .i_rd_addr_c    (       i_rd_index_2    ),
+                .i_rd_addr_d    (       i_rd_index_3    ),
+        
+                .o_rd_data_a    (       o_rd_data_0     ),
+                .o_rd_data_b    (       o_rd_data_1     ),
+                .o_rd_data_c    (       o_rd_data_2     ),
+                .o_rd_data_d    (       o_rd_data_3     )
+        );
+`elsif FPGA
+        bram_wrapper u_bram_wrapper
+        (
+                .i_clk          (       i_clk           ),
+                .i_clk_2x       (       i_clk_2x        ),
+
+                .i_reset        (       i_reset         ),       
+ 
+                .i_wr_addr_a    (       wa1             ),
+                .i_wr_addr_b    (       wa2             ),
+        
+                .i_wr_data_a    (       wdata1          ),
+                .i_wr_data_b    (       wdata2          ),
+        
+                .i_wen          (       wen             ),        
+        
+                .i_rd_addr_a    ( i_copro_reg_en ? i_copro_reg_rd_index : i_rd_index_0 ),
+                .i_rd_addr_b    (       i_rd_index_1    ),
+                .i_rd_addr_c    (       i_rd_index_2    ),
+                .i_rd_addr_d    (       i_rd_index_3    ),
+        
+                .o_rd_data_a    (       o_rd_data_0     ),
+                .o_rd_data_b    (       o_rd_data_1     ),
+                .o_rd_data_c    (       o_rd_data_2     ),
+                .o_rd_data_d    (       o_rd_data_3     )
+);
+`else
+initial
 begin
-        o_rd_data_0 = r_ff [ i_copro_reg_en ? i_copro_reg_rd_index : i_rd_index_0 ];
-        o_rd_data_1 = r_ff [ i_rd_index_1 ];
-        o_rd_data_2 = r_ff [ i_rd_index_2 ];
-        o_rd_data_3 = r_ff [ i_rd_index_3 ];
+        $display($time, "Please define either ASIC or FPGA...");
+        $finish;
 end
+`endif
 
 // The register file function.
 always @*
 begin: blk1
 
         integer i;
+
+        wen = 1'd0;
+        wa1 = PHY_RAZ_REGISTER;
+        wa2 = PHY_RAZ_REGISTER;
+        wdata1 = 32'd0;
+        wdata2 = 32'd0;
 
         o_clear_from_writeback = 0;
         o_fiq_ack = 0;
@@ -247,87 +301,76 @@ begin: blk1
         begin
                 // Returns do LR - 8 to get back to the same instruction.
                 pc_nxt                   = DABT_VECTOR; 
-
-                if ( !cpsr_ff[T] ) // ARM mode.
-                        r_nxt[PHY_ABT_R14]              = i_pc_buf_ff;
-                else
-                        r_nxt[PHY_ABT_R14]              = i_pc_buf_ff + 32'd4;
-
-                r_nxt[PHY_ABT_SPSR]                     = cpsr_ff;
-                cpsr_nxt[`CPSR_MODE]                    = ABT;
+                wen    = 1;
+                wdata1 = (!cpsr_ff[T]) ? i_pc_buf_ff : (i_pc_buf_ff + 32'd4);
+                wa1    = PHY_ABT_R14;
+                wa2    = PHY_ABT_SPSR;
+                wdata2 = cpsr_ff;
+                cpsr_nxt[`CPSR_MODE]  = ABT;
         end
         else if ( i_fiq )
         begin
                 // Returns do LR - 4 to get back to the same instruction.
-                pc_nxt                   = FIQ_VECTOR;
-
-                if ( !cpsr_ff[T] ) // ARM mode.
-                        r_nxt[PHY_FIQ_R14]              = i_pc_buf_ff - 32'd4;
-                else
-                        r_nxt[PHY_FIQ_R14]              = i_pc_buf_ff;
-
-                r_nxt[PHY_FIQ_SPSR]                     = cpsr_ff;
-                cpsr_nxt[`CPSR_MODE]                    = FIQ;
-                cpsr_nxt[F]                             = 1'd1;
-                o_fiq_ack = 1;
+                pc_nxt = FIQ_VECTOR; 
+                wen    = 1;
+                wdata1 = (!cpsr_ff[T]) ? (i_pc_buf_ff - 32'd4) : i_pc_buf_ff ;
+                wa1    = PHY_FIQ_R14;
+                wa2    = PHY_FIQ_SPSR;
+                wdata2 = cpsr_ff;
+                cpsr_nxt[`CPSR_MODE]  = FIQ;
+                o_fiq_ack = 1'd1;
+                cpsr_nxt[F] = 1'd1;
         end
         else if ( i_irq )
         begin
+                pc_nxt = IRQ_VECTOR; 
+                wen    = 1;
+                wdata1 = (!cpsr_ff[T]) ? (i_pc_buf_ff - 32'd4) : i_pc_buf_ff ;
+                wa1    = PHY_IRQ_R14;
+                wa2    = PHY_IRQ_SPSR;
+                wdata2 = cpsr_ff;
+                cpsr_nxt[`CPSR_MODE]  = IRQ;
+                o_irq_ack = 1'd1;
                 // Returns do LR - 4 to get back to the same instruction.
-                pc_nxt           = IRQ_VECTOR;
-
-                if ( !cpsr_ff[T] ) // ARM mode.
-                        r_nxt[PHY_IRQ_R14]      = i_pc_buf_ff - 32'd4;
-                else
-                        r_nxt[PHY_IRQ_R14]      = i_pc_buf_ff;
-
-                r_nxt[PHY_IRQ_SPSR]             = cpsr_ff;
-                cpsr_nxt[`CPSR_MODE]            = IRQ;
-                o_irq_ack                       = 1;
         end
         else if ( i_instr_abt )
         begin
                 // Returns do LR - 4 to get back to the same instruction.
-                pc_nxt                   = DABT_VECTOR;
-
-                if ( !cpsr_ff[T] ) // ARM mode.
-                        r_nxt[PHY_ABT_R14]              = i_pc_buf_ff - 32'd4;
-                else
-                        r_nxt[PHY_ABT_R14]              = i_pc_buf_ff;
-
-                r_nxt[PHY_ABT_SPSR]                     = cpsr_ff;
-                cpsr_nxt[`CPSR_MODE]                    = ABT;
+                pc_nxt = PABT_VECTOR; 
+                wen    = 1;
+                wdata1 = (!cpsr_ff[T]) ? (i_pc_buf_ff - 32'd4) : i_pc_buf_ff ;
+                wa1    = PHY_ABT_R14;
+                wa2    = PHY_ABT_SPSR;
+                wdata2 = cpsr_ff;
+                cpsr_nxt[`CPSR_MODE]  = ABT;
         end
         else if ( i_swi )
         begin
                 // Returns do LR to return to the next instruction.
-                pc_nxt                   = SWI_VECTOR;
-
-                if ( !cpsr_ff[T] ) // ARM mode.
-                        r_nxt[PHY_SVC_R14]              = i_pc_buf_ff - 32'd4;
-                else            
-                        r_nxt[PHY_SVC_R14]              = i_pc_buf_ff;
-
-                r_nxt[PHY_SVC_SPSR]                     = cpsr_ff;
-                cpsr_nxt[`CPSR_MODE]                    = SVC;
+                pc_nxt = SWI_VECTOR; 
+                wen    = 1;
+                wdata1 = (!cpsr_ff[T]) ? (i_pc_buf_ff - 32'd4) : i_pc_buf_ff ;
+                wa1    = PHY_SVC_R14;
+                wa2    = PHY_SVC_SPSR;
+                wdata2 = cpsr_ff;
+                cpsr_nxt[`CPSR_MODE]  = SVC;
         end
         else if ( i_und )
         begin
-                // Returns do LR to get back to the next instruction.
-                pc_nxt                   = UND_VECTOR;
-
-                if ( !cpsr_ff[T] ) // ARM mode.
-                        r_nxt[PHY_UND_R14]              = i_pc_buf_ff - 32'd4;
-                else
-                        r_nxt[PHY_UND_R14]              = i_pc_buf_ff;
-
-                r_nxt[PHY_UND_SPSR]                     = cpsr_ff;
-                cpsr_nxt[`CPSR_MODE]                    = UND;
+                pc_nxt = UND_VECTOR; 
+                wen    = 1;
+                wdata1 = (!cpsr_ff[T]) ? (i_pc_buf_ff - 32'd4) : i_pc_buf_ff ;
+                wa1    = PHY_UND_R14;
+                wa2    = PHY_UND_SPSR;
+                wdata2 = cpsr_ff;
+                cpsr_nxt[`CPSR_MODE]  = UND;
         end
         else if ( i_copro_reg_en )
         begin
                // Write to register.
-               r_nxt[i_copro_reg_wr_index] = i_copro_reg_wr_data; 
+               wen      = 1;
+               wa1      = i_copro_reg_wr_index;
+               wdata1   = i_copro_reg_wr_data;
         end
         else if ( i_valid )
         begin
@@ -338,8 +381,11 @@ begin: blk1
                                           );                 
 
                 // Dual write port.
-                r_nxt[i_wr_index]       = i_wr_data;
-                r_nxt[i_wr_index_1]     = i_mem_load_ff ? i_wr_data_1 : r_ff[i_wr_index_1];
+                wen    = 1;
+                wa1    = i_wr_index;
+                wa2    = i_mem_load_ff ? i_wr_index_1 : PHY_RAZ_REGISTER;
+                wdata1 = i_wr_data;
+                wdata2 = i_mem_load_ff ? i_wr_data_1 : 32'd0;
 
                 // Update PC if needed.
                 if ( i_wr_index == ARCH_PC )
