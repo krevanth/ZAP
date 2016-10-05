@@ -27,6 +27,7 @@ module zap_memory_main
 
         // Memory stuff.
         input   wire                        i_mem_load_ff,
+        input   wire [31:0]                 i_mem_address_ff, // Address generated.
 
         // Data read from memory.
         input   wire [31:0]                 i_mem_rd_data,
@@ -145,7 +146,7 @@ begin
         o_instr_abort_ff      <= i_instr_abort_ff;
         o_mem_load_ff         <= i_mem_load_ff; 
         o_flag_update_ff      <= i_flag_update_ff;
-        o_mem_rd_data_ff      <= transform(i_mem_load_ff ? i_mem_rd_data : i_mem_srcdest_value_ff, i_sbyte_ff, i_ubyte_ff, i_shalf_ff, i_uhalf_ff);
+        o_mem_rd_data_ff      <= transform((i_mem_load_ff ? i_mem_rd_data : i_mem_srcdest_value_ff), i_mem_address_ff, i_sbyte_ff, i_ubyte_ff, i_shalf_ff, i_uhalf_ff, i_mem_load_ff);
         o_und_ff              <= i_und_ff;
         o_mem_fault           <= i_mem_fault;
 end
@@ -153,7 +154,7 @@ end
 /*
  * Memory always loads 32-bit to processor. We will rotate that here as we wish.
  */
-function [31:0] transform ( input [31:0] data, input sbyte, input ubyte, input shalf, input uhalf );
+function [31:0] transform ( input [31:0] data, input [31:0] address, input sbyte, input ubyte, input shalf, input uhalf, input mem_load_ff );
 begin: trFn
         reg [31:0] d;
 
@@ -162,44 +163,49 @@ begin: trFn
 
         if ( ubyte == 1'd1 )
         begin
-                case ( data[1:0] )
-                0: transform = (d >> 0)  & 8'hff;
-                1: transform = (d >> 8)  & 8'hff;
-                2: transform = (d >> 16) & 8'hff;
-                3: transform = (d >> 24) & 8'hff;
+                case ( address[1:0] )
+                0: transform = (d >> 0)  & 32'h000000ff;
+                1: transform = (d >> 8)  & 32'h000000ff;
+                2: transform = (d >> 16) & 32'h000000ff;
+                3: transform = (d >> 24) & 32'h000000ff;
                 endcase
         end
         else if ( sbyte == 1'd1 )
         begin
-                case ( data[1:0] )
-                0: transform = (d >> 0)  & 8'hff; 
-                1: transform = (d >> 8)  & 8'hff;
-                2: transform = (d >> 16) & 8'hff;
-                3: transform = (d >> 24) & 8'hff;
+                case ( address[1:0] )
+                0: transform = (d >> 0)  & 32'h000000ff; 
+                1: transform = (d >> 8)  & 32'h000000ff;
+                2: transform = (d >> 16) & 32'h000000ff;
+                3: transform = (d >> 24) & 32'h000000ff;
                 endcase
 
                 transform = $signed(transform[7:0]);
         end
         else if ( shalf == 1'd1 )
         begin
-                case ( data[1] )
-                0: transform = (d >>  0) & 16'hffff;
-                1: transform = (d >> 16) & 16'hffff;
+                case ( address[1] )
+                0: transform = (d >>  0) & 32'h0000ffff;
+                1: transform = (d >> 16) & 32'h0000ffff;
                 endcase
 
                 transform = $signed(transform[15:0]);
         end
         else if ( uhalf == 1'd1 )
         begin
-                case ( data[1] )
-                0: transform = (d >>  0) & 16'hffff;
-                1: transform = (d >> 16) & 16'hffff;
+                case ( address[1] )
+                0: transform = (d >>  0) & 32'h0000ffff;
+                1: transform = (d >> 16) & 32'h0000ffff;
                 endcase
         end
         else
+        begin
                 transform = data;
+        end
 
-        if ( !i_mem_load_ff ) transform = data; // No memory load means pass it on.
+        if ( !mem_load_ff ) 
+        begin
+                transform = data; // No memory load means pass it on.
+        end
 end
 endfunction
 

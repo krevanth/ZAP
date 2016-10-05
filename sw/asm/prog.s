@@ -15,6 +15,13 @@ add sp, sp, #1
 subs pc, lr, #4
 
 there:
+// Write a byte to location 7502
+ldr r0, =7502
+ldr r1, =8
+strb r1, [r0]
+ldrb r2, [r0]
+mov r3, r2
+
 // Enable interrupts.
 mrs r1, cpsr
 bic r1, r1, #0x80

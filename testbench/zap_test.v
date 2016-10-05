@@ -129,8 +129,8 @@ cache u_cache
 (
         .i_clk(i_clk),
         .i_reset(i_reset),
-        .i_address(o_address    & 32'hfffffffe  ),
-        .i_address1(o_pc        & 32'hfffffffe  ),
+        .i_address(o_address),
+        .i_address1(o_pc),
         .i_data(o_wr_data),
         .o_data(i_rd_data),
         .o_data1(i_instruction),

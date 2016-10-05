@@ -826,6 +826,8 @@ u_zap_memory_main
         .i_und_ff (alu_und_ff),
         .o_und_ff (memory_und_ff),
 
+        .i_mem_address_ff(o_address),
+
         .i_clk                          (i_clk),
         .i_reset                        (i_reset),
 

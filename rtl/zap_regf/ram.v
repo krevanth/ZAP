@@ -32,6 +32,21 @@ module ram
 reg [31:0] mem [63:0];
 integer i;
 
+`ifdef SIM
+
+genvar g;
+
+generate
+        wire [31:0] w [63:0];
+
+        for(g=0;g<64;g=g+1) begin: GEN
+                assign w[g] = mem[g];
+        end
+endgenerate
+
+`endif
+
+
 initial
 begin
         for(i=0;i<64;i=i+1)
