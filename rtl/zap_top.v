@@ -120,6 +120,8 @@ module zap_top #(
 `include "cc.vh"
 `include "modes.vh"
 
+wire reset;
+
 wire [31:0] copro_mode;
 wire [31:0] user;
 
@@ -316,12 +318,21 @@ wire [31:0]     bp_pc;
 assign o_user           = (alu_flags_ff[4:0] == USR);
 assign o_copro_flags    = copro_mode[31:28];
 
+// RESET SYNCHRONIZER //
+zap_reset_synchronizer_main
+U_RST_SYNC
+(
+        .i_clk(i_clk),
+        .i_reset(i_reset),
+        .o_reset(reset)
+);
+
 // FETCH STAGE //
 zap_fetch_main 
 u_zap_fetch_main (
         // Input.
         .i_clk                          (i_clk),
-        .i_reset                        (i_reset),
+        .i_reset                        (reset),
         .i_clear_from_writeback         (clear_from_writeback),
         .i_clear_from_decode            (clear_from_decode),
         .i_data_stall                   (i_data_stall),
@@ -349,7 +360,7 @@ u_zap_branch_predict
 (
         // Input.
         .i_clk                          (i_clk),
-        .i_reset                        (i_reset),
+        .i_reset                        (reset),
         .i_clear_from_writeback         (clear_from_writeback),
         .i_data_stall                   (i_data_stall),
         .i_clear_from_alu               (clear_from_alu),
@@ -386,7 +397,7 @@ zap_predecode_main #(
 u_zap_predecode (
         // Input.
         .i_clk                          (i_clk),
-        .i_reset                        (i_reset),
+        .i_reset                        (reset),
         .i_clear_from_writeback         (clear_from_writeback),
         .i_data_stall                   (i_data_stall),
         .i_clear_from_alu               (clear_from_alu),
@@ -450,7 +461,7 @@ zap_decode_main #(
 u_zap_decode_main (
         // Input.
         .i_clk                          (i_clk),
-        .i_reset                        (i_reset),
+        .i_reset                        (reset),
         .i_clear_from_writeback         (clear_from_writeback),
         .i_data_stall                   (i_data_stall),
         .i_clear_from_alu               (clear_from_alu),
@@ -519,7 +530,7 @@ u_zap_issue_main
 
         // Inputs
         .i_clk                          (i_clk),
-        .i_reset                        (i_reset),
+        .i_reset                        (reset),
         .i_clear_from_writeback         (clear_from_writeback),
         .i_stall_from_shifter           (stall_from_shifter),
         .i_data_stall                   (i_data_stall),
@@ -636,7 +647,7 @@ u_zap_shifter_main
 
         // Inputs.
         .i_clk                          (i_clk),
-        .i_reset                        (i_reset),
+        .i_reset                        (reset),
         .i_clear_from_writeback         (clear_from_writeback),
         .i_data_stall                   (i_data_stall),
         .i_clear_from_alu               (clear_from_alu),
@@ -737,7 +748,7 @@ u_zap_alu_main
         .o_und_ff(alu_und_ff),
 
          .i_clk                          (i_clk),
-         .i_reset                        (i_reset),
+         .i_reset                        (reset),
          .i_clear_from_writeback         (clear_from_writeback),     // | High Priority
          .i_data_stall                   (i_data_stall),             // V Low Priority
 
@@ -829,7 +840,7 @@ u_zap_memory_main
         .i_mem_address_ff(o_address),
 
         .i_clk                          (i_clk),
-        .i_reset                        (i_reset),
+        .i_reset                        (reset),
 
         .i_sbyte_ff                     (alu_sbyte_ff),     // Signed byte.
         .i_ubyte_ff                     (alu_ubyte_ff),     // Unsigned byte.
@@ -890,7 +901,7 @@ u_zap_regf
 (
         .i_clk                  (i_clk),     // ZAP clock.
         .i_clk_2x               (i_clk_2x),  // 2xZAP clock.
-        .i_reset                (i_reset),   // ZAP reset.
+        .i_reset                (reset),   // ZAP reset.
         .i_valid                (memory_dav_ff),
         .i_data_stall           (i_data_stall),
         .i_clear_from_alu       (clear_from_alu),
