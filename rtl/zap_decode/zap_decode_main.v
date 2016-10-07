@@ -301,6 +301,9 @@ zap_decode #(
         .SHIFT_OPS      (SHIFT_OPS)
 ) 
 u_zap_decode (
+        .i_irq(i_irq),
+        .i_fiq(i_fiq),
+        .i_abt(i_abt),
         .i_instruction(i_instruction),          
         .i_instruction_valid(i_instruction_valid),
         .i_cpsr_ff(i_cpu_mode),

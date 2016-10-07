@@ -48,7 +48,9 @@ module zap_decode #(
 )
 (
                 // I/O Ports.
-                
+                input   wire                            i_irq, i_fiq, i_abt,
+               
+ 
                 // From the FSM.
                 input    wire   [35:0]                  i_instruction,          // The upper 2-bit [34:33] are {rd/ptr,rm/srcdest}. The upper most bit is for opcode extend.
                 input    wire                           i_instruction_valid,
@@ -145,7 +147,21 @@ begin: mainBlk1
 
 
                 // Based on our pattern match, call the appropriate task
-                if ( i_instruction_valid )
+                if ( i_fiq || i_irq || i_abt )
+                begin
+                        // Generate LR = PC - 4.
+                        o_condition_code    = AL;
+                        o_alu_operation     = SUB;
+                        o_alu_source        = ARCH_PC;
+                        o_alu_source[32]    = INDEX_EN; 
+                        o_destination_index = ARCH_LR;
+                        o_shift_source      = 4;
+                        o_shift_source[32]  = IMMED_EN;
+                        o_shift_operation   = LSL;
+                        o_shift_length      = 0;
+                        o_shift_length[32]  = IMMED_EN;
+                end
+                else if ( i_instruction_valid )
                 casez ( i_instruction[31:0] )
                 //CLZ_INST:                                       decode_clz ( i_instruction );  /* v4T does not need CLZ. Leaving function here anyway. */
                 BX_INST:                                        decode_bx ( i_instruction );
@@ -268,27 +284,38 @@ begin
 
         // Say instruction is undefined.
         o_und = 1;
+
+        // Generate LR = PC - 4
+        o_condition_code    = AL;
+        o_alu_operation     = SUB;
+        o_alu_source        = ARCH_PC;
+        o_alu_source[32]    = INDEX_EN; 
+        o_destination_index = ARCH_LR;
+        o_shift_source      = 4;
+        o_shift_source[32]  = IMMED_EN;
+        o_shift_operation   = LSL;
+        o_shift_length      = 0;
+        o_shift_length[32]  = IMMED_EN;
 end
 endtask
 
 task decode_swi( input [34:0] i_instruction );
 begin: tskDecodeSWI
-        // Generate a MOV RAZ, SWI_number.
 
         `ifdef SIM
                 $display($time, "%m:SWI decode...");
         `endif
 
-        o_condition_code = i_instruction[31:28];
-        o_alu_operation  = MOV;
-        o_alu_source     = RAZ_REGISTER;
-        o_alu_source = 0;
-        o_alu_source[32] = IMMED_EN; 
-        o_destination_index = RAZ_REGISTER;
-        o_shift_source = i_instruction[23:0];
-        o_shift_operation = LSL;
-        o_shift_length = 0;
-        o_shift_length[32] = IMMED_EN;
+        o_condition_code    = AL;
+        o_alu_operation     = SUB;
+        o_alu_source        = ARCH_PC;
+        o_alu_source[32]    = INDEX_EN; 
+        o_destination_index = ARCH_LR;
+        o_shift_source      = 4;
+        o_shift_source[32]  = IMMED_EN;
+        o_shift_operation   = LSL;
+        o_shift_length      = 0;
+        o_shift_length[32]  = IMMED_EN;
 end
 endtask
 
