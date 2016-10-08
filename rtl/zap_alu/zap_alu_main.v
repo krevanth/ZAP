@@ -424,7 +424,7 @@ begin: blk1
         end
         else
         begin: blk3
-                {flags_nxt[31:28], rd} = process_arithmetic_instructions ( rn, rm, flags_ff[31:28], opcode, i_rrx_ff, i_flag_update_ff );
+                {flags_nxt[31:28], rd} = process_arithmetic_instructions ( rn, rm, not_rn, not_rm, flags_ff[31:28], opcode, i_rrx_ff, i_flag_update_ff );
         end
 
         if ( i_irq_ff || i_fiq_ff || i_abt_ff || i_swi_ff || i_und_ff ) // Any sign of an interrupt is present.
@@ -591,7 +591,7 @@ endfunction
 
 // Process arithmetic instructions.
 function [35:0] process_arithmetic_instructions 
-( input [31:0] rn, rm, input [3:0] flags, input [$clog2(ALU_OPS)-1:0] op, input rrx, input i_flag_upd );
+( input [31:0] rn, rm, not_rn, not_rm, input [3:0] flags, input [$clog2(ALU_OPS)-1:0] op, input rrx, input i_flag_upd );
 begin: blk3
 
         reg [31:0]      r_d;

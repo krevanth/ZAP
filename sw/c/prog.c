@@ -3,7 +3,6 @@ void factorial (void)
         int *x = (int *)500;
         x[0] = 5;
         x[1] = fact(x[0]);               
-        while(1);
 }
 
 int fact (int x)

@@ -556,7 +556,17 @@ begin
         o_alu_operation  = i_instruction[22] ? MMOV : FMOV;
         o_alu_source     = i_instruction[25] ? (i_instruction[19:16] & 4'b1000) 
                            : (i_instruction[19:16] & 4'b1001);
-        o_alu_source[32] = IMMED_EN; 
+        o_alu_source[32] = IMMED_EN;
+
+        // If you are in USER mode and you perform MSR with [18:16] != 0, then this
+        // will be undefined (write to CPSR). 
+        if (    i_cpsr_ff[5:0] == USR     &&  // User mode.
+                o_alu_source[2:0] != 3'd0 &&  // Changing critical stuff.
+                o_alu_operation == FMOV       // To CPSR.
+        )
+        begin
+                decode_und ( i_instruction );                
+        end
 end
 endtask
 

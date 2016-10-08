@@ -11,10 +11,10 @@ processor is built around a 9 stage pipeline:
 ARM ISA Version         : v4 
 THUMB ISA Version       : v1 
 
-The pipeline is fully interlocked and fed-back. Most dependent instructions
-execute without requiring stalls. A load accelerator allows instructions that require
-a loaded register to issue 1 cycle early. Multiplication takes 4 clock cycles. Shift
-and multiplication operations require registers a cycle early.
+The pipeline is fully bypassed to allow most dependent instructions to execute without stalls. 
+The pipeline stalls for 3 cycles if there is an attempt to use a value loaded from memory immediately following it.
+32x32+32->32 MAC takes 4 clock cycles while long multiplication/MAC takes 8 clock cycles.
+Multiplication and non trivial shifts require registers a cycle early else the pipeline stalls for 1 cycle.
 
 Features:
 - Supports v4 ARM instructions.
