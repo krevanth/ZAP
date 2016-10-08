@@ -567,7 +567,7 @@ begin: blk2
                 `ifdef SIM
                         #40;
                         $display("This should never happen, check the RTL!");
-                        $stop;
+                        //$stop;
                 `endif
         end
         endcase           
@@ -626,7 +626,7 @@ begin: blk3
                 `ifdef SIM
                         #40;
                         $display("ALU__arith__:This should never happen op = %d, check the RTL!", op);
-                        $stop;
+                        //$stop;
                 `endif
         end
         endcase
