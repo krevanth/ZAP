@@ -125,8 +125,8 @@ localparam FIQ_VECTOR   = 32'h0000001C;
 `include "cpsr.vh"
 
 // Register file.
-reg     [31:0]  r_ff       [PHY_REGS-1:0];
-reg     [31:0]  r_nxt      [PHY_REGS-1:0];
+//reg     [31:0]  r_ff       [PHY_REGS-1:0];
+//reg     [31:0]  r_nxt      [PHY_REGS-1:0];
 
 // PC and CPSR are separate registers.
 reg     [31:0]  cpsr_ff, cpsr_nxt;
@@ -223,9 +223,9 @@ begin: blk1
         pc_nxt = pc_ff;
         cpsr_nxt = cpsr_ff;
 
-        // Avoid latch inference.
-        for ( i=0 ; i<PHY_REGS ; i=i+1 )
-                r_nxt[i] = r_ff[i];
+  //      Avoid latch inference.
+  //      for ( i=0 ; i<PHY_REGS ; i=i+1 )
+  //              r_nxt[i] = r_ff[i];
 
         `ifdef SIM
                 $display($time, "PC_nxt before = %d", pc_nxt);
@@ -400,26 +400,26 @@ begin: blk1
         end
 
         `ifdef SIM
-                $display("PC_nxt = %d", r_nxt[15]);
+                $display("PC_nxt = %d", pc_nxt);
         `endif
 end
 
 // Sequential Logic.
-always @ (posedge i_clk)
-begin: seqregfblk
-        integer i;
-
-        if ( i_reset )
-        begin
-                for(i=0;i<PHY_REGS;i=i+1)
-                        r_ff[i] <= 32'd0;
-        end
-        else 
-        begin
-                for(i=0;i<PHY_REGS;i=i+1)
-                        r_ff[i] <= r_nxt[i];
-        end
-end
+// always @ (posedge i_clk)
+// begin: seqregfblk
+//         integer i;
+// 
+//         if ( i_reset )
+//         begin
+//                 for(i=0;i<PHY_REGS;i=i+1)
+//                         r_ff[i] <= 32'd0;
+//         end
+//         else 
+//         begin
+//                 for(i=0;i<PHY_REGS;i=i+1)
+//                         r_ff[i] <= r_nxt[i];
+//         end
+// end
 
 always @ (posedge i_clk)
 begin
