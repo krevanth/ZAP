@@ -279,7 +279,7 @@ task decode_und( input [34:0] i_instruction );
 begin
         `ifdef SIM
                 $display($time, "Undefined instruction detected! You may continue the simulation...");
-                $stop;
+                //$stop;
         `endif
 
         // Say instruction is undefined.
