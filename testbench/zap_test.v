@@ -124,6 +124,8 @@ u_zap_top
         .o_copro_reg_rd_data(o_copro_reg_rd_data)
 );
 
+`ifdef TB_CACHE
+
 // Memory - Dual ported unified cache.
 cache u_cache
 (
@@ -144,6 +146,29 @@ cache u_cache
         .i_cpsr(o_user)
 );
 
+`elsif FPGA_CACHE
+
+zap_cache_main
+#(
+        .SIZE_IN_BYTES(8192)
+)
+(
+        .i_clk(i_clk),
+        .i_daddress(o_address),
+        .i_iaddress(o_pc),
+        .o_ddata(i_rd_data),
+        .o_idata(i_instruction),
+        .i_ben(o_ben),
+        .i_ddata(o_wr_data),
+        .i_wr_en(o_write_en)
+);
+
+assign i_valid       = 1'd1;
+assign i_data_stall  = 1'd0;
+assign i_data_abort  = 1'd0;
+assign i_instr_abort = 1'd0;
+
+`endif
 
 initial i_clk = 0;
 always #10 i_clk = !i_clk;
