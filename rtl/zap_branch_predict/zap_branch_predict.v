@@ -62,14 +62,8 @@ localparam      ST      =       3; // Strongly Taken.
 // Offset (For Thumb)
 reg     [11:0] offset_ff, offset_nxt;
 
-// Taken nxt.
-reg            taken_nxt;
-
 // Branch memory. Common for ARM and Thumb.
 reg [1:0] mem_ff  [511:0];
-reg [1:0] mem_nxt [511:0];
-
-
 
 // Mundane outputs.
 always @ (posedge i_clk)
@@ -113,7 +107,7 @@ begin
                 o_val_ff        <= i_val;
                 o_abt_ff        <= i_abt;
                 o_pc_plus_8_ff  <= i_pc_plus_8; 
-                o_taken_ff      <= taken_nxt;
+                o_taken_ff      <= ( mem_ff [ i_pc[9:1] ] ) >> 1;
                 o_pc_ff         <= i_pc;
         end
 end
@@ -130,22 +124,6 @@ begin
 end
 endtask
 
-// The output is stock read from memory.
-always @*
-begin      
-        taken_nxt = (mem_ff [ i_pc[9:1] ]) >> 1;
-end
-
-always @ (posedge i_clk)     
-begin:blkBRAMSeq
-        integer i;
-
-        // Update ONLY if there is a confirm from ALU and no data stall.
-          
-        for(i=0;i<512;i=i+1)
-                mem_ff[i] <= mem_nxt[i];
-end
-
 // The initial block initializes the memory.
 initial
 begin: blk1
@@ -160,51 +138,36 @@ begin: blk1
                         mem_ff[i] = 2'd0;
 end
 
+`define x i_pc_from_alu[9:1]
+
 // Memory writes.
-always @*
+always @ (posedge i_clk)
 begin: blk2
-        integer i;
-        reg [8:0] x;
-
-        // We will index memory using this.
-        x = i_pc_from_alu[9:1];
-
-        // We will be editing only 1 location.
-        for ( i=0;i<512;i=i+1 )
-        begin
-                mem_nxt[i] = mem_ff[i];
-        end
 
         if ( !i_data_stall ) // If there isn't a data stall.
         begin
                 // Based on feedback, we modify stuff.
                 if ( i_clear_from_alu )
                 begin
-                        case ( mem_ff[x] )
-                        SNT: mem_nxt[x] = WNT;
-                        WNT: mem_nxt[x] = WT;
-                        WT:  mem_nxt[x] = WNT;
-                        ST:  mem_nxt[x] = WT;
+                        case ( mem_ff[`x] )
+                        SNT: mem_ff[`x] <= WNT;
+                        WNT: mem_ff[`x] <= WT;
+                        WT:  mem_ff[`x] <= WNT;
+                        ST:  mem_ff[`x] <= WT;
                         endcase
-
-                        `ifdef SIM
-                                $display($time, "BRANCH :: Branch predictor mispredicted local address %d, changing from %d to %d...", i_pc_from_alu, mem_ff[x], mem_nxt[x]);
-                        `endif
                 end
                 else if ( i_confirm_from_alu )
                 begin
-                        case ( mem_ff[x] )
-                        SNT: mem_nxt[x] = SNT;
-                        WNT: mem_nxt[x] = SNT;
-                        WT:  mem_nxt[x] = ST;
-                        ST:  mem_nxt[x] = ST;
+                        case ( mem_ff[`x] )
+                        SNT: mem_ff[`x] <= SNT;
+                        WNT: mem_ff[`x] <= SNT;
+                        WT:  mem_ff[`x] <= ST;
+                        ST:  mem_ff[`x] <= ST;
                         endcase
-
-                        `ifdef SIM
-                                $display($time, "BRANCH :: Branch predictor correctly predicted local address %d, changing from %d to %d...", i_pc_from_alu, mem_ff[x], mem_nxt[x]);
-                        `endif
                 end
         end
 end
+
+`undef x
 
 endmodule

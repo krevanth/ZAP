@@ -168,6 +168,12 @@ assign i_data_stall  = 1'd0;
 assign i_data_abort  = 1'd0;
 assign i_instr_abort = 1'd0;
 
+`else
+initial
+begin
+        $display("Please define TB_CACHE or FPGA_CACHE...");
+        $finish;
+end
 `endif
 
 initial i_clk = 0;
@@ -201,7 +207,7 @@ begin
         @(negedge i_clk);
         i_reset = 0;
 
-        repeat(100000) @(negedge i_clk);
+        repeat(50000) @(negedge i_clk);
 
         for(i=496;i<=548;i=i+4)
         $display("mem[%d] = %d", i, {u_cache.mem[i+3],u_cache.mem[i+2],u_cache.mem[i+1],u_cache.mem[i]});

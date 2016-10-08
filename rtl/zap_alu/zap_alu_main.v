@@ -152,7 +152,6 @@ assign not_rn = ~rn;
 // Wires to connect to the adder.
 reg [31:0]      op1, op2;
 reg             cin;
-wire [32:0]     sum;
 
 always @*
 begin
@@ -565,14 +564,14 @@ begin: blk2
         default:
         begin
                 `ifdef SIM
-                        #40;
+                        //#40;
                         $display("This should never happen, check the RTL!");
                         //$stop;
                 `endif
         end
         endcase           
 
-        // Assume flags are not going to change at ALL.
+        // Suppose flags are not going to change at ALL.
         flags_out = flags;
 
         // Assign values to the flags only if an update is requested. Note that V
@@ -624,7 +623,7 @@ begin: blk3
         default:
         begin
                 `ifdef SIM
-                        #40;
+                        //#40;
                         $display("ALU__arith__:This should never happen op = %d, check the RTL!", op);
                         //$stop;
                 `endif
@@ -632,7 +631,7 @@ begin: blk3
         endcase
 
         // Assign output of adder to variables
-        {c,r_d} = sum;
+        {c,r_d} = sum(op1,op2,cin);
 
         // Compute Z and N (C computed before).
         z = (r_d == 0);
@@ -701,13 +700,8 @@ begin: clzBlk
 end
 endfunction
 
-// Instantiate adder
-zap_adder UUT_ZAP_ADDER
-(
-        .i_op1(op1),
-        .i_op2(op2),
-        .i_cin(cin),
-        .o_sum(sum)
-);
+function [32:0] sum ( input [31:0] op1, input [31:0] op2, input cin );
+        sum = op1 + op2 + cin;
+endfunction
 
 endmodule

@@ -199,7 +199,9 @@ reg                            wen;
 `else
 initial
 begin
+        `ifdef SIM
         $display($time, "Please define either ASIC or FPGA...");
+        `endif
         $finish;
 end
 `endif

@@ -1,9 +1,11 @@
+`default_nettype none
+
 module zap_reset_synchronizer_main
 (
-        input           i_clk,
-        input           i_reset,
+        input wire          i_clk,
+        input wire          i_reset,
 
-        output          o_reset
+        output wire         o_reset
 );
 
 // Reset buffers.
