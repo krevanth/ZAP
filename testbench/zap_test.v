@@ -1,5 +1,6 @@
 module zap_test;
 
+parameter FPGA_CACHE_SIZE = 8192;
 parameter PHY_REGS  = 64;
 parameter ALU_OPS   = 32;
 parameter SHIFT_OPS = 5;
@@ -150,8 +151,9 @@ cache u_cache
 
 zap_cache_main
 #(
-        .SIZE_IN_BYTES(8192)
+        .SIZE_IN_BYTES(FPGA_CACHE_SIZE)
 )
+u_cache
 (
         .i_clk(i_clk),
         .i_daddress(o_address),
@@ -193,10 +195,17 @@ begin
         i_irq = 0;
         i_fiq = 0;
 
+        `ifdef TB_CACHE
         for(i=496;i<=544;i=i+4)
         begin
                 $display("INITIAL :: mem[%d] = %d", i, {u_cache.mem[i+3],u_cache.mem[i+2],u_cache.mem[i+1],u_cache.mem[i]});
         end
+        `elsif FPGA_CACHE
+        for(i=496;i<=544;i=i+4)
+        begin
+                $display("INITIAL(FPGA) :: mem[%d] = %d", i, {u_cache.mem3[(i/4)+3], u_cache.mem2[(i/4)+2], u_cache.mem1[(i/4)+1], u_cache.mem0[(i/4)]});
+        end
+        `endif
 
         $dumpfile("zap.vcd");
         $dumpvars;
@@ -209,8 +218,17 @@ begin
 
         repeat(50000) @(negedge i_clk);
 
+        `ifdef TB_CACHE
         for(i=496;i<=548;i=i+4)
-        $display("mem[%d] = %d", i, {u_cache.mem[i+3],u_cache.mem[i+2],u_cache.mem[i+1],u_cache.mem[i]});
+        begin
+                $display("mem[%d] = %d", i, {u_cache.mem[i+3],u_cache.mem[i+2],u_cache.mem[i+1],u_cache.mem[i]});
+        end
+        `elsif FPGA_CACHE
+        for(i=496;i<548;i=i+4)
+        begin
+                $display("(FPGA) mem[%d] = %d", i, {u_cache.mem3[(i/4)+3], u_cache.mem2[(i/4)+2], u_cache.mem1[(i/4)+1], u_cache.mem0[(i/4)]});
+        end
+        `endif
 
         $finish;
 end
