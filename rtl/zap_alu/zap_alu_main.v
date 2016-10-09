@@ -426,6 +426,8 @@ begin: blk1
                 {flags_nxt[31:28], rd} = process_arithmetic_instructions ( rn, rm, not_rn, not_rm, flags_ff[31:28], opcode, i_rrx_ff, i_flag_update_ff );
         end
 
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
         if ( i_irq_ff || i_fiq_ff || i_abt_ff || i_swi_ff || i_und_ff ) // Any sign of an interrupt is present.
         begin
                 `ifdef SIM

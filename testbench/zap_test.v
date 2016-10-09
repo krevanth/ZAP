@@ -1,6 +1,6 @@
 module zap_test;
 
-parameter FPGA_CACHE_SIZE = 8192;
+parameter FPGA_CACHE_SIZE = 1023;
 parameter PHY_REGS  = 64;
 parameter ALU_OPS   = 32;
 parameter SHIFT_OPS = 5;
