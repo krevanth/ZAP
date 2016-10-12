@@ -71,7 +71,7 @@ begin
                 o_instr_abort   <= 1'd0;
                 sleep_ff        <= 1'd0;        // Wake unit up.
                 o_pc_plus_8_ff  <= 32'd8;
-                o_pc_ff         <= 32'd0;
+                //o_pc_ff         <= 32'd0; -- Allows ISE to infer efficient block RAM.
         end
         else if ( i_clear_from_writeback )       
         begin   

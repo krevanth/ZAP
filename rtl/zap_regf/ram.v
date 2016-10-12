@@ -6,8 +6,6 @@
 module ram
 (
         input wire              i_clk,
-        input wire              i_clk_2x,
-
         input wire              i_reset,
 
         input wire              i_wen,
@@ -54,7 +52,7 @@ begin
 end
 
 // Write on posedge.
-always @ (posedge i_clk_2x)
+always @ (posedge i_clk)
 begin
         if ( i_wen )
         begin       
@@ -64,12 +62,12 @@ begin
 end
 
 // Read on negedge.
-always @ (posedge i_clk_2x)
+always @*
 begin
-        o_rd_data_a <= mem [ i_rd_addr_a ];
-        o_rd_data_b <= mem [ i_rd_addr_b ];
-        o_rd_data_c <= mem [ i_rd_addr_c ];
-        o_rd_data_d <= mem [ i_rd_addr_d ];
+        o_rd_data_a = mem [ i_rd_addr_a ];
+        o_rd_data_b = mem [ i_rd_addr_b ];
+        o_rd_data_c = mem [ i_rd_addr_c ];
+        o_rd_data_d = mem [ i_rd_addr_d ];
 end
 
 endmodule

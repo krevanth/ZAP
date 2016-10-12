@@ -148,7 +148,6 @@ reg                            wen;
         ram u_ram
         (
                 .i_clk          (       i_clk           ),
-                .i_clk_2x       (       i_clk_2x        ),
 
                 .i_reset        (       i_reset         ),       
  

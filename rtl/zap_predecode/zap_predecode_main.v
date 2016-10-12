@@ -114,7 +114,7 @@ wire                            o_irq_nxt;
 wire                            o_fiq_nxt;
 wire                            o_abt_nxt;
 reg                             o_swi_nxt;
-wire                            o_und_nxt;
+//wire                            o_und_nxt;
 wire [35:0]                     o_instruction_nxt;
 wire                            o_instruction_valid_nxt;
 

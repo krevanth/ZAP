@@ -198,12 +198,12 @@ begin
         `ifdef TB_CACHE
         for(i=496;i<=544;i=i+4)
         begin
-                $display("INITIAL :: mem[%d] = %d", i, {u_cache.mem[i+3],u_cache.mem[i+2],u_cache.mem[i+1],u_cache.mem[i]});
+                $display("INITIAL(TB CACHE) :: mem[%d] = %d", i, {u_cache.mem[i+3],u_cache.mem[i+2],u_cache.mem[i+1],u_cache.mem[i]});
         end
         `elsif FPGA_CACHE
         for(i=496;i<=544;i=i+4)
         begin
-                $display("INITIAL(FPGA) :: mem[%d] = %d", i, {u_cache.mem3[(i/4)+3], u_cache.mem2[(i/4)+2], u_cache.mem1[(i/4)+1], u_cache.mem0[(i/4)]});
+                $display("INITIAL(FPGA CACHE) :: mem[%d] = %d", i, {u_cache.mem3[(i/4)+3], u_cache.mem2[(i/4)+2], u_cache.mem1[(i/4)+1], u_cache.mem0[(i/4)]});
         end
         `endif
 

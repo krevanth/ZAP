@@ -130,7 +130,7 @@ zap_branch_predict_ram
         .i_wr_addr(`x),
         .i_rd_addr(`y),
         .i_wr_data(compute(i_taken, i_clear_from_alu)),
-        .o_rd_data(o_taken_ff) // TODO: Fix this
+        .o_rd_data(o_taken_ff) 
 );
 
 // Memory writes.

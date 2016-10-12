@@ -28,20 +28,37 @@ always @ (posedge i_clk)
 
 // Write (Gated)
 always @ (posedge i_clk)
+        `ifdef ASIC
+        if ( i_reset )
+        begin: blk2
+                integer i;
+
+                `ifdef SIM
+                        $display($time, "(ASIC)Initializing branch RAM to 2'b00...");
+                `endif
+
+                // Must initialize to 0.
+                for(i=0;i<NUMBER_OF_ENTRIES;i=i+1)
+                        mem[i] = 0;
+        end
+        else
+        `endif
         if ( i_wr_en )
                 mem [ i_wr_addr ] <= i_wr_data;
 
+`ifdef FPGA
 // The initial block initializes the memory.
 initial
 begin: blk1
                 integer i;
 
                 `ifdef SIM
-                        $display($time, "Initializing branch RAM to 2'b00...");
+                        $display($time, "(FPGA)Initializing branch RAM to 2'b00...");
                 `endif
 
                 // Must initialize to 0.
                 for(i=0;i<NUMBER_OF_ENTRIES;i=i+1)
                         mem[i] = 0;
 end
+`endif
 endmodule

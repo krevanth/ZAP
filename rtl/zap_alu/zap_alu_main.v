@@ -36,6 +36,9 @@ module zap_alu_main #(
         // Taken.
         input wire   [1:0]                 i_taken_ff,
 
+        // PC
+        input wire   [31:0]                i_pc_ff,
+
         // From CPSR. ( I, F, T, Mode ) - From WB.
         input wire  [31:0]                 i_cpsr_ff,
         input wire  [31:0]                 i_cpsr_nxt,
@@ -375,6 +378,10 @@ begin
         // Valid for Thumb.
         if ( i_force32align_ff )
                 mem_address_nxt[1:0] = 2'b00;
+
+        // Do not change address simply.
+        if (!( (i_mem_load_ff || i_mem_store_ff) && o_dav_nxt )) // If NOT a load OR a store.
+                mem_address_nxt = o_mem_address_ff;
 end
 
 always @*
@@ -506,7 +513,7 @@ begin: blk1
                         if ( i_taken_ff == WT || i_taken_ff == ST ) // Wrong prediction.
                         begin
                                 o_clear_from_alu = 1'd1;
-                                o_pc_from_alu    = i_pc_plus_8_ff - 32'd4; // Go to the next instruction.
+                                o_pc_from_alu    = i_pc_ff; // Go to the same branch.
                         end
                         else
                         begin

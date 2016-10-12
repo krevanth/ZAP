@@ -238,7 +238,7 @@ wire shifter_mem_translate_ff;
 wire [3:0] shifter_condition_code_ff;
 wire [$clog2(PHY_REGS)-1:0] shifter_destination_index_ff;
 wire [$clog2(ALU_OPS)-1:0] shifter_alu_operation_ff;
-wire [$clog2(SHIFT_OPS)-1:0] shifter_shift_operation_ff;
+//wire [$clog2(SHIFT_OPS)-1:0] shifter_shift_operation_ff;
 wire shifter_flag_update_ff;
 wire [31:0] shifter_mem_srcdest_value_ff;
 wire [31:0] shifter_alu_source_value_ff;
@@ -718,7 +718,7 @@ u_zap_shifter_main
         .o_condition_code_ff            (shifter_condition_code_ff),
         .o_destination_index_ff         (shifter_destination_index_ff),
         .o_alu_operation_ff             (shifter_alu_operation_ff),
-        .o_shift_operation_ff           (shifter_shift_operation_ff),
+        .o_shift_operation_ff           (), //(shifter_shift_operation_ff),
         .o_flag_update_ff               (shifter_flag_update_ff),
 
         // Interrupts.
@@ -744,6 +744,8 @@ u_zap_alu_main
 (
         .i_taken_ff                      (shifter_taken_ff),
         .o_confirm_from_alu              (confirm_from_alu),
+
+        .i_pc_ff                        (shifter_pc_ff),
 
         .i_und_ff(shifter_und_ff),
         .o_und_ff(alu_und_ff),
