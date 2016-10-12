@@ -302,7 +302,7 @@ begin:bprblk1
         taken_nxt               = i_taken;
         addr                    = $signed(arm_instruction[23:0]);
         
-        if ( arm_instruction[34] )
+        if ( arm_instruction[34] )      // Indicates a shift of 1.
                 addr_final = addr << 1;
         else
                 addr_final = addr << 2;
