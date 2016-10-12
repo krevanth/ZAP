@@ -41,7 +41,7 @@ module zap_decode_main #(
 /////////////////////////////////////////////////////////////////////////////////////////////
 
         // Branch state.
-        input   wire                            i_taken,
+        input   wire     [1:0]                  i_taken,
 
         // Thumb undefined.
         input   wire                            i_thumb_und,
@@ -125,7 +125,7 @@ module zap_decode_main #(
         output reg                              o_force32align_ff,
 
         // Branch.
-        output reg                              o_taken_ff
+        output reg    [1:0]                     o_taken_ff
 );
 
 `include "index_immed.vh"

@@ -13,6 +13,9 @@
 `default_nettype none
 
 module zap_branch_predict
+#(
+        parameter BP_ENTRIES = 512
+)
 (
         // Clock and reset.
         input wire              i_clk,
@@ -45,25 +48,18 @@ module zap_branch_predict
         output reg [31:0]       o_pc_ff,
 
         // Branch state.
-        output reg              o_taken_ff        
+        input  wire [1:0]       i_taken,
+        output wire [1:0]       o_taken_ff
 );
 
 // For Thumb bit position.
 `include "cpsr.vh"
-
-
 
 // Branch states.
 localparam      SNT     =       0; // Strongly Not Taken.
 localparam      WNT     =       1; // Weakly Not Taken.
 localparam      WT      =       2; // Weakly Taken.
 localparam      ST      =       3; // Strongly Taken.
-
-// Offset (For Thumb)
-reg     [11:0] offset_ff, offset_nxt;
-
-// Branch memory. Common for ARM and Thumb.
-reg [1:0] mem_ff  [511:0];
 
 // Mundane outputs.
 always @ (posedge i_clk)
@@ -107,7 +103,6 @@ begin
                 o_val_ff        <= i_val;
                 o_abt_ff        <= i_abt;
                 o_pc_plus_8_ff  <= i_pc_plus_8; 
-                o_taken_ff      <= ( mem_ff [ i_pc[9:1] ] ) >> 1;
                 o_pc_ff         <= i_pc;
         end
 end
@@ -120,54 +115,49 @@ begin
         o_abt_ff        <= 1'd0;
         o_pc_plus_8_ff  <= 32'd8;
         o_pc_ff         <= 32'd0;
-        o_taken_ff      <= 1'd0;
 end
 endtask
 
-// The initial block initializes the memory.
-initial
-begin: blk1
-                integer i;
+`define x i_pc_from_alu[$clog2(BP_ENTRIES):1]
+`define y i_pc[$clog2(BP_ENTRIES):1]
 
-                `ifdef SIM
-                        $display($time, "Initializing branch RAM to 2'b00...");
-                `endif
-
-                // Must initialize to 0.
-                for(i=0;i<512;i=i+1)
-                        mem_ff[i] = 2'd0;
-end
-
-`define x i_pc_from_alu[9:1]
+zap_branch_predict_ram
+#(.NUMBER_OF_ENTRIES(BP_ENTRIES), .ENTRY_SIZE(2)) u_br_ram
+(
+        .i_clk(i_clk),
+        .i_reset(i_reset),
+        .i_wr_en(!i_data_stall && (i_clear_from_alu || i_confirm_from_alu)),
+        .i_wr_addr(`x),
+        .i_rd_addr(`y),
+        .i_wr_data(compute(i_taken, i_clear_from_alu)),
+        .o_rd_data(o_taken_ff) // TODO: Fix this
+);
 
 // Memory writes.
-always @ (posedge i_clk)
-begin: blk2
-
-        if ( !i_data_stall ) // If there isn't a data stall.
-        begin
-                // Based on feedback, we modify stuff.
+function [1:0] compute ( input [1:0] i_taken, input i_clear_from_alu );
+begin
                 if ( i_clear_from_alu )
                 begin
-                        case ( mem_ff[`x] )
-                        SNT: mem_ff[`x] <= WNT;
-                        WNT: mem_ff[`x] <= WT;
-                        WT:  mem_ff[`x] <= WNT;
-                        ST:  mem_ff[`x] <= WT;
+                        case ( i_taken )
+                        SNT: compute = WNT;
+                        WNT: compute = WT;
+                        WT:  compute = WNT;
+                        ST:  compute = WT;
                         endcase
                 end
-                else if ( i_confirm_from_alu )
+                else
                 begin
-                        case ( mem_ff[`x] )
-                        SNT: mem_ff[`x] <= SNT;
-                        WNT: mem_ff[`x] <= SNT;
-                        WT:  mem_ff[`x] <= ST;
-                        ST:  mem_ff[`x] <= ST;
+                        case ( i_taken )
+                        SNT: compute = SNT;
+                        WNT: compute = SNT;
+                        WT:  compute = ST;
+                        ST:  compute = ST;
                         endcase
                 end
-        end
 end
+endfunction
 
 `undef x
+`undef y
 
 endmodule

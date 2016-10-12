@@ -34,7 +34,7 @@ module zap_alu_main #(
         input wire                         i_reset,                // ZAP synchronous active high reset.
 
         // Taken.
-        input wire                         i_taken_ff,
+        input wire   [1:0]                 i_taken_ff,
 
         // From CPSR. ( I, F, T, Mode ) - From WB.
         input wire  [31:0]                 i_cpsr_ff,
@@ -138,6 +138,12 @@ localparam _N = 3;
 localparam _Z = 2;
 localparam _C = 1;
 localparam _V = 0;
+
+// Branch status.
+localparam SNT = 2'd0;
+localparam WNT = 2'd1;
+localparam WT  = 2'd2;
+localparam ST  = 2'd3;
 
 reg                             sleep_ff, sleep_nxt;
 reg [31:0]                      flags_ff, flags_nxt;
@@ -463,7 +469,7 @@ begin: blk1
                                 $display($time, "ALU :: A quick branch! Possibly a BX i_switch_ff = %d...", i_switch_ff);
                         `endif
 
-                        if ( !i_taken_ff ) // Incorrectly predicted.
+                        if ( i_taken_ff == SNT || i_taken_ff == WNT ) // Incorrectly predicted.
                         begin
                                 // Quick branches - Flush everything before.
                                 o_destination_index_nxt = PHY_RAZ_REGISTER;                     // Dumping ground since PC change is done.
@@ -497,7 +503,7 @@ begin: blk1
                 end
                 else    // Branch not taken
                 begin
-                        if ( i_taken_ff ) // Wrong prediction.
+                        if ( i_taken_ff == WT || i_taken_ff == ST ) // Wrong prediction.
                         begin
                                 o_clear_from_alu = 1'd1;
                                 o_pc_from_alu    = i_pc_plus_8_ff - 32'd4; // Go to the next instruction.

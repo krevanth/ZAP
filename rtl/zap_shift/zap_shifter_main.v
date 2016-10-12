@@ -28,8 +28,8 @@ module zap_shifter_main
         output reg [31:0]                       o_pc_ff,
 
         // Taken.
-        input wire                               i_taken_ff,
-        output reg                               o_taken_ff,
+        input wire   [1:0]                       i_taken_ff,
+        output reg   [1:0]                       o_taken_ff,
 
         // ==============================
         // Stall and clear.

@@ -40,8 +40,8 @@ module zap_issue_main
         output reg [31:0]                       o_pc_ff,
 
         // BP signals.
-        input wire                              i_taken_ff,
-        output reg                              o_taken_ff,
+        input wire   [1:0]                      i_taken_ff,
+        output reg   [1:0]                      o_taken_ff,
 
         // Clock and reset.
         input  wire                             i_clk,    // ZAP clock.

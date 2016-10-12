@@ -148,7 +148,7 @@ wire [35:0]     predecode_inst;
 wire            predecode_val;
 wire            predecode_force32;
 wire            predecode_und;
-wire            predecode_taken;
+wire [1:0]      predecode_taken;
 
 // Decode
 wire [3:0]                      decode_condition_code;
@@ -179,7 +179,7 @@ wire                            decode_force32_ff;
 wire                            decode_und_ff;
 wire                            clear_from_decode;
 wire [31:0]                     pc_from_decode;
-wire                            decode_taken_ff;
+wire [1:0]                      decode_taken_ff;
 
 // Issue
 wire [$clog2(PHY_REGS)-1:0]     issue_rd_index_0, 
@@ -218,7 +218,7 @@ wire                            issue_shifter_disable_ff;
 wire                            issue_switch_ff;
 wire                            issue_force32_ff;
 wire                            issue_und_ff;
-wire                            issue_taken_ff;
+wire  [1:0]                     issue_taken_ff;
 
 wire [$clog2(PHY_REGS)-1:0]     rd_index_0;
 wire [$clog2(PHY_REGS)-1:0]     rd_index_1;
@@ -256,7 +256,7 @@ wire shifter_force32_ff;
 wire shifter_und_ff;
 wire stall_from_shifter;
 wire shifter_use_old_carry_ff;
-wire shifter_taken_ff;
+wire [1:0] shifter_taken_ff;
 
 // ALU
 wire [$clog2(SHIFT_OPS)-1:0]    alu_shift_operation_ff;
@@ -312,7 +312,7 @@ wire [31:0]     bp_inst;
 wire            bp_val;
 wire            bp_abt;
 wire [31:0]     bp_pc_plus_8;
-wire            bp_state;
+wire [1:0]      bp_state;
 wire [31:0]     bp_pc;
 
 assign o_user           = (alu_flags_ff[4:0] == USR);
@@ -371,6 +371,7 @@ u_zap_branch_predict
         .i_abt                          (fetch_instr_abort),
         .i_pc_plus_8                    (fetch_pc_plus_8_ff),
         .i_pc                           (fetch_pc_ff),
+        .i_taken                        (shifter_taken_ff),
 
         .i_stall_from_shifter           (stall_from_shifter),
         .i_stall_from_issue             (stall_from_issue),

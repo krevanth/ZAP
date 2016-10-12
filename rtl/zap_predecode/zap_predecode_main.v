@@ -39,7 +39,7 @@ module zap_predecode_main #(
         input   wire                            i_reset,
 
         // Branch state.
-        input   wire                            i_taken,
+        input   wire     [1:0]                  i_taken,
 
         // Clear and stall signals. 
         input wire                              i_clear_from_writeback, // | Priority
@@ -95,7 +95,7 @@ module zap_predecode_main #(
         output wire  [$clog2(PHY_REGS)-1:0]     o_copro_reg_ff,
 
         // Branch.
-        output reg                              o_taken_ff,
+        output reg   [1:0]                      o_taken_ff,
 
         // Clear from decode.
         output reg                              o_clear_from_decode,
@@ -148,7 +148,7 @@ wire cp_instruction_valid;
 wire cp_irq;
 wire cp_fiq;
 
-reg taken_nxt;
+reg [1:0] taken_nxt;
 
 always @*
 begin
@@ -299,7 +299,7 @@ begin:bprblk1
 
         o_clear_from_decode     = 1'd0;
         o_pc_from_decode        = 32'd0;
-        taken_nxt               = 1'd0;
+        taken_nxt               = i_taken;
         addr                    = $signed(arm_instruction[23:0]);
         
         if ( arm_instruction[34] )
@@ -309,7 +309,7 @@ begin:bprblk1
 
         if ( arm_instruction[27:25] == 3'b101 && arm_instruction_valid )
         begin
-                if ( i_taken || arm_instruction[31:28] == AL ) // Taken or Strongly Taken or Always taken.
+                if ( i_taken[1] || arm_instruction[31:28] == AL ) // Taken or Strongly Taken or Always taken.
                 begin
                         // Take the branch.
                         o_clear_from_decode = 1'd1;
@@ -317,15 +317,14 @@ begin:bprblk1
                         // Predict new PC.
                         o_pc_from_decode    = i_pc_plus_8_ff + addr_final;
 
-                        // Set as taken.
-                        taken_nxt           = 1'd1;
+                       if ( arm_instruction[31:28] == AL ) 
+                                taken_nxt = ST;  
                 end
                 else // Not Taken or Weakly Not Taken.
                 begin
                         // Else dont.
                         o_clear_from_decode = 1'd0;
                         o_pc_from_decode    = 32'd0;
-                        taken_nxt           = 1'd0;
                 end
         end
 end
