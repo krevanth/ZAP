@@ -31,7 +31,10 @@ module zap_predecode_main #(
         parameter SHIFT_OPS = 5,
 
         // Number of physical registers.
-        parameter PHY_REGS = 46
+        parameter PHY_REGS = 46,
+
+        // Enable Thumb
+        parameter THUMB_EN = 0
 )
 (
         // Clock and reset.
@@ -89,7 +92,7 @@ module zap_predecode_main #(
         output reg                              o_force32align_ff,
 
         // Coprocessor interface.
-        output wire  [31:0]                     o_copro_mode_ff,
+//        output wire  [31:0]                     o_copro_mode_ff,
         output wire                             o_copro_dav_ff,
         output wire  [31:0]                     o_copro_word_ff,
         output wire  [$clog2(PHY_REGS)-1:0]     o_copro_reg_ff,
@@ -113,7 +116,7 @@ wire    [3:0]                   o_condition_code_nxt;
 wire                            o_irq_nxt;
 wire                            o_fiq_nxt;
 wire                            o_abt_nxt;
-reg                             o_swi_nxt;
+//reg                             o_swi_nxt;
 //wire                            o_und_nxt;
 wire [35:0]                     o_instruction_nxt;
 wire                            o_instruction_valid_nxt;
@@ -150,12 +153,12 @@ wire cp_fiq;
 
 reg [1:0] taken_nxt;
 
-always @*
-begin
-        // The actual decision whether or not to execute this is taken in EX stage.
-        // Passed instructions are pointless anyway since they will not be executed.
-        o_swi_nxt = &i_instruction[27:24]; 
-end
+//always @*
+//begin
+//        // The actual decision whether or not to execute this is taken in EX stage.
+//        // Passed instructions are pointless anyway since they will not be executed.
+//        o_swi_nxt = &i_instruction[27:24]; 
+//end
 
         // Abort
 assign  o_abt_nxt = i_abt;
@@ -262,14 +265,19 @@ u_zap_decode_coproc
         .o_stall_from_decode(cp_stall),
 
         // Coprocessor interface.
-        .o_copro_mode_ff(o_copro_mode_ff),
+//        .o_copro_mode_ff(o_copro_mode_ff),
         .o_copro_dav_ff(o_copro_dav_ff),
         .o_copro_word_ff(o_copro_word_ff),
         .o_copro_reg_ff(o_copro_reg_ff)
 );
 
 // This unit handles decompression.
-zap_predecode_thumb u_zap_decode_thumb (
+zap_predecode_thumb
+#(
+        .THUMB_EN(THUMB_EN)
+)
+u_zap_predecode_thumb
+(
         .i_clk(i_clk),
         .i_reset(i_reset),
         .i_irq(cp_irq),

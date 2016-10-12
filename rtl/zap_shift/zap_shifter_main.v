@@ -72,7 +72,7 @@ module zap_shifter_main
         input wire      [32:0]                  i_alu_source_ff,
         input wire                              i_alu_dav_nxt,
         input wire      [32:0]                  i_shift_source_ff,
-        input wire      [32:0]                  i_shift_length_ff,
+//        input wire      [32:0]                  i_shift_length_ff,
 
         // Values are obtained here.
         input wire      [31:0]                  i_alu_source_value_ff,

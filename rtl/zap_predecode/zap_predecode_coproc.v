@@ -37,7 +37,6 @@ module zap_predecode_coproc #(
 
         output reg              o_stall_from_decode,      // Stall from decode.
 
-        output reg  [31:0]                o_copro_mode_ff,          // Processor mode sent to coprocessor.
         output reg                        o_copro_dav_ff,           // Are we really asking for the coprocessor.
         output reg  [31:0]                o_copro_word_ff,          // The entire instruction is passed to the coprocessor.
         output reg [$clog2(PHY_REGS)-1:0] o_copro_reg_ff            // Register the coprocessor must deal with. 
@@ -160,7 +159,6 @@ begin
                 o_copro_word_ff <= cp_word_nxt;
                 o_copro_dav_ff  <= cp_dav_nxt;
                 o_copro_reg_ff  <= cp_reg_nxt;
-                o_copro_mode_ff <= i_cpsr_ff;
         end
 end
 
@@ -170,7 +168,6 @@ begin
                 o_copro_word_ff     <= 32'd0;
                 o_copro_dav_ff      <= 1'd0; 
                 o_copro_reg_ff      <= 0;
-                o_copro_mode_ff     <= 0;
 end
 endtask
 

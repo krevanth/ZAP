@@ -23,7 +23,6 @@ wire             o_write_en;             // Memory store.
 wire[31:0]       o_address;              // Memory address.
 
 //Coproc wires.
-wire  [3:0]                      o_copro_flags;
 wire                             o_copro_dav;
 wire  [31:0]                     o_copro_word;
 wire  [$clog2(PHY_REGS)-1:0]     o_copro_reg;
@@ -54,7 +53,7 @@ reg              i_irq;                  // IRQ signal.
 // Program counter.
 wire[31:0]      o_pc;                   // Program counter.
 
-wire            o_user;                 // CPSR
+wire [31:0]      o_cpsr;                 // CPSR
 
 reg             i_copro_reg_en;
 reg [5:0]       i_copro_reg_wr_index;
@@ -110,10 +109,10 @@ u_zap_top
         .o_fiq_ack(o_fiq_ack),
         .o_irq_ack(o_irq_ack),
         .o_pc(o_pc),
-        .o_user(o_user),
+        .o_cpsr(o_cpsr),
 
         .i_copro_done (1'd1),           // Assume coprocessor completes its task.
-        .o_copro_flags (o_copro_flags),
+//        .o_copro_flags (o_copro_flags),
         .o_copro_dav  (o_copro_dav),
         .o_copro_word (o_copro_word),
         .o_copro_reg  (o_copro_reg),
@@ -144,7 +143,7 @@ cache u_cache
         .i_rd_en(o_read_en),
         .i_wr_en(o_write_en),
         .o_abort1(i_instr_abort),
-        .i_cpsr(o_user)
+        .i_cpsr(o_cpsr)
 );
 
 `elsif FPGA_CACHE

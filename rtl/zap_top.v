@@ -48,7 +48,10 @@ module zap_top #(
         parameter PHY_REGS = 64,
 
         // Width of the flags.
-        parameter FLAG_WDT = 32
+        parameter FLAG_WDT = 32,
+
+        // Enable or disable Thumb. Enabling thumb slows the core down by 10MHz (On S6LX9).
+        parameter THUMB_EN = 0
 )
 (
                 // Clock and reset.
@@ -92,7 +95,6 @@ module zap_top #(
                 input wire                              i_irq,                  // IRQ signal.
 
                 // Coprocessor - REGISTERED.
-                output wire  [3:0]                      o_copro_flags,   // THE CPSR[31:28] Exposed to the CoProcessor. Copro must do conditional checks if needed.
                 output wire                             o_copro_dav,
                 output wire  [31:0]                     o_copro_word,
                 output wire  [$clog2(PHY_REGS)-1:0]     o_copro_reg,
@@ -106,7 +108,7 @@ module zap_top #(
                 // Data from register file to coprocessor. - REGISTERED.
                 output wire     [31:0]                  o_copro_reg_rd_data,    // Coprocessor read data from register file.
 
-                // Interrupt acknowledge - NOT REGISTERED.
+                // Interrupt acknowledge - NOT REGISTERED. - For easy debugging.
                 output wire                             o_fiq_ack,              // FIQ acknowledge.
                 output wire                             o_irq_ack,              // IRQ acknowledge.
 
@@ -114,16 +116,13 @@ module zap_top #(
                 output wire     [31:0]                  o_pc,                   // Program counter.
 
                 // Determines user or supervisory mode. - REGISTERED.
-                output wire                             o_user                  // CPSR. Cache must use this to determine VM scheme for instruction fetches.
+                output wire      [31:0]                 o_cpsr                  // CPSR. Cache must use this to determine VM scheme for instruction fetches.
 );
 
 `include "cc.vh"
 `include "modes.vh"
 
 wire reset;
-
-wire [31:0] copro_mode;
-wire [31:0] user;
 
 // Clear and stall signals.
 wire stall_from_decode;
@@ -211,7 +210,7 @@ wire [31:0]                     issue_shift_length_value_ff;
 wire [31:0]                     issue_mem_srcdest_value_ff;
 wire [32:0]                     issue_alu_source_ff;
 wire [32:0]                     issue_shift_source_ff;
-wire [32:0]                     issue_shift_length_ff;
+//wire [32:0]                     issue_shift_length_ff;
 wire [31:0]                     issue_pc_plus_8_ff;
 wire [31:0]                     issue_pc_ff;
 wire                            issue_shifter_disable_ff;
@@ -315,8 +314,7 @@ wire [31:0]     bp_pc_plus_8;
 wire [1:0]      bp_state;
 wire [31:0]     bp_pc;
 
-assign o_user           = (alu_flags_ff[4:0] == USR);
-assign o_copro_flags    = copro_mode[31:28];
+assign o_cpsr = alu_flags_ff;
 
 // RESET SYNCHRONIZER //
 zap_reset_synchronizer_main
@@ -392,8 +390,8 @@ zap_predecode_main #(
         .ARCH_REGS(ARCH_REGS),
         .PHY_REGS(PHY_REGS),
         .SHIFT_OPS(SHIFT_OPS),
-        .ALU_OPS(ALU_OPS)
-
+        .ALU_OPS(ALU_OPS),
+        .THUMB_EN(THUMB_EN)
 )
 u_zap_predecode (
         // Input.
@@ -437,7 +435,6 @@ u_zap_predecode (
 
         .o_force32align_ff              (predecode_force32),
 
-        .o_copro_mode_ff                (copro_mode),
         .o_copro_dav_ff                 (o_copro_dav),
         .o_copro_word_ff                (o_copro_word),
         .o_copro_reg_ff                 (o_copro_reg),
@@ -622,7 +619,7 @@ u_zap_issue_main
 
         .o_alu_source_ff                (issue_alu_source_ff),
         .o_shift_source_ff              (issue_shift_source_ff),
-        .o_shift_length_ff              (issue_shift_length_ff),
+        .o_shift_length_ff              (),
         .o_stall_from_issue             (stall_from_issue),
         .o_pc_plus_8_ff                 (issue_pc_plus_8_ff),
         .o_shifter_disable_ff           (issue_shifter_disable_ff)
@@ -672,7 +669,7 @@ u_zap_shifter_main
         .i_swi_ff                       (issue_swi_ff),
         .i_alu_source_ff                (issue_alu_source_ff),
         .i_shift_source_ff              (issue_shift_source_ff),
-        .i_shift_length_ff              (issue_shift_length_ff),
+//        .i_shift_length_ff              (issue_shift_length_ff),
         .i_alu_source_value_ff          (issue_alu_source_value_ff),
         .i_shift_source_value_ff        (issue_shift_source_value_ff),
         .i_shift_length_value_ff        (issue_shift_length_value_ff),

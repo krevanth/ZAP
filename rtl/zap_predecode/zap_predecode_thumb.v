@@ -18,7 +18,9 @@ License --
 Released under the MIT License.
 */
 
-module zap_predecode_thumb
+module zap_predecode_thumb #(
+        parameter THUMB_EN = 0
+)
 (
         // Clock and reset.
         input wire              i_clk,
@@ -68,7 +70,7 @@ begin
         o_fiq                   = i_fiq;
         o_force32_align         = 0;
 
-        if ( i_cpsr_ff[T] && i_instruction_valid ) // Thumb mode.
+        if ( i_cpsr_ff[T] && i_instruction_valid && THUMB_EN ) // Thumb mode.
         begin
                 casez ( i_instruction[15:0] )
                         T_BRANCH_COND           : decode_conditional_branch; 
