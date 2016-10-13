@@ -12,7 +12,7 @@
 
 `default_nettype none
 
-module zap_branch_predict
+module zap_branch_predict_main
 #(
         parameter BP_ENTRIES = 512
 )

@@ -51,7 +51,10 @@ module zap_top #(
         parameter FLAG_WDT = 32,
 
         // Enable or disable Thumb. Enabling thumb slows the core down by 10MHz (On S6LX9).
-        parameter THUMB_EN = 0
+        parameter THUMB_EN = 0,
+
+        // Set number of predictor entries.
+        parameter BRANCH_PREDICTOR_ENTRIES = 1024
 )
 (
                 // Clock and reset.
@@ -353,7 +356,10 @@ u_zap_fetch_main (
 );
 
 // PREDICTOR STAGE //
-zap_branch_predict
+zap_branch_predict_main
+#(
+        .BP_ENTRIES(BRANCH_PREDICTOR_ENTRIES)
+)
 u_zap_branch_predict
 (
         // Input.
