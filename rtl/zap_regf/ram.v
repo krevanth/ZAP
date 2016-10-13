@@ -44,17 +44,15 @@ endgenerate
 
 `endif
 
-
-initial
-begin
-        for(i=0;i<64;i=i+1)
-                mem[i] = 32'd0;
-end
-
 // Write on posedge.
 always @ (posedge i_clk)
 begin
-        if ( i_wen )
+        if ( i_reset )
+        begin
+        for(i=0;i<64;i=i+1)
+                mem[i] <= 32'd0;
+        end
+        else if ( i_wen )
         begin       
                 mem [ i_wr_addr_a ] <= i_wr_data_a;
                 mem [ i_wr_addr_b ] <= i_wr_data_b;

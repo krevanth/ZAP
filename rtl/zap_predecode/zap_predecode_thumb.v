@@ -73,13 +73,13 @@ begin
         if ( i_cpsr_ff[T] && i_instruction_valid && THUMB_EN ) // Thumb mode.
         begin
                 casez ( i_instruction[15:0] )
+                        T_ADD_SUB_LO            : decode_add_sub_lo; 
+                        T_SWI                   : decode_swi;
                         T_BRANCH_COND           : decode_conditional_branch; 
                         T_BRANCH_NOCOND         : decode_unconditional_branch;
                         T_BL                    : decode_bl;
                         T_BX                    : decode_bx;
-                        T_SWI                   : decode_swi;
                         T_SHIFT                 : decode_shift;
-                        T_ADD_SUB_LO            : decode_add_sub_lo; 
                         T_MCAS_IMM              : decode_mcas_imm;    // MOV,CMP,ADD,SUB IMM.
                         T_ALU_LO                : decode_alu_lo;
                         T_ALU_HI                : decode_alu_hi;

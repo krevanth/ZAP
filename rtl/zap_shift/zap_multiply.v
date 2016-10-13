@@ -49,8 +49,6 @@ wire signed [16:0] d;
 reg signed [63:0] x_ff, x_nxt;
 wire signed [63:0] ab, ad, bc, cd;
 
-reg [4:0] state_ff, state_nxt;
-
 assign a = sign ? {i_rm[31], i_rm[31:16]} : {1'd0, i_rm[31:16]};
 assign b = sign ? {i_rs[31], i_rs[31:16]} : {1'd0, i_rs[31:16]};
 assign c = {1'd0, i_rm[15:0]}; 
@@ -70,6 +68,9 @@ localparam S3   = 3;
 localparam S4   = 4;
 localparam S5   = 5;
 localparam S6   = 6;
+localparam NUMBER_OF_STATES = 7;
+
+reg [$clog2(NUMBER_OF_STATES)-1:0] state_ff, state_nxt;
 
 always @*
 begin

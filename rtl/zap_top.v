@@ -7,19 +7,8 @@ zap_top.v
 HDL --
 Verilog-2005
 
-Dependencies --
-zap_fetch_main
-zap_decode_main
-zap_issue_main
-zap_shift_main
-zap_alu_main
-zap_memory_main
-zap_register_file
-
 Description --
-This is the TOP module of the ZAP core. It contains only instantiations of
-submodules for easy debugging. ZAP is an ARM v4T compatible processor core
-intended for open source use.
+This is the TOP module of the ZAP core. 
 
 Author --
 Revanth Kamaraj.
@@ -276,7 +265,6 @@ wire [$clog2(PHY_REGS)-1:0]     alu_destination_index_ff;
 wire [FLAG_WDT-1:0]             alu_flags_ff;
 wire [$clog2(PHY_REGS)-1:0]     alu_mem_srcdest_index_ff;
 wire                            alu_mem_load_ff;
-wire                            alu_flag_update_ff;
 wire                            alu_und_ff;
 wire [31:0]                     alu_cpsr_nxt; //TODO: Eliminate this  and place MAC in ALU itself.
 wire                            confirm_from_alu;
@@ -297,7 +285,6 @@ wire                            memory_swi_ff;
 wire                            memory_instr_abort_ff;
 wire                            memory_mem_load_ff;
 wire  [FLAG_WDT-1:0]            memory_flags_ff;
-wire                            memory_flag_update_ff;
 wire  [31:0]                    memory_mem_rd_data_ff;
 wire                            memory_und_ff;
 wire                            memory_data_abt_ff;
@@ -760,7 +747,7 @@ u_zap_alu_main
 
          .i_use_old_carry_ff             (shifter_use_old_carry_ff),
 
-         .i_cpsr_ff                      (cpsr),
+//         .i_cpsr_ff                      (cpsr),
          .i_cpsr_nxt                     (cpsr_nxt),
          .i_flag_update_ff               (shifter_flag_update_ff),
          .i_switch_ff                    (shifter_switch_ff),
@@ -826,9 +813,7 @@ u_zap_alu_main
          .o_mem_signed_byte_enable_ff      (alu_sbyte_ff),       
          .o_mem_signed_halfword_enable_ff  (alu_shalf_ff),        
          .o_mem_unsigned_halfword_enable_ff(alu_uhalf_ff),      
-         .o_mem_translate_ff               (o_mem_translate),
-
-        .o_flag_update_ff                  (alu_flag_update_ff) 
+         .o_mem_translate_ff               (o_mem_translate)
 );
 
 assign o_read_en = alu_mem_load_ff; 
@@ -892,8 +877,6 @@ u_zap_memory_main
          
         .o_mem_load_ff                  (memory_mem_load_ff),
 
-        .i_flag_update_ff               (alu_flag_update_ff),
-        .o_flag_update_ff               (memory_flag_update_ff),
 
         .o_mem_rd_data_ff               (memory_mem_rd_data_ff)
 );
@@ -920,8 +903,6 @@ u_zap_regf
         .i_pc_from_decode       (pc_from_decode),
 
         .i_code_stall           (!i_valid),
-
-        .i_flag_update_ff       (memory_flag_update_ff),
 
         .i_mem_load_ff          (memory_mem_load_ff), // Used to valid writes on i_wr_index1.
 
@@ -958,7 +939,7 @@ u_zap_regf
         .o_rd_data_3            (rd_data_3),
 
         .o_pc                   (o_pc),
-        .o_cpsr                 (cpsr),
+//        .o_cpsr                 (cpsr),
         .o_cpsr_nxt             (cpsr_nxt),
         .o_clear_from_writeback (clear_from_writeback),
 

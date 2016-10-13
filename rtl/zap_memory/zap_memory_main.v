@@ -42,7 +42,6 @@ module zap_memory_main
         // ALU value, flags,and where to write the value.
         input wire [31:0]                   i_alu_result_ff,
         input wire  [FLAG_WDT-1:0]          i_flags_ff,
-        input wire                          i_flag_update_ff,
         input wire [$clog2(PHY_REGS)-1:0]   i_destination_index_ff,
 
         // Interrupts.
@@ -71,7 +70,6 @@ module zap_memory_main
         // ALU result and flags.
         output reg  [31:0]                   o_alu_result_ff,
         output reg  [FLAG_WDT-1:0]           o_flags_ff,
-        output reg                           o_flag_update_ff,
 
         // Where to write ALU and memory read target register.
         output reg [$clog2(PHY_REGS)-1:0]    o_destination_index_ff,
@@ -107,7 +105,6 @@ begin
         o_swi_ff              <= 0;
         o_instr_abort_ff      <= 0;
         o_mem_load_ff         <= 0;
-        o_flag_update_ff      <= 0;
         o_mem_rd_data_ff      <= 0;
         o_und_ff              <= 0;
         o_mem_fault           <= 0;
@@ -145,7 +142,6 @@ begin
         o_swi_ff              <= i_swi_ff;
         o_instr_abort_ff      <= i_instr_abort_ff;
         o_mem_load_ff         <= i_mem_load_ff; 
-        o_flag_update_ff      <= i_flag_update_ff;
         o_mem_rd_data_ff      <= transform((i_mem_load_ff ? i_mem_rd_data : i_mem_srcdest_value_ff), i_mem_address_ff, i_sbyte_ff, i_ubyte_ff, i_shalf_ff, i_uhalf_ff, i_mem_load_ff);
         o_und_ff              <= i_und_ff;
         o_mem_fault           <= i_mem_fault;

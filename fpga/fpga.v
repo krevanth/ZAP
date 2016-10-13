@@ -43,7 +43,6 @@ u_zap_top
                 .i_fiq(1'd0),                   // FIQ signal.
                 .i_irq(1'd0),                   // IRQ signal.
                 
-                .o_copro_flags(),                // THE CPSR[31:28] Exposed to the CoProcessor. Copro must do conditional checks if needed.
                 .o_copro_dav(),
                 .o_copro_word(),
                 .o_copro_reg(),
@@ -60,7 +59,7 @@ u_zap_top
                 
                 .o_pc(iaddress),                 // Program counter.
 
-                .o_user()                        // CPSR. Cache must use this to determine VM scheme for instruction fetches.
+                .o_cpsr()                        // CPSR. Cache must use this to determine VM scheme for instruction fetches.
 );
 
 // Cache.

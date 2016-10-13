@@ -171,7 +171,6 @@ end
 assign  o_abt_nxt = i_abt;
 assign  o_irq_nxt = i_irq;
 assign  o_fiq_nxt = i_fiq;
-assign  o_abt_nxt = i_abt;
 
 // Flop the outputs to break the pipeline at this point.
 always @ (posedge i_clk)

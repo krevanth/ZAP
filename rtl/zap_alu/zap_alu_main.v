@@ -40,7 +40,7 @@ module zap_alu_main #(
         input wire   [31:0]                i_pc_ff,
 
         // From CPSR. ( I, F, T, Mode ) - From WB.
-        input wire  [31:0]                 i_cpsr_ff,
+//        input wire  [31:0]                 i_cpsr_ff,
         input wire  [31:0]                 i_cpsr_nxt,
 
         // State switch ( ARM <-> Thumb possible ).
@@ -110,8 +110,6 @@ module zap_alu_main #(
 
         output reg [FLAG_WDT-1:0]           o_flags_ff,                 // Output flags (CPSR).
         output reg [FLAG_WDT-1:0]           o_flags_nxt,                // Next output flags (CPSR) - For multiply.
-
-        output reg                          o_flag_update_ff,
 
         output reg                          o_confirm_from_alu,
 
@@ -195,7 +193,6 @@ begin
                 o_mem_translate_ff               <= 0;
                 o_mem_srcdest_value_ff           <= 0;
                 sleep_ff                         <= 0;
-                o_flag_update_ff                 <= 0;
                 o_und_ff                         <= 0;
                 o_ben_ff                         <= 0;
         end
@@ -222,7 +219,6 @@ begin
                 o_mem_translate_ff               <= 0; 
                 o_mem_srcdest_value_ff           <= 0;
                 sleep_ff                         <= 0;
-                o_flag_update_ff                 <= 0; 
                 o_und_ff                         <= 0;
                 o_ben_ff                         <= 0;
         end
@@ -252,7 +248,6 @@ begin
                         o_mem_unsigned_halfword_enable_ff<= 0; 
                         o_mem_translate_ff               <= 0; 
                         o_mem_srcdest_value_ff           <= 0;
-                        o_flag_update_ff                 <= 0;
                         sleep_ff                         <= 1'd1; // Initiate a sleep.
                         o_und_ff                         <= 0;
                         o_ben_ff                         <= 0;
@@ -282,7 +277,6 @@ begin
                         o_mem_unsigned_halfword_enable_ff<= 0; 
                         o_mem_translate_ff               <= 0; 
                         o_mem_srcdest_value_ff           <= 0;
-                        o_flag_update_ff                 <= 0;
                         sleep_ff                         <= 1'd1; // Keep sleeping.
                         o_und_ff                         <= 0;
                 end
@@ -309,7 +303,6 @@ begin
                         o_mem_translate_ff               <= i_mem_translate_ff;  
                         o_mem_srcdest_value_ff           <= duplicate   (i_mem_unsigned_byte_enable_ff, i_mem_signed_byte_enable_ff, i_mem_unsigned_halfword_enable_ff, i_mem_unsigned_halfword_enable_ff, i_mem_srcdest_value_ff); 
                         sleep_ff                         <= sleep_nxt;
-                        o_flag_update_ff                 <= i_flag_update_ff;
                         o_und_ff                         <= i_und_ff;
                         o_ben_ff                         <= generate_ben(i_mem_unsigned_byte_enable_ff, i_mem_signed_byte_enable_ff, i_mem_unsigned_halfword_enable_ff, i_mem_unsigned_halfword_enable_ff, mem_address_nxt);
                 end

@@ -44,9 +44,6 @@ module zap_register_file #(
         input wire                           i_clear_from_decode,
         input wire      [31:0]               i_pc_from_decode,
 
-        // Flag update.
-        input wire                           i_flag_update_ff,
-
         // 4 read ports for high performance.
         input wire   [$clog2(PHY_REGS)-1:0] i_rd_index_0, 
         input wire   [$clog2(PHY_REGS)-1:0] i_rd_index_1, 
@@ -95,7 +92,6 @@ module zap_register_file #(
         output reg      [31:0]               o_pc,
 
         // CPSR output
-        output reg       [31:0]              o_cpsr,
         output reg       [31:0]              o_cpsr_nxt,
 
         // Clear from writeback
@@ -124,10 +120,6 @@ localparam FIQ_VECTOR   = 32'h0000001C;
 `include "modes.vh"
 `include "cpsr.vh"
 
-// Register file.
-//reg     [31:0]  r_ff       [PHY_REGS-1:0];
-//reg     [31:0]  r_nxt      [PHY_REGS-1:0];
-
 // PC and CPSR are separate registers.
 reg     [31:0]  cpsr_ff, cpsr_nxt;
 reg     [31:0]  pc_ff, pc_nxt;
@@ -136,7 +128,6 @@ reg     [31:0]  pc_ff, pc_nxt;
 always @*
 begin
         o_pc            = pc_ff;
-        o_cpsr          = cpsr_ff;
         o_cpsr_nxt      = cpsr_nxt;
 end
 
@@ -223,10 +214,6 @@ begin: blk1
 
         pc_nxt = pc_ff;
         cpsr_nxt = cpsr_ff;
-
-  //      Avoid latch inference.
-  //      for ( i=0 ; i<PHY_REGS ; i=i+1 )
-  //              r_nxt[i] = r_ff[i];
 
         `ifdef SIM
                 $display($time, "PC_nxt before = %d", pc_nxt);
@@ -404,23 +391,6 @@ begin: blk1
                 $display("PC_nxt = %d", pc_nxt);
         `endif
 end
-
-// Sequential Logic.
-// always @ (posedge i_clk)
-// begin: seqregfblk
-//         integer i;
-// 
-//         if ( i_reset )
-//         begin
-//                 for(i=0;i<PHY_REGS;i=i+1)
-//                         r_ff[i] <= 32'd0;
-//         end
-//         else 
-//         begin
-//                 for(i=0;i<PHY_REGS;i=i+1)
-//                         r_ff[i] <= r_nxt[i];
-//         end
-// end
 
 always @ (posedge i_clk)
 begin

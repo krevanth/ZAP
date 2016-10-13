@@ -39,7 +39,7 @@ always @ (posedge i_clk)
 
                 // Must initialize to 0.
                 for(i=0;i<NUMBER_OF_ENTRIES;i=i+1)
-                        mem[i] = 0;
+                        mem[i] <= 0;
         end
         else
         `endif
