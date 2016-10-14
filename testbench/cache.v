@@ -44,7 +44,10 @@ begin:blk1
         for(i=0;i<8192;i=i+1)
         begin
                 mem[i]  = 8'd0;
-                $display($time, "mem[%d]=%d",i,mem[i]);
+
+                `ifdef SIM
+                        $display($time, "mem[%d]=%d",i,mem[i]);
+                `endif
         end
 
         // Initialize memory with the program.

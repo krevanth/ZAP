@@ -222,7 +222,7 @@ begin
         `ifdef TB_CACHE
         for(i=596;i<=644;i=i+4)
         begin
-                $display("mem[%d] = %x", i, {u_cache.mem[i+3],u_cache.mem[i+2],u_cache.mem[i+1],u_cache.mem[i]});
+                $display("(TB)mem[%d] = %x", i, {u_cache.mem[i+3],u_cache.mem[i+2],u_cache.mem[i+1],u_cache.mem[i]});
         end
         `elsif FPGA_CACHE
         for(i=596;i<644;i=i+4)

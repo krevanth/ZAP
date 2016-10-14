@@ -229,42 +229,33 @@ begin: blk1
         if ( i_data_stall )
         begin
                 pc_nxt = pc_ff;                        
-                $display("Data Stall!");
         end
         else if ( i_clear_from_alu )
         begin
                 pc_nxt = i_pc_from_alu;
-                $display("Clear from ALU!");
         end
         else if ( i_stall_from_issue )
         begin
                 pc_nxt = pc_ff;
-                $display("Stall from issue!");
         end
         else if ( i_stall_from_shifter )
         begin
                 pc_nxt = pc_ff;
-                $display("Stall from shifter!");
         end
         else if ( i_clear_from_decode )
         begin
                 pc_nxt = i_pc_from_decode;
-                $display("Clear from decode!");
         end
         else if ( i_stall_from_decode )
         begin
                 pc_nxt = pc_ff;
-                $display("Stall from decode!");
         end
         else if ( i_code_stall )
         begin
                 pc_nxt = pc_ff;
-                $display("Code Stall!");
         end
         else
         begin
-                $display("Normal PC update!");
-                // Based on ARM or Thumb, we decide how much to increment.
                 pc_nxt = pc_ff + ((cpsr_ff[T]) ? 32'd2 : 32'd4);
         end
 
@@ -287,7 +278,6 @@ begin: blk1
                 o_clear_from_writeback  = 1'd1;
                 cpsr_nxt[I]      = 1'd1; // Mask interrupts.
                 cpsr_nxt[T]      = 1'd0; // Go to ARM mode.
-                $display("Interrupt detected! Clearing from writeback...");
         end
                 
 

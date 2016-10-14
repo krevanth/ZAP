@@ -82,6 +82,8 @@ begin
         o_rd   = 32'd0;
         state_nxt = state_ff;
         x_nxt = x_ff;        
+        in1 = 0;
+        in2 = 0;
 
         case ( state_ff )
                 IDLE:

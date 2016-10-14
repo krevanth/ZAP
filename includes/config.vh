@@ -9,10 +9,12 @@ SIM - Bench only. Be more verbose
 
 `ifndef FPGA
         `define FPGA
+        `undef ASIC
 `endif
 
 `ifndef TB_CACHE
         `define TB_CACHE
+        `undef FPGA_CACHE
 `endif
 
 `ifndef IRQ_EN
