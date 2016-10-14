@@ -1,4 +1,4 @@
-module zap_with_cache
+module soc_top
 (
                 input wire                              i_clk,                  // ZAP clock.        
                 input wire                              i_reset,                // Active high synchronous reset.
@@ -62,7 +62,7 @@ u_zap_top
                 .o_cpsr()                        // CPSR. Cache must use this to determine VM scheme for instruction fetches.
 );
 
-// Cache.
+// SRAM.
 zap_cache_main
 u_zap_cache_main
 (

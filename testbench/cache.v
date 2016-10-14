@@ -13,7 +13,7 @@ module cache
 
         input wire      [3:0]   i_ben,
 
-        input wire      [4:0]   i_cpsr,         // CPSR.
+        input wire      [31:0]  i_cpsr,         // CPSR.
 
         input wire      [31:0]  i_data,
         output reg              o_miss,

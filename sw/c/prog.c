@@ -1,6 +1,6 @@
 void factorial (void)
 {
-        int *x = (int *)500;
+        char *x = (char *)600;
         x[0] = 5;
         x[1] = fact(x[0]);               
 }

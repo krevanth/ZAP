@@ -114,6 +114,10 @@ module zap_top #(
 `include "cc.vh"
 `include "modes.vh"
 
+// -------------------------------
+// Wires.
+// -------------------------------
+
 wire reset;
 
 // Clear and stall signals.
@@ -202,7 +206,6 @@ wire [31:0]                     issue_shift_length_value_ff;
 wire [31:0]                     issue_mem_srcdest_value_ff;
 wire [32:0]                     issue_alu_source_ff;
 wire [32:0]                     issue_shift_source_ff;
-//wire [32:0]                     issue_shift_length_ff;
 wire [31:0]                     issue_pc_plus_8_ff;
 wire [31:0]                     issue_pc_ff;
 wire                            issue_shifter_disable_ff;
@@ -272,6 +275,7 @@ wire                            alu_sbyte_ff;
 wire                            alu_ubyte_ff;
 wire                            alu_shalf_ff;
 wire                            alu_uhalf_ff;
+wire [31:0]                     alu_address_ff;
 
 // Memory
 wire [31:0]                     memory_alu_result_ff;
@@ -304,7 +308,15 @@ wire [31:0]     bp_pc_plus_8;
 wire [1:0]      bp_state;
 wire [31:0]     bp_pc;
 
-assign o_cpsr = alu_flags_ff;
+// ------------------------------
+// Assign statements.
+// ------------------------------
+assign o_cpsr    = alu_flags_ff;
+assign o_address = {alu_address_ff[31:2], 2'd0};
+
+// ---------------------------
+// Instances.
+// ---------------------------
 
 // RESET SYNCHRONIZER //
 zap_reset_synchronizer_main
@@ -662,7 +674,6 @@ u_zap_shifter_main
         .i_swi_ff                       (issue_swi_ff),
         .i_alu_source_ff                (issue_alu_source_ff),
         .i_shift_source_ff              (issue_shift_source_ff),
-//        .i_shift_length_ff              (issue_shift_length_ff),
         .i_alu_source_value_ff          (issue_alu_source_value_ff),
         .i_shift_source_value_ff        (issue_shift_source_value_ff),
         .i_shift_length_value_ff        (issue_shift_length_value_ff),
@@ -747,7 +758,6 @@ u_zap_alu_main
 
          .i_use_old_carry_ff             (shifter_use_old_carry_ff),
 
-//         .i_cpsr_ff                      (cpsr),
          .i_cpsr_nxt                     (cpsr_nxt),
          .i_flag_update_ff               (shifter_flag_update_ff),
          .i_switch_ff                    (shifter_switch_ff),
@@ -795,7 +805,7 @@ u_zap_alu_main
          .o_dav_nxt                     (alu_dav_nxt),
 
          .o_pc_plus_8_ff                (alu_pc_plus_8_ff),
-         .o_mem_address_ff              (o_address),                    // Memory addresss sent. Memory system should ignore lower 2 bits.
+         .o_mem_address_ff              (alu_address_ff),                    // Memory addresss sent. Memory system should ignore lower 2 bits.
          .o_clear_from_alu              (clear_from_alu),
          .o_pc_from_alu                 (pc_from_alu),
          .o_destination_index_ff        (alu_destination_index_ff),
@@ -828,7 +838,7 @@ u_zap_memory_main
         .i_und_ff (alu_und_ff),
         .o_und_ff (memory_und_ff),
 
-        .i_mem_address_ff(o_address),
+        .i_mem_address_ff(alu_address_ff),
 
         .i_clk                          (i_clk),
         .i_reset                        (reset),
@@ -939,7 +949,6 @@ u_zap_regf
         .o_rd_data_3            (rd_data_3),
 
         .o_pc                   (o_pc),
-//        .o_cpsr                 (cpsr),
         .o_cpsr_nxt             (cpsr_nxt),
         .o_clear_from_writeback (clear_from_writeback),
 

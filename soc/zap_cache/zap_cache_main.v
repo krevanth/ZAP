@@ -11,7 +11,7 @@ module zap_cache_main
         input wire      [31:0]  i_iaddress,     // For instructions.
 
         output reg      [31:0]  o_ddata,
-        output reg      [31:0]  o_idata,        // Instruction data - 36-bit.
+        output reg      [31:0]  o_idata,        // Instruction data - 32-bit.
 
         input wire      [3:0]   i_ben,          // Byte enables.
         input wire      [31:0]  i_ddata,        // Input data.
