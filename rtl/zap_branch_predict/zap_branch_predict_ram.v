@@ -4,6 +4,8 @@
  * Branch predictor becomes BLOCK RAM.
  */
 
+`include "config.vh"
+
 module zap_branch_predict_ram 
 #(
         parameter NUMBER_OF_ENTRIES = 64,

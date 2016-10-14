@@ -1,4 +1,5 @@
 `default_nettype none
+`include "config.vh"
 
 module zap_reset_synchronizer_main
 (

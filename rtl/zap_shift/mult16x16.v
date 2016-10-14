@@ -1,4 +1,5 @@
 `default_nettype none
+`include "config.vh"
 
 module mult16x16 (
         input  wire signed [16:0] in1,

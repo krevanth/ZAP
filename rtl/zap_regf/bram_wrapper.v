@@ -3,6 +3,9 @@
  * Used to construct the register file. Do not use for ASIC.
  */
 
+`default_nettype none
+`include "config.vh"
+
 module bram_wrapper
 (
         input wire              i_clk,

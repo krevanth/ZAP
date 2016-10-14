@@ -1,4 +1,5 @@
 `default_nettype none
+`include "config.vh"
 
 module zap_cache_main
 #(

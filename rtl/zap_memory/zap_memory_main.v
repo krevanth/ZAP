@@ -1,3 +1,6 @@
+`default_nettype none
+`include "config.vh"
+
 /*
 Filename --
 zap_memory_main.v

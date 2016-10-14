@@ -1,3 +1,6 @@
+`default_nettype none
+`include "config.vh"
+
 module soc_top
 (
                 input wire                              i_clk,                  // ZAP clock.        

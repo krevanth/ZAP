@@ -1,4 +1,5 @@
 `default_nettype none
+`include "config.vh"
 
 module zap_predecode_coproc #(
         parameter PHY_REGS = 46

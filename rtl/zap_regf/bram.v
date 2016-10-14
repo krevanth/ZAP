@@ -2,6 +2,9 @@
  * Will synthesize to a 2 write port, 1 read port block RAM.
  */
 
+`default_nettype none
+`include "config.vh"
+
 module block_ram #(
         parameter       DATA_WDT        =       32,
         parameter       ADDR_WDT        =       6,

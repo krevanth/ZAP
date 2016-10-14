@@ -1,4 +1,4 @@
-`default_nettype none
+`include "config.vh"
 
 module cache
 (

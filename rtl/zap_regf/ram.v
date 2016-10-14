@@ -3,6 +3,9 @@
  * Do not use for FPGA.
  */
 
+`default_nettype none
+`include "config.vh"
+
 module ram
 (
         input wire              i_clk,

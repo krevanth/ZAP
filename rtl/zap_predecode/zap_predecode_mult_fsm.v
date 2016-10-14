@@ -6,6 +6,7 @@
  */
 
 `default_nettype none
+`include "config.vh"
 
 module zap_predecode_mult_fsm
 (

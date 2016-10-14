@@ -1,4 +1,5 @@
 `default_nettype none
+`include "config.vh"
 
 // Filename --
 // zap_shift_shifter.v 

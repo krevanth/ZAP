@@ -1,4 +1,6 @@
 `default_nettype none
+`include "config.vh"
+
 /*
  Filename --
  zap_decode_mem_fsm.v

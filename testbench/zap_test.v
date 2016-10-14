@@ -1,3 +1,5 @@
+`include "config.vh"
+
 module zap_test;
 
 parameter FPGA_CACHE_SIZE = 1023;
