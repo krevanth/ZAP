@@ -47,18 +47,21 @@ wire signed [16:0] b;
 wire signed [16:0] c;
 wire signed [16:0] d;
 reg signed [63:0] x_ff, x_nxt;
-wire signed [63:0] ab, ad, bc, cd;
+reg signed [16:0] in1;
+reg signed [16:0] in2;
+wire signed [63:0] prod;
+
+mult16x16 u_mult16x16
+(
+        .in1(in1),
+        .in2(in2),
+        .out(prod)
+);
 
 assign a = sign ? {i_rm[31], i_rm[31:16]} : {1'd0, i_rm[31:16]};
 assign b = sign ? {i_rs[31], i_rs[31:16]} : {1'd0, i_rs[31:16]};
 assign c = {1'd0, i_rm[15:0]}; 
 assign d = {1'd0, i_rs[15:0]};
-
-// Aliases.
-assign ab = a * b;
-assign ad = a * d;
-assign bc = b * c;
-assign cd = c * d;
 
 // States
 localparam IDLE = 0;
@@ -94,23 +97,31 @@ begin
                 end
                 S1:
                 begin
-                        x_nxt     = x_ff + (cd << 0);                        
+                        in1 = c;
+                        in2 = d;
+                        x_nxt     = x_ff + (prod << 0);                        
                         state_nxt = S2;
                 end
                 S2:
                 begin
+                        in1 = a;
+                        in2 = b;
                         state_nxt = S3;
-                        x_nxt     = x_ff + (ab << 32);
+                        x_nxt     = x_ff + (prod << 32);
                 end
                 S3:
                 begin
+                        in1 = a;
+                        in2 = d;
                         state_nxt = S4;
-                        x_nxt     = x_ff + (ad << 16);
+                        x_nxt     = x_ff + (prod << 16);
                 end
                 S4:
                 begin
+                        in1 = b;
+                        in2 = c;
                         state_nxt = S5;
-                        x_nxt    = x_ff + (bc << 16);
+                        x_nxt    = x_ff + (prod << 16);
                 end
                 S5:
                 begin

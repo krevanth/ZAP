@@ -48,7 +48,11 @@ module zap_top #(
 (
                 // Clock and reset.
                 input wire                              i_clk,                  // ZAP clock.        
+
+                `ifdef FPGA
                 input wire                              i_clk_2x,               // 2x ZAP clock for register file.
+                `endif
+
                 input wire                              i_reset,                // Active high synchronous reset.
                                 
                 // From I-cache.
@@ -899,7 +903,11 @@ zap_register_file #(
 u_zap_regf
 (
         .i_clk                  (i_clk),     // ZAP clock.
+
+        `ifdef FPGA
         .i_clk_2x               (i_clk_2x),  // 2xZAP clock.
+        `endif
+
         .i_reset                (reset),   // ZAP reset.
         .i_valid                (memory_dav_ff),
         .i_data_stall           (i_data_stall),

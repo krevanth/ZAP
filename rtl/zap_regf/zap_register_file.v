@@ -25,7 +25,12 @@ module zap_register_file #(
 )
 (
         // Clock and reset.
-        input wire                           i_clk, i_clk_2x,    // ZAP clock and 2x clock.
+        input wire                           i_clk, 
+
+        `ifdef FPGA
+        input wire                           i_clk_2x,    // ZAP clock and 2x clock.
+        `endif
+
         input wire                           i_reset,   // ZAP reset.
 
         // Inputs from memory unit valid signal.
