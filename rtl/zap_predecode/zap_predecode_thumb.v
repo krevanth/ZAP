@@ -51,8 +51,6 @@ module zap_predecode_thumb #(
 
 reg [11:0] offset_ff, offset_nxt;       // Remember offset.
 
-always @ (posedge i_clk) offset_ff <= offset_nxt;
-
 `include "cc.vh"
 `include "cpsr.vh"
 `include "instruction_patterns.vh"
@@ -60,6 +58,9 @@ always @ (posedge i_clk) offset_ff <= offset_nxt;
 `include "shtype.vh"
 `include "regs.vh"
 
+always @ (posedge i_clk) 
+        if ( i_instruction_valid )
+                offset_ff <= offset_nxt;
 always @*
 begin
         // If you are not in Thumb mode, just pass stuff on.
