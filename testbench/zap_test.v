@@ -208,7 +208,7 @@ begin
         end
         `endif
 
-        $dumpfile("zap.vcd");
+        $dumpfile(`VCD_FILE_PATH);
         $dumpvars;
 
         $display("Started!");

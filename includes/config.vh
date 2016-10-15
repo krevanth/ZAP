@@ -21,4 +21,6 @@ SIM - Bench only. Be more verbose
         `define IRQ_EN
 `endif
 
-
+`ifndef VCD_FILE_PATH
+        `define VCD_FILE_PATH "/tmp/zap.vcd"
+`endif
