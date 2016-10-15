@@ -13,7 +13,7 @@ THUMB ISA Version       : v1
 
 The pipeline is fully bypassed to allow most dependent instructions to execute without stalls. 
 The pipeline stalls for 3 cycles if there is an attempt to use a value loaded from memory immediately following it.
-32x32+32->32 MAC takes 4 clock cycles while long multiplication/MAC takes 8 clock cycles.
+32x32+32=32 operations take 6 clock cycles whilt 32x32+64=64 taken 12 clock cycles.
 Multiplication and non trivial shifts require registers a cycle early else the pipeline stalls for 1 cycle.
 
 Features:

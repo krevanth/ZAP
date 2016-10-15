@@ -40,8 +40,10 @@ module zap_alu_main #(
         // PC
         input wire   [31:0]                i_pc_ff,
 
+        // No zero.
+        input wire                         i_nozero_ff,
+
         // From CPSR. ( I, F, T, Mode ) - From WB.
-//        input wire  [31:0]                 i_cpsr_ff,
         input wire  [31:0]                 i_cpsr_nxt,
 
         // State switch ( ARM <-> Thumb possible ).
@@ -407,7 +409,7 @@ begin: blk1
                         opcode == CLZ 
                 )
         begin
-                {flags_nxt[31:28], rd} = process_logical_instructions ( rn, rm, flags_ff[31:28], opcode, i_rrx_ff, i_flag_update_ff  );
+                {flags_nxt[31:28], rd} = process_logical_instructions ( rn, rm, flags_ff[31:28], opcode, i_rrx_ff, i_flag_update_ff, i_nozero_ff );
         end
         else if ( opcode == FMOV || opcode == MMOV )
         begin: blk2
@@ -532,7 +534,7 @@ end
 
 // Process logical instructions.
 function [35:0] process_logical_instructions 
-( input [31:0] rn, rm, input [3:0] flags, input [$clog2(ALU_OPS)-1:0] op, input rrx, input i_flag_upd );
+( input [31:0] rn, rm, input [3:0] flags, input [$clog2(ALU_OPS)-1:0] op, input rrx, input i_flag_upd, input nozero );
 begin: blk2
         reg [31:0] rd;
         reg [3:0] flags_out;
@@ -589,7 +591,13 @@ begin: blk2
         begin
                 // V is preserved since flags_out = flags assignment.
                 flags_out[_C] = tmp_carry;
-                flags_out[_Z] = (rd == 0);
+
+                if ( nozero )
+                        /* This specifically states that we must NOT set the ZERO flag under any circumstance. */
+                        flags_out[_Z] = 1'd0;
+                else
+                        flags_out[_Z] = (rd == 0);
+
                 flags_out[_N] = rd[31];
         end
 

@@ -202,6 +202,8 @@ begin
 end
 `endif
 
+`define ARM_MODE (cpsr_ff[T] == 1'd0)
+
 // The register file function.
 always @*
 begin: blk1
@@ -284,9 +286,9 @@ begin: blk1
         if ( i_data_abt )
         begin
                 // Returns do LR - 8 to get back to the same instruction.
-                pc_nxt                   = DABT_VECTOR; 
+                pc_nxt = DABT_VECTOR; 
                 wen    = 1;
-                wdata1 = (!cpsr_ff[T]) ? i_pc_buf_ff : (i_pc_buf_ff + 32'd4);
+                wdata1 = `ARM_MODE ? i_pc_buf_ff : (i_pc_buf_ff + 32'd4);
                 wa1    = PHY_ABT_R14;
                 wa2    = PHY_ABT_SPSR;
                 wdata2 = cpsr_ff;
@@ -297,7 +299,7 @@ begin: blk1
                 // Returns do LR - 4 to get back to the same instruction.
                 pc_nxt = FIQ_VECTOR; 
                 wen    = 1;
-                wdata1 = (!cpsr_ff[T]) ? i_wr_data : i_pc_buf_ff ;
+                wdata1 = `ARM_MODE ? i_wr_data : i_pc_buf_ff ;
                 wa1    = PHY_FIQ_R14;
                 wa2    = PHY_FIQ_SPSR;
                 wdata2 = cpsr_ff;
@@ -309,7 +311,7 @@ begin: blk1
         begin
                 pc_nxt = IRQ_VECTOR; 
                 wen    = 1;
-                wdata1 = (!cpsr_ff[T]) ? i_wr_data : i_pc_buf_ff ;
+                wdata1 = `ARM_MODE ? i_wr_data : i_pc_buf_ff ;
                 wa1    = PHY_IRQ_R14;
                 wa2    = PHY_IRQ_SPSR;
                 wdata2 = cpsr_ff;
@@ -322,7 +324,7 @@ begin: blk1
                 // Returns do LR - 4 to get back to the same instruction.
                 pc_nxt = PABT_VECTOR; 
                 wen    = 1;
-                wdata1 = (!cpsr_ff[T]) ? i_wr_data : i_pc_buf_ff ;
+                wdata1 = `ARM_MODE ? i_wr_data : i_pc_buf_ff ;
                 wa1    = PHY_ABT_R14;
                 wa2    = PHY_ABT_SPSR;
                 wdata2 = cpsr_ff;
@@ -333,7 +335,7 @@ begin: blk1
                 // Returns do LR to return to the next instruction.
                 pc_nxt = SWI_VECTOR; 
                 wen    = 1;
-                wdata1 = (!cpsr_ff[T]) ? i_wr_data : i_pc_buf_ff ;
+                wdata1 = `ARM_MODE ? i_wr_data : i_pc_buf_ff ;
                 wa1    = PHY_SVC_R14;
                 wa2    = PHY_SVC_SPSR;
                 wdata2 = cpsr_ff;
@@ -344,7 +346,7 @@ begin: blk1
                 // Returns do LR to return to the next instruction.
                 pc_nxt = UND_VECTOR; 
                 wen    = 1;
-                wdata1 = (!cpsr_ff[T]) ? i_wr_data : i_pc_buf_ff ;
+                wdata1 = `ARM_MODE ? i_wr_data : i_pc_buf_ff ;
                 wa1    = PHY_UND_R14;
                 wa2    = PHY_UND_SPSR;
                 wdata2 = cpsr_ff;

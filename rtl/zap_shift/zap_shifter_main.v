@@ -73,7 +73,6 @@ module zap_shifter_main
         input wire      [32:0]                  i_alu_source_ff,
         input wire                              i_alu_dav_nxt,
         input wire      [32:0]                  i_shift_source_ff,
-//        input wire      [32:0]                  i_shift_length_ff,
 
         // Values are obtained here.
         input wire      [31:0]                  i_alu_source_value_ff,
@@ -118,6 +117,7 @@ module zap_shifter_main
         output reg                              o_shift_carry_ff,
         output reg                              o_rrx_ff,
         output reg                              o_use_old_carry_ff,
+        output reg                              o_nozero_ff,
 
         // Send all other outputs.
 
@@ -159,6 +159,7 @@ module zap_shifter_main
 `include "modes.vh"
 `include "global_functions.vh"
 
+wire nozero_nxt;
 wire [31:0] shout;
 wire shcarry;
 wire        rrx;
@@ -193,7 +194,8 @@ u_zap_multiply
         .i_rh(i_mem_srcdest_value_ff),
 
         .o_rd(mult_out),
-        .o_busy(o_stall_from_shifter)
+        .o_busy(o_stall_from_shifter),
+        .o_nozero(nozero_nxt)
 );
 
 task clear;
@@ -228,6 +230,7 @@ begin
            o_use_old_carry_ff                <= 0;
            o_taken_ff                        <= 0;
            o_pc_ff                           <= 0;
+           o_nozero_ff                       <= 0;
 end
 endtask
 
@@ -282,6 +285,7 @@ begin
            o_use_old_carry_ff                <= old_carry_nxt;
            o_taken_ff                        <= i_taken_ff;
            o_pc_ff                           <= i_pc_ff;
+           o_nozero_ff                       <= nozero_nxt;
    end
 end
 

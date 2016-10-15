@@ -35,14 +35,15 @@ module zap_multiply
         input wire [31:0]                       i_rs,        // rm.rs + {rh,rn}. For non ACC versions, rn = 0x0 and rh = 0x0.
 
         output reg  [31:0]                      o_rd,
-        output reg                              o_busy
+        output reg                              o_busy,
+        output reg                              o_nozero
 );
 
 `include "opcodes.vh"
 
+reg [31:0] buffer_nxt, buffer_ff;
 wire higher = i_alu_operation_ff[0];
 wire sign   = (i_alu_operation_ff == SMLALL || i_alu_operation_ff == SMLALH);
-
 wire signed [16:0] a;
 wire signed [16:0] b;
 wire signed [16:0] c;
@@ -71,13 +72,14 @@ localparam S2   = 2;
 localparam S3   = 3;
 localparam S4   = 4;
 localparam S5   = 5;
-localparam S6   = 6;
-localparam NUMBER_OF_STATES = 7;
+localparam NUMBER_OF_STATES = 6;
 
 reg [$clog2(NUMBER_OF_STATES)-1:0] state_ff, state_nxt;
 
 always @*
 begin
+        buffer_nxt = buffer_ff;
+        o_nozero = 1'd0;
         o_busy = 1'd1;
         o_rd   = 32'd0;
         state_nxt = state_ff;
@@ -107,10 +109,10 @@ begin
                 end
                 S2:
                 begin
-                        in1 = a;
-                        in2 = b;
+                        in1 = b;
+                        in2 = c;
                         state_nxt = S3;
-                        x_nxt     = x_ff + (prod << 32);
+                        x_nxt     = x_ff + (prod << 16);
                 end
                 S3:
                 begin
@@ -121,21 +123,28 @@ begin
                 end
                 S4:
                 begin
-                        in1 = b;
-                        in2 = c;
+                        in1 = a;
+                        in2 = b;
                         state_nxt = S5;
-                        x_nxt    = x_ff + (prod << 16);
+                        x_nxt    = x_ff + (prod << 32);
                 end
                 S5:
                 begin
-                        state_nxt = S6;
-                        x_nxt     = x_ff + {i_rh, i_rn};
-                end
-                S6:
-                begin
-                        state_nxt = IDLE;
-                        o_busy    = 1'd0;
-                        o_rd      = higher ? x_ff[63:32] : x_ff[31:0];
+                        state_nxt  = IDLE;
+                        x_nxt      = x_ff + {i_rh, i_rn};
+                        o_rd       = higher ? x_nxt[63:32] : x_nxt[31:0];
+
+                        if ( !higher )
+                        begin
+                                buffer_nxt = x_nxt[31:0];
+                        end
+
+                        o_busy     = 1'd0;
+
+                        if ( higher && (buffer_ff != 32'd0) )
+                        begin
+                                o_nozero = 1'd1;
+                        end
                 end
         endcase
 end
@@ -146,11 +155,13 @@ begin
         begin
                 x_ff     <= 63'd0;
                 state_ff <= IDLE;
+                buffer_ff<= 32'd0;
         end
         else if ( i_clear_from_writeback )
         begin
                 x_ff     <= 63'd0;
                 state_ff <= IDLE; 
+                buffer_ff <= 32'd0;
         end
         else if ( i_data_stall )
         begin
@@ -160,11 +171,13 @@ begin
         begin
                 x_ff     <= 63'd0;
                 state_ff <= IDLE;
+                buffer_ff <= 32'd0;
         end
         else
         begin
                 x_ff <= x_nxt;
                 state_ff <= state_nxt;
+                buffer_ff <= buffer_nxt;
         end
 end
 
