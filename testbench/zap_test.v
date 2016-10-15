@@ -2,7 +2,7 @@
 
 module zap_test;
 
-parameter FPGA_CACHE_SIZE = 1023;
+parameter RAM_SIZE  = 1023; // Bytes
 parameter PHY_REGS  = 64;
 parameter ALU_OPS   = 32;
 parameter SHIFT_OPS = 5;
@@ -114,7 +114,6 @@ u_zap_top
         .o_cpsr(o_cpsr),
 
         .i_copro_done (1'd1),           // Assume coprocessor completes its task.
-//        .o_copro_flags (o_copro_flags),
         .o_copro_dav  (o_copro_dav),
         .o_copro_word (o_copro_word),
         .o_copro_reg  (o_copro_reg),
@@ -126,35 +125,11 @@ u_zap_top
         .o_copro_reg_rd_data(o_copro_reg_rd_data)
 );
 
-`ifdef TB_CACHE
-
-// Memory - Dual ported unified cache.
-cache u_cache
-(
-        .i_clk(i_clk),
-        .i_reset(i_reset),
-        .i_address(o_address & 32'hfffffffc),
-        .i_address1(o_pc),
-        .i_data(o_wr_data),
-        .o_data(i_rd_data),
-        .o_data1(i_instruction),
-        .o_hit1(i_valid),
-        .o_miss(i_data_stall),
-        .i_ben(o_ben),
-        .o_abort(i_data_abort),  
-        .i_rd_en(o_read_en),
-        .i_wr_en(o_write_en),
-        .o_abort1(i_instr_abort),
-        .i_cpsr(o_cpsr)
-);
-
-`elsif FPGA_CACHE
-
-zap_cache_main
+ram
 #(
-        .SIZE_IN_BYTES(FPGA_CACHE_SIZE)
+        .SIZE_IN_BYTES(RAM_SIZE)
 )
-u_cache
+u_ram
 (
         .i_clk(i_clk),
         .i_daddress(o_address),
@@ -163,21 +138,13 @@ u_cache
         .o_idata(i_instruction),
         .i_ben(o_ben),
         .i_ddata(o_wr_data),
-        .i_wr_en(o_write_en)
+        .i_wr_en(o_write_en),
+        .i_cpsr(o_cpsr),
+        .o_data_stall(i_data_stall),
+        .o_code_hit(i_valid),
+        .o_code_abort(i_instr_abort),
+        .o_data_abort(i_data_abort)
 );
-
-assign i_valid       = 1'd1;
-assign i_data_stall  = 1'd0;
-assign i_data_abort  = 1'd0;
-assign i_instr_abort = 1'd0;
-
-`else
-initial
-begin
-        $display("Please define TB_CACHE or FPGA_CACHE...");
-        $finish;
-end
-`endif
 
 initial i_clk = 0;
 always #10 i_clk = !i_clk;
@@ -196,17 +163,10 @@ begin
         i_irq = 0;
         i_fiq = 0;
 
-        `ifdef TB_CACHE
         for(i=596;i<=644;i=i+4)
         begin
-                $display("INITIAL(TB CACHE) :: mem[%d] = %x", i, {u_cache.mem[i+3],u_cache.mem[i+2],u_cache.mem[i+1],u_cache.mem[i]});
+                $display("INITIAL :: mem[%d] = %x", i, {u_ram.ram[(i/4)]});
         end
-        `elsif FPGA_CACHE
-        for(i=596;i<=644;i=i+4)
-        begin
-                $display("INITIAL(FPGA CACHE) :: mem[%d] = %x", i, {u_cache.mem3[(i/4)+3], u_cache.mem2[(i/4)+2], u_cache.mem1[(i/4)+1], u_cache.mem0[(i/4)]});
-        end
-        `endif
 
         $dumpfile(`VCD_FILE_PATH);
         $dumpvars;
@@ -217,19 +177,12 @@ begin
         @(negedge i_clk);
         i_reset = 0;
 
-        repeat(50000) @(negedge i_clk);
+        repeat(`MAX_CLOCK_CYCLES) @(negedge i_clk);
 
-        `ifdef TB_CACHE
-        for(i=596;i<=644;i=i+4)
-        begin
-                $display("(TB)mem[%d] = %x", i, {u_cache.mem[i+3],u_cache.mem[i+2],u_cache.mem[i+1],u_cache.mem[i]});
-        end
-        `elsif FPGA_CACHE
         for(i=596;i<644;i=i+4)
         begin
-                $display("(FPGA) mem[%d] = %x", i, {u_cache.mem3[(i/4)+3], u_cache.mem2[(i/4)+2], u_cache.mem1[(i/4)+1], u_cache.mem0[(i/4)]});
+                $display("mem[%d] = %x", i, {u_ram.ram[(i/4)]});
         end
-        `endif
 
         $finish;
 end

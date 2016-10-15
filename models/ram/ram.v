@@ -1,7 +1,7 @@
 `default_nettype none
 `include "config.vh"
 
-module zap_cache_main
+module ram
 #(
         parameter SIZE_IN_BYTES = 8192
 )
@@ -17,13 +17,39 @@ module zap_cache_main
         input wire      [3:0]   i_ben,          // Byte enables.
         input wire      [31:0]  i_ddata,        // Input data.
 
+        input wire      [31:0]  i_cpsr,
+
+        output reg              o_code_hit,
+        output reg              o_data_stall,
+        output reg              o_code_abort,
+        output reg              o_data_abort,
+
         input wire              i_wr_en         // Write.
 );
 
-reg [7:0] mem0  [SIZE_IN_BYTES/4 - 1:0];
-reg [7:0] mem1  [SIZE_IN_BYTES/4 - 1:0];
-reg [7:0] mem2  [SIZE_IN_BYTES/4 - 1:0];
-reg [7:0] mem3  [SIZE_IN_BYTES/4 - 1:0];
+integer seed = `SEED;
+
+`ifdef SIM
+always @ (negedge i_clk)
+begin
+        o_code_hit = $random(seed);
+        o_data_stall = $random(seed);
+        o_code_abort = 0;
+        o_data_abort = 0;
+end
+`endif
+
+`ifndef SIM
+initial
+begin
+        o_code_hit   = 1;
+        o_data_stall = 0;
+        o_code_abort = 0;
+        o_data_abort = 0;
+end
+`endif
+
+reg [31:0] ram  [SIZE_IN_BYTES/4 - 1:0];
 
 initial
 begin:blk1
@@ -33,14 +59,6 @@ begin:blk1
 
         j = 0;
 
-        for(i=0;i<SIZE_IN_BYTES/4;i=i+1)
-        begin
-                mem0[i]  = 8'd0;
-                mem1[i]  = 8'd0;
-                mem2[i]  = 8'd0;
-                mem3[i]  = 8'd0;
-        end
-
         for ( i=0;i<SIZE_IN_BYTES;i=i+1)
                 mem[i] = 8'd0;
 
@@ -48,7 +66,7 @@ begin:blk1
 
         for (i=0;i<SIZE_IN_BYTES/4;i=i+1)
         begin
-                {mem3[i], mem2[i], mem1[i], mem0[i]} = {mem[j+3], mem[j+2], mem[j+1], mem[j]};
+                ram[i] = {mem[j+3], mem[j+2], mem[j+1], mem[j]};
                 j = j + 4;
         end
 end
@@ -56,30 +74,24 @@ end
 // Data write port.
 always @ (posedge i_clk)
         if ( i_wr_en && i_ben[0] )
-                mem0[i_daddress  >> 2] <= i_ddata;
+                ram[i_daddress  >> 2][7:0] <= i_ddata[7:0];
 
 always @ (posedge i_clk)
         if ( i_wr_en && i_ben[1] )
-                mem1[i_daddress >> 2] <= i_ddata >> 8;
+                ram[i_daddress >> 2][15:8] <= i_ddata[15:8];
 
 always @ (posedge i_clk)
         if ( i_wr_en && i_ben[2] )
-                mem2[i_daddress >> 2] <= i_ddata >> 16;
+                ram[i_daddress >> 2][23:16] <= i_ddata[23:16];
 
 always @ (posedge i_clk)
         if ( i_wr_en && i_ben[3] )
-                mem3[i_daddress >> 2] <= i_ddata >> 24;
+                ram[i_daddress >> 2][31:24] <= i_ddata[31:24];
 
 // Data reads.
-always @* o_ddata[7:0]   = mem0[i_daddress >> 2];
-always @* o_ddata[15:8]  = mem1[i_daddress >> 2];
-always @* o_ddata[23:16] = mem2[i_daddress >> 2];
-always @* o_ddata[31:24] = mem3[i_daddress >> 2];
+always @* o_ddata   = ram[i_daddress >> 2];
 
 // Instruction reads.
-always @* o_idata[7:0]   = mem0[i_iaddress >> 2];
-always @* o_idata[15:8]  = mem1[i_iaddress >> 2];
-always @* o_idata[23:16] = mem2[i_iaddress >> 2];
-always @* o_idata[31:24] = mem3[i_iaddress >> 2];
+always @* o_idata   = ram[i_iaddress >> 2];
 
 endmodule

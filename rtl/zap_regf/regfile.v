@@ -6,7 +6,7 @@
 `default_nettype none
 `include "config.vh"
 
-module ram
+module regfile
 (
         input wire              i_clk,
         input wire              i_reset,

@@ -142,7 +142,7 @@ reg [31:0]                     wdata1, wdata2;
 reg                            wen;
 
 `ifdef ASIC
-        ram u_ram
+        regfile u_regfile
         (
                 .i_clk          (       i_clk           ),
 

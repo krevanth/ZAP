@@ -25,11 +25,10 @@ Current limitations :
 - In Alpha stage of development. Very experimental and buggy at the moment.
 - No MMU or cache is provided but may be attached.
 
-A simple dual port cache model is provided in testbench/cache.v for simulation
+A simple dual port ram model is provided in models/ram/ram.v for simulation
 purposes.
 
-Detailed instruction on simulating this may be found at...
-https://hackaday.io/project/14771/instructions
+See the wiki for instructions.
 -------------------------------------------------------------------------------
 
 MIT License
