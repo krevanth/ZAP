@@ -51,7 +51,7 @@ begin:blk1
         end
 
         // Initialize memory with the program.
-        `include "prog.v"
+        `include `MEMORY_IMAGE
 end
 
 // Data write port.

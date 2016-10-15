@@ -24,3 +24,7 @@ SIM - Bench only. Be more verbose
 `ifndef VCD_FILE_PATH
         `define VCD_FILE_PATH "/tmp/zap.vcd"
 `endif
+
+`ifndef MEMORY_IMAGE
+        `define MEMORY_IMAGE "/tmp/prog.v"
+`endif

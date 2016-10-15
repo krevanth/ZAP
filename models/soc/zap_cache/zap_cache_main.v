@@ -44,7 +44,7 @@ begin:blk1
         for ( i=0;i<SIZE_IN_BYTES;i=i+1)
                 mem[i] = 8'd0;
 
-        `include "prog.v"
+        `include `MEMORY_IMAGE
 
         for (i=0;i<SIZE_IN_BYTES/4;i=i+1)
         begin
