@@ -19,27 +19,6 @@ Released under the MIT license.
 */
 
 module zap_top #(
-        // For several reasons, we need more architectural registers than
-        // what ARM specifies. We also need more physical registers. This has
-        // *nothing* to do with superscalar terminology. THIS PROCESSOR IS A 
-        // SINGLE ISSUE SCALAR PROCESSOR.
-        parameter ARCH_REGS = 32,
-
-        // Although ARM mentions only 16 ALU operations, the processor
-        // internally performs many more operations.
-        parameter ALU_OPS   = 32,
-
-        // Apart from the 4 specified by ARM, an undocumented RORI is present
-        // to help deal with immediate rotates.
-        parameter SHIFT_OPS = 5,
-
-        // Number of physical registers. Architectural registers map to
-        // physical registers in a fixed way.
-        parameter PHY_REGS = 64,
-
-        // Width of the flags.
-        parameter FLAG_WDT = 32,
-
         // Enable or disable Thumb. Enabling thumb slows the core down by 10MHz (On S6LX9).
         parameter THUMB_EN = 0,
 
@@ -113,6 +92,27 @@ module zap_top #(
                 // Determines user or supervisory mode. - REGISTERED.
                 output wire      [31:0]                 o_cpsr                  // CPSR. Cache must use this to determine VM scheme for instruction fetches.
 );
+
+        // For several reasons, we need more architectural registers than
+        // what ARM specifies. We also need more physical registers. This has
+        // *nothing* to do with superscalar terminology. THIS PROCESSOR IS A 
+        // SINGLE ISSUE SCALAR PROCESSOR.
+        localparam ARCH_REGS = 32;
+
+        // Although ARM mentions only 16 ALU operations, the processor
+        // internally performs many more operations.
+        localparam ALU_OPS   = 32;
+
+        // Apart from the 4 specified by ARM, an undocumented RORI is present
+        // to help deal with immediate rotates.
+        localparam SHIFT_OPS = 5;
+
+        // Number of physical registers. Architectural registers map to
+        // physical registers in a fixed way.
+        localparam PHY_REGS = 64;
+
+        // Width of the flags.
+        localparam FLAG_WDT = 32;
 
 `include "cc.vh"
 `include "modes.vh"

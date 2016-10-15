@@ -84,10 +84,8 @@ always @ (negedge i_clk)
 // Processor core.
 zap_top 
 #(
-        .PHY_REGS(PHY_REGS),
-        .ALU_OPS(ALU_OPS),
-        .SHIFT_OPS(SHIFT_OPS),
-        .ARCH_REGS(ARCH_REGS)
+        .THUMB_EN(1'd1),
+        .BRANCH_PREDICTOR_ENTRIES(1024)
 )
 u_zap_top 
 (
