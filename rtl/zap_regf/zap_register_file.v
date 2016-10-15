@@ -28,9 +28,7 @@ module zap_register_file #(
         // Clock and reset.
         input wire                           i_clk, 
 
-        `ifdef FPGA
         input wire                           i_clk_2x,    // ZAP clock and 2x clock.
-        `endif
 
         input wire                           i_reset,   // ZAP reset.
 
@@ -141,66 +139,31 @@ reg [$clog2(PHY_REGS)-1:0]     wa1, wa2;
 reg [31:0]                     wdata1, wdata2;
 reg                            wen;
 
-`ifdef ASIC
-        regfile u_regfile
-        (
-                .i_clk          (       i_clk           ),
+bram_wrapper u_bram_wrapper
+(
+ .i_clk          (       i_clk           ),
+ .i_clk_2x       (       i_clk_2x        ),
 
-                .i_reset        (       i_reset         ),       
- 
-                .i_wr_addr_a    (       wa1             ),
-                .i_wr_addr_b    (       wa2             ),
-        
-                .i_wr_data_a    (       wdata1          ),
-                .i_wr_data_b    (       wdata2          ),
-        
-                .i_wen          (       wen             ),        
-        
-                .i_rd_addr_a    ( i_copro_reg_en ? i_copro_reg_rd_index : i_rd_index_0 ),
-                .i_rd_addr_b    (       i_rd_index_1    ),
-                .i_rd_addr_c    (       i_rd_index_2    ),
-                .i_rd_addr_d    (       i_rd_index_3    ),
-        
-                .o_rd_data_a    (       o_rd_data_0     ),
-                .o_rd_data_b    (       o_rd_data_1     ),
-                .o_rd_data_c    (       o_rd_data_2     ),
-                .o_rd_data_d    (       o_rd_data_3     )
-        );
-`elsif FPGA
-        bram_wrapper u_bram_wrapper
-        (
-                .i_clk          (       i_clk           ),
-                .i_clk_2x       (       i_clk_2x        ),
+ .i_reset        (       i_reset         ),       
 
-                .i_reset        (       i_reset         ),       
- 
-                .i_wr_addr_a    (       wa1             ),
-                .i_wr_addr_b    (       wa2             ),
-        
-                .i_wr_data_a    (       wdata1          ),
-                .i_wr_data_b    (       wdata2          ),
-        
-                .i_wen          (       wen             ),        
-        
-                .i_rd_addr_a    ( i_copro_reg_en ? i_copro_reg_rd_index : i_rd_index_0 ),
-                .i_rd_addr_b    (       i_rd_index_1    ),
-                .i_rd_addr_c    (       i_rd_index_2    ),
-                .i_rd_addr_d    (       i_rd_index_3    ),
-        
-                .o_rd_data_a    (       o_rd_data_0     ),
-                .o_rd_data_b    (       o_rd_data_1     ),
-                .o_rd_data_c    (       o_rd_data_2     ),
-                .o_rd_data_d    (       o_rd_data_3     )
+ .i_wr_addr_a    (       wa1             ),
+ .i_wr_addr_b    (       wa2             ),
+
+ .i_wr_data_a    (       wdata1          ),
+ .i_wr_data_b    (       wdata2          ),
+
+ .i_wen          (       wen             ),        
+
+ .i_rd_addr_a    ( i_copro_reg_en ? i_copro_reg_rd_index : i_rd_index_0 ),
+ .i_rd_addr_b    (       i_rd_index_1    ),
+ .i_rd_addr_c    (       i_rd_index_2    ),
+ .i_rd_addr_d    (       i_rd_index_3    ),
+
+ .o_rd_data_a    (       o_rd_data_0     ),
+ .o_rd_data_b    (       o_rd_data_1     ),
+ .o_rd_data_c    (       o_rd_data_2     ),
+ .o_rd_data_d    (       o_rd_data_3     )
 );
-`else
-initial
-begin
-        `ifdef SIM
-        $display($time, "Please define either ASIC or FPGA...");
-        `endif
-        $finish;
-end
-`endif
 
 `define ARM_MODE (cpsr_ff[T] == 1'd0)
 

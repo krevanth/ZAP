@@ -1,17 +1,10 @@
 /*
 You can defines these macros...
-FPGA/ASIC - Determines RAM type.
-TB_CACHE/FPGA_CACHE - Determines cache type.
 IRQ_EN - Bench only. Gives periodic IRQs.
 SIM - Bench only. Be more verbose
  */
 
 `timescale 1ns/1ps
-
-`ifndef FPGA
-        `define FPGA
-        `undef ASIC
-`endif
 
 `ifndef IRQ_EN
         `define IRQ_EN
@@ -31,4 +24,8 @@ SIM - Bench only. Be more verbose
 
 `ifndef MAX_CLOCK_CYCLES
         `define MAX_CLOCK_CYCLES 100000
+`endif
+
+`ifndef SEED
+        `define SEED 32'h12345678
 `endif

@@ -1,6 +1,5 @@
 /*
  * Synthesizes to a 4 read port, 2 write port RAM and supports up to 64 entries.
- * Used to construct the register file. Do not use for ASIC.
  */
 
 `default_nettype none
