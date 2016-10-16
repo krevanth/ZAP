@@ -43,8 +43,6 @@ module zap_decode #(
         // internally performs many more operations.
         parameter ALU_OPS   = 32,
 
-        // Apart from the 4 specified by ARM, an undocumented RORI is present
-        // to help deal with immediate rotates.
         parameter SHIFT_OPS = 5
 )
 (
@@ -661,7 +659,7 @@ begin
 
         dp2 = 1;
 
-        // ROR #0 = ROR #32, ASR #0 = ASR #23, LSL #0 = LSL #0.
+        // ROR #0 = RRC, ASR #0 = ASR #32, LSL #0 = LSL #0, LSR #0 = LSR #32.
         o_shift_length          = instruction[11:7];
         o_shift_length[32]      = IMMED_EN;
         o_shift_source          = {i_instruction[`DP_RS_EXTEND],instruction[`DP_RS]};
@@ -671,6 +669,7 @@ begin
         case ( o_shift_operation )
                 LSR: if ( !o_shift_length[31:0] ) o_shift_length[31:0] = 32;
                 ASR: if ( !o_shift_length[31:0] ) o_shift_length[31:0] = 32;
+                ROR: if ( !o_shift_length[31:0] ) o_shift_operation    = RRC;
         endcase
 
 end

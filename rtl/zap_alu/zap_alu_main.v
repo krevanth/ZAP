@@ -86,9 +86,6 @@ module zap_alu_main #(
         // Force 32.
         input wire                         i_force32align_ff,
 
-        // Use old carry.
-        input wire                         i_use_old_carry_ff,
-
         // undefined instr.
         input wire                         i_und_ff,
         output reg                         o_und_ff,
@@ -593,23 +590,10 @@ function [35:0] process_logical_instructions
 begin: blk2
         reg [31:0] rd;
         reg [3:0] flags_out;
-        reg       tmp_carry;
 
         // Avoid accidental latch inference.
-        rd = 0;
+        rd        = 0;
         flags_out = 0;
-        tmp_carry = 0;
-
-        // If we must use flag carry...
-        if ( i_use_old_carry_ff )
-        begin
-                tmp_carry = flags[_C];
-        end
-        else
-        begin
-        // Else use shift carry.
-                tmp_carry = i_shift_carry_ff;
-        end
 
         case(op)
         AND: rd = rn & rm;
@@ -638,7 +622,7 @@ begin: blk2
         if ( i_flag_upd )
         begin
                 // V is preserved since flags_out = flags assignment.
-                flags_out[_C] = tmp_carry;
+                flags_out[_C] = i_shift_carry_ff;
 
                 if ( nozero )
                         /* This specifically states that we must NOT set the ZERO flag under any circumstance. */

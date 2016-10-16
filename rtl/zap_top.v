@@ -251,7 +251,6 @@ wire shifter_switch_ff;
 wire shifter_force32_ff;
 wire shifter_und_ff;
 wire stall_from_shifter;
-wire shifter_use_old_carry_ff;
 wire [1:0] shifter_taken_ff;
 
 // ALU
@@ -738,9 +737,7 @@ u_zap_shifter_main
         .o_swi_ff                       (shifter_swi_ff),
 
         // Stall
-        .o_stall_from_shifter           (stall_from_shifter),
-
-        .o_use_old_carry_ff             (shifter_use_old_carry_ff)
+        .o_stall_from_shifter           (stall_from_shifter)
 );
 
 // ALU STAGE //
@@ -773,9 +770,7 @@ u_zap_alu_main
          .i_clear_from_writeback         (clear_from_writeback),     // | High Priority
          .i_data_stall                   (i_data_stall),             // V Low Priority
 
-         .i_use_old_carry_ff             (shifter_use_old_carry_ff),
-
-         .i_cpsr_nxt                     (cpsr_nxt),
+         .i_cpsr_nxt                     (cpsr_nxt), // FROM WB
          .i_flag_update_ff               (shifter_flag_update_ff),
          .i_switch_ff                    (shifter_switch_ff),
 

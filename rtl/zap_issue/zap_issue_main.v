@@ -31,8 +31,6 @@ module zap_issue_main
         // internally performs many more operations.
         parameter ALU_OPS   = 32,
 
-        // Apart from the 4 specified by ARM, an undocumented RORI is present
-        // to help deal with immediate rotates.
         parameter SHIFT_OPS = 5
 )
 (

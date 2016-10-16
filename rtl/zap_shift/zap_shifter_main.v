@@ -115,7 +115,6 @@ module zap_shifter_main
         output reg      [31:0]                  o_alu_source_value_ff,
         output reg      [31:0]                  o_shifted_source_value_ff,
         output reg                              o_shift_carry_ff,
-        output reg                              o_use_old_carry_ff,
         output reg                              o_nozero_ff,
 
         // Send all other outputs.
@@ -165,7 +164,6 @@ reg [31:0] mem_srcdest_value;
 reg [31:0] rm, rn;
 
 wire [31:0] mult_out;
-wire        old_carry_nxt;
 
 // The MAC unit.
 zap_multiply
@@ -224,7 +222,6 @@ begin
            o_switch_ff                       <= 0; 
            o_und_ff                          <= 0;
            o_force32align_ff                 <= 0;
-           o_use_old_carry_ff                <= 0;
            o_taken_ff                        <= 0;
            o_pc_ff                           <= 0;
            o_nozero_ff                       <= 0;
@@ -278,7 +275,6 @@ begin
            o_switch_ff                       <= i_switch_ff;
            o_und_ff                          <= i_und_ff;
            o_force32align_ff                 <= i_force32align_ff;
-           o_use_old_carry_ff                <= old_carry_nxt;
            o_taken_ff                        <= i_taken_ff;
            o_pc_ff                           <= i_pc_ff;
            o_nozero_ff                       <= nozero_nxt;
@@ -293,8 +289,7 @@ zap_shift_shifter U_SHIFT
         .i_shift_type   ( i_shift_operation_ff ),
         .i_carry        ( i_cpsr_nxt[29] ),
         .o_result       ( shout ),
-        .o_carry        ( shcarry ),
-        .o_use_old_carry( old_carry_nxt )
+        .o_carry        ( shcarry )
 );
 
 // For ALU source value (rn)
