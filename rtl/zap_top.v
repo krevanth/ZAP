@@ -241,7 +241,6 @@ wire [31:0] shifter_mem_srcdest_value_ff;
 wire [31:0] shifter_alu_source_value_ff;
 wire [31:0] shifter_shifted_source_value_ff;
 wire shifter_shift_carry_ff;
-wire shifter_rrx_ff;
 wire [31:0] shifter_pc_plus_8_ff;
 wire [31:0] shifter_pc_ff;
 wire shifter_irq_ff;
@@ -302,6 +301,12 @@ wire [31:0] rd_data_1;
 wire [31:0] rd_data_2;
 wire [31:0] rd_data_3;
 wire [31:0] cpsr_nxt, cpsr;
+
+wire wb_hijack;
+wire [31:0] wb_hijack_op1;
+wire [31:0] wb_hijack_op2;
+wire wb_hijack_cin;
+wire [32:0] alu_hijack_sum;
 
 // Predictor.
 wire [31:0]     bp_inst;
@@ -707,7 +712,6 @@ u_zap_shifter_main
         .o_alu_source_value_ff          (shifter_alu_source_value_ff),
         .o_shifted_source_value_ff      (shifter_shifted_source_value_ff),
         .o_shift_carry_ff               (shifter_shift_carry_ff),
-        .o_rrx_ff                       (shifter_rrx_ff),
 
         .o_pc_plus_8_ff                 (shifter_pc_plus_8_ff),         
 
@@ -748,6 +752,12 @@ zap_alu_main #(
 )
 u_zap_alu_main
 (
+        .i_hijack     (wb_hijack      ),
+        .i_hijack_op1 ( wb_hijack_op1 ),
+        .i_hijack_op2 ( wb_hijack_op2 ),
+        .i_hijack_cin ( wb_hijack_cin ),
+        .o_hijack_sum ( alu_hijack_sum ),
+
         .i_taken_ff                      (shifter_taken_ff),
         .o_confirm_from_alu              (confirm_from_alu),
 
@@ -775,7 +785,6 @@ u_zap_alu_main
          .i_alu_source_value_ff         (shifter_alu_source_value_ff), 
          .i_shifted_source_value_ff     (shifter_shifted_source_value_ff),
          .i_shift_carry_ff              (shifter_shift_carry_ff),
-         .i_rrx_ff                      (shifter_rrx_ff),
          .i_pc_plus_8_ff                (shifter_pc_plus_8_ff),
 
          .i_abt_ff                      (shifter_abt_ff), 
@@ -962,7 +971,14 @@ u_zap_regf
         .o_clear_from_writeback (clear_from_writeback),
 
         .o_fiq_ack              (o_fiq_ack),
-        .o_irq_ack              (o_irq_ack)
+        .o_irq_ack              (o_irq_ack),
+
+        .o_hijack               (wb_hijack),
+        .o_hijack_op1           (wb_hijack_op1),
+        .o_hijack_op2           (wb_hijack_op2),
+        .o_hijack_cin           (wb_hijack_cin),
+
+        .i_hijack_sum           (alu_hijack_sum)
 );
 
 endmodule

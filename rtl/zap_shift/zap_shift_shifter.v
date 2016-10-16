@@ -17,11 +17,11 @@ module zap_shift_shifter
 (
         input  wire [31:0]                      i_source,
         input  wire [7:0]                       i_amount,
+        input  wire                             i_carry,
         input  wire [$clog2(SHIFT_OPS)-1:0]     i_shift_type,
 
         output reg [31:0]                       o_result,
         output reg                              o_carry,
-        output reg                              o_rrx,
         output reg                              o_use_old_carry
 );
 
@@ -29,7 +29,6 @@ module zap_shift_shifter
 
 always @*
 begin
-        o_rrx           = 0;
         o_result        = i_source;
         o_carry         = 0;
         o_use_old_carry = 0;
@@ -45,8 +44,8 @@ begin
                         if ( i_amount == 0 )
                         begin
                                 // RRX will be done in the ALU itself.
-                                o_result        = i_source;
-                                o_rrx           = 1'd1;
+                                o_result        = {i_carry, i_source[31:1]};
+                                o_carry         = i_source[0];
                         end
                 end
                 RORI:    
@@ -56,7 +55,7 @@ begin
                 end
         endcase
 
-        if ( i_amount == 0 )
+        if ( i_amount == 0 && (i_shift_type != ROR) )
         begin
                 o_use_old_carry = 1'd1;
         end

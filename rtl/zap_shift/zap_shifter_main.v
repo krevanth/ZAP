@@ -115,7 +115,6 @@ module zap_shifter_main
         output reg      [31:0]                  o_alu_source_value_ff,
         output reg      [31:0]                  o_shifted_source_value_ff,
         output reg                              o_shift_carry_ff,
-        output reg                              o_rrx_ff,
         output reg                              o_use_old_carry_ff,
         output reg                              o_nozero_ff,
 
@@ -162,7 +161,6 @@ module zap_shifter_main
 wire nozero_nxt;
 wire [31:0] shout;
 wire shcarry;
-wire        rrx;
 reg [31:0] mem_srcdest_value;
 reg [31:0] rm, rn;
 
@@ -223,7 +221,6 @@ begin
            o_alu_source_value_ff             <= 0; 
            o_shifted_source_value_ff         <= 0; 
            o_shift_carry_ff                  <= 0; 
-           o_rrx_ff                          <= 0;
            o_switch_ff                       <= 0; 
            o_und_ff                          <= 0;
            o_force32align_ff                 <= 0;
@@ -278,7 +275,6 @@ begin
            o_alu_source_value_ff             <= rn;
            o_shifted_source_value_ff         <= rm;
            o_shift_carry_ff                  <= shcarry;
-           o_rrx_ff                          <= rrx; 
            o_switch_ff                       <= i_switch_ff;
            o_und_ff                          <= i_und_ff;
            o_force32align_ff                 <= i_force32align_ff;
@@ -295,9 +291,9 @@ zap_shift_shifter U_SHIFT
         .i_source       ( i_shift_source_value_ff ),
         .i_amount       ( i_shift_length_value_ff[7:0] ),
         .i_shift_type   ( i_shift_operation_ff ),
+        .i_carry        ( i_cpsr_nxt[29] ),
         .o_result       ( shout ),
         .o_carry        ( shcarry ),
-        .o_rrx          ( rrx ),
         .o_use_old_carry( old_carry_nxt )
 );
 

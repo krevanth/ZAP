@@ -13,8 +13,7 @@ None
 
 Description --
 This unit performs arithmetic operations. It also generates memory signals at the end of
-the clock cycle. RRX is performed here since the operation is trivial. The point is to 
-not carry CARRY over to another stage.
+the clock cycle. 
 
 Author --
 Revanth Kamaraj
@@ -30,6 +29,13 @@ module zap_alu_main #(
         parameter FLAG_WDT = 32
 )
 (
+        // ALU Hijack Interface.
+        input wire                         i_hijack,
+        input wire      [31:0]             i_hijack_op1,
+        input wire      [31:0]             i_hijack_op2,
+        input wire                         i_hijack_cin,
+        output wire     [32:0]             o_hijack_sum,
+
         // Clock and reset.
         input wire                         i_clk,                  // ZAP clock.
         input wire                         i_reset,                // ZAP synchronous active high reset.
@@ -58,7 +64,6 @@ module zap_alu_main #(
         input wire  [31:0]                 i_alu_source_value_ff,       // ALU source operand.
         input wire  [31:0]                 i_shifted_source_value_ff,   // Shifter source operand. 
         input wire                         i_shift_carry_ff,            // Carry out from shifer.
-        input wire                         i_rrx_ff,                    // RRX indicator to be done in this stage.
         input wire  [31:0]                 i_pc_plus_8_ff,
         input wire                         i_abt_ff, 
                                            i_irq_ff, 
@@ -162,12 +167,13 @@ assign not_rn = ~rn;
 // Wires to connect to the adder.
 reg [31:0]      op1, op2;
 reg             cin;
+wire [32:0]     sum;
 
 always @*
 begin
-        rm         = i_shifted_source_value_ff;
-        rn         = i_alu_source_value_ff;
-        o_flags_ff = flags_ff;
+        rm          = i_shifted_source_value_ff;
+        rn          = i_alu_source_value_ff;
+        o_flags_ff  = flags_ff;
         o_flags_nxt = flags_nxt;
 end
 
@@ -392,9 +398,6 @@ begin: blk1
        flags_nxt                = flags_ff;
        o_destination_index_nxt  = i_destination_index_ff;
        o_confirm_from_alu      = 1'd0;
-       op1 = 0;
-       op2 = 0;
-       cin = 0;
 
        o_dav_nxt = is_cc_satisfied ( i_condition_code_ff, flags_ff[31:28] );
 
@@ -409,7 +412,7 @@ begin: blk1
                         opcode == CLZ 
                 )
         begin
-                {flags_nxt[31:28], rd} = process_logical_instructions ( rn, rm, flags_ff[31:28], opcode, i_rrx_ff, i_flag_update_ff, i_nozero_ff );
+                {flags_nxt[31:28], rd} = process_logical_instructions ( rn, rm, i_shifted_source_value_ff[0], flags_ff[31:28], opcode, i_flag_update_ff, i_nozero_ff );
         end
         else if ( opcode == FMOV || opcode == MMOV )
         begin: blk2
@@ -428,11 +431,63 @@ begin: blk1
                 if ( opcode == FMOV )
                 begin
                         flags_nxt = rd;
-                end                
+                end
         end
         else
         begin: blk3
-                {flags_nxt[31:28], rd} = process_arithmetic_instructions ( rn, rm, not_rn, not_rm, flags_ff[31:28], opcode, i_rrx_ff, i_flag_update_ff );
+                reg [35:0] process_arithmetic_instructions;
+                reg [3:0] flags;
+                reg [$clog2(ALU_OPS)-1:0] op;
+                reg i_flag_upd;
+                reg [31:0]      r_d;
+                reg             n,z,c,v;
+
+                flags      = flags_ff[31:28];
+                op         = opcode;
+                i_flag_upd = i_flag_update_ff;
+
+                // Avoid accidental latch inference.
+                r_d       = 0;
+                n         = 0;
+                z         = 0;
+                c         = 0;
+                v         = 0;
+
+                // Assign output of adder to variables
+                {c,r_d} = sum;
+
+                // Compute Z and N (C computed before).
+                z = (r_d == 0);
+                n = r_d[31];
+
+                // Overflow.
+                if ( ( op == ADD || op == ADC || op == CMN ) && (rn[31] == rm[31]) && (r_d[31] != rn[31]) )
+                begin
+                        v = 1;
+                end 
+                else if ( (op == RSB || op == RSC) && (rm[31] == !rn[31]) && (r_d[31] != rm[31] ) )
+                begin
+                        v = 1;
+                end
+                else if ( (op == SUB || op == SBC || op == CMP) && (rn[31] == !rm[31]) && (r_d[31] != rn[31]) )
+                begin
+                        v = 1;
+                end
+                else
+                begin
+                        v = 0;
+                end
+       
+                // If you choose not to update flags, force n,z,c,v to previous values. 
+                // Otherwise, they will contain their newly computed values.
+                if ( !i_flag_upd )
+                        {n,z,c,v} = flags;
+
+                // Write out the result.
+                process_arithmetic_instructions = {n, z, c, v, r_d};
+
+
+                {flags_nxt[31:28], rd} = process_arithmetic_instructions; 
         end
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -452,10 +507,10 @@ begin: blk1
                         $display($time, "ALU :: Major change to CPSR! Restarting from the next instruction...");
                 `endif
                 o_clear_from_alu        = 1'd1;
-                o_pc_from_alu           = i_pc_plus_8_ff - 32'd4;
+                o_pc_from_alu           = sum;
                 flags_nxt[`CPSR_MODE]   = (flags_nxt[`CPSR_MODE] == USR) ? USR : flags_nxt[`CPSR_MODE]; // Security.
         end
-        else if ( i_destination_index_ff == ARCH_PC )
+        else if ( i_destination_index_ff == ARCH_PC && (i_condition_code_ff != NV))
         begin
                 if ( i_flag_update_ff && o_dav_nxt ) // Unit sleeps since this is handled in WB. Taken :: flag_update
                 begin
@@ -534,7 +589,7 @@ end
 
 // Process logical instructions.
 function [35:0] process_logical_instructions 
-( input [31:0] rn, rm, input [3:0] flags, input [$clog2(ALU_OPS)-1:0] op, input rrx, input i_flag_upd, input nozero );
+( input [31:0] rn, rm, ssv, input [3:0] flags, input [$clog2(ALU_OPS)-1:0] op, input i_flag_upd, input nozero );
 begin: blk2
         reg [31:0] rd;
         reg [3:0] flags_out;
@@ -545,21 +600,15 @@ begin: blk2
         flags_out = 0;
         tmp_carry = 0;
 
-        if ( rrx )
+        // If we must use flag carry...
+        if ( i_use_old_carry_ff )
         begin
-                rm = {flags[_C], rm[31:1]};
-                tmp_carry = rm[0];
+                tmp_carry = flags[_C];
         end
         else
         begin
-                if ( i_use_old_carry_ff )
-                begin
-                        tmp_carry = flags[_C];
-                end
-                else
-                begin
-                        tmp_carry = i_shift_carry_ff;
-                end
+        // Else use shift carry.
+                tmp_carry = i_shift_carry_ff;
         end
 
         case(op)
@@ -571,7 +620,6 @@ begin: blk2
         ORR: rd = rn | rm;
         TST: rd = rn & rm; // Target is not written.
         TEQ: rd = rn ^ rn; // Target is not written.
-//        CLZ: rd = count_leading_zeros(rm); /* v4T does not need CLZ support. Leaving the function here anyway. */
         default:
         begin
                 `ifdef SIM
@@ -605,120 +653,49 @@ begin: blk2
 end
 endfunction
 
-// Process arithmetic instructions.
-function [35:0] process_arithmetic_instructions 
-( input [31:0] rn, rm, not_rn, not_rm, input [3:0] flags, input [$clog2(ALU_OPS)-1:0] op, input rrx, input i_flag_upd );
-begin: blk3
+//
+// These are ALU connections. Data processing and FMOV use these.
+//
 
-        reg [31:0]      r_d;
-        reg             n,z,c,v;
+always @*
+begin: op1op2blk
+        reg [$clog2(ALU_OPS)-1:0] op;
+        reg [31:0] flags;
 
-        // Avoid accidental latch inference.
-        r_d       = 0;
-        n         = 0;
-        z         = 0;
-        c         = 0;
-        v         = 0;
-        op1       = 0;
-        op2       = 0;
-        cin       = 0;
+        flags = flags_ff[31:28];
+        op    = i_alu_operation_ff;
 
-        if ( rrx )
+        if ( i_hijack ) 
         begin
-                rm = {flags[_C], rm[31:1]}; // The flag from the shifter is not used anyway.
-        end
-
-        case ( op )
-        ADD: begin op1 = rn ; op2 = rm     ; cin =   32'd0;     end
-        ADC: begin op1 = rn ; op2 = rm     ; cin =   flags[_C]; end
-        SUB: begin op1 = rn ; op2 = not_rm ; cin =   32'd1;     end
-        RSB: begin op1 = rm ; op2 = not_rn ; cin =   32'd1;     end
-        SBC: begin op1 = rn ; op2 = not_rm ; cin =   !flags[_C];end
-        RSC: begin op1 = rm ; op2 = not_rn ; cin =   !flags[_C];end
-        CMP: begin op1 = rn ; op2 = not_rm ; cin =   32'd1;     end // Target is not written.
-        CMN: begin op1 = rn ; op2 = rm     ; cin =   32'd0;     end // Target is not written.
-        default:
-        begin
-                `ifdef SIM
-                        //#40;
-                        $display("ALU__arith__:This should never happen op = %d, check the RTL!", op);
-                        //$stop;
-                `endif
-        end
-        endcase
-
-        // Assign output of adder to variables
-        {c,r_d} = sum(op1,op2,cin);
-
-        // Compute Z and N (C computed before).
-        z = (r_d == 0);
-        n = r_d[31];
-
-        // Overflow.
-        if ( ( op == ADD || op == ADC || op == CMN ) && (rn[31] == rm[31]) && (r_d[31] != rn[31]) )
-        begin
-                v = 1;
-        end 
-        else if ( (op == RSB || op == RSC) && (rm[31] == !rn[31]) && (r_d[31] != rm[31] ) )
-        begin
-                v = 1;
-        end
-        else if ( (op == SUB || op == SBC || op == CMP) && (rn[31] == !rm[31]) && (r_d[31] != rn[31]) )
-        begin
-                v = 1;
+                op1 = i_hijack_op1;
+                op2 = i_hijack_op2;
+                cin = i_hijack_cin;
         end
         else
+        case ( op )
+       FMOV: begin op1 = i_pc_plus_8_ff ; op2 = ~32'd4 ; cin =   1'd1;      end
+        ADD: begin op1 = rn             ; op2 = rm     ; cin =   32'd0;     end
+        ADC: begin op1 = rn             ; op2 = rm     ; cin =   flags[_C]; end
+        SUB: begin op1 = rn             ; op2 = not_rm ; cin =   32'd1;     end
+        RSB: begin op1 = rm             ; op2 = not_rn ; cin =   32'd1;     end
+        SBC: begin op1 = rn             ; op2 = not_rm ; cin =   !flags[_C];end
+        RSC: begin op1 = rm             ; op2 = not_rn ; cin =   !flags[_C];end
+        CMP: begin op1 = rn             ; op2 = not_rm ; cin =   32'd1;     end // Target is not written.
+        CMN: begin op1 = rn             ; op2 = rm     ; cin =   32'd0;     end // Target is not written.
+        default:
         begin
-                v = 0;
+                op1 = 0;
+                op2 = 0;
+                cin = 0;
         end
-       
-        // If you choose not to update flags, force n,z,c,v to previous values. 
-        // Otherwise, they will contain their newly computed values.
-        if ( !i_flag_upd )
-                {n,z,c,v} = flags;
-
-        // Write out the result.
-        process_arithmetic_instructions = {n, z, c, v, r_d};
-
+        endcase
 end
-endfunction
 
-// Count leading zeros.
-function [5:0] count_leading_zeros ( input [31:0] in );
-begin: clzBlk
-        integer i;
-        reg done;
-        reg [5:0] cnt;
+assign o_hijack_sum = sum;
 
-        // Avoid latch inference.
-        done = 0;
-        cnt  = 32; // If in = 0, out = 32
-
-        // Ripple carry method.
-        for(i=31;i>=0;i=i-1)
-        begin
-                if ( done == 0 ) /* no sleep */
-                begin
-                        // Keep counting till you see a '1'.
-                        if ( in[i] == 1'd1 )
-                        begin
-                                // Put loop to sleep.
-                                done = 1;
-                        end
-                        else
-                        begin
-                                cnt = cnt - 6'd1;        
-                        end
-                end
-        end
-
-        count_leading_zeros = cnt;        
-        
-end
-endfunction
-
-function [32:0] sum ( input [31:0] op1, input [31:0] op2, input cin );
-        sum = op1 + op2 + cin;
-endfunction
+//
+// The 32-bit ALU.
+//
+alu u_alu ( .op1(op1), .op2(op2), .cin(cin), .sum(sum) );
 
 endmodule

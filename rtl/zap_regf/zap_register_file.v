@@ -103,7 +103,14 @@ module zap_register_file #(
 
         // Acks.
         output reg                           o_fiq_ack,
-        output reg                           o_irq_ack
+        output reg                           o_irq_ack,
+
+        // Hijack I/F
+        output reg    [31:0]                  o_hijack_op1,
+        output reg    [31:0]                  o_hijack_op2,
+        output reg                            o_hijack_cin,
+        output reg                            o_hijack,
+        input wire     [32:0]                 i_hijack_sum
 );
 
 // Coprocessor accesses.
@@ -172,6 +179,11 @@ always @*
 begin: blk1
 
         integer i;
+
+        o_hijack    =  0;
+        o_hijack_op1 = 0;
+        o_hijack_op2 = 0;
+        o_hijack_cin = 0;
 
         wen = 1'd0;
         wa1 = PHY_RAZ_REGISTER;
@@ -248,10 +260,15 @@ begin: blk1
 
         if ( i_data_abt )
         begin
+                o_hijack    =  1'd1;
+                o_hijack_op1 = i_pc_buf_ff;
+                o_hijack_op2 = 32'd4;
+                o_hijack_cin = 1'd0;
+
                 // Returns do LR - 8 to get back to the same instruction.
                 pc_nxt = DABT_VECTOR; 
                 wen    = 1;
-                wdata1 = `ARM_MODE ? i_pc_buf_ff : (i_pc_buf_ff + 32'd4);
+                wdata1 = `ARM_MODE ? i_pc_buf_ff : i_hijack_sum[31:0];
                 wa1    = PHY_ABT_R14;
                 wa2    = PHY_ABT_SPSR;
                 wdata2 = cpsr_ff;
