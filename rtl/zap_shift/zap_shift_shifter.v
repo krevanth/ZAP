@@ -39,9 +39,9 @@ begin
                 ROR,RORI:    
                 begin
                         o_result = ( i_source >> i_amount[4:0] )  | (i_source << (32 - i_amount[4:0] ) );
-                        o_carry  = o_result[31];
+                        o_carry  = i_amount ? o_result[31] : i_carry; // An Amt of 0 preserves the carry. This can occur only if reg = 0 since other (ROR #0) goes to RRC in decode (For ROR).
                 end
-                RRC:    {o_result, o_carry}        = {i_carry, i_source};
+                RRC:    {o_result, o_carry}        = {i_carry, i_source}; // RORI #0 DOES *NOT* BECOME THIS.
         endcase
 end
 
