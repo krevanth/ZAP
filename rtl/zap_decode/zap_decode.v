@@ -106,7 +106,7 @@ module zap_decode #(
 `include "index_immed.vh"
 `include "fields.vh"
 
-reg clz, bx, dp, br, mrs, msr, ls, mult, halfword_ls, swi;
+reg clz, bx, dp, br, mrs, msr, ls, mult, halfword_ls, swi, dp1, dp2, dp3;
 
 // Main reg is here...
 
@@ -145,7 +145,9 @@ begin: mainBlk1
         mult = 0; 
         halfword_ls = 0; 
         swi = 0; 
-
+        dp1 = 0;
+        dp2 = 0;
+        dp3 = 0;
 
                 // Based on our pattern match, call the appropriate task
                 if ( i_fiq || i_irq || i_abt )
@@ -183,11 +185,11 @@ begin: mainBlk1
                 end
                 endcase
 
-                `ifdef SIM
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
                         // Debugging purposes.
                         if ( i_instruction_valid )
                         casez ( i_instruction[31:0] )
-                        //CLZ_INST:                                       clz = 1;
                         BX_INST:                                        bx  = 1;
 
                         MRS:                                            mrs = 1;
@@ -209,7 +211,9 @@ begin: mainBlk1
                         HALFWORD_LS:                                    halfword_ls     = 1; 
                         SOFTWARE_INTERRUPT:                             swi             = 1;         
                         endcase
-                `endif
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 end
 
 // Task definitions.
@@ -628,6 +632,8 @@ begin
 end
 endtask
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////
+
 // If an immediate value is to be rotated right by an immediate value, this mode is used.
 task process_immediate ( input [34:0] instruction );
 begin
@@ -635,6 +641,8 @@ begin
         `ifdef SIM
         $display("%m Process immediate...");
         `endif
+
+        dp1 = 1;
 
         o_shift_length          = instruction[11:8] << 1'd1;
         o_shift_length[32]      = IMMED_EN;
@@ -651,6 +659,8 @@ begin
                 $display("%m Process instruction specified shift...");
         `endif
 
+        dp2 = 1;
+
         // ROR #0 = ROR #32, ASR #0 = ASR #23, LSL #0 = LSL #0.
         o_shift_length          = instruction[11:7];
         o_shift_length[32]      = IMMED_EN;
@@ -659,8 +669,8 @@ begin
         o_shift_operation       = instruction[6:5];
 
         case ( o_shift_operation )
-                LSR: if ( !o_shift_length) o_shift_length = 32;
-                ASR: if ( !o_shift_length) o_shift_length = 32;
+                LSR: if ( !o_shift_length[31:0] ) o_shift_length[31:0] = 32;
+                ASR: if ( !o_shift_length[31:0] ) o_shift_length[31:0] = 32;
         endcase
 
 end
@@ -672,6 +682,8 @@ begin
         `ifdef SIM
         $display("%m Process register specified shift...");
         `endif
+
+        dp3 = 1;
 
         o_shift_length          = instruction[11:8];
         o_shift_length[32]      = INDEX_EN;

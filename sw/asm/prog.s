@@ -31,6 +31,10 @@ ldmfd sp!, {r0-r12, pc}^
 
 SWI:
 ldr sp,=#700
+mov r0, #12
+mov r1, #0
+mov r2, r0, lsr #32
+mov r3, r0, lsr r1
 stmfd sp!, {r0-r12, r14}
 mrs r1, spsr
 orr r1, r1, #0x80
