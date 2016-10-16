@@ -29,6 +29,10 @@ A simple dual port ram model is provided in models/ram/ram.v for simulation
 purposes.
 
 See the wiki for instructions.
+
+Visit the google groups forum at...
+groups.google.com/d/forum/zap-devel
+
 -------------------------------------------------------------------------------
 
 MIT License
