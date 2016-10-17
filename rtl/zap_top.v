@@ -23,7 +23,10 @@ module zap_top #(
         parameter THUMB_EN = 0,
 
         // Set number of predictor entries.
-        parameter BRANCH_PREDICTOR_ENTRIES = 1024
+        parameter BRANCH_PREDICTOR_ENTRIES = 1024,
+
+        // Enable coprocessor iterface.
+        parameter COPROC_IF_EN = 0
 )
 (
                 // Clock and reset.
@@ -105,7 +108,7 @@ module zap_top #(
 
         // Apart from the 4 specified by ARM, an undocumented RORI is present
         // to help deal with immediate rotates.
-        localparam SHIFT_OPS = 5;
+        localparam SHIFT_OPS = 6;
 
         // Number of physical registers. Architectural registers map to
         // physical registers in a fixed way.
@@ -403,7 +406,8 @@ zap_predecode_main #(
         .PHY_REGS(PHY_REGS),
         .SHIFT_OPS(SHIFT_OPS),
         .ALU_OPS(ALU_OPS),
-        .THUMB_EN(THUMB_EN)
+        .THUMB_EN(THUMB_EN),
+        .COPROC_IF_EN(COPROC_IF_EN)
 )
 u_zap_predecode (
         // Input.

@@ -43,7 +43,8 @@ module zap_decode #(
         // internally performs many more operations.
         parameter ALU_OPS   = 32,
 
-        parameter SHIFT_OPS = 5
+        // Number of shift operations.
+        parameter SHIFT_OPS = 6
 )
 (
                 // I/O Ports.
@@ -164,7 +165,6 @@ begin: mainBlk1
                 end
                 else if ( i_instruction_valid )
                 casez ( i_instruction[31:0] )
-                //CLZ_INST:                                       decode_clz ( i_instruction );  /* v4T does not need CLZ. Leaving function here anyway. */
                 BX_INST:                                        decode_bx ( i_instruction );
                 MRS:                                            decode_mrs ( i_instruction );   
                 MSR,MSR_IMMEDIATE:                              decode_msr ( i_instruction );

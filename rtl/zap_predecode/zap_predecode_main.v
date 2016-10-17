@@ -35,7 +35,10 @@ module zap_predecode_main #(
         parameter PHY_REGS = 46,
 
         // Enable Thumb
-        parameter THUMB_EN = 0
+        parameter THUMB_EN = 0,
+
+        // ENable coproc IF
+        parameter COPROC_IF_EN = 0
 )
 (
         // Clock and reset.
@@ -230,7 +233,8 @@ end
 // This unit handles coprocessor stuff.
 zap_predecode_coproc 
 #(
-        .PHY_REGS(PHY_REGS)
+        .PHY_REGS(PHY_REGS),
+        .COPROC_IF_EN(COPROC_IF_EN)
 )
 u_zap_decode_coproc
 (

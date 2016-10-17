@@ -2,7 +2,8 @@
 `include "config.vh"
 
 module zap_predecode_coproc #(
-        parameter PHY_REGS = 46
+        parameter PHY_REGS = 46,
+        parameter COPROC_IF_EN = 0
 )
 (
         input wire              i_clk,
@@ -74,7 +75,7 @@ begin
         case ( state_ff )
         IDLE:
                 // Activate only if no thumb.
-                casez ( (!i_cpsr_ff[T]) ? i_instruction : 32'd0 )
+                casez ( (!i_cpsr_ff[T] & COPROC_IF_EN) ? i_instruction : 32'd0 )
                 MRC, MCR, LDC, STC, CDP:
                 begin
                         // As long as there is an instruction to process

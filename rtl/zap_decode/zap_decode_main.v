@@ -29,7 +29,7 @@ module zap_decode_main #(
 
         // Apart from the 4 specified by ARM, an undocumented RORI is present
         // to help deal with immediate rotates.
-        parameter SHIFT_OPS = 5,
+        parameter SHIFT_OPS = 6,
 
         // Number of physical registers.
         parameter PHY_REGS = 46
