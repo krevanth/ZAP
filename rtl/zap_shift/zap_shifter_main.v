@@ -282,7 +282,10 @@ begin
 end
 
 // Barrel shifter.
-zap_shift_shifter U_SHIFT
+zap_shift_shifter  #(
+        .SHIFT_OPS(SHIFT_OPS)
+)
+U_SHIFT
 (
         .i_source       ( i_shift_source_value_ff ),
         .i_amount       ( i_shift_length_value_ff[7:0] ),

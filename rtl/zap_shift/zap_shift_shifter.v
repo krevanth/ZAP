@@ -16,7 +16,7 @@ module zap_shift_shifter
 )
 (
         input  wire [31:0]                      i_source,
-        input  wire [7:0]                       i_amount,
+        input  wire [7:0]                       i_amount, // Ensures only lower byte is used.
         input  wire                             i_carry,
         input  wire [$clog2(SHIFT_OPS)-1:0]     i_shift_type,
 
@@ -34,15 +34,31 @@ begin
 
         case ( i_shift_type )
                 LSL:    {o_carry, o_result} = {i_carry, i_source} << i_amount;
+                LSLI:   {o_carry, o_result} = {i_source[31], i_source} << i_amount;
+
                 LSR:    {o_result, o_carry} = {i_source, i_carry} >> i_amount;
+                LSRI:   {o_result, o_carry} = {i_source, i_source[31]} >> i_amount;
+
                 ASR:    {o_result, o_carry} = (($signed(i_source) << 1)|i_carry) >> i_amount;
-                ROR,RORI:    
+                ASRI:   {o_result, o_carry} = (($signed(i_source) << 1)|i_source[31]) >> i_amount;
+
+                ROR:
                 begin
-                        // RORI always comes here.
-                        o_result = ( i_source >> i_amount[4:0] )  | (i_source << (32 - i_amount[4:0] ) );
-                        o_carry  = i_amount ? o_result[31] : i_carry; // An Amt of 0 preserves the carry. This can occur only if reg = 0 since other (ROR #0) goes to RRC in decode (For ROR).
+                        o_result = ( i_source >> i_amount[4:0] )  | ( i_source << (32 - i_amount[4:0] ) );                               
+                        o_carry  = (i_amount[7:0] == 0) ? 
+                                   i_carry  : ( (i_amount[4:0] == 0) ? i_source[31] : o_result[31] ); 
                 end
-                RRC:    {o_result, o_carry}        = {i_carry, i_source}; // RORI #0 DOES *NOT* BECOME THIS. Irrespective of i_amount, does only by 1. ROR might come here if instr spec shift = 0.
+
+                RORI,
+                ROTI:    
+                begin
+                        // ROTI or ROR #n
+                        o_result = ( i_source >> i_amount[4:0] )  | (i_source << (32 - i_amount[4:0] ) );
+                        o_carry  = i_amount ? o_result[31] : i_carry; 
+                end
+
+                // ROR #0 becomes this.
+                RRC:    {o_result, o_carry}        = {i_carry, i_source}; 
         endcase
 end
 

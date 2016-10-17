@@ -646,7 +646,7 @@ begin
         o_shift_length[32]      = IMMED_EN;
         o_shift_source          = instruction[7:0];
         o_shift_source[32]      = IMMED_EN;                        
-        o_shift_operation       = RORI;
+        o_shift_operation       = ROTI;
 end
 endtask
 
@@ -672,6 +672,12 @@ begin
                 ROR: if ( !o_shift_length[31:0] ) o_shift_operation    = RRC;
         endcase
 
+        case ( o_shift_operation )
+        LSL: o_shift_operation = LSLI;
+        LSR: o_shift_operation = LSRI;
+        ASR: o_shift_operation = ASRI;
+        ROR: o_shift_operation = RORI;
+        endcase
 end
 endtask
 
