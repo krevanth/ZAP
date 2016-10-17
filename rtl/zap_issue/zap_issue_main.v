@@ -508,7 +508,7 @@ begin
                         i_alu_dav_nxt, i_shifter_mem_load_ff, i_alu_mem_srcdest_index_ff, 
                         i_alu_dav_ff, i_alu_mem_load_ff );
 
-        // A shift lock occurs if the current instruction requires a shift
+        // A shift lock occurs if the current instruction requires a shift amount as a register
         // other than LSL #0 or RORI if the operands are right on the output of this
         // stage.
         shift_lock =    (!(

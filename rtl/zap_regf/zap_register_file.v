@@ -116,7 +116,7 @@ module zap_register_file #(
 // Coprocessor accesses.
 always @ (posedge i_clk) 
 begin
-        o_copro_reg_rd_data_ff = o_rd_data_0;
+        o_copro_reg_rd_data_ff <= i_reset ? 0 : o_rd_data_0;
 end
 
 localparam RST_VECTOR   = 32'h00000000;

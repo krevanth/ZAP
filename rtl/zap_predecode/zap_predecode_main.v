@@ -120,8 +120,6 @@ wire    [3:0]                   o_condition_code_nxt;
 wire                            o_irq_nxt;
 wire                            o_fiq_nxt;
 wire                            o_abt_nxt;
-//reg                             o_swi_nxt;
-//wire                            o_und_nxt;
 wire [35:0]                     o_instruction_nxt;
 wire                            o_instruction_valid_nxt;
 
@@ -270,7 +268,6 @@ u_zap_decode_coproc
         .o_stall_from_decode(cp_stall),
 
         // Coprocessor interface.
-//        .o_copro_mode_ff(o_copro_mode_ff),
         .o_copro_dav_ff(o_copro_dav_ff),
         .o_copro_word_ff(o_copro_word_ff),
         .o_copro_reg_ff(o_copro_reg_ff)

@@ -124,8 +124,9 @@ begin
                 // Pump PC + 8 or 4 down the pipeline. The number depends on
                 // ARM/Thumb mode.
                 o_pc_plus_8_ff <= i_pc_ff + (i_cpsr_ff[T] ? 32'd4 : 32'd8);
-                o_pc_ff        <= i_pc_ff;
         end
 end
+
+always @ (posedge i_clk) o_pc_ff <= i_pc_ff & {32{~i_reset}};
 
 endmodule
