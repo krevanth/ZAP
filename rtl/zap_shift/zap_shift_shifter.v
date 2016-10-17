@@ -39,8 +39,8 @@ begin
                 LSR:    {o_result, o_carry} = {i_source, i_carry} >> i_amount;
                 LSRI:   {o_result, o_carry} = {i_source, i_source[31]} >> i_amount;
 
-                ASR:    {o_result, o_carry} = (($signed(i_source) << 1)|i_carry) >> i_amount;
-                ASRI:   {o_result, o_carry} = (($signed(i_source) << 1)|i_source[31]) >> i_amount;
+                ASR:    {o_result, o_carry} = ($signed(($signed(i_source) << 1)|i_carry))      >> i_amount;
+                ASRI:   {o_result, o_carry} = ($signed(($signed(i_source) << 1)|i_source[31])) >> i_amount;
 
                 ROR:
                 begin
