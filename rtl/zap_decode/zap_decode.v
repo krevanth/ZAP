@@ -105,7 +105,7 @@ module zap_decode #(
 `include "index_immed.vh"
 `include "fields.vh"
 
-reg clz, bx, dp, br, mrs, msr, ls, mult, halfword_ls, swi, dp1, dp2, dp3;
+reg bx, dp, br, mrs, msr, ls, mult, halfword_ls, swi, dp1, dp2, dp3;
 
 // Main reg is here...
 
@@ -113,28 +113,27 @@ always @*
 begin: mainBlk1
         // If an unrecognized instruction enters this, the output
         // signals an NV state i.e., invalid.
-        o_condition_code        = NV;
-        o_destination_index     = 0;
-        o_alu_source            = 0;
-        o_alu_operation         = 0;
-        o_shift_source          = 0;
-        o_shift_operation       = 0;
-        o_shift_length          = 0;
-        o_flag_update           = 0;
-        o_mem_srcdest_index     = RAZ_REGISTER;
-        o_mem_load              = 0;
-        o_mem_store             = 0;
-        o_mem_translate         = 0;
-        o_mem_pre_index         = 0;
-        o_mem_unsigned_byte_enable = 0;
-        o_mem_signed_byte_enable = 0;
-        o_mem_signed_halfword_enable = 0;
-        o_mem_unsigned_halfword_enable = 0;
-        o_mem_translate = 0;
-        o_und           = 0;
-        o_switch        = 0;
+        o_condition_code                = NV;
+        o_destination_index             = 0;
+        o_alu_source                    = 0;
+        o_alu_operation                 = 0;
+        o_shift_source                  = 0;
+        o_shift_operation               = 0;
+        o_shift_length                  = 0;
+        o_flag_update                   = 0;
+        o_mem_srcdest_index             = RAZ_REGISTER;
+        o_mem_load                      = 0;
+        o_mem_store                     = 0;
+        o_mem_translate                 = 0;
+        o_mem_pre_index                 = 0;
+        o_mem_unsigned_byte_enable      = 0;
+        o_mem_signed_byte_enable        = 0;
+        o_mem_signed_halfword_enable    = 0;
+        o_mem_unsigned_halfword_enable  = 0;
+        o_mem_translate                 = 0;
+        o_und                           = 0;
+        o_switch                        = 0;
 
-        clz = 0; 
         bx  = 0;
         dp  = 0; 
         br  = 0; 
@@ -438,32 +437,6 @@ begin: tskDecodeBx
 
         // Indicate switch.
         o_switch = 1;
-end
-endtask
-
-// Count leading zeroes... This is a v5T instruction.
-task decode_clz( input [34:0] i_instruction );
-begin: tskDecodeClz
-        // The raw ALU source does not matter.
-
-        reg [31:0] temp;
-
-        `ifdef SIM
-                $display($time, "%m: CLZ decode...");
-        `endif
-
-        temp = i_instruction;
-        temp[4] = 1'd0;
-
-        process_instruction_specified_shift ( temp[11:0] );
-
-        o_destination_index = {i_instruction[`DP_RD_EXTEND], i_instruction[`DP_RD]};
-        o_alu_operation = CLZ;
-        o_condition_code = i_instruction[31:28];
-
-        // We will force an immediate in alu source to prevent unwanted locks.
-        o_alu_source            = 0;
-        o_alu_source[32]        = IMMED_EN;
 end
 endtask
 

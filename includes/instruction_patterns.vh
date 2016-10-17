@@ -19,10 +19,8 @@ localparam      [31:0]  MSR                                             =       
 localparam      [31:0]  LS_INSTRUCTION_SPECIFIED_SHIFT                  =                                       32'b????_01_1_?????_????_????_????_????_????; 
 localparam      [31:0]  LS_IMMEDIATE                                    =                                       32'b????_01_0_?????_????_????_????_????_????;
 
-//localparam      [31:0]  CLZ_INST                                        =                                       32'b????_00010110000_????_00000001_????; /* v4T does not need CLZ. */
-
 localparam      [31:0]  BX_INST                                         =                                       32'b????_0001_0010_1111_1111_1111_0001_????;
-// Includes MLA too. No xMULLx support (M not implemented)
+
 localparam      [31:0]  MULT_INST                                       =                                       32'b????_0000_00?_?_????_????_????_1001_????;
 
 // M MULT INST - UMULL, UMLAL, SMULL, SMLAL.
