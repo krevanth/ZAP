@@ -108,7 +108,7 @@ module zap_top #(
 
         // Apart from the 4 specified by ARM, an undocumented RORI is present
         // to help deal with immediate rotates.
-        localparam SHIFT_OPS = 6;
+        localparam SHIFT_OPS = 7;
 
         // Number of physical registers. Architectural registers map to
         // physical registers in a fixed way.

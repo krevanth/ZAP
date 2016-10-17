@@ -647,7 +647,7 @@ begin
                         if ( !o_shift_length[31:0] ) 
                                 o_shift_operation    = RRC;
                         else
-                                o_shift_operation    = RORI;
+                                o_shift_operation    = ROR_1;
                 end
         endcase
 end

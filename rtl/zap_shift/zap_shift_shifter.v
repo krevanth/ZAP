@@ -35,7 +35,7 @@ begin
         case ( i_shift_type )
                 LSL:    {o_carry, o_result} = {i_carry, i_source} << i_amount;
                 LSR:    {o_result, o_carry} = {i_source, i_carry} >> i_amount;
-                ASR:    {o_result, o_carry} = ($signed(($signed(i_source) << 1)|i_carry))      >> i_amount;
+                ASR:    {o_result, o_carry} = ($signed(($signed(i_source) << 1)|i_carry)) >> i_amount;
 
                 ROR:
                 begin
@@ -44,9 +44,9 @@ begin
                                    i_carry  : ( (i_amount[4:0] == 0) ? i_source[31] : o_result[31] ); 
                 end
 
-                RORI:
+                RORI, ROR_1:
                 begin
-                        // ROTI or ROR #n
+                        // ROR #n (ROR_1)
                         o_result = ( i_source >> i_amount[4:0] )  | (i_source << (32 - i_amount[4:0] ) );
                         o_carry  = i_amount ? o_result[31] : i_carry; 
                 end
