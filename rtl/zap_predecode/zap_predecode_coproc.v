@@ -2,8 +2,7 @@
 `include "config.vh"
 
 module zap_predecode_coproc #(
-        parameter PHY_REGS = 46,
-        parameter COPROC_IF_EN = 0
+        parameter PHY_REGS = 46
 )
 (
         input wire              i_clk,
@@ -64,20 +63,26 @@ begin
         cp_dav_nxt              = o_copro_dav_ff;
         cp_word_nxt             = o_copro_word_ff;
         o_stall_from_decode     = 1'd0;
-        o_instruction           = 32'd0;
-        o_valid                 = 1'd0;
+        o_instruction           = i_instruction;
+        o_valid                 = i_valid;
         state_nxt               = state_ff;
-        o_irq                   = 1'd0;
-        o_fiq                   = 1'd0;
-
+        o_irq                   = i_irq;
+        o_fiq                   = i_fiq;
         cp_reg_nxt              = o_copro_reg_ff;
+
+        `ifdef COPROC_IF_EN
 
         case ( state_ff )
         IDLE:
                 // Activate only if no thumb.
-                casez ( (!i_cpsr_ff[T] & COPROC_IF_EN) ? i_instruction : 32'd0 )
+                casez ( (!i_cpsr_ff[T]) ? i_instruction : 32'd0 )
                 MRC, MCR, LDC, STC, CDP:
                 begin
+                        o_instruction = 32'd0;
+                        o_valid       = 1'd0;
+                        o_irq         = 1'd0;
+                        o_fiq         = 1'd0;
+
                         // As long as there is an instruction to process
                         if ( i_pipeline_dav )
                         begin
@@ -104,14 +109,14 @@ begin
                 default:
                 begin
                         // Remain transparent.
-                        o_valid         = i_valid;
-                        o_instruction   = i_instruction;
-                        o_irq           = i_irq;
-                        o_fiq           = i_fiq;
-                        cp_dav_nxt      = 0;
-                        cp_word_nxt     = 0;
-                        cp_reg_nxt      = 0;
-                        o_stall_from_decode = 1'd0;
+                        o_valid                 = i_valid;
+                        o_instruction           = i_instruction;
+                        o_irq                   = i_irq;
+                        o_fiq                   = i_fiq;
+                        cp_dav_nxt              = 0;
+                        cp_word_nxt             = 0;
+                        cp_reg_nxt              = 0;
+                        o_stall_from_decode     = 0;
                 end
                 endcase
 
@@ -131,6 +136,8 @@ begin
                 end
         end
         endcase
+
+        `endif
 end
 
 always @ (posedge i_clk)

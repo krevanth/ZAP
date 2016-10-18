@@ -632,7 +632,7 @@ begin
 
         dp2 = 1;
 
-        // ROR #0 = RRC, ASR #0 = ASR #32, LSL #0 = LSL #0, LSR #0 = LSR #32.
+        // ROR #0 = RRC, ASR #0 = ASR #32, LSL #0 = LSL #0, LSR #0 = LSR #32 ROR #n = ROR_1 #n ( n > 0 )
         o_shift_length          = instruction[11:7];
         o_shift_length[32]      = IMMED_EN;
         o_shift_source          = {i_instruction[`DP_RS_EXTEND],instruction[`DP_RS]};
@@ -650,6 +650,8 @@ begin
                                 o_shift_operation    = ROR_1;
                 end
         endcase
+
+        o_shift_length[32] = IMMED_EN;
 end
 endtask
 

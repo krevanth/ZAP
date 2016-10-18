@@ -32,13 +32,7 @@ module zap_predecode_main #(
         parameter SHIFT_OPS = 5,
 
         // Number of physical registers.
-        parameter PHY_REGS = 46,
-
-        // Enable Thumb
-        parameter THUMB_EN = 0,
-
-        // ENable coproc IF
-        parameter COPROC_IF_EN = 0
+        parameter PHY_REGS = 46
 )
 (
         // Clock and reset.
@@ -155,14 +149,7 @@ wire cp_fiq;
 
 reg [1:0] taken_nxt;
 
-//always @*
-//begin
-//        // The actual decision whether or not to execute this is taken in EX stage.
-//        // Passed instructions are pointless anyway since they will not be executed.
-//        o_swi_nxt = &i_instruction[27:24]; 
-//end
-
-        // Abort
+// Abort
 assign  o_abt_nxt = i_abt;
 
 // Flop the outputs to break the pipeline at this point.
@@ -231,8 +218,7 @@ end
 // This unit handles coprocessor stuff.
 zap_predecode_coproc 
 #(
-        .PHY_REGS(PHY_REGS),
-        .COPROC_IF_EN(COPROC_IF_EN)
+        .PHY_REGS(PHY_REGS)
 )
 u_zap_decode_coproc
 (

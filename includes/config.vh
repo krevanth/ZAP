@@ -1,8 +1,4 @@
-/*
-You can defines these macros...
-IRQ_EN - Bench only. Gives periodic IRQs.
-SIM - Bench only. Be more verbose
- */
+// Please use only these kinds of comments. DO NOT USE /* */ STYLE.
 
 `timescale 1ns/1ps
 
@@ -28,4 +24,12 @@ SIM - Bench only. Be more verbose
 
 `ifndef SEED
         `define SEED 32'h12345678
+`endif
+
+`ifndef THUMB_EN
+        `define THUMB_EN
+`endif
+
+`ifndef COPROC_IF_EN
+        `define COPROC_IF_EN
 `endif

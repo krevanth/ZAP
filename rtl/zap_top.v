@@ -18,16 +18,7 @@ License --
 Released under the MIT license.
 */
 
-module zap_top #(
-        // Enable or disable Thumb. Enabling thumb slows the core down by 10MHz (On S6LX9).
-        parameter THUMB_EN = 0,
-
-        // Set number of predictor entries.
-        parameter BRANCH_PREDICTOR_ENTRIES = 1024,
-
-        // Enable coprocessor iterface.
-        parameter COPROC_IF_EN = 0
-)
+module zap_top 
 (
                 // Clock and reset.
                 input wire                              i_clk,                  // ZAP clock.        
@@ -41,8 +32,12 @@ module zap_top #(
                 input wire                              i_valid,                // Instruction valid.
                 input wire                              i_instr_abort,          // Instruction abort fault.
 
+                `ifdef COPROC_IF_EN
+
                 // Coprocessor.
                 input wire                              i_copro_done,
+
+                `endif
 
                 // Memory access - ALL ARE REGISTERED..
                 output wire                             o_read_en,              // Memory load
@@ -71,6 +66,8 @@ module zap_top #(
                 input wire                              i_fiq,                  // FIQ signal.
                 input wire                              i_irq,                  // IRQ signal.
 
+                `ifdef COPROC_IF_EN
+
                 // Coprocessor - REGISTERED.
                 output wire                             o_copro_dav,
                 output wire  [31:0]                     o_copro_word,
@@ -85,6 +82,8 @@ module zap_top #(
                 // Data from register file to coprocessor. - REGISTERED.
                 output wire     [31:0]                  o_copro_reg_rd_data,    // Coprocessor read data from register file.
 
+                `endif
+
                 // Interrupt acknowledge - NOT REGISTERED. - For easy debugging.
                 output wire                             o_fiq_ack,              // FIQ acknowledge.
                 output wire                             o_irq_ack,              // IRQ acknowledge.
@@ -95,6 +94,23 @@ module zap_top #(
                 // Determines user or supervisory mode. - REGISTERED.
                 output wire      [31:0]                 o_cpsr                  // CPSR. Cache must use this to determine VM scheme for instruction fetches.
 );
+
+`ifndef COPROC_IF_EN
+
+        // Pretend as a successful coprocessor.
+        wire i_copro_reg_en        = 0;
+        wire i_copro_reg_wr_index  = 0;
+        wire i_copro_reg_rd_inex   = 0;
+        wire i_copro_reg_wr_data   = 0;
+        wire i_copro_done          = 1;
+
+        // Dummy wires to connect nets.
+        wire o_copro_reg_rd_data;
+        wire o_copro_dav;
+        wire o_copro_word;
+        wire o_copro_reg;
+
+`endif
 
         // For several reasons, we need more architectural registers than
         // what ARM specifies. We also need more physical registers. This has
@@ -367,7 +383,7 @@ u_zap_fetch_main (
 // PREDICTOR STAGE //
 zap_branch_predict_main
 #(
-        .BP_ENTRIES(BRANCH_PREDICTOR_ENTRIES)
+        .BP_ENTRIES(1024)
 )
 u_zap_branch_predict
 (
@@ -405,9 +421,7 @@ zap_predecode_main #(
         .ARCH_REGS(ARCH_REGS),
         .PHY_REGS(PHY_REGS),
         .SHIFT_OPS(SHIFT_OPS),
-        .ALU_OPS(ALU_OPS),
-        .THUMB_EN(THUMB_EN),
-        .COPROC_IF_EN(COPROC_IF_EN)
+        .ALU_OPS(ALU_OPS)
 )
 u_zap_predecode (
         // Input.

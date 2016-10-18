@@ -19,9 +19,7 @@ License --
 Released under the MIT License.
 */
 
-module zap_predecode_thumb #(
-        parameter THUMB_EN = 0
-)
+module zap_predecode_thumb 
 (
         // Clock and reset.
         input wire              i_clk,
@@ -72,7 +70,8 @@ begin
         o_fiq                   = i_fiq;
         o_force32_align         = 0;
 
-        if ( i_cpsr_ff[T] && i_instruction_valid && THUMB_EN ) // Thumb mode.
+        `ifdef THUMB_EB
+        if ( i_cpsr_ff[T] && i_instruction_valid ) // Thumb mode.
         begin
                 casez ( i_instruction[15:0] )
                         T_ADD_SUB_LO            : decode_add_sub_lo; 
@@ -104,6 +103,7 @@ begin
                         end
                 endcase 
         end
+        `endif
 end
 
 task decode_get_addr;
