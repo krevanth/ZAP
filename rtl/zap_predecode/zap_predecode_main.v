@@ -261,9 +261,6 @@ u_zap_decode_coproc
 
 // This unit handles decompression.
 zap_predecode_thumb
-#(
-        .THUMB_EN(THUMB_EN)
-)
 u_zap_predecode_thumb
 (
         .i_clk(i_clk),

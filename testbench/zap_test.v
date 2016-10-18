@@ -83,10 +83,6 @@ always @ (negedge i_clk)
 
 // Processor core.
 zap_top 
-#(
-        .THUMB_EN(1'd1),
-        .BRANCH_PREDICTOR_ENTRIES(1024)
-)
 u_zap_top 
 (
         .i_clk(i_clk),
