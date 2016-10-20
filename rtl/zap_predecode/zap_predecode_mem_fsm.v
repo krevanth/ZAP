@@ -302,7 +302,6 @@ begin
         map = instr;
         map = map & ~(1<<22); // No byte access.
         map = map & ~(1<<25); // Constant Offset (of 4).
-        map[21] = 1'd1;       // Address needs to burst on the bus. /* -- BUG FIX -- */
         map[23] = 1'd1;       // Hard wired to increment.
 
         map[11:0] = 12'd4;          // Offset

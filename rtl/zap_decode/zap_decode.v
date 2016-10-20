@@ -534,14 +534,11 @@ begin
                            : (i_instruction[19:16] & 4'b1001);
         o_alu_source[32] = IMMED_EN;
 
-        // If you are in USER mode and you perform MSR with [18:16] != 0, then this
-        // will be undefined (write to CPSR). 
-        if (    i_cpsr_ff[5:0] == USR     &&  // User mode.
-                o_alu_source[2:0] != 3'd0 &&  // Changing critical stuff.
-                o_alu_operation == FMOV       // To CPSR.
-        )
+        // Part of the instruction will silently fail when changing mode bits
+        // in user mode. This is as per the ARM spec.
+        if  ( i_cpsr_ff[5:0] == USR )
         begin
-                decode_und ( i_instruction );                
+                o_alu_source[2:0] = 3'b0;
         end
 end
 endtask
