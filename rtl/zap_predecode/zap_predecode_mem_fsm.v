@@ -83,6 +83,9 @@ wire [15:0] reglist= i_instruction[15:0];
 wire link          = i_instruction[24];
 wire [11:0] branch_offset = i_instruction[11:0];
 
+// Ones counter offset.
+wire [11:0] oc_offset;
+
 // States.
 localparam IDLE         = 0;
 localparam MEMOP        = 1;
@@ -119,9 +122,18 @@ begin
                                 `ifdef SIM
                                         $display($time, "%m: Load/Store Multiple detected!");
                                 `endif
-
-                                o_instruction = {cc, 2'b00, 1'b0, MOV, 1'b0, 4'd0, 4'd0, 8'd0, base};
-                                {o_instruction[`DP_RD_EXTEND], o_instruction[`DP_RD]} = ARCH_DUMMY_REG0;
+                                
+                                if ( up )
+                                begin
+                                        o_instruction = {cc, 2'b00, 1'b0, MOV, 1'b0, 4'd0, 4'd0, 8'd0, base};
+                                        {o_instruction[`DP_RD_EXTEND], o_instruction[`DP_RD]} = ARCH_DUMMY_REG0;
+                                end
+                                else
+                                begin
+                                        // SUB DUMMY0, BASE, OFFSET
+                                        o_instruction = {cc, 2'b00, 1'b1, SUB, 1'd0, base, 4'd0, oc_offset};
+                                        {o_instruction[`DP_RD_EXTEND], o_instruction[`DP_RD]} = ARCH_DUMMY_REG0;
+                                end
 
                                 o_instruction_valid = 1'd1;
                                 reglist_nxt = reglist;
@@ -211,8 +223,7 @@ begin
 
                         reg [3:0] pri_enc_out;
 
-
-                        pri_enc_out = pri_enc(reglist_ff, up);
+                        pri_enc_out = pri_enc(reglist_ff);
                         reglist_nxt = reglist_ff & ~(1 << pri_enc_out); 
 
                         o_irq = 0;
@@ -270,7 +281,10 @@ reg writeback;
 reg load;          
 reg store;         
 reg [15:0] reglist;
+reg restore;
 begin
+        restore = 0;
+
         // All variables used inside the function depend solely on the input args.
                 
         base            = instr[`BASE];
@@ -278,7 +292,7 @@ begin
         cc              = instr[31:28];
         id              = instr[27:25];
         pre_index       = instr[24];
-        up              = instr[23];
+        up              = instr[23];         
         s_bit           = instr[22];
         writeback       = instr[21];
         load            = instr[20];
@@ -289,14 +303,28 @@ begin
         map = map & ~(1<<22); // No byte access.
         map = map & ~(1<<25); // Constant Offset (of 4).
         map[21] = 1'd1;       // Address needs to burst on the bus. /* -- BUG FIX -- */
-        map[11:0] = 12'd4;
-        map[27:26] = 2'b01;
+        map[23] = 1'd1;       // Hard wired to increment.
+
+        map[11:0] = 12'd4;          // Offset
+        map[27:26] = 2'b01;         // Memory instruction.
+
         map[`SRCDEST] = enc;         
         {map[`BASE_EXTEND],map[`BASE]} = ARCH_DUMMY_REG0; // Use this as the base register.
 
-        if ( pre_index == 0 ) // Post index.
+        // If !up, then DA -> IB and DB -> IA.
+        if ( !up ) // DA or DB.
+        begin
+                map[24]   = !map[24];   // Post <---> Pre
+        end
+
+        // Since the indexing has swapped (possibly), we must rethink map[21].
+        if ( map[24] == 0 ) // Post index.
         begin
                 map[21] = 1'd0; // Writeback is implicit.
+        end
+        else // Pre-index - Must specify writeback.
+        begin
+                map[21] = 1'd1;
         end
 
         if ( list == 0 ) // Catch 0 list here itself...
@@ -304,8 +332,18 @@ begin
                 // Restore base. MOV Rbase, DUMMY0
                 if ( writeback )
                 begin
-                        map = { cc, 2'b0, 1'b0, MOV, 1'b0, 4'd0, base, 8'd0, 4'd0 };
-                        {map[`DP_RS_EXTEND],map[`DP_RS]} = ARCH_DUMMY_REG0;  
+                        restore = 1;
+
+                        if ( up ) // Original instruction asked increment.
+                        begin
+                                map = { cc, 2'b0, 1'b0, MOV, 1'b0, 4'd0, base, 8'd0, 4'd0 };
+                                {map[`DP_RS_EXTEND],map[`DP_RS]} = ARCH_DUMMY_REG0;  
+                        end
+                        else
+                        begin // Restore.
+                                // SUB BASE, BASE, #OFFSET
+                                map = {cc, 2'b00, 1'b1, SUB, 1'd0, base, base, oc_offset};
+                        end
                 end
                 else
                 begin
@@ -336,25 +374,16 @@ end
 endfunction
 
 // Priority encoder.
-function [3:0] pri_enc ( input [15:0] in, input up );
+function [3:0] pri_enc ( input [15:0] in );
 begin: priEncFn
         integer i;
         pri_enc = 4'd0;
 
-        if ( up )
-        begin
-                // PC is the last.
-                for(i=15;i>=0;i=i-1)
-                        if ( in[i] == 1'd1 )
-                                pri_enc = i;
-        end
-        else
-        begin
-                // PC is the first.
-                 for(i=0;i<=15;i=i+1)
-                        if ( in[i] == 1'd1 )
-                                pri_enc = i;
-        end
+        // PC is the last.
+        for(i=15;i>=0;i=i-1)
+                if ( in[i] == 1'd1 )
+                        pri_enc = i;
+       
 end
 endfunction
 
@@ -380,5 +409,12 @@ begin
         reglist_ff              <= 16'd0;
 end
 endtask
+
+// The register jumps to the bottom of the list and starts processing.
+ones_counter u_ones_counter 
+(
+        .i_word(i_instruction[15:0]),
+        .o_offset(oc_offset)
+);
 
 endmodule
