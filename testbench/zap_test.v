@@ -24,10 +24,13 @@ wire             o_read_en;              // Memory load
 wire             o_write_en;             // Memory store.
 wire[31:0]       o_address;              // Memory address.
 
+`ifdef COPROC_IF_EN
+
 //Coproc wires.
 wire                             o_copro_dav;
 wire  [31:0]                     o_copro_word;
-wire  [$clog2(PHY_REGS)-1:0]     o_copro_reg;
+
+`endif
 
 // User view.
 wire             o_mem_translate;
@@ -48,14 +51,12 @@ wire [31:0]      o_wr_data;
 reg              i_fiq;                  // FIQ signal.
 reg              i_irq;                  // IRQ signal.
 
-// Interrupt acknowledge.
- wire             o_fiq_ack;              // FIQ acknowledge.
- wire             o_irq_ack;              // IRQ acknowledge.
-
 // Program counter.
 wire[31:0]      o_pc;                   // Program counter.
 
 wire [31:0]      o_cpsr;                 // CPSR
+
+`ifdef COPROC_IF_EN
 
 reg             i_copro_reg_en;
 reg [5:0]       i_copro_reg_wr_index;
@@ -63,7 +64,11 @@ reg [5:0]       i_copro_reg_rd_index;
 reg [31:0]      i_copro_reg_wr_data;
 wire [31:0]     o_copro_reg_rd_data;
 
+`endif
+
 wire [3:0] o_ben;
+
+`ifdef COPROC_IF_EN
 
 initial
 begin
@@ -72,6 +77,8 @@ begin
         i_copro_reg_rd_index    = 16;
         i_copro_reg_wr_data     = 0;
 end
+
+`endif
 
 `include "cc.vh"
 
@@ -102,21 +109,21 @@ u_zap_top
         .o_wr_data(o_wr_data),
         .i_fiq(i_fiq),
         .i_irq(i_irq),
-        .o_fiq_ack(o_fiq_ack),
-        .o_irq_ack(o_irq_ack),
         .o_pc(o_pc),
-        .o_cpsr(o_cpsr),
 
+        `ifdef COPROC_IF_EN
         .i_copro_done (1'd1),           // Assume coprocessor completes its task.
         .o_copro_dav  (o_copro_dav),
         .o_copro_word (o_copro_word),
-        .o_copro_reg  (o_copro_reg),
 
         .i_copro_reg_en(i_copro_reg_en),
         .i_copro_reg_wr_index(i_copro_reg_wr_index),
         .i_copro_reg_rd_index(i_copro_reg_rd_index),
         .i_copro_reg_wr_data(i_copro_reg_wr_data),
-        .o_copro_reg_rd_data(o_copro_reg_rd_data)
+        .o_copro_reg_rd_data(o_copro_reg_rd_data),
+        `endif
+
+        .o_cpsr(o_cpsr)
 );
 
 ram

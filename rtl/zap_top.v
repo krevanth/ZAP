@@ -32,12 +32,6 @@ module zap_top
                 input wire                              i_valid,                // Instruction valid.
                 input wire                              i_instr_abort,          // Instruction abort fault.
 
-                `ifdef COPROC_IF_EN
-
-                // Coprocessor.
-                input wire                              i_copro_done,
-
-                `endif
 
                 // Memory access - ALL ARE REGISTERED..
                 output wire                             o_read_en,              // Memory load
@@ -68,25 +62,21 @@ module zap_top
 
                 `ifdef COPROC_IF_EN
 
-                // Coprocessor - REGISTERED.
-                output wire                             o_copro_dav,
-                output wire  [31:0]                     o_copro_word,
-                output wire  [$clog2(PHY_REGS)-1:0]     o_copro_reg,
+                        // Coprocessor.
+                        input wire                              i_copro_done,
+                        output wire                             o_copro_dav,
+                        output wire  [31:0]                     o_copro_word,
 
-                // Coprocessor direct register access.
-                input wire                              i_copro_reg_en,         // Coprocessor controls register file.
-                input wire      [$clog2(PHY_REGS)-1:0]  i_copro_reg_wr_index,   // Register write index.
-                input wire      [$clog2(PHY_REGS)-1:0]  i_copro_reg_rd_index,   // Register read index.
-                input wire      [31:0]                  i_copro_reg_wr_data,    // Register write data.
+                        // Coprocessor direct register access.
+                        input wire                              i_copro_reg_en,         // Coprocessor controls register file.
+                        input wire      [$clog2(PHY_REGS)-1:0]  i_copro_reg_wr_index,   // Register write index.
+                        input wire      [$clog2(PHY_REGS)-1:0]  i_copro_reg_rd_index,   // Register read index.
+                        input wire      [31:0]                  i_copro_reg_wr_data,    // Register write data.
 
-                // Data from register file to coprocessor. - REGISTERED.
-                output wire     [31:0]                  o_copro_reg_rd_data,    // Coprocessor read data from register file.
+                        // Data from register file to coprocessor. - REGISTERED.
+                        output wire     [31:0]                  o_copro_reg_rd_data,    // Coprocessor read data from register file.
 
                 `endif
-
-                // Interrupt acknowledge - NOT REGISTERED. - For easy debugging.
-                output wire                             o_fiq_ack,              // FIQ acknowledge.
-                output wire                             o_irq_ack,              // IRQ acknowledge.
 
                 // Program counter - REGISTERED.
                 output wire     [31:0]                  o_pc,                   // Program counter.
@@ -94,6 +84,10 @@ module zap_top
                 // Determines user or supervisory mode. - REGISTERED.
                 output wire      [31:0]                 o_cpsr                  // CPSR. Cache must use this to determine VM scheme for instruction fetches.
 );
+
+//Debug only.
+wire o_fiq_ack;
+wire o_irq_ack;
 
 `ifndef COPROC_IF_EN
 
@@ -108,7 +102,6 @@ module zap_top
         wire o_copro_reg_rd_data;
         wire o_copro_dav;
         wire o_copro_word;
-        wire o_copro_reg;
 
 `endif
 
@@ -154,6 +147,7 @@ wire        fetch_valid;        // Instruction valid from the fetch unit.
 wire        fetch_instr_abort;  // abort indicator.
 wire [31:0] fetch_pc_plus_8_ff; // PC + 8 generated from the fetch unit.
 wire [31:0] fetch_pc_ff;        // PC generated from fetch unit.
+wire [1:0]  fetch_bp_state;
 
 // Predecode
 wire [31:0]     predecode_pc_plus_8;
@@ -309,7 +303,7 @@ wire                            memory_swi_ff;
 wire                            memory_instr_abort_ff;
 wire                            memory_mem_load_ff;
 wire  [FLAG_WDT-1:0]            memory_flags_ff;
-wire  [31:0]                    memory_mem_rd_data_ff;
+wire  [31:0]                    memory_mem_rd_data;
 wire                            memory_und_ff;
 wire                            memory_data_abt_ff;
 
@@ -325,14 +319,6 @@ wire [31:0] wb_hijack_op1;
 wire [31:0] wb_hijack_op2;
 wire wb_hijack_cin;
 wire [32:0] alu_hijack_sum;
-
-// Predictor.
-wire [31:0]     bp_inst;
-wire            bp_val;
-wire            bp_abt;
-wire [31:0]     bp_pc_plus_8;
-wire [1:0]      bp_state;
-wire [31:0]     bp_pc;
 
 // ------------------------------
 // Assign statements.
@@ -354,7 +340,10 @@ U_RST_SYNC
 );
 
 // FETCH STAGE //
-zap_fetch_main 
+zap_fetch_main
+#(
+        .BP_ENTRIES(1024)
+) 
 u_zap_fetch_main (
         // Input.
         .i_clk                          (i_clk),
@@ -377,43 +366,12 @@ u_zap_fetch_main (
         .o_valid                        (fetch_valid),
         .o_instr_abort                  (fetch_instr_abort),
         .o_pc_plus_8_ff                 (fetch_pc_plus_8_ff),
-        .o_pc_ff                        (fetch_pc_ff)
-);
+        .o_pc_ff                        (fetch_pc_ff),
 
-// PREDICTOR STAGE //
-zap_branch_predict_main
-#(
-        .BP_ENTRIES(1024)
-)
-u_zap_branch_predict
-(
-        // Input.
-        .i_clk                          (i_clk),
-        .i_reset                        (reset),
-        .i_clear_from_writeback         (clear_from_writeback),
-        .i_data_stall                   (i_data_stall),
-        .i_clear_from_alu               (clear_from_alu),
         .i_confirm_from_alu             (confirm_from_alu),
-        .i_pc_from_alu                  (shifter_pc_ff),     
-        .i_inst                         (fetch_instruction),
-        .i_val                          (fetch_valid),
-        .i_abt                          (fetch_instr_abort),
-        .i_pc_plus_8                    (fetch_pc_plus_8_ff),
-        .i_pc                           (fetch_pc_ff),
+        .i_pc_from_alu                  (shifter_pc_ff),
         .i_taken                        (shifter_taken_ff),
-
-        .i_stall_from_shifter           (stall_from_shifter),
-        .i_stall_from_issue             (stall_from_issue),
-        .i_stall_from_decode            (stall_from_decode),
-        .i_clear_from_decode            (clear_from_decode),
-
-        // Output.
-        .o_inst_ff                      (bp_inst),
-        .o_val_ff                       (bp_val),
-        .o_abt_ff                       (bp_abt),
-        .o_pc_plus_8_ff                 (bp_pc_plus_8),
-        .o_pc_ff                        (bp_pc),
-        .o_taken_ff                     (bp_state)
+        .o_taken_ff                     (fetch_bp_state)
 );
 
 // PREDECODE STAGE //
@@ -435,13 +393,13 @@ u_zap_predecode (
         .i_irq                          (i_irq),
         .i_fiq                          (i_fiq),
 
-        .i_abt                          (bp_abt),
-        .i_pc_plus_8_ff                 (bp_pc_plus_8),
-        .i_pc_ff                        (bp_pc),
+        .i_abt                          (fetch_instr_abort),
+        .i_pc_plus_8_ff                 (fetch_pc_plus_8_ff),
+        .i_pc_ff                        (fetch_pc_ff),
         .i_cpu_mode                     (alu_flags_ff),
-        .i_instruction                  (bp_inst),
-        .i_instruction_valid            (bp_val),
-        .i_taken                        (bp_state),
+        .i_instruction                  (fetch_instruction),
+        .i_instruction_valid            (fetch_valid),
+        .i_taken                        (fetch_bp_state),
 
         .i_copro_done                   (i_copro_done),
         .i_pipeline_dav                 (
@@ -467,7 +425,6 @@ u_zap_predecode (
 
         .o_copro_dav_ff                 (o_copro_dav),
         .o_copro_word_ff                (o_copro_word),
-        .o_copro_reg_ff                 (o_copro_reg),
 
         .o_clear_from_decode            (clear_from_decode),
         .o_pc_from_decode               (pc_from_decode),
@@ -612,7 +569,7 @@ u_zap_issue_main
         .i_shifter_mem_load_ff          (shifter_mem_load_ff),
         .i_alu_mem_load_ff              (alu_mem_load_ff),
         .i_memory_mem_load_ff           (memory_mem_load_ff),
-        .i_memory_mem_srcdest_value_ff  (memory_mem_rd_data_ff),
+        .i_memory_mem_srcdest_value_ff  (memory_mem_rd_data),
 
         // Switch indicator.
         .i_switch_ff                    (decode_switch_ff),
@@ -917,7 +874,7 @@ u_zap_memory_main
         .o_mem_load_ff                  (memory_mem_load_ff),
 
 
-        .o_mem_rd_data_ff               (memory_mem_rd_data_ff)
+        .o_mem_rd_data                 (memory_mem_rd_data)
 );
 
 // WRITEBACK //
@@ -956,7 +913,7 @@ u_zap_regf
         .i_wr_data              (memory_alu_result_ff),
         .i_flags                (memory_flags_ff),
         .i_wr_index_1           (memory_mem_srcdest_index_ff),  // Memory load index.
-        .i_wr_data_1            (memory_mem_rd_data_ff),        // Memory load data.
+        .i_wr_data_1            (memory_mem_rd_data),        // Memory load data.
 
         .i_irq                  (memory_irq_ff),
         .i_fiq                  (memory_fiq_ff),

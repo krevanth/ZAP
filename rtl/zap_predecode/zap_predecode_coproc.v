@@ -39,8 +39,7 @@ module zap_predecode_coproc #(
         output reg              o_stall_from_decode,      // Stall from decode.
 
         output reg                        o_copro_dav_ff,           // Are we really asking for the coprocessor.
-        output reg  [31:0]                o_copro_word_ff,          // The entire instruction is passed to the coprocessor.
-        output reg [$clog2(PHY_REGS)-1:0] o_copro_reg_ff            // Register the coprocessor must deal with. 
+        output reg  [31:0]                o_copro_word_ff          // The entire instruction is passed to the coprocessor.
 );
 
 `include "cpsr.vh"
@@ -68,7 +67,6 @@ begin
         state_nxt               = state_ff;
         o_irq                   = i_irq;
         o_fiq                   = i_fiq;
-        cp_reg_nxt              = o_copro_reg_ff;
 
         `ifdef COPROC_IF_EN
 
@@ -124,7 +122,6 @@ begin
         begin
                 cp_word_nxt             = o_copro_word_ff;
                 cp_dav_nxt              = o_copro_dav_ff;
-                cp_reg_nxt              = o_copro_reg_ff;
                 o_stall_from_decode     = 1'd1;
 
                 if ( i_copro_done )
@@ -167,7 +164,6 @@ begin
                 state_ff        <= state_nxt;
                 o_copro_word_ff <= cp_word_nxt;
                 o_copro_dav_ff  <= cp_dav_nxt;
-                o_copro_reg_ff  <= cp_reg_nxt;
         end
 end
 
@@ -176,7 +172,6 @@ begin
                 state_ff            <= IDLE;
                 o_copro_word_ff     <= 32'd0;
                 o_copro_dav_ff      <= 1'd0; 
-                o_copro_reg_ff      <= 0;
 end
 endtask
 

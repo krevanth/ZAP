@@ -90,10 +90,8 @@ module zap_predecode_main #(
         output reg                              o_force32align_ff,
 
         // Coprocessor interface.
-//        output wire  [31:0]                     o_copro_mode_ff,
         output wire                             o_copro_dav_ff,
         output wire  [31:0]                     o_copro_word_ff,
-        output wire  [$clog2(PHY_REGS)-1:0]     o_copro_reg_ff,
 
         // Branch.
         output reg   [1:0]                      o_taken_ff,
@@ -255,8 +253,7 @@ u_zap_decode_coproc
 
         // Coprocessor interface.
         .o_copro_dav_ff(o_copro_dav_ff),
-        .o_copro_word_ff(o_copro_word_ff),
-        .o_copro_reg_ff(o_copro_reg_ff)
+        .o_copro_word_ff(o_copro_word_ff)
 );
 
 // This unit handles decompression.

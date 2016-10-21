@@ -15,7 +15,9 @@ the I-cache. Data aborts are handled by pumping an extra signal down the
 pipeline. Data aborts piggyback off AND R0, R0, R0. 
 */
 
-module zap_fetch_main
+module zap_fetch_main #(
+        parameter BP_ENTRIES = 1024
+)
 (
                 // Clock and reset.
                 input wire i_clk,          // ZAP clock.        
@@ -48,10 +50,18 @@ module zap_fetch_main
                 output reg         o_valid,             // Instruction valid.
                 output reg         o_instr_abort,       // Indication of an abort.       
                 output reg [31:0]  o_pc_plus_8_ff,      // PC +8 ouput.
-                output reg [31:0]  o_pc_ff              // PC output.
+                output reg [31:0]  o_pc_ff,             // PC output.
+
+                // For BP.
+                input wire         i_confirm_from_alu,
+                input wire [31:0]  i_pc_from_alu,
+                input wire [1:0]   i_taken,
+                output wire [1:0]  o_taken_ff
 );
 
 `include "cpsr.vh"
+
+wire instr_stall;
 
 // If an instruction abort occurs, this unit sleeps until it is woken up.
 reg sleep_ff;
@@ -68,17 +78,14 @@ begin
         if (  i_reset )                          
         begin
                 o_valid         <= 1'd0;
-                o_instruction   <= 32'd0;
                 o_instr_abort   <= 1'd0;
                 sleep_ff        <= 1'd0;        // Wake unit up.
                 o_pc_plus_8_ff  <= 32'd8;
-                //o_pc_ff         <= 32'd0; -- Allows ISE to infer efficient block RAM.
         end
         else if ( i_clear_from_writeback )       
         begin   
                 o_valid         <= 1'd0;
                 o_instr_abort   <= 1'd0;
-                o_instruction   <= 32'd0;
                 sleep_ff        <= 1'd0;        // Wake unit up.
         end
         else if ( i_data_stall)                  begin end // Save state.
@@ -86,7 +93,6 @@ begin
         begin
                 o_valid         <= 1'd0;
                 o_instr_abort   <= 1'd0;
-                o_instruction   <= 32'd0;
                 sleep_ff        <= 1'd0;        // Wake unit up.
         end
         else if ( i_stall_from_shifter )         begin end // Save state.
@@ -96,14 +102,12 @@ begin
         begin
                 o_valid         <= 1'd0;
                 o_instr_abort   <= 1'd0;
-                o_instruction   <= 32'd0;
                 sleep_ff        <= 1'd0;
         end
         else if ( sleep_ff )
         begin
                 o_valid         <= 1'd0;
                 o_instr_abort   <= 1'd0;
-                o_instruction   <= 32'd0;
                 sleep_ff        <= 1'd1;
         end
         else
@@ -127,6 +131,64 @@ begin
         end
 end
 
-always @ (posedge i_clk) o_pc_ff <= i_pc_ff & {32{~i_reset}};
+assign instr_stall = (  i_data_stall || i_stall_from_shifter || 
+                        i_stall_from_issue || i_stall_from_decode );
+
+// Will be absorbed into I-cache by ISE.
+always @ (posedge i_clk)
+        if(!instr_stall)
+                o_instruction <= i_instruction;
+
+// PC logic.
+always @ (posedge i_clk) 
+        o_pc_ff <= i_pc_ff & {32{~i_reset}};
+
+// Branch states.
+localparam      SNT     =       0; // Strongly Not Taken.
+localparam      WNT     =       1; // Weakly Not Taken.
+localparam      WT      =       2; // Weakly Taken.
+localparam      ST      =       3; // Strongly Taken.
+
+`define x i_pc_from_alu[$clog2(BP_ENTRIES):1]
+`define y i_pc_ff[$clog2(BP_ENTRIES):1]
+
+bp_ram
+#(.NUMBER_OF_ENTRIES(BP_ENTRIES), .ENTRY_SIZE(2)) u_br_ram
+(
+        .i_clk(i_clk),
+        .i_reset(i_reset),
+        .i_wr_en(!i_data_stall && (i_clear_from_alu || i_confirm_from_alu)),
+        .i_wr_addr(`x),
+        .i_rd_addr(`y),
+        .i_wr_data(compute(i_taken, i_clear_from_alu)),
+        .o_rd_data(o_taken_ff) 
+);
+
+// Memory writes.
+function [1:0] compute ( input [1:0] i_taken, input i_clear_from_alu );
+begin
+                if ( i_clear_from_alu )
+                begin
+                        case ( i_taken )
+                        SNT: compute = WNT;
+                        WNT: compute = WT;
+                        WT:  compute = WNT;
+                        ST:  compute = WT;
+                        endcase
+                end
+                else
+                begin
+                        case ( i_taken )
+                        SNT: compute = SNT;
+                        WNT: compute = SNT;
+                        WT:  compute = ST;
+                        ST:  compute = ST;
+                        endcase
+                end
+end
+endfunction
+
+`undef x
+`undef y
 
 endmodule

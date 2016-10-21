@@ -21,6 +21,9 @@
  [31:0] is a register index (although only the lower 5-bits are actually
  used if the number of arch regs i.e., ARCH_REGS = 32, for example).
 
+ For notation, Rs means Rm of ARM. The ARM Rs is just refered to here without
+ a name and as a part select.
+
  Dependencies --
  None
 

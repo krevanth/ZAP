@@ -90,10 +90,24 @@ module zap_memory_main
 
         // Memory load information is passed down.
         output reg                           o_mem_load_ff,
-        output reg  [31:0]                   o_mem_rd_data_ff
+        output reg  [31:0]                   o_mem_rd_data
 );
 
 `include "regs.vh"
+
+reg                             i_mem_load_ff2          ;
+reg [31:0]                      i_mem_srcdest_value_ff2 ;
+reg [31:0]                      i_mem_address_ff2       ;
+reg                             i_sbyte_ff2             ;
+reg                             i_ubyte_ff2             ;
+reg                             i_shalf_ff2             ;
+reg                             i_uhalf_ff2             ;
+reg [31:0]                      mem_rd_data_ff          ;
+
+// Absorbed into block RAM.
+always @ (posedge i_clk)
+        if ( !i_data_stall )
+                mem_rd_data_ff <= i_mem_rd_data;
 
 task clear;
 begin
@@ -108,7 +122,6 @@ begin
         o_swi_ff              <= 0;
         o_instr_abort_ff      <= 0;
         o_mem_load_ff         <= 0;
-        o_mem_rd_data_ff      <= 0;
         o_und_ff              <= 0;
         o_mem_fault           <= 0;
 end
@@ -145,10 +158,29 @@ begin
         o_swi_ff              <= i_swi_ff;
         o_instr_abort_ff      <= i_instr_abort_ff;
         o_mem_load_ff         <= i_mem_load_ff; 
-        o_mem_rd_data_ff      <= transform((i_mem_load_ff ? i_mem_rd_data : i_mem_srcdest_value_ff), i_mem_address_ff, i_sbyte_ff, i_ubyte_ff, i_shalf_ff, i_uhalf_ff, i_mem_load_ff);
         o_und_ff              <= i_und_ff;
         o_mem_fault           <= i_mem_fault;
 end
+
+always @ (posedge i_clk)
+begin
+        if ( !i_data_stall )
+        begin
+                i_mem_load_ff2          <= i_mem_load_ff;
+                i_mem_srcdest_value_ff2 <= i_mem_srcdest_value_ff;
+                i_mem_address_ff2       <= i_mem_address_ff;
+                i_sbyte_ff2             <= i_sbyte_ff;
+                i_ubyte_ff2             <= i_ubyte_ff;
+                i_shalf_ff2             <= i_shalf_ff;
+                i_uhalf_ff2             <= i_uhalf_ff;
+        end
+end
+
+always @*
+o_mem_rd_data         = transform((i_mem_load_ff2 ? mem_rd_data_ff : 
+                        i_mem_srcdest_value_ff2), i_mem_address_ff2, 
+                        i_sbyte_ff2, i_ubyte_ff2, i_shalf_ff2, i_uhalf_ff2, 
+                        i_mem_load_ff2);
 
 /*
  * Memory always loads 32-bit to processor. We will rotate that here as we wish.

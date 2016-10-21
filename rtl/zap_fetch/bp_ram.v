@@ -6,7 +6,7 @@
 
 `include "config.vh"
 
-module zap_branch_predict_ram 
+module bp_ram 
 #(
         parameter NUMBER_OF_ENTRIES = 64,
         parameter ENTRY_SIZE = 2
