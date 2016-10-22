@@ -29,9 +29,9 @@ parameter TOTAL_ARCH_REGS = 28;
 // ===============================
 // Physical registers.
 // ===============================
-parameter  PHY_PC               =       15;
-parameter  PHY_RAZ_REGISTER     =       16;
-parameter  PHY_CPSR             =       17;
+parameter  PHY_PC               =       15; // DO NOT CHANGE!
+parameter  PHY_RAZ_REGISTER     =       16; // DO NOT CHANGE!
+parameter  PHY_CPSR             =       17; // DO NOT CHANGE!
 
 parameter  PHY_USR_R0           =       0;
 parameter  PHY_USR_R1           =       1;
@@ -69,21 +69,18 @@ parameter  PHY_UND_R14          =       30;
 parameter  PHY_ABT_R13          =       31;
 parameter  PHY_ABT_R14          =       32;     
 
-parameter  PHY_SWI_R13          =       33;
-parameter  PHY_SWI_R14          =       34;
-
 // Dummy registers for various purposes.
-parameter  PHY_DUMMY_REG0       =       37;
-parameter  PHY_DUMMY_REG1       =       38;
+parameter  PHY_DUMMY_REG0       =       33;
+parameter  PHY_DUMMY_REG1       =       34;
 
 // SPSRs.
-parameter  PHY_FIQ_SPSR         =       39;
-parameter  PHY_IRQ_SPSR         =       40;
-parameter  PHY_SVC_SPSR         =       41;
-parameter  PHY_UND_SPSR         =       42;
-parameter  PHY_ABT_SPSR         =       43;
-parameter  PHY_SWI_SPSR         =       44;
+parameter  PHY_FIQ_SPSR         =       35;
+parameter  PHY_IRQ_SPSR         =       36;
+parameter  PHY_SVC_SPSR         =       37;
+parameter  PHY_UND_SPSR         =       38;
+parameter  PHY_ABT_SPSR         =       39;
+parameter  PHY_SWI_SPSR         =       40;
 
 // Count of total registers (Can go up to 64 with no problems).
-parameter  TOTAL_PHY_REGS       =       45;
+parameter  TOTAL_PHY_REGS       =       41;
 
