@@ -198,13 +198,10 @@ begin
                 o_irq_ff                                <= 0;
                 o_fiq_ff                                <= 0;
                 o_abt_ff                                <= 0; 
-                o_pc_plus_8_ff                          <= 32'd8;
                 o_und_ff                                <= 0;
-                o_force32align_ff                       <= 0;
                 o_taken_ff                              <= 0;
-                o_pc_ff                                 <= 0;
-                o_instruction_ff                        <= 0;
                 o_instruction_valid_ff                  <= 0;
+                o_instruction_ff[27]                    <= 0;
 end
 endtask
 

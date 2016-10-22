@@ -121,7 +121,7 @@ wire o_irq_ack;
 
         // Number of physical registers. Architectural registers map to
         // physical registers in a fixed way.
-        localparam PHY_REGS = 64;
+        localparam PHY_REGS = 45;
 
         // Width of the flags.
         localparam FLAG_WDT = 32;

@@ -197,34 +197,12 @@ u_zap_multiply
 task clear;
 begin
            o_condition_code_ff               <= NV;
-           o_destination_index_ff            <= 0; 
-           o_alu_operation_ff                <= 0; 
-           o_shift_operation_ff              <= 0; 
-           o_flag_update_ff                  <= 0; 
-           o_mem_srcdest_index_ff            <= 0; 
-           o_mem_load_ff                     <= 0; 
-           o_mem_store_ff                    <= 0; 
-           o_mem_pre_index_ff                <= 0; 
-           o_mem_unsigned_byte_enable_ff     <= 0; 
-           o_mem_signed_byte_enable_ff       <= 0; 
-           o_mem_signed_halfword_enable_ff   <= 0; 
-           o_mem_unsigned_halfword_enable_ff <= 0; 
-           o_mem_translate_ff                <= 0; 
            o_irq_ff                          <= 0; 
            o_fiq_ff                          <= 0; 
            o_abt_ff                          <= 0;                
            o_swi_ff                          <= 0; 
-           o_pc_plus_8_ff                    <= 0; 
-           o_mem_srcdest_value_ff            <= 0; 
-           o_alu_source_value_ff             <= 0; 
-           o_shifted_source_value_ff         <= 0; 
-           o_shift_carry_ff                  <= 0; 
-           o_switch_ff                       <= 0; 
            o_und_ff                          <= 0;
-           o_force32align_ff                 <= 0;
-           o_taken_ff                        <= 0;
-           o_pc_ff                           <= 0;
-           o_nozero_ff                       <= 0;
+           o_destination_index_ff[4]         <= 1;
 end
 endtask
 

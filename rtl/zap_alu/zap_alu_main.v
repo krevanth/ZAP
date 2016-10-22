@@ -174,144 +174,66 @@ begin
         o_flags_nxt = flags_nxt;
 end
 
-always @ (posedge i_clk)
+task clear ( input [31:0] flags );
 begin
-        if ( i_reset )
-        begin
-                o_alu_result_ff                  <= 0;
                 o_dav_ff                         <= 0;
-                o_pc_plus_8_ff                   <= 0;
-                o_mem_address_ff                 <= 0;
-                o_destination_index_ff           <= 0;
-                flags_ff                         <= {1'd1,1'd1,1'd0,SVC};
+                o_destination_index_ff[4]        <= 1;
+                flags_ff                         <= flags; //{1'd1,1'd1,1'd0,SVC};
                 o_abt_ff                         <= 0;
                 o_irq_ff                         <= 0;
                 o_fiq_ff                         <= 0;
                 o_swi_ff                         <= 0;
-                o_mem_srcdest_index_ff           <= 0;
-                o_mem_srcdest_index_ff           <= 0;
+                o_und_ff                         <= 0;
+                sleep_ff                         <= 0;
                 o_mem_load_ff                    <= 0;
                 o_mem_store_ff                   <= 0;
-                o_mem_unsigned_byte_enable_ff    <= 0;
-                o_mem_signed_byte_enable_ff      <= 0;
-                o_mem_signed_halfword_enable_ff  <= 0;
-                o_mem_unsigned_halfword_enable_ff<= 0;
-                o_mem_translate_ff               <= 0;
-                o_mem_srcdest_value_ff           <= 0;
-                sleep_ff                         <= 0;
-                o_und_ff                         <= 0;
-                o_ben_ff                         <= 0;
+end
+endtask
+
+always @ (posedge i_clk)
+begin
+        if ( i_reset )
+        begin
+                clear ( {1'd1,1'd1,1'd0,SVC} );
         end
         else if ( i_clear_from_writeback ) 
         begin
-                o_alu_result_ff                  <= 0; 
-                o_dav_ff                         <= 0;    
-                o_pc_plus_8_ff                   <= 0; 
-                o_mem_address_ff                 <= 0; 
-                o_destination_index_ff           <= 0; 
-                flags_ff                         <= i_cpsr_nxt; // If the instruction that caused clear has flags, then copy that over.
-                o_abt_ff                         <= 0; 
-                o_irq_ff                         <= 0; 
-                o_fiq_ff                         <= 0; 
-                o_swi_ff                         <= 0; 
-                o_mem_srcdest_index_ff           <= 0; 
-                o_mem_srcdest_index_ff           <= 0; 
-                o_mem_load_ff                    <= 0; 
-                o_mem_store_ff                   <= 0; 
-                o_mem_unsigned_byte_enable_ff    <= 0; 
-                o_mem_signed_byte_enable_ff      <= 0; 
-                o_mem_signed_halfword_enable_ff  <= 0; 
-                o_mem_unsigned_halfword_enable_ff<= 0; 
-                o_mem_translate_ff               <= 0; 
-                o_mem_srcdest_value_ff           <= 0;
-                sleep_ff                         <= 0;
-                o_und_ff                         <= 0;
-                o_ben_ff                         <= 0;
+                clear ( i_cpsr_nxt );
         end
         else if ( i_data_stall )
         begin
                 // Preserve values.
         end
-        else if ( i_data_mem_fault )
+        else if ( i_data_mem_fault || sleep_ff )
         begin
-                        o_alu_result_ff                  <= 0; 
-                        o_dav_ff                         <= 0;    
-                        o_pc_plus_8_ff                   <= 0; 
-                        o_mem_address_ff                 <= 0; 
-                        o_destination_index_ff           <= 0; 
-                        flags_ff                         <= flags_ff; // Preserve flags.
-                        o_abt_ff                         <= 0; 
-                        o_irq_ff                         <= 0; 
-                        o_fiq_ff                         <= 0; 
-                        o_swi_ff                         <= 0; 
-                        o_mem_srcdest_index_ff           <= 0; 
-                        o_mem_srcdest_index_ff           <= 0; 
-                        o_mem_load_ff                    <= 0; 
-                        o_mem_store_ff                   <= 0; 
-                        o_mem_unsigned_byte_enable_ff    <= 0; 
-                        o_mem_signed_byte_enable_ff      <= 0; 
-                        o_mem_signed_halfword_enable_ff  <= 0; 
-                        o_mem_unsigned_halfword_enable_ff<= 0; 
-                        o_mem_translate_ff               <= 0; 
-                        o_mem_srcdest_value_ff           <= 0;
-                        sleep_ff                         <= 1'd1; // Initiate a sleep.
-                        o_und_ff                         <= 0;
-                        o_ben_ff                         <= 0;
-               
+               clear(flags_ff);
+               sleep_ff                         <= 1'd1; 
         end
         else
         begin
-                if ( sleep_ff )
-                begin
-                        o_alu_result_ff                  <= 0; 
-                        o_dav_ff                         <= 0;    
-                        o_pc_plus_8_ff                   <= 0; 
-                        o_mem_address_ff                 <= 0; 
-                        o_destination_index_ff           <= 0; 
-                        flags_ff                         <= flags_ff; // Preserve flags.
-                        o_abt_ff                         <= 0; 
-                        o_irq_ff                         <= 0; 
-                        o_fiq_ff                         <= 0; 
-                        o_swi_ff                         <= 0; 
-                        o_mem_srcdest_index_ff           <= 0; 
-                        o_mem_srcdest_index_ff           <= 0; 
-                        o_mem_load_ff                    <= 0; 
-                        o_mem_store_ff                   <= 0; 
-                        o_mem_unsigned_byte_enable_ff    <= 0; 
-                        o_mem_signed_byte_enable_ff      <= 0; 
-                        o_mem_signed_halfword_enable_ff  <= 0; 
-                        o_mem_unsigned_halfword_enable_ff<= 0; 
-                        o_mem_translate_ff               <= 0; 
-                        o_mem_srcdest_value_ff           <= 0;
-                        sleep_ff                         <= 1'd1; // Keep sleeping.
-                        o_und_ff                         <= 0;
-                end
-                else
-                begin
-                        o_alu_result_ff                  <= o_alu_result_nxt;
-                        o_dav_ff                         <= o_dav_nxt;                
-                        o_pc_plus_8_ff                   <= i_pc_plus_8_ff;
-                        o_mem_address_ff                 <= mem_address_nxt;
-                        o_destination_index_ff           <= o_destination_index_nxt;
-                        flags_ff                         <= flags_nxt;
-                        o_abt_ff                         <= i_abt_ff;
-                        o_irq_ff                         <= i_irq_ff;
-                        o_fiq_ff                         <= i_fiq_ff;
-                        o_swi_ff                         <= i_swi_ff;
-                        o_mem_srcdest_index_ff           <= i_mem_srcdest_index_ff;
-                        o_mem_srcdest_index_ff           <= i_mem_srcdest_index_ff;           
-                        o_mem_load_ff                    <= o_dav_nxt ? i_mem_load_ff : 1'd0;                    
-                        o_mem_store_ff                   <= o_dav_nxt ? i_mem_store_ff: 1'd0;                   
-                        o_mem_unsigned_byte_enable_ff    <= i_mem_unsigned_byte_enable_ff;    
-                        o_mem_signed_byte_enable_ff      <= i_mem_signed_byte_enable_ff;      
-                        o_mem_signed_halfword_enable_ff  <= i_mem_signed_halfword_enable_ff;  
-                        o_mem_unsigned_halfword_enable_ff<= i_mem_unsigned_halfword_enable_ff;
-                        o_mem_translate_ff               <= i_mem_translate_ff;  
-                        o_mem_srcdest_value_ff           <= duplicate   (i_mem_unsigned_byte_enable_ff, i_mem_signed_byte_enable_ff, i_mem_unsigned_halfword_enable_ff, i_mem_unsigned_halfword_enable_ff, i_mem_srcdest_value_ff); 
-                        sleep_ff                         <= sleep_nxt;
-                        o_und_ff                         <= i_und_ff;
-                        o_ben_ff                         <= generate_ben(i_mem_unsigned_byte_enable_ff, i_mem_signed_byte_enable_ff, i_mem_unsigned_halfword_enable_ff, i_mem_unsigned_halfword_enable_ff, mem_address_nxt);
-                end
+                o_alu_result_ff                  <= o_alu_result_nxt;
+                o_dav_ff                         <= o_dav_nxt;                
+                o_pc_plus_8_ff                   <= i_pc_plus_8_ff;
+                o_mem_address_ff                 <= mem_address_nxt;
+                o_destination_index_ff           <= o_destination_index_nxt;
+                flags_ff                         <= flags_nxt;
+                o_abt_ff                         <= i_abt_ff;
+                o_irq_ff                         <= i_irq_ff;
+                o_fiq_ff                         <= i_fiq_ff;
+                o_swi_ff                         <= i_swi_ff;
+                o_mem_srcdest_index_ff           <= i_mem_srcdest_index_ff;
+                o_mem_srcdest_index_ff           <= i_mem_srcdest_index_ff;           
+                o_mem_load_ff                    <= o_dav_nxt ? i_mem_load_ff : 1'd0;                    
+                o_mem_store_ff                   <= o_dav_nxt ? i_mem_store_ff: 1'd0;                   
+                o_mem_unsigned_byte_enable_ff    <= i_mem_unsigned_byte_enable_ff;    
+                o_mem_signed_byte_enable_ff      <= i_mem_signed_byte_enable_ff;      
+                o_mem_signed_halfword_enable_ff  <= i_mem_signed_halfword_enable_ff;  
+                o_mem_unsigned_halfword_enable_ff<= i_mem_unsigned_halfword_enable_ff;
+                o_mem_translate_ff               <= i_mem_translate_ff;  
+                o_mem_srcdest_value_ff           <= duplicate   (i_mem_unsigned_byte_enable_ff, i_mem_signed_byte_enable_ff, i_mem_unsigned_halfword_enable_ff, i_mem_unsigned_halfword_enable_ff, i_mem_srcdest_value_ff); 
+                sleep_ff                         <= sleep_nxt;
+                o_und_ff                         <= i_und_ff;
+                o_ben_ff                         <= generate_ben(i_mem_unsigned_byte_enable_ff, i_mem_signed_byte_enable_ff, i_mem_unsigned_halfword_enable_ff, i_mem_unsigned_halfword_enable_ff, mem_address_nxt);
         end
 end
 

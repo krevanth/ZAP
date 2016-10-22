@@ -55,7 +55,6 @@ localparam BUSY = 1;
 reg state_ff, state_nxt;
 reg cp_dav_nxt;
 reg [31:0] cp_word_nxt;
-reg [$clog2(PHY_REGS)-1:0] cp_reg_nxt;
 
 always @*
 begin
@@ -88,7 +87,6 @@ begin
                                 o_stall_from_decode     = 1'd1;
                                 cp_dav_nxt              = 1'd0;
                                 cp_word_nxt             = 32'd0;
-                                cp_reg_nxt              = 1'd0;
                         end
                         else
                         begin
@@ -97,11 +95,6 @@ begin
                                 cp_word_nxt             = i_instruction;
                                 cp_dav_nxt              = 1'd1;
                                 state_nxt               = BUSY;
-
-                                if ( i_instruction[27:25] != 3'b110 ) // MCR, MRC.
-                                        cp_reg_nxt              = translate ( i_instruction[15:12], i_cpsr_ff[`CPSR_MODE] );
-                                else                                  // LDC, STC, CDP(Useless)  
-                                        cp_reg_nxt              = translate ( i_instruction[19:16], i_cpsr_ff[`CPSR_MODE] );
                         end
                 end
                 default:
@@ -112,9 +105,8 @@ begin
                         o_irq                   = i_irq;
                         o_fiq                   = i_fiq;
                         cp_dav_nxt              = 0;
-                        cp_word_nxt             = 0;
-                        cp_reg_nxt              = 0;
                         o_stall_from_decode     = 0;
+                        cp_word_nxt             = {32{1'dx}}; // Don't care.
                 end
                 endcase
 
@@ -170,7 +162,6 @@ end
 task clear;
 begin
                 state_ff            <= IDLE;
-                o_copro_word_ff     <= 32'd0;
                 o_copro_dav_ff      <= 1'd0; 
 end
 endtask

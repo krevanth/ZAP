@@ -111,19 +111,13 @@ always @ (posedge i_clk)
 
 task clear;
 begin
-        o_alu_result_ff       <= 0;
-        o_flags_ff            <= 0;
-        o_mem_srcdest_index_ff<= 0;
-        o_dav_ff              <= 0;
-        o_destination_index_ff<= 0;
-        o_pc_plus_8_ff        <= 0;
-        o_irq_ff              <= 0;
-        o_fiq_ff              <= 0;
-        o_swi_ff              <= 0;
-        o_instr_abort_ff      <= 0;
-        o_mem_load_ff         <= 0;
-        o_und_ff              <= 0;
-        o_mem_fault           <= 0;
+        o_dav_ff                  <= 0;
+        o_irq_ff                  <= 0;
+        o_fiq_ff                  <= 0;
+        o_swi_ff                  <= 0;
+        o_instr_abort_ff          <= 0;
+        o_und_ff                  <= 0;
+        o_mem_fault               <= 0;
 end
 endtask
 

@@ -30,8 +30,10 @@ purposes.
 
 See the wiki for instructions.
 
+See the documentation [here](docs/zap_doc.pdf)
+
 Visit the google groups forum at...
-groups.google.com/d/forum/zap-devel
+[groups.google.com/d/forum/zap-devel](https://groups.google.com/d/forum/zap-devel)
 
 -------------------------------------------------------------------------------
 
