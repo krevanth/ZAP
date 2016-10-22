@@ -480,9 +480,6 @@ begin: tskDecodeLs
                                 RAZ_REGISTER; // Pointer register already added.
         o_mem_unsigned_byte_enable = i_instruction[22];
 
-        // If we do not require a user bank transfer. Note that this stuff
-        // cannot come from an LDR/STR itself but comes from an LDM/STM
-        // instruction instead.
         o_mem_srcdest_index = {i_instruction[`SRCDEST_EXTEND], i_instruction[`SRCDEST]};
 
         if ( !o_mem_pre_index ) // Post-index, writeback has no meaning.

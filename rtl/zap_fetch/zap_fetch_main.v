@@ -116,7 +116,6 @@ begin
                 // is 0 since we are using a VIVT cache that
                 // faults only on a miss. 
                 o_valid         <= i_valid;
-                o_instruction   <= i_instruction;
                 o_instr_abort   <= i_instr_abort;
 
                 // Put unit to sleep on an abort.
