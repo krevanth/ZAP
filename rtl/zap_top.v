@@ -94,7 +94,7 @@ wire o_irq_ack;
         // Pretend as a successful coprocessor.
         wire i_copro_reg_en        = 0;
         wire i_copro_reg_wr_index  = 0;
-        wire i_copro_reg_rd_inex   = 0;
+        wire i_copro_reg_rd_index  = 0;
         wire i_copro_reg_wr_data   = 0;
         wire i_copro_done          = 1;
 
