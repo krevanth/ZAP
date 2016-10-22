@@ -30,10 +30,11 @@ purposes.
 
 See the wiki for instructions.
 
-See the documentation at docs/zap_doc.pdf
+See the documentation at 
+https://github.com/krevanth/ZAP/blob/master/docs/zap_doc.pdf
 
 Visit the google groups forum at...
-[groups.google.com/d/forum/zap-devel](https://groups.google.com/d/forum/zap-devel)
+https://groups.google.com/d/forum/zap-devel
 
 -------------------------------------------------------------------------------
 
