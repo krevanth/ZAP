@@ -1,6 +1,6 @@
-void factorial (void)
+void main (void)
 {
-        char *x = (char *)600;
+        char *x = (char *)5000;
         x[0] = 5;
         x[1] = fact(x[0]);               
 }
@@ -12,6 +12,8 @@ int fact (int x)
         else
                 return x * fact(x-1);
 }
+
+////////////////// VECTORS /////////////////////////
 
 void __undef(void) {
         return;
@@ -36,4 +38,3 @@ void __irq (void) {
 void __fiq (void) {
         return;
 }
-

@@ -18,11 +18,11 @@ die "*E: Failed to convert $asm_file to asm_file.o" if system("arm-none-eabi-as 
 
 # C file to assembly.
 print "Converting C file to /tmp/c_file.asm...\n";
-die "*E: Failed to convert $c_file to c_file.asm" if system("arm-none-eabi-gcc -S -c -mcpu=arm7tdmi -g $c_file -o /tmp/c_file.asm"); 
+die "*E: Failed to convert $c_file to c_file.asm" if system("arm-none-eabi-gcc -S -c -msoft-float -mfloat-abi=soft -mcpu=arm7tdmi -g $c_file -o /tmp/c_file.asm"); 
 
 # C file to object file.
 print "Converting C file $c_file to object file c_file.o...\n";
-die "*E: Failed to convert $c_file to c_file.o" if system("arm-none-eabi-gcc -c -mcpu=arm7tdmi -g $c_file -o /tmp/c_file.o");     
+die "*E: Failed to convert $c_file to c_file.o" if system("arm-none-eabi-gcc -c -msoft-float -mfloat-abi=soft -mcpu=arm7tdmi -g $c_file -o /tmp/c_file.o");     
 
 # This is the linker script to combine input files to a single ELF output file.
 print "Assembling all .o files usig the linker script $linker...\n";

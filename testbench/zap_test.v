@@ -2,11 +2,14 @@
 
 module zap_test;
 
-parameter RAM_SIZE  = 1023; // Bytes
+parameter RAM_SIZE  = 8192; // Bytes
 parameter PHY_REGS  = 64;
 parameter ALU_OPS   = 32;
 parameter SHIFT_OPS = 5;
 parameter ARCH_REGS = 32;
+
+parameter START = 4992;
+parameter COUNT = 120;
 
 // Clock and reset.
 reg              i_clk;                  // ZAP clock.        
@@ -164,7 +167,7 @@ begin
         i_irq = 0;
         i_fiq = 0;
 
-        for(i=596;i<=644;i=i+4)
+        for(i=START;i<START+COUNT;i=i+4)
         begin
                 $display("INITIAL :: mem[%d] = %x", i, {u_ram.ram[(i/4)]});
         end
@@ -180,7 +183,7 @@ begin
 
         repeat(`MAX_CLOCK_CYCLES) @(negedge i_clk);
 
-        for(i=596;i<644;i=i+4)
+        for(i=START;i<START+COUNT;i=i+4)
         begin
                 $display("mem[%d] = %x", i, {u_ram.ram[(i/4)]});
         end
