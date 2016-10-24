@@ -28,7 +28,7 @@ module zap_top
                 input wire                              i_reset,                // Active high synchronous reset.
                                 
                 // From I-cache.
-                input wire [31:0]                       i_instruction,          // A 32-bit ZAP instruction or a microcode instruction.
+                input wire [31:0]                       i_instruction,          // A 32-bit ZAP instruction.
                 input wire                              i_valid,                // Instruction valid.
                 input wire                              i_instr_abort,          // Instruction abort fault.
 
@@ -606,7 +606,6 @@ u_zap_issue_main
 
         .o_alu_source_ff                (issue_alu_source_ff),
         .o_shift_source_ff              (issue_shift_source_ff),
-        .o_shift_length_ff              (),
         .o_stall_from_issue             (stall_from_issue),
         .o_pc_plus_8_ff                 (issue_pc_plus_8_ff),
         .o_shifter_disable_ff           (issue_shifter_disable_ff)
@@ -702,7 +701,6 @@ u_zap_shifter_main
         .o_condition_code_ff            (shifter_condition_code_ff),
         .o_destination_index_ff         (shifter_destination_index_ff),
         .o_alu_operation_ff             (shifter_alu_operation_ff),
-        .o_shift_operation_ff           (), //(shifter_shift_operation_ff),
         .o_flag_update_ff               (shifter_flag_update_ff),
 
         // Interrupts.
@@ -824,7 +822,7 @@ u_zap_memory_main
         .i_und_ff (alu_und_ff),
         .o_und_ff (memory_und_ff),
 
-        .i_mem_address_ff(alu_address_ff),
+        .i_mem_address_ff(alu_address_ff[1:0]),
 
         .i_clk                          (i_clk),
         .i_reset                        (reset),

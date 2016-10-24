@@ -180,7 +180,6 @@ module zap_issue_main
         // the appropriate value.
         output reg      [32:0]                  o_alu_source_ff,
         output reg      [32:0]                  o_shift_source_ff,
-        output reg      [32:0]                  o_shift_length_ff,
 
         // Stall everything before this.
         output reg                              o_stall_from_issue,
@@ -280,7 +279,6 @@ begin
         o_shifter_disable_ff              <= o_shifter_disable_nxt;
         o_alu_source_ff                   <= i_alu_source_ff;
         o_shift_source_ff                 <= i_shift_source_ff;
-        o_shift_length_ff                 <= i_shift_length_ff;
         o_alu_source_value_ff             <= o_alu_source_value_nxt;
         o_shift_source_value_ff           <= o_shift_source_value_nxt;
         o_shift_length_value_ff           <= o_shift_length_value_nxt;

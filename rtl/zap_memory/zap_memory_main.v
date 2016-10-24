@@ -30,7 +30,7 @@ module zap_memory_main
 
         // Memory stuff.
         input   wire                        i_mem_load_ff,
-        input   wire [31:0]                 i_mem_address_ff, // Address generated.
+        input   wire [1:0]                  i_mem_address_ff, // Address generated.
 
         // Data read from memory.
         input   wire [31:0]                 i_mem_rd_data,
@@ -97,7 +97,7 @@ module zap_memory_main
 
 reg                             i_mem_load_ff2          ;
 reg [31:0]                      i_mem_srcdest_value_ff2 ;
-reg [31:0]                      i_mem_address_ff2       ;
+reg [1:0]                       i_mem_address_ff2       ;
 reg                             i_sbyte_ff2             ;
 reg                             i_ubyte_ff2             ;
 reg                             i_shalf_ff2             ;
@@ -179,7 +179,7 @@ o_mem_rd_data         = transform((i_mem_load_ff2 ? mem_rd_data_ff :
 /*
  * Memory always loads 32-bit to processor. We will rotate that here as we wish.
  */
-function [31:0] transform ( input [31:0] data, input [31:0] address, input sbyte, input ubyte, input shalf, input uhalf, input mem_load_ff );
+function [31:0] transform ( input [31:0] data, input [1:0] address, input sbyte, input ubyte, input shalf, input uhalf, input mem_load_ff );
 begin: trFn
         reg [31:0] d;
 

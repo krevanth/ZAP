@@ -22,7 +22,7 @@ Features:
 - Branch prediction supported.
 
 Current limitations :
-- In Alpha stage of development. Very experimental and buggy at the moment.
+- Beta release
 - No MMU or cache is provided but may be attached.
 
 A simple dual port ram model is provided in models/ram/ram.v for simulation

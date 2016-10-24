@@ -143,7 +143,6 @@ module zap_shifter_main
         output reg       [3:0]                   o_condition_code_ff,
         output reg       [$clog2(PHY_REGS )-1:0] o_destination_index_ff,
         output reg       [$clog2(ALU_OPS)-1:0]   o_alu_operation_ff,
-        output reg       [$clog2(SHIFT_OPS)-1:0] o_shift_operation_ff,
         output reg                               o_flag_update_ff,
 
         // Stall from shifter.
@@ -162,6 +161,8 @@ wire [31:0] shout;
 wire shcarry;
 reg [31:0] mem_srcdest_value;
 reg [31:0] rm, rn;
+reg shift_carry_nxt;
+wire shifter_enabled = !i_disable_shifter_ff;
 
 wire [31:0] mult_out;
 
@@ -230,7 +231,6 @@ begin
            o_destination_index_ff            <= i_destination_index_ff;
            o_alu_operation_ff                <= (i_alu_operation_ff == UMLALL || i_alu_operation_ff == UMLALH || i_alu_operation_ff == SMLALL || i_alu_operation_ff == SMLALH) ? 
                                                 MOV : i_alu_operation_ff; // Multiplication needs transformation.
-           o_shift_operation_ff              <= i_shift_operation_ff;
            o_flag_update_ff                  <= i_flag_update_ff;
            o_mem_srcdest_index_ff            <= i_mem_srcdest_index_ff;           
            o_mem_load_ff                     <= i_mem_load_ff;                    
@@ -249,7 +249,7 @@ begin
            o_mem_srcdest_value_ff            <= mem_srcdest_value;
            o_alu_source_value_ff             <= rn;
            o_shifted_source_value_ff         <= rm;
-           o_shift_carry_ff                  <= shcarry;
+           o_shift_carry_ff                  <= shift_carry_nxt;
            o_switch_ff                       <= i_switch_ff;
            o_und_ff                          <= i_und_ff;
            o_force32align_ff                 <= i_force32align_ff;
@@ -295,16 +295,27 @@ begin
         if ( i_alu_operation_ff == UMLALL || i_alu_operation_ff == UMLALH || i_alu_operation_ff == SMLALL || i_alu_operation_ff == SMLALH )
         begin
                 // Get result from multiplier.
-                rm = mult_out;
+                rm              = mult_out;
+
+                // Carry is set to a MEANINGLESS value.
+                shift_carry_nxt = i_cpsr_nxt[29];
         end        
-        else if( !i_disable_shifter_ff )
+        else if( shifter_enabled ) // Shifter enabled if valid shift is asked for.
         begin
-                rm = shout;
+                // Get result from shifter.
+                rm              = shout;
+
+                // Get carry from shifter
+                shift_carry_nxt = shcarry; 
         end
         else
         begin
+                // Resolve conflict.
                 rm = resolve_conflict ( i_shift_source_ff, i_shift_source_value_ff,
                                         o_destination_index_ff, i_alu_value_nxt, i_alu_dav_nxt );
+
+                // Do not touch the carry.
+                shift_carry_nxt = i_cpsr_nxt[29];
         end
 end
 
