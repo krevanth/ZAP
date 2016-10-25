@@ -115,21 +115,7 @@ wire                            o_abt_nxt;
 wire [35:0]                     o_instruction_nxt;
 wire                            o_instruction_valid_nxt;
 
-wire                            mem_irq;
-wire                            mem_fiq;
-wire    [34:0]                  mem_instruction;
-wire                            mem_instruction_valid;
 wire                            mem_fetch_stall;
-
-wire   [34:0]                   bl_instruction;
-wire                            bl_instruction_valid;
-wire                            bl_fetch_stall;
-wire                            bl_irq;
-wire                            bl_fiq;
-
-wire   [35:0]                   mult_instruction;
-wire                            mult_instruction_valid;
-wire                            mult_stall;
 
 wire o_thumb_und_nxt;
 wire arm_irq;
@@ -207,7 +193,7 @@ endtask
 
 always @*
 begin
-        o_stall_from_decode = bl_fetch_stall || mem_fetch_stall || cp_stall || mult_stall;
+        o_stall_from_decode = mem_fetch_stall || cp_stall;
 end
 
 // This unit handles coprocessor stuff.
@@ -316,7 +302,7 @@ begin:bprblk1
         end
 end
 
-// This FSM handles LDM/STM/SWAP/SWAPB
+// This FSM handles LDM/STM/SWAP/SWAPB/BL/LMULT
 zap_predecode_mem_fsm u_zap_mem_fsm (
         .i_clk(i_clk),
         .i_reset(i_reset),
@@ -324,6 +310,7 @@ zap_predecode_mem_fsm u_zap_mem_fsm (
         .i_instruction_valid(arm_instruction_valid),
         .i_fiq(arm_fiq),
         .i_irq(arm_irq),
+        .i_cpsr(i_cpu_mode),
 
         .i_clear_from_writeback(i_clear_from_writeback),
         .i_data_stall(i_data_stall),          
@@ -331,56 +318,11 @@ zap_predecode_mem_fsm u_zap_mem_fsm (
         .i_issue_stall(i_stall_from_issue), 
         .i_stall_from_shifter(i_stall_from_shifter),
 
-        .o_irq(mem_irq),
-        .o_fiq(mem_fiq),
-        .o_instruction(mem_instruction),
-        .o_instruction_valid(mem_instruction_valid),
-        .o_stall_from_decode(mem_fetch_stall)
-);
-
-// This FSM handles BL.
-zap_predecode_bl_fsm u_zap_bl_fsm (
-        .i_clk(i_clk),
-        .i_reset(i_reset),
-        .i_fiq(mem_fiq),
-        .i_irq(mem_irq),
-
-        .i_cpsr_ff(i_cpu_mode),
-        .i_clear_from_writeback(i_clear_from_writeback),
-        .i_data_stall(i_data_stall),          
-        .i_clear_from_alu(i_clear_from_alu),      
-        .i_stall_from_issue(i_stall_from_issue), 
-
-        .i_stall_from_shifter(i_stall_from_shifter),
-
-        .i_instruction(mem_instruction),
-        .i_instruction_valid(mem_instruction_valid), 
-        .o_instruction(bl_instruction),
-        .o_instruction_valid(bl_instruction_valid),
-        .o_stall_from_decode(bl_fetch_stall),
-        .o_fiq(bl_fiq),
-        .o_irq(bl_irq)
-);
-
-// Multiplication FSM - Breaks long multiplies into smaller things..
-zap_predecode_mult_fsm u_zap_decode_mult_fsm (
-        .i_clk(i_clk),
-        .i_reset(i_reset),
-        .i_fiq(bl_fiq),
-        .i_irq(bl_irq),
-        .i_clear_from_writeback(i_clear_from_writeback),
-        .i_data_stall(i_data_stall),
-        .i_clear_from_alu(i_clear_from_alu),
-        .i_stall_from_issue(i_stall_from_issue),
-        .i_stall_from_shifter(i_stall_from_shifter),
-        .i_instruction(bl_instruction),
-        .i_instruction_valid(bl_instruction_valid),
-
-        .o_instruction      (o_instruction_nxt),
+        .o_irq(o_irq_nxt),
+        .o_fiq(o_fiq_nxt),
+        .o_instruction(o_instruction_nxt),
         .o_instruction_valid(o_instruction_valid_nxt),
-        .o_stall_from_decode(mult_stall), 
-        .o_irq              (o_irq_nxt),
-        .o_fiq              (o_fiq_nxt)
+        .o_stall_from_decode(mem_fetch_stall)
 );
 
 endmodule

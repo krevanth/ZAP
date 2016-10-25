@@ -42,6 +42,9 @@ module zap_predecode_mem_fsm
         input wire              i_irq,
         input wire              i_fiq,
 
+        // CPSR
+        input wire [31:0]       i_cpsr,
+
         // Pipeline control signals.
         input wire              i_clear_from_writeback,
         input wire              i_data_stall,
@@ -49,7 +52,7 @@ module zap_predecode_mem_fsm
         input wire              i_stall_from_shifter,
         input wire              i_issue_stall,
 
-        output reg [34:0]       o_instruction,
+        output reg [35:0]       o_instruction,
         output reg              o_instruction_valid,
         output reg              o_stall_from_decode,// Inputs to this module must not  change
                                                     // if this is seen as 1. The interrupt 
@@ -66,6 +69,7 @@ module zap_predecode_mem_fsm
 `include "fields.vh"
 `include "opcodes.vh"
 `include "regs.vh"
+`include "cpsr.vh"
 
 // Instruction breakup
 // These assignments are repeated in the function.
@@ -92,6 +96,8 @@ localparam MEMOP        = 1;
 localparam WRITE_PC     = 2;
 localparam SWAP1        = 3;
 localparam SWAP2        = 4;
+localparam LMULT_BUSY   = 5;
+localparam BL_S1        = 6;
 
 // Registers.
 reg     [2:0]   state_ff, state_nxt;
@@ -100,16 +106,16 @@ reg     [15:0]  reglist_ff, reglist_nxt;
 // Next state and output logic.
 always @*
 begin
-
+        // Block interrupts by default.
         o_irq = 0;
         o_fiq = 0;
 
         // Avoid latch inference.
-        state_nxt = state_ff;
-        o_instruction = i_instruction;
-        o_instruction_valid = i_instruction_valid;
-        reglist_nxt = reglist_ff;
-        o_stall_from_decode = 1'd0;
+        state_nxt               = state_ff;
+        o_instruction           = i_instruction;
+        o_instruction_valid     = i_instruction_valid;
+        reglist_nxt             = reglist_ff;
+        o_stall_from_decode     = 1'd0;
 
         case ( state_ff )
                 IDLE:
@@ -167,18 +173,86 @@ begin
 
                                 o_stall_from_decode = 1'd1;  
                         end
+                        else if ( i_instruction[27:23] == 5'd1 && i_instruction[7:4] == 4'b1001 )
+                        begin
+                                        // LMULT
+                                        state_nxt           = LMULT_BUSY;
+                                        o_stall_from_decode = 1'd1; 
+                                        o_irq               = i_irq;
+                                        o_fiq               = i_fiq;
+                                        o_instruction       = i_instruction;
+                                        o_instruction_valid = i_instruction_valid;
+                        end
+                        else if (    i_instruction[27:25] == 3'b101 && i_instruction[24] ) // BL.
+                        begin
+                                // Move to new state. In that state, we will 
+                                // generate a plain branch.
+                                state_nxt = BL_S1;
+                                
+                                // PC will stall preventing the fetch from 
+                                // presenting new data.
+                                o_stall_from_decode = 1'd1;
+
+                                if ( i_cpsr[T] == 1'd0 ) // ARM
+                                begin
+                                        // PC is 8 bytes ahead.
+                                        // Craft a SUB LR, PC, 4.
+                                        o_instruction = {i_instruction[31:28], 28'h24FE004};
+                                end
+                                else
+                                begin
+                                        // PC is 4 bytes ahead...
+                                        // Craft a SUB LR, PC, 1 so that return goes to the next Thumb instruction and making LSB of LR = 1.
+                                         o_instruction = {i_instruction[31:28], 28'h24FE001};
+                                end
+
+                                // Sell it as a valid instruction
+                                o_instruction_valid = 1;
+
+                                // Silence interrupts if a BL instruction is 
+                                // seen.
+                                o_irq = 0;
+                                o_fiq = 0;
+                        end
                         else
                         begin
                                 // Be transparent.
-                                state_nxt = state_ff;
-                                o_stall_from_decode = 1'd0;
-                                o_instruction = i_instruction;
-                                o_instruction_valid = i_instruction_valid;
-                                reglist_nxt = 16'd0;
-
-                                o_irq = i_irq;
-                                o_fiq = i_fiq;
+                                state_nxt               = state_ff;
+                                o_stall_from_decode     = 1'd0;
+                                o_instruction           = i_instruction;
+                                o_instruction_valid     = i_instruction_valid;
+                                reglist_nxt             = 16'd0;
+                                o_irq                   = i_irq;
+                                o_fiq                   = i_fiq;
                         end
+                end
+
+                BL_S1:
+                begin
+                        // Launch out the original instruction clearing the
+                        // link bit. This is like MOV PC, <Whatever>
+                        o_instruction = i_instruction & ~(1 << 24);
+                        o_instruction_valid = i_instruction_valid;
+
+                        // Move to IDLE state.
+                        state_nxt       =       IDLE;
+
+                        // Free the fetch from your clutches.
+                        o_stall_from_decode = 1'd0;
+
+                        // Continue to silence interrupts.
+                        o_irq           = 0;
+                        o_fiq           = 0;
+                end
+
+                LMULT_BUSY:
+                begin
+                        o_irq                   = 0;
+                        o_fiq                   = 0;
+                        o_instruction           = {1'd1, i_instruction}; 
+                        o_instruction_valid     = i_instruction_valid;
+                        o_stall_from_decode     = 1'd0;
+                        state_nxt               = IDLE;
                 end
 
                 SWAP1:

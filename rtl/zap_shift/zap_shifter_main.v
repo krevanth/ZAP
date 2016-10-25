@@ -183,7 +183,7 @@ u_zap_multiply
 
         .i_alu_operation_ff(i_alu_operation_ff),
 
-        .i_cc_satisfied ( is_cc_satisfied ( i_condition_code_ff, i_cpsr_nxt[31:28] ) ),
+        .i_cc_satisfied (1'd1), // ( is_cc_satisfied ( i_condition_code_ff, i_cpsr_nxt[31:28] ) ) -- Causing timing issues in Xilinx ISE.
 
         .i_rm(i_alu_source_value_ff),
         .i_rn(i_shift_length_value_ff),
