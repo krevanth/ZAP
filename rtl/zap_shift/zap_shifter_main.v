@@ -9,7 +9,6 @@
 //
 // Description --
 // This stage contains the barrel shifter and the conflict resolver system.
-// TODO: Fix the feedback function. Take valid from ALU.
 
 module zap_shifter_main
 #(

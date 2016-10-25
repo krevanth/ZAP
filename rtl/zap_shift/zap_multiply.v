@@ -5,10 +5,6 @@
 Filename --
 zap_multiply.v
 
-Description --
-A 32x32 multiplier using 16x16 multipliers. Takes 4 cycles to perform
-a multiply-accumulate operation. Long multiplication (M) is not supported. 
-
 Author --
 Revanth Kamaraj
 */
@@ -27,7 +23,7 @@ module zap_multiply
         input wire                              i_clear_from_alu,
 
         input wire   [$clog2(ALU_OPS)-1:0]      i_alu_operation_ff,
-        input wire                              i_cc_satisfied,
+        input wire                              i_cc_satisfied, // NOT USED.
 
         input wire [31:0]                       i_rm,
         input wire [31:0]                       i_rn,
