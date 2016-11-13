@@ -1,9 +1,6 @@
 `default_nettype none
 
-/*
- * This is the cache and MMU system for the ZAP core. Cache is write-through
- * with a write buffer to memory. The write buffer is fully associative.
- */
+/* STILL WORKING ON THIS. THIS FILE IS **INCOMPLETE** */
 
 module mmucache (
 
