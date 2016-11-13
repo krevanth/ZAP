@@ -11,6 +11,7 @@ module mmucache (
         // Config       
         i_cfg_tlb_clear,        // Clear TLB.
         i_cfg_cache_inv,        // Invalidate cache.
+        i_cfg_cache_clean,      // Clean the cache (reestablish coherency).
 
         i_instr_stall,          // Stall output from processor.
 
@@ -47,9 +48,6 @@ module mmucache (
 // Parameters.
 // =============================
 
-/* Set the write buffer size */
-parameter WRITE_BUFFER_SIZE = 16;       // 16 entry write buffer (Fully assoc).
-
 /* Set the cache size in bytes here */
 parameter CACHE_SIZE = 1024;            // Bytes.
 
@@ -61,7 +59,5 @@ parameter LPAGE_TLB_ENTRIES = 64;       // Entries.
 
 /* Set the small page TLB depth here */
 parameter SPAGE_TLB_ENTRIES = 64;       // Entries.
-
-
 
 endmodule
