@@ -41,7 +41,7 @@ module zap_top
                 // User view - REGISTERED.
                 output wire                             o_mem_translate,
 
-                // Memory stall.
+                // DCache Memory stall.
                 input wire                              i_data_stall,
                 
                 // Memory abort.
@@ -82,7 +82,18 @@ module zap_top
                 output wire     [31:0]                  o_pc,                   // Program counter.
 
                 // Determines user or supervisory mode. - REGISTERED.
-                output wire      [31:0]                 o_cpsr                  // CPSR. Cache must use this to determine VM scheme for instruction fetches.
+                output wire      [31:0]                 o_cpsr,                 // CPSR. Cache must use this to determine VM scheme for instruction fetches.
+
+                /* UNREGISTERED SIGNALS. USED FOR CONNECTING CACHES */
+
+                // Stall.
+                output wire                             o_instr_stall,          // Stall I-cache.
+
+                // Data cache access signals.
+                output wire     [31:0]                  o_address_nxt,          // Upcoming address for D-Cache.
+ 
+                // Instruction cache access signals.
+                output wire     [31:0]                  o_pc_nxt                // Upcoming address for I-cache. 
 );
 
 //Debug only.
@@ -323,8 +334,10 @@ wire [32:0] alu_hijack_sum;
 // ------------------------------
 // Assign statements.
 // ------------------------------
-assign o_cpsr    = alu_flags_ff;
-assign o_address = {alu_address_ff[31:2], 2'd0};
+assign o_cpsr        = alu_flags_ff;
+assign o_address     = {alu_address_ff[31:2], 2'd0};
+assign o_instr_stall = stall_from_shifter | stall_from_issue | stall_from_decode | i_data_stall;
+assign o_address_nxt = alu_hijack_sum;
 
 // ---------------------------
 // Instances.
@@ -935,6 +948,7 @@ u_zap_regf
         .o_rd_data_3            (rd_data_3),
 
         .o_pc                   (o_pc),
+        .o_pc_nxt               (o_pc_nxt),
         .o_cpsr_nxt             (cpsr_nxt),
         .o_clear_from_writeback (clear_from_writeback),
 

@@ -33,6 +33,9 @@ wire[31:0]       o_address;              // Memory address.
 wire                             o_copro_dav;
 wire  [31:0]                     o_copro_word;
 
+// Instr stall from CPU to RAM.
+wire instr_stall;
+
 `endif
 
 // User view.
@@ -91,6 +94,7 @@ always @ (negedge i_clk)
         i_irq = $random;
 `endif
 
+
 // Processor core.
 zap_top 
 u_zap_top 
@@ -126,7 +130,11 @@ u_zap_top
         .o_copro_reg_rd_data(o_copro_reg_rd_data),
         `endif
 
-        .o_cpsr(o_cpsr)
+        .o_cpsr(o_cpsr),
+        .o_instr_stall(instr_stall),
+
+        .o_pc_nxt(),
+        .o_address_nxt()
 );
 
 ram
@@ -136,6 +144,7 @@ ram
 u_ram
 (
         .i_clk(i_clk),
+        .i_instr_stall(instr_stall),
         .i_daddress(o_address),
         .i_iaddress(o_pc),
         .o_ddata(i_rd_data),

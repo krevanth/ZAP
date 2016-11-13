@@ -11,6 +11,8 @@ module ram
         input wire      [31:0]  i_daddress,     // For data.
         input wire      [31:0]  i_iaddress,     // For instructions.
 
+        input wire              i_instr_stall,   // From CPU.
+
         output reg      [31:0]  o_ddata,
         output reg      [31:0]  o_idata,        // Instruction data - 32-bit.
 
@@ -89,9 +91,13 @@ always @ (posedge i_clk)
                 ram[i_daddress >> 2][31:24] <= i_ddata[31:24];
 
 // Data reads.
-always @* o_ddata   = ram[i_daddress >> 2];
+always @ (posedge i_clk) 
+        if ( !o_data_stall ) 
+                o_ddata <= ram[i_daddress >> 2];
 
 // Instruction reads.
-always @* o_idata   = ram[i_iaddress >> 2];
+always @ (posedge i_clk) 
+        if ( o_code_hit && !i_instr_stall )  
+                o_idata   <= ram[i_iaddress >> 2];
 
 endmodule

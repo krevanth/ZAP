@@ -61,8 +61,6 @@ module zap_fetch_main #(
 
 `include "cpsr.vh"
 
-wire instr_stall;
-
 // If an instruction abort occurs, this unit sleeps until it is woken up.
 reg sleep_ff;
 
@@ -130,13 +128,10 @@ begin
         end
 end
 
-assign instr_stall = (  i_data_stall || i_stall_from_shifter || 
-                        i_stall_from_issue || i_stall_from_decode );
 
-// Will be absorbed into I-cache by ISE.
-always @ (posedge i_clk)
-        if(!instr_stall)
-                o_instruction <= i_instruction;
+// RAM takes care of stall issues.
+always @* 
+        o_instruction = i_instruction;
 
 // PC logic.
 always @ (posedge i_clk) 

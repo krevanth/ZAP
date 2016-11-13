@@ -10,7 +10,7 @@ Verilog 2005.
 
 Description --
 This stage merely acts as a buffer in between the ALU stage and the register file (i.e., writeback stage). This stage is intended
-to allow the memory to use up 1 clock cycle to perform operations without the pipeline losing throughput.
+to allow the memory to use up 1 clock cycle to perform operations without the pipeline losing throughput. *See line 107*.
 */
 
 module zap_memory_main
@@ -102,12 +102,6 @@ reg                             i_sbyte_ff2             ;
 reg                             i_ubyte_ff2             ;
 reg                             i_shalf_ff2             ;
 reg                             i_uhalf_ff2             ;
-reg [31:0]                      mem_rd_data_ff          ;
-
-// Absorbed into block RAM.
-always @ (posedge i_clk)
-        if ( !i_data_stall )
-                mem_rd_data_ff <= i_mem_rd_data;
 
 task clear;
 begin
@@ -171,7 +165,7 @@ begin
 end
 
 always @*
-o_mem_rd_data         = transform((i_mem_load_ff2 ? mem_rd_data_ff : 
+o_mem_rd_data         = transform((i_mem_load_ff2 ? i_mem_rd_data : 
                         i_mem_srcdest_value_ff2), i_mem_address_ff2, 
                         i_sbyte_ff2, i_ubyte_ff2, i_shalf_ff2, i_uhalf_ff2, 
                         i_mem_load_ff2);

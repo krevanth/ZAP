@@ -94,6 +94,7 @@ module zap_register_file #(
 
         // Program counter (dedicated port).
         output reg      [31:0]               o_pc,
+        output reg      [31:0]               o_pc_nxt,
 
         // CPSR output
         output reg       [31:0]              o_cpsr_nxt,
@@ -139,6 +140,7 @@ reg     [31:0]  pc_ff, pc_nxt;
 always @*
 begin
         o_pc            = pc_ff;
+        o_pc_nxt        = pc_nxt & 32'hfffffffe;
         o_cpsr_nxt      = cpsr_nxt;
 end
 
