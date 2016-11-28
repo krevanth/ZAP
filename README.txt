@@ -7,8 +7,11 @@ NOTE: This project is currently in an *experimental* state.
 
 Features:
 - Supports v4 ARM instructions and v1 Thumb instructions.
-- Supports cache and MMU with configurable cache and TLB sizes.
+- Supports cache and MMU (v4 compatible) with configurable cache and TLB sizes.
 - Branch prediction supported.
+
+NOTE: Performing a TLB purge for a particular address will invalidate the 
+entire TLB.
 
 ZAP is an ARM processor compatible with v4T of the ARM instruction set. The
 processor is built around a an 8 stage pipeline:
