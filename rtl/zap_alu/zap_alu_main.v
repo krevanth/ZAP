@@ -129,7 +129,8 @@ module zap_alu_main #(
         output reg                          o_mem_translate_ff,
 
         /* Byte enables useful for writes. */
-        output reg [3:0]                    o_ben_ff 
+        output reg [3:0]                    o_ben_ff,
+        output wire [31:0]                  o_address_nxt
 );
 
 `include "cc.vh"
@@ -158,6 +159,7 @@ reg [31:0]                      mem_address_nxt;
 reg [$clog2(PHY_REGS)-1:0]      o_destination_index_nxt;
 wire [31:0]                     not_rm, not_rn;
 
+assign o_address_nxt = mem_address_nxt;
 assign not_rm = ~rm;
 assign not_rn = ~rn;
 

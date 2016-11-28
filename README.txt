@@ -1,39 +1,42 @@
-Title  : ZAP - An ARM v4T compatible processor.
+Title  : ZAP - An ARM v4T compatible processor with cache/MMU support.
 Author : Revanth Kamaraj (revanth91kamaraj@gmail.com)
 License: MIT License.
 ------------------------------------------------------------------------------
 
+NOTE: This project is currently in an *experimental* state.
+
+Features:
+- Supports v4 ARM instructions and v1 Thumb instructions.
+- Supports cache and MMU with configurable cache and TLB sizes.
+- Branch prediction supported.
+
 ZAP is an ARM processor compatible with v4T of the ARM instruction set. The
 processor is built around a an 8 stage pipeline:
 
-    FETCH => PRE-DECODE => DECODE => ISSUE => SHIFTER => ALU => MEMORY => WRITEBACK
+FETCH => PRE-DECODE => DECODE => ISSUE => SHIFTER => ALU => MEMORY => WRITEBACK
 
 ARM ISA Version         : v4 
-THUMB ISA Version       : v1 
+THUMB ISA Version       : v1
 
-The pipeline is fully bypassed to allow most dependent instructions to execute without stalls. 
-The pipeline stalls for 3 cycles if there is an attempt to use a value loaded from memory immediately following it.
-32x32+32=32 operations take 6 clock cycles while 32x32+64=64 takes 12 clock cycles.
-Multiplication and non trivial shifts require registers a cycle early else the pipeline stalls for 1 cycle.
+The pipeline is fully bypassed to allow most dependent instructions to execute 
+without stalls. The pipeline stalls for 3 cycles if there is an attempt to use 
+a value loaded from memory immediately following it. 32x32+32=32 operations take 
+6 clock cycles while 32x32+64=64 takes 12 clock cycles. Multiplication and 
+non trivial shifts require registers a cycle early else the pipeline stalls 
+for 1 cycle.
 
-Features:
-- Supports v4 ARM instructions.
-- Supports v1 Thumb instructions.
-- Branch prediction supported.
-
-Current limitations :
-- Beta release
-- No MMU or cache is provided but may be attached.
-
-A simple dual port ram model is provided in models/ram/ram.v for simulation
-purposes.
+A simple ram model is provided in models/ram/model_ram.v for simulation
+purposes. 
 
 See the wiki for instructions.
 
 See the documentation at 
 https://github.com/krevanth/ZAP/blob/master/docs/zap_doc.pdf
 
-Visit the google groups forum at...
+NOTE: The documentation was written before adding cache/MMU. I will upload
+new documentation soon.
+
+Please provide your feedback on the google forum...
 https://groups.google.com/d/forum/zap-devel
 
 -------------------------------------------------------------------------------

@@ -1,7 +1,7 @@
 `default_nettype none
 `include "config.vh"
 
-module zap_reset_synchronizer_main
+module reset_sync
 (
         input wire          i_clk,
         input wire          i_reset,

@@ -2,12 +2,16 @@
 
 `timescale 1ns/1ps
 
-`ifndef IRQ_EN
-        `define IRQ_EN
-`endif
-
 `ifndef SIM
         `define SIM
+`endif
+
+`ifndef STALL
+        `define STALL
+`endif
+
+`ifndef IRQ_EN
+      `define IRQ_EN
 `endif
 
 `ifndef VCD_FILE_PATH
@@ -30,6 +34,3 @@
         `define THUMB_EN
 `endif
 
-`ifndef COPROC_IF_EN
-        `define COPROC_IF_EN
-`endif

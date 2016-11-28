@@ -67,8 +67,6 @@ begin
         o_irq                   = i_irq;
         o_fiq                   = i_fiq;
 
-        `ifdef COPROC_IF_EN
-
         case ( state_ff )
         IDLE:
                 // Activate only if no thumb.
@@ -125,8 +123,6 @@ begin
                 end
         end
         endcase
-
-        `endif
 end
 
 always @ (posedge i_clk)

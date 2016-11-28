@@ -110,9 +110,7 @@ begin
         end
         else
         begin
-                // Instruction aborts occur only when i_valid
-                // is 0 since we are using a VIVT cache that
-                // faults only on a miss. 
+                // Instruction aborts occur with i_valid as 1.
                 o_valid         <= i_valid;
                 o_instr_abort   <= i_instr_abort;
 
@@ -129,7 +127,7 @@ begin
 end
 
 
-// RAM takes care of stall issues.
+// iCache takes care of stall issues.
 always @* 
         o_instruction = i_instruction;
 
@@ -146,15 +144,15 @@ localparam      ST      =       3; // Strongly Taken.
 `define x i_pc_from_alu[$clog2(BP_ENTRIES):1]
 `define y i_pc_ff[$clog2(BP_ENTRIES):1]
 
-bp_ram
-#(.NUMBER_OF_ENTRIES(BP_ENTRIES), .ENTRY_SIZE(2)) u_br_ram
+ram_simple
+#(.DEPTH(BP_ENTRIES), .WIDTH(2)) u_br_ram
 (
         .i_clk(i_clk),
-        .i_reset(i_reset),
         .i_wr_en(!i_data_stall && (i_clear_from_alu || i_confirm_from_alu)),
         .i_wr_addr(`x),
         .i_rd_addr(`y),
         .i_wr_data(compute(i_taken, i_clear_from_alu)),
+        .i_rd_en(1'd1),
         .o_rd_data(o_taken_ff) 
 );
 
