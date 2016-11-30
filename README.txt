@@ -3,11 +3,11 @@ Author : Revanth Kamaraj (revanth91kamaraj@gmail.com)
 License: MIT License.
 ------------------------------------------------------------------------------
 
-NOTE: This project is currently in an *experimental* state.
+NOTE: This cache/MMU section of the project is currently in an *experimental* state.
 
 Features:
 - Supports v4 ARM instructions and v1 Thumb instructions.
-- Supports cache and MMU (v4 compatible) with configurable cache and TLB sizes.
+- (Experimental) Supports cache and MMU (v4 compatible) with configurable cache and TLB sizes.
 - Branch prediction supported.
 
 NOTE: Performing a TLB purge for a particular address will invalidate the 
@@ -37,7 +37,8 @@ See the documentation at
 https://github.com/krevanth/ZAP/blob/master/docs/zap_doc.pdf
 
 NOTE: The documentation was written before adding cache/MMU. I will upload
-new documentation soon.
+new documentation soon. To run sample code provided, see Section 1.3 of
+the current manual.
 
 Please provide your feedback on the google forum...
 https://groups.google.com/d/forum/zap-devel
