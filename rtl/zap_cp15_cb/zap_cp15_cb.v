@@ -50,6 +50,15 @@ reg [31:0] r [6:0]; // Coprocessor registers. R7 is write-only.
 reg [2:0]    state; // State variable.
 reg [31:0] fsr_dly;
 
+
+wire [31:0] r0 = r[0];
+wire [31:0] r1 = r[1];
+wire [31:0] r2 = r[2];
+wire [31:0] r3 = r[3];
+wire [31:0] r4 = r[4];
+wire [31:0] r5 = r[5];
+wire [31:0] r6 = r[6];
+
 always @*
 begin
         o_cache_en = r[1][2];
@@ -65,6 +74,7 @@ localparam ACTIVE       = 1;
 localparam DONE         = 2;
 localparam READ         = 3;
 localparam READ_DLY     = 4;
+localparam TERM         = 5;
 
 always @ (posedge i_clk)
 begin
@@ -99,6 +109,7 @@ begin
         o_tlb_inv   <= 1'd0;
         o_cache_inv <= 1'd0;
         o_reg_en    <= 1'd0;
+        o_cp_done   <= 1'd0;
 
         case ( state )
         IDLE:
@@ -130,7 +141,12 @@ begin
         DONE:
         begin
                 o_cp_done    <= 1'd1;
-                state        <= IDLE;
+                state        <= TERM;
+        end
+
+        TERM:
+        begin
+                state <= IDLE;
         end
 
         READ_DLY:
@@ -171,13 +187,13 @@ begin
                                         // Generate register read command.
                                         o_reg_en        <= 1'd1;
                                         o_reg_rd_index  <=  translate(i_cp_word[15:12], i_cpsr[4:0]);
+                                        o_reg_wr_index  <= 16;
                                         state           <= READ_DLY;                                        
                                 end
                 end
                 else
                 begin
-                        o_cp_done    <= 1'd1;
-                        state        <= IDLE;
+                        state        <= DONE;
                 end
         end
         endcase

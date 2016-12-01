@@ -401,7 +401,7 @@ u_zap_predecode (
 
         .i_copro_done                   (i_copro_done),
         .i_pipeline_dav                 (
-                                                (predecode_inst[31:28]    != NV)   ||     
+                                                predecode_val                      ||     
                                                 (decode_condition_code    != NV)   ||
                                                 (issue_condition_code_ff  != NV)   ||
                                                 (shifter_condition_code_ff!= NV)   ||

@@ -53,6 +53,10 @@ stmfd sp!, {r0-r12, r14}
 mrs r1, spsr
 orr r1, r1, #0x80
 msr spsr_c, r1
+
+// Attempt to read CP15 R0.
+mrc p15, 0, r1, c0, c0, 0
+
 ldmfd sp!, {r0-r12, pc}^
 
 there:

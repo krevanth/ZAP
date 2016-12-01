@@ -113,6 +113,11 @@ begin
                 cp_word_nxt             = o_copro_word_ff;
                 cp_dav_nxt              = o_copro_dav_ff;
                 o_stall_from_decode     = 1'd1;
+                o_valid = 1'd0;
+                o_instruction = 32'd0;
+
+                o_irq = 1'd0;
+                o_fiq = 1'd0;
 
                 if ( i_copro_done )
                 begin
