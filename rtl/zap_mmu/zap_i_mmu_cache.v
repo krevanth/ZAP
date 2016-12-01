@@ -338,7 +338,6 @@ zap_cp15_cb #(.PHY_REGS(PHY_REGS)) u_cb_block (
 );
 // -------------------------------------------------------------------------
 
-
 // ============================================================================
 // COMBINATIONAL LOGIC.
 // ============================================================================
@@ -362,7 +361,7 @@ begin
            far = far_ff;
 
            // Cache read data.
-           o_rd_data = (cache_en | state_ff == RD_DLY) ? cache_rdata >> (i_address[3:2] << 5) :
+           o_rd_data = (cache_en && state_ff != RD_DLY) ? cache_rdata >> (i_address[3:2] << 5) :
                        i_ram_rd_data;
 end
 
@@ -517,9 +516,12 @@ begin: blk1
                                                 o_stall = 1'd1;
 
                                                 // Cache is disabled.
-                                                generate_memory_read2(phy_addr_nxt);
+                                                if ( !stall )
+                                                        generate_memory_read2(phy_addr_nxt);
+                                                else
+                                                        kill_memory_op2;
 
-                                                if ( i_ram_done )
+                                                if ( i_ram_done && !stall )
                                                 begin
                                                         state_nxt = RD_DLY;
                                                         o_stall   = 1'd0;

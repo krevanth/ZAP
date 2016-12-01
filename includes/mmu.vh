@@ -1,10 +1,7 @@
 /* Defines work on specific items, the syntax is ITEM_NAME__PORTION
    Parameters tend to define values. */
 
-parameter SECTION_TLB_ENTRIES =  4;
-parameter LPAGE_TLB_ENTRIES   =  8;
-parameter SPAGE_TLB_ENTRIES   =  16;
-parameter CACHE_SIZE          =  1024; // Bytes.
+`include "mmu_config.vh"
 
 /////////////////////////////////
 // State definitions.            

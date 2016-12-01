@@ -355,7 +355,7 @@ begin
            far = far_ff;
 
            // Cache read data.
-           o_rd_data = cache_en ? cache_rdata >> (i_address[3:2] << 5) :
+           o_rd_data = (cache_en && state_ff != RD_DLY) ? cache_rdata >> (i_address[3:2] << 5) :
                        i_ram_rd_data;
 
            // No stall.
@@ -529,7 +529,7 @@ begin: blk1
                                                         generate_memory_write ();
                                                         o_stall = 1'd1;
 
-                                                        if ( i_ram_done )
+                                                        if ( i_ram_done && !stall )
                                                         begin
                                                                 cache_wdata   = {96'd0, i_wr_data} << (i_address[3:2] << 5);
                                                                 cache_ben     = {12'd0, i_ben} << (i_address[3:2] << 2);
