@@ -357,6 +357,9 @@ begin
            // Cache read data.
            o_rd_data = cache_en ? cache_rdata >> (i_address[3:2] << 5) :
                        i_ram_rd_data;
+
+           // No stall.
+           stall = 1'd0;
 end
 
 always @*
