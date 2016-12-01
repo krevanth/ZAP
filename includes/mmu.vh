@@ -17,7 +17,8 @@ localparam CACHE_FILL_1         = 6;
 localparam CACHE_FILL_2         = 7;
 localparam CACHE_FILL_3         = 8;
 localparam REFRESH_CYCLE        = 9;
-localparam NUMBER_OF_STATES     = 10;
+localparam RD_DLY             = 10;
+localparam NUMBER_OF_STATES     = 11;
 
 ///////////////////////////////
 // Generic defines.

@@ -449,9 +449,20 @@ begin: blk1
                         end
                         else
                         begin
-                                state_nxt = FETCH_L1_DESC;
+                                // Dont go ahead with cache access.
+                                o_fault   = 1'd0;
+                                goahead   = 1'd0;
                                 o_stall   = 1'd1;
-                                goahead   = 1'd0; // Dont do cache.
+
+                                // Provide address on the bus.
+                                // Generate read.
+                                generate_memory_read (   
+                                {baddr  [`VA__TRANSLATION_BASE], 
+                               i_address[`VA__TABLE_INDEX], 2'd0});
+
+                                // Wait for a response.
+                                if ( i_ram_done )
+                                        state_nxt = FETCH_L1_DESC;
                         end
 
                         if ( o_fault ) // Dont do cache.
@@ -493,7 +504,13 @@ begin: blk1
                                         begin
                                                 // Generate memory read signals.
                                                 generate_memory_read(phy_addr_nxt);
-                                                o_stall = !i_ram_done;
+                                                o_stall = 1'd1;
+
+                                                if ( i_ram_done && !stall )
+                                                begin
+                                                        state_nxt = RD_DLY;
+                                                        o_stall   = 1'd0;
+                                                end
                                         end
                                 end
                                 else
@@ -507,10 +524,14 @@ begin: blk1
                                                 begin
                                                         // Generate memory write signals.
                                                         generate_memory_write ();
+                                                        o_stall = 1'd1;
 
-                                                        o_stall = !i_ram_done;
-                                                        cache_wdata   = {96'd0, i_wr_data} << (i_address[3:2] << 5);
-                                                        cache_ben     = {12'd0, i_ben} << (i_address[3:2] << 2);
+                                                        if ( i_ram_done )
+                                                        begin
+                                                                cache_wdata   = {96'd0, i_wr_data} << (i_address[3:2] << 5);
+                                                                cache_ben     = {12'd0, i_ben} << (i_address[3:2] << 2);
+                                                                o_stall       = 1'd0;
+                                                        end
                                                 end
                                                 else // Read 
                                                 begin
@@ -546,152 +567,165 @@ begin: blk1
                 end // Else kill_memory_op
          end
 
-         FETCH_L1_DESC:
-         begin
-                generate_memory_read (   
-                {baddr  [`VA__TRANSLATION_BASE], 
-               i_address[`VA__TABLE_INDEX], 2'd0});
-
+        RD_DLY:
+        begin
                 o_stall = 1'd1;
 
-                if ( i_ram_done )
+                if ( !stall )
                 begin
-                        case ( i_ram_rd_data[`ID] )
-                        SECTION_ID:
-                        begin
-                                // It's a section!!!
-                                // No need another fetch.
+                        state_nxt = IDLE;         
+                end
+        end
 
-                                // Update TLB.
-                                setlb_wen   = 1'd1;
+         FETCH_L1_DESC:
+         begin
+                o_stall = 1'd1;
 
-                                // The section TLB structure mimics the
-                                // way ARM likes to do things.
-                                setlb_wdata = {i_address[`VA__SECTION_TAG], 
-                                               i_ram_rd_data};
-                                state_nxt   = REFRESH_CYCLE; 
-                        end
+                case ( i_ram_rd_data[`ID] )
+                SECTION_ID:
+                begin
+                        // It's a section!!!
+                        // No need another fetch.
 
-                        PAGE_ID:
-                        begin
+                        // Update TLB.
+                        setlb_wen   = 1'd1;
+
+                        // The section TLB structure mimics the
+                        // way ARM likes to do things.
+                        setlb_wdata = {i_address[`VA__SECTION_TAG], 
+                                       i_ram_rd_data};
+                        state_nxt   = REFRESH_CYCLE; 
+                end
+
+                PAGE_ID:
+                begin
+                        if ( i_ram_done )
                                 state_nxt = FETCH_L2_DESC;
 
-                                // Store the current one (Only domain sel).
-                                phy_addr_nxt[3:0] = i_ram_rd_data[`L1_PAGE__DAC_SEL];
-                        end
+                        // Store the current one (Only domain sel).
+                        phy_addr_nxt[3:0] = i_ram_rd_data[`L1_PAGE__DAC_SEL];
 
-                        default:
-                        begin
-                                // Generate Section translation fault.
-                                o_fault  = 1;
-                                fsr_nxt   = FSR_SECTION_TRANSLATION_FAULT;
-                                fsr_nxt   = {i_ram_rd_data[`L1_SECTION__DAC_SEL], fsr_nxt[3:0]};
-                                far_nxt   = i_address;
-                        end
-                        
-                        endcase 
+        
+                        // Get another level of fetch.
+                        generate_memory_read ({i_ram_rd_data[`L1_PAGE__PTBR], 
+                                        i_address[`VA__L2_TABLE_INDEX], 2'd0});
+
                 end
+
+                default:
+                begin
+                        // Generate Section translation fault.
+                        fsr_nxt   = FSR_SECTION_TRANSLATION_FAULT;
+                        fsr_nxt   = {i_ram_rd_data[`L1_SECTION__DAC_SEL], fsr_nxt[3:0]};
+                        far_nxt   = i_address;
+                        o_fault   = 1;
+                        state_nxt = !stall ? IDLE : state_ff;
+                end
+                
+                endcase 
          end
 
         FETCH_L2_DESC:
         begin
-               // Get another level of fetch.
-               generate_memory_read ({i_ram_rd_data[`L1_PAGE__PTBR], 
-                                      i_address[`VA__L2_TABLE_INDEX], 2'd0});
-
                 o_stall = 1'd1;
 
-                if ( i_ram_done )
+                case ( i_ram_rd_data[`ID] )
+                SPAGE_ID:
                 begin
-                        case ( i_ram_rd_data[`ID] )
-                        SPAGE_ID:
-                        begin
-                                // Update TLB.
-                                sptlb_wen   = 1'd1;
+                        // Update TLB.
+                        sptlb_wen   = 1'd1;
 
-                                sptlb_wdata = {i_ram_rd_data[`VA__SPAGE_TAG],
-                                               phy_addr_nxt[3:0], // DAC sel. 
-                                               i_ram_rd_data};    // This is same.
+                        sptlb_wdata = {i_ram_rd_data[`VA__SPAGE_TAG],
+                                       phy_addr_nxt[3:0], // DAC sel. 
+                                       i_ram_rd_data};    // This is same.
 
-                                state_nxt   = REFRESH_CYCLE;
-                        end
-
-                        LPAGE_ID:
-                        begin
-                                lptlb_wen   = 1'd1;
-                                lptlb_wdata = {i_ram_rd_data[`VA__LPAGE_TAG],
-                                               i_ram_rd_data};
-
-                                // DAC is inserted in between to save bits.
-                                lptlb_wdata[`LPAGE_TLB__DAC_SEL] = phy_addr_nxt[3:0];
-
-                                state_nxt   = REFRESH_CYCLE;
-                        end
-
-                        default:
-                        begin
-                                o_fault   = 1;
-                                fsr_nxt   = FSR_PAGE_TRANSLATION_FAULT;
-                                fsr_nxt   = {i_ram_rd_data[`L1_PAGE__DAC_SEL], fsr_nxt[3:0]};
-                        end
-                        endcase
+                        state_nxt   = REFRESH_CYCLE;
                 end
+
+                LPAGE_ID:
+                begin
+                        lptlb_wen   = 1'd1;
+                        lptlb_wdata = {i_ram_rd_data[`VA__LPAGE_TAG],
+                                       i_ram_rd_data};
+
+                        // DAC is inserted in between to save bits.
+                        lptlb_wdata[`LPAGE_TLB__DAC_SEL] = phy_addr_nxt[3:0];
+
+                        state_nxt   = REFRESH_CYCLE;
+                end
+
+                default:
+                begin
+                        o_fault   = 1;
+                        fsr_nxt   = FSR_PAGE_TRANSLATION_FAULT;
+                        fsr_nxt   = {i_ram_rd_data[`L1_PAGE__DAC_SEL], fsr_nxt[3:0]};
+                        far_nxt   = i_address;
+                        state_nxt = !stall ? IDLE : state_ff;
+                end
+                endcase
         end
 
         CACHE_FILL_0:
         begin
                 o_stall = 1'd1;
 
-                generate_memory_read({phy_addr_nxt[31:4], 4'd0});
+                generate_memory_read({phy_addr_nxt[31:4], 4'd4});
                 buf0_nxt = i_ram_rd_data;
 
                 if ( i_ram_done )
+                begin
                         state_nxt = CACHE_FILL_1;
+                end
         end
 
         CACHE_FILL_1:
         begin
                 o_stall = 1'd1;
 
-                generate_memory_read({phy_addr_ff[31:4], 4'd4} );
+                generate_memory_read ( {phy_addr_ff[31:4], 4'd8} );
                 buf1_nxt = i_ram_rd_data;
 
                 if ( i_ram_done )
+                begin
+                        buf1_nxt = i_ram_rd_data;
                         state_nxt = CACHE_FILL_2;
+                end
         end
 
         CACHE_FILL_2:
         begin
                 o_stall = 1'd1;
 
-                generate_memory_read({phy_addr_ff[31:4], 4'd8});
+                generate_memory_read ( {phy_addr_ff[31:4], 4'd12} );
                 buf2_nxt = i_ram_rd_data;
 
                 if ( i_ram_done )
+                begin
                         state_nxt = CACHE_FILL_3;
+                end
         end
 
         CACHE_FILL_3:
         begin
                 o_stall = 1'd1;
 
-                generate_memory_read ( {phy_addr_ff[31:4], 4'd12} );
-                cache_ben   = 16'b1111_1111_1111_1111;
-                cache_wdata = {i_ram_rd_data, buf2_ff, buf1_ff, buf0_ff};
-                tag_wen     = 1'd1;
+                 // Update TAG and Cache.                
+                 cache_ben   = 16'b1111_1111_1111_1111;
+                 cache_wdata = {i_ram_rd_data, buf2_ff, buf1_ff, buf0_ff};
+                 tag_wen     = 1'd1;
 
                 if ( i_ram_done )
-                        state_nxt   = REFRESH_CYCLE;
+                begin
+                        state_nxt = REFRESH_CYCLE;
+                end                        
         end
 
         REFRESH_CYCLE:
         begin
-                o_stall = 1'd1;
-
+                o_stall   = 1'd1;
                 state_nxt = IDLE;
-                refresh   = 1'd1;
+                refresh = 1'd1;
         end
-
          endcase // : CASE ENDS HERE
 end
 
