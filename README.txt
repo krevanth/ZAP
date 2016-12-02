@@ -36,10 +36,6 @@ See the wiki for instructions.
 See the documentation at 
 https://github.com/krevanth/ZAP/blob/master/docs/zap_doc.pdf
 
-NOTE: The documentation was written before adding cache/MMU. I will upload
-new documentation soon. To run sample code provided, see Section 3.1 of
-the current manual.
-
 Please provide your feedback on the google forum...
 https://groups.google.com/d/forum/zap-devel
 
