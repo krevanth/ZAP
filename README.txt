@@ -3,7 +3,7 @@ Author : Revanth Kamaraj (revanth91kamaraj@gmail.com)
 License: MIT License.
 ------------------------------------------------------------------------------
 
-NOTE: This cache/MMU section of the project is currently in an *experimental* state.
+NOTE: This cache/MMU section of the project is currently in an *experimental* state (See ISSUES page).
 
 Features:
 - Supports v4 ARM instructions and v1 Thumb instructions.
