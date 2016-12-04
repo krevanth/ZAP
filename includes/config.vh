@@ -34,10 +34,10 @@
         `define THUMB_EN
 `endif
 
-//`ifndef FORCE_I_CACHEABLE
-//        `define FORCE_I_CACHEABLE
-//`endif
-//
-//`ifndef FORCE_D_CACHEABLE
-//      `define FORCE_D_CACHEABLE
-//`endif
+`ifndef FORCE_I_CACHEABLE
+        `define FORCE_I_CACHEABLE
+`endif
+
+`ifndef FORCE_D_CACHEABLE
+      `define FORCE_D_CACHEABLE
+`endif

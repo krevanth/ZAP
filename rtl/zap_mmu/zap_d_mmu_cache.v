@@ -606,8 +606,8 @@ begin: blk1
                                 o_ram_rd_en   = i_read_en; 
                                 o_stall       = !i_ram_done;
                                 o_fault       = 1'd0;
-                                fsr           = 32'd0;
-                                far           = 32'd0;
+                                //fsr           = 32'd0;
+                                //far           = 32'd0;
                                 fsr_nxt       = 32'd0;
                                 far_nxt       = 32'd0;
                                 state_nxt     = IDLE;
@@ -669,6 +669,7 @@ begin: blk1
                         far_nxt   = i_address;
                         o_fault   = 1;
                         state_nxt = !stall ? IDLE : state_ff;
+                        o_stall   = 1'd0;
                 end
                 
                 endcase 
@@ -710,6 +711,7 @@ begin: blk1
                         fsr_nxt   = {i_ram_rd_data[`L1_PAGE__DAC_SEL], fsr_nxt[3:0]};
                         far_nxt   = i_address;
                         state_nxt = !stall ? IDLE : state_ff;
+                        o_stall   = 1'd0;
                 end
                 endcase
         end
