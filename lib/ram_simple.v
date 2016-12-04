@@ -23,6 +23,7 @@ module ram_simple #(
 
 reg [WIDTH-1:0] mem [DEPTH-1:0];
 
+// Initialize block RAM to ZERO.
 initial
 begin: blk1
         integer i;

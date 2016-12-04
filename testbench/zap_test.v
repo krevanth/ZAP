@@ -110,9 +110,11 @@ begin
         forever #5 i_clk_2x = !i_clk_2x;        
 end
 
+integer seed = `SEED;
+
 `ifdef IRQ_EN
 always @ (negedge i_clk)
-        i_irq = $random;
+        i_irq = $random(seed);
 `endif
 
 initial

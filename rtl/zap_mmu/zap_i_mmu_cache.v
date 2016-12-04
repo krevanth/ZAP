@@ -1,3 +1,5 @@
+`include "config.vh"
+
 // ============================================================================
 // Filename:
 // zap_i_mmu_cache.v
@@ -76,7 +78,6 @@ output  reg                     o_fault         , // Not registered.
 input wire      [31:0]                  i_cp_word     ,
 input wire                              i_cp_dav      ,
 input wire [31:0]                       i_reg_rd_data ,
-output wire [$clog2(PHY_REGS)-1:0]      o_reg_rd_index,
 // ----------------------------------------------------
 
 
@@ -212,6 +213,8 @@ reg [$clog2(NUMBER_OF_STATES)-1:0] state_ff     ,
 reg [31:0] phy_addr_ff, phy_addr_nxt            ; // Physical address.
 reg [31:0] fsr_nxt,     fsr_ff                  ;
 reg [31:0] far_nxt,     far_ff                  ;
+reg [31:0] pc_buf                               ; // For cache read re-time.
+reg        swa_nxt, swa_ff                      ; // Output switcher.
 // ---------------------------------------------
 
 //=============================================================================
@@ -228,7 +231,7 @@ reg [31:0] far_nxt,     far_ff                  ;
 mem_inv_block #(.DEPTH(CACHE_SIZE/16), .WIDTH(CACHE_TAG_WDT)) u_cache_tag  (
         .i_clk          (i_clk)                                            ,
         .i_reset        (i_reset)                                          ,
-        .i_inv          (cache_inv)                                        ,
+        .i_inv          (cache_inv || !cache_en)                           ,
         .i_ren          (!stall && !o_stall)                               ,
         .i_wen          ( i_ram_done ? tag_wen : 1'd0 )                    ,
         .i_raddr        (i_address_nxt[`VA__CACHE_INDEX])                  ,
@@ -247,7 +250,7 @@ mem_inv_block #(.DEPTH(CACHE_SIZE/16), .WIDTH(CACHE_TAG_WDT)) u_cache_tag  (
 mem_inv_block #(.DEPTH(SECTION_TLB_ENTRIES), .WIDTH(SECTION_TLB_WDT)) sect (
         .i_clk          (i_clk)                                            ,
         .i_reset        (i_reset)                                          ,
-        .i_inv          (tlb_inv)                                          ,
+        .i_inv          (tlb_inv || !mmu_en)                               ,
         .i_ren          (!stall && !o_stall)                               ,
         .i_wen          ( setlb_wen )                                      ,
         .i_raddr        (i_address_nxt[`VA__SECTION_INDEX])                ,
@@ -266,7 +269,7 @@ mem_inv_block #(.DEPTH(SECTION_TLB_ENTRIES), .WIDTH(SECTION_TLB_WDT)) sect (
 mem_inv_block #(.DEPTH(LPAGE_TLB_ENTRIES), .WIDTH(LPAGE_TLB_WDT)) u_lptlb  (
         .i_clk          (i_clk)                                            ,
         .i_reset        (i_reset)                                          ,
-        .i_inv          (tlb_inv)                                        ,
+        .i_inv          (tlb_inv || !mmu_en)                               ,
         .i_ren          (!stall && !o_stall)                               ,
         .i_wen          ( lptlb_wen )                                      ,
         .i_raddr        (i_address_nxt[`VA__LPAGE_INDEX])                  ,
@@ -285,7 +288,7 @@ mem_inv_block #(.DEPTH(LPAGE_TLB_ENTRIES), .WIDTH(LPAGE_TLB_WDT)) u_lptlb  (
 mem_inv_block #(.DEPTH(SPAGE_TLB_ENTRIES), .WIDTH(SPAGE_TLB_WDT)) u_sptlb  (
         .i_clk          (i_clk)                                            ,
         .i_reset        (i_reset)                                          ,
-        .i_inv          (tlb_inv)                                          ,
+        .i_inv          (tlb_inv || !mmu_en)                               ,
         .i_ren          (!stall && !o_stall)                               ,
         .i_wen          ( sptlb_wen )                                      ,
         .i_raddr        (i_address_nxt[`VA__SPAGE_INDEX])                  ,
@@ -333,8 +336,10 @@ zap_cp15_cb #(.PHY_REGS(PHY_REGS)) u_cb_block (
         .o_baddr(baddr),
         .o_cache_inv(cache_inv),
         .o_tlb_inv(tlb_inv),
-        .o_cache_en(cache_en),
-        .o_mmu_en(mmu_en)
+        .o_icache_en(cache_en),
+        .o_dcache_en(),
+        .o_mmu_en(mmu_en),
+        .o_sr(sr)
 );
 // -------------------------------------------------------------------------
 
@@ -354,16 +359,32 @@ begin
         else                                     stall = 1'd0;
 end
 
+// Sequential logic - BUG FIX.
+always @ (posedge i_clk)
+begin
+        if ( i_reset )
+                pc_buf <= 32'd0;
+        else if ( !stall && !o_stall )
+                pc_buf <= i_address;
+end
+
 always @*
 begin
            // Statii.
            fsr = fsr_ff;
            far = far_ff;
 
-           // Cache read data.
-           o_rd_data = (cache_en && state_ff != RD_DLY) ? cache_rdata >> (i_address[3:2] << 5) :
-                       i_ram_rd_data;
+            // Cache read data.
+            o_rd_data = (!swa_ff && cache_en && state_ff != RD_DLY) ? adapt_cache_data ( pc_buf[3:2], cache_rdata ) : i_ram_rd_data;
 end
+
+function [31:0] adapt_cache_data ( input [1:0] shift, input [127:0] cd);
+begin: blk1
+        reg [31:0] shamt;
+        shamt = shift << 5;
+        adapt_cache_data = cd >> shamt;
+end
+endfunction
 
 always @*
 begin: blk1
@@ -391,6 +412,7 @@ begin: blk1
         cache_ben       = 0;
         cache_wdata     = 0;
         state_nxt       = state_ff;
+        swa_nxt         = 1'd0;
 
         kill_memory_op2;
 
@@ -469,6 +491,8 @@ begin: blk1
                                 goahead   = 1'd0;
                                 o_stall   = 1'd1;
 
+                                // Value of cacheable does not matter.
+
                                 // Provide address on the bus.
                                 // Generate read.
                                 generate_memory_read2 (   
@@ -481,7 +505,7 @@ begin: blk1
                         end
 
                         // If a fault occurred, do not go ahead with cache access.
-                        // But do not stall.
+                        // But do not stall. Value of cacheable does not matter.
                         if ( o_fault )
                         begin
                                 goahead   = 1'd0;
@@ -490,6 +514,8 @@ begin: blk1
                         end
                         else
                         begin
+                                // If no fault, cacheable would have been set.
+
                                 goahead = 1'd1; // Go ahead with cache access.
                                                 // Stall will be computed later.
                         end
@@ -502,10 +528,18 @@ begin: blk1
                         o_fault      = 1'd0;
                         state_nxt    = IDLE;
                         goahead      = 1'd1;
+
+                        // Decide cacheability based on define.
+                        `ifdef FORCE_I_CACHEABLE
+                        cacheable = 1'd1;
+                        `else
+                        cacheable = 1'd0; // If mmu is out, cache is also out.
+                        `endif
                 end
 
 ///////////////////////////////////////////////////////////////////////////////
 
+                // Active request to cache pending...
                 if ( goahead )
                 begin
                         if ( cache_en )
@@ -513,18 +547,17 @@ begin: blk1
                                 // If the item is non-cacheable.
                                 if ( !cacheable )
                                 begin
-                                                o_stall = 1'd1;
+                                                o_stall = !i_ram_done;
 
                                                 // Cache is disabled.
-                                                if ( !stall )
-                                                        generate_memory_read2(phy_addr_nxt);
-                                                else
-                                                        kill_memory_op2;
+                                                 generate_memory_read2(phy_addr_nxt);
 
+                                                // If RAM is done AND no stall, then move
+                                                // to RD_DLY.
                                                 if ( i_ram_done && !stall )
                                                 begin
+                                                        swa_nxt   = 1'd1;
                                                         state_nxt = RD_DLY;
-                                                        o_stall   = 1'd0;
                                                 end
                                 end
                                 else
@@ -536,9 +569,13 @@ begin: blk1
                                                         // Read. This is where we
                                                         // accelerate performance.
                                                         o_stall = 1'd0;
+
+                                                        $display($time, "ICACHE :: Cache tag match! Read accelerated!");
                                         end
                                         else
                                         begin
+                                                $display($time, "ICACHE :: Cache no match. Request read on address %d...", {phy_addr_nxt[31:4], 4'd0});
+
                                                 // Place address.
                                                 generate_memory_read2({phy_addr_nxt[31:4], 4'd0});
 
@@ -547,6 +584,7 @@ begin: blk1
                                                 // Begin a linefill and update the tag.
                                                 if ( i_ram_done )
                                                 begin
+                                                        $display($time, "ICACHE : RAM delivering data on next clock cycle...");
                                                         state_nxt = CACHE_FILL_0; 
                                                 end
 
@@ -564,7 +602,7 @@ begin: blk1
                                 fsr_nxt       = 32'd0;
                                 far_nxt       = 32'd0;
                         end
-                end // else kill_memory_op2 is activaed.
+                end // else kill_memory_op2 is activated or TLB transfer.
          end
 
         RD_DLY:
@@ -573,6 +611,7 @@ begin: blk1
 
                 if ( !stall )
                 begin
+                        swa_nxt   = 1'd0; // Change output flow on upcoming.
                         state_nxt = IDLE;         
                 end
         end
@@ -724,12 +763,10 @@ begin: blk1
         begin
                 o_stall   = 1'd1;
                 state_nxt = IDLE;
-                refresh = 1'd1;
+                refresh   = 1'd1;
         end
-
          endcase // : CASE ENDS HERE
 end
-
 
 // ============================================================================
 // SEQUENTIAL LOGIC.
@@ -744,18 +781,39 @@ begin
         end
         else
         begin
-                if ( i_clear_from_writeback )   state_ff <= IDLE;
-                else if ( i_dcache_stall )      state_ff <= state_nxt;
-                else if ( o_stall )             state_ff <= state_nxt;
-                else if ( i_clear_from_alu)     state_ff <= IDLE;
+                if      ( i_clear_from_writeback )   state_ff <= IDLE;
+                else if ( i_dcache_stall )           state_ff <= state_nxt;
+                else if ( i_clear_from_alu)          state_ff <= IDLE;
 
                 else if ( i_stall_from_shifter || 
                           i_stall_from_issue   || 
-                          i_stall_from_decode ) 
-                                                state_ff <= state_nxt;
+                          i_stall_from_decode  ) 
+                                                state_ff <= state_nxt; // Keep movin'
 
                 else if ( i_clear_from_decode ) state_ff <= IDLE;
                 else state_ff <= state_nxt;
+        end
+end
+
+always @ (posedge i_clk)
+begin
+        if ( i_reset )  
+        begin
+                                                        swa_ff <= 1'd0;
+        end
+        else
+        begin
+                if      ( i_clear_from_writeback )      swa_ff <= 1'd0;
+                else if ( i_dcache_stall )              swa_ff <= swa_nxt;
+                else if ( i_clear_from_alu)             swa_ff <= 1'd0;
+
+                else if ( i_stall_from_shifter || 
+                          i_stall_from_issue   || 
+                          i_stall_from_decode  ) 
+                                                        swa_ff <= swa_nxt; // Keep movin'
+
+                else if ( i_clear_from_decode )         swa_ff <= 1'd0;
+                else                                    swa_ff <= swa_nxt;
         end
 end
 
@@ -763,5 +821,20 @@ always @ (posedge i_clk) fsr_ff      <= i_reset ? 0 : fsr_nxt;
 always @ (posedge i_clk) far_ff      <= i_reset ? 0 : far_nxt;
 always @ (posedge i_clk) phy_addr_ff <= i_reset ? 0 : phy_addr_nxt;
 
+always @ (posedge i_clk)
+begin
+        if ( i_reset )
+        begin
+                buf0_ff <= 32'd0;
+                buf1_ff <= 32'd0;
+                buf2_ff <= 32'd0;
+        end
+        else
+        begin
+                buf0_ff <= buf0_nxt;
+                buf1_ff <= buf1_nxt;
+                buf2_ff <= buf2_nxt;
+        end
+end
 
-endmodule // zap_mmu_cache.v
+endmodule // zap_i_mmu_cache.v

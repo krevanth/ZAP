@@ -32,6 +32,16 @@ wire en_r;
 assign addr_r = i_refresh ? i_waddr : i_raddr;
 assign en_r   = i_refresh ? 1'd1    : i_ren;
 
+// Initialize block RAM to 0.
+initial
+begin: bkl1
+        integer i;
+
+        for(i=0;i<DEPTH;i=i+1)
+                mem_ff[i] = 0;
+       
+end
+
 always @ (posedge i_clk)
 begin: block_ram
         if ( en_r )
@@ -44,13 +54,17 @@ end
 always @ (posedge i_clk)
 begin: flip_flops
         if ( i_reset | i_inv )
+        begin
                dav_ff <=  {DEPTH{1'd0}};
+               o_rdav <= 1'd0;
+        end
         else
         begin
                 if ( i_wen )
                         dav_ff [ i_waddr ] <= 1'd1;
 
-                o_rdav <= dav_ff [ i_raddr ];
+                if ( en_r )
+                        o_rdav <= dav_ff [ addr_r ]; 
         end
 end
 

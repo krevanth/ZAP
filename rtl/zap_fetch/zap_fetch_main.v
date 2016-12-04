@@ -79,6 +79,7 @@ begin
                 o_instr_abort   <= 1'd0;
                 sleep_ff        <= 1'd0;        // Wake unit up.
                 o_pc_plus_8_ff  <= 32'd8;
+                o_pc_ff         <= 32'd0;
         end
         else if ( i_clear_from_writeback )       
         begin   
@@ -108,10 +109,10 @@ begin
                 o_instr_abort   <= 1'd0;
                 sleep_ff        <= 1'd1;
         end
-        else
+        else if ( i_valid )
         begin
                 // Instruction aborts occur with i_valid as 1.
-                o_valid         <= i_valid;
+                o_valid         <= 1'd1;
                 o_instr_abort   <= i_instr_abort;
 
                 // Put unit to sleep on an abort.
@@ -123,6 +124,13 @@ begin
                 // Pump PC + 8 or 4 down the pipeline. The number depends on
                 // ARM/Thumb mode.
                 o_pc_plus_8_ff <= i_pc_ff + (i_cpsr_ff[T] ? 32'd4 : 32'd8);
+
+                // PC.
+                o_pc_ff <= i_pc_ff;
+        end
+        else
+        begin
+                o_valid        <= 1'd0;
         end
 end
 
@@ -130,10 +138,6 @@ end
 // iCache takes care of stall issues.
 always @* 
         o_instruction = i_instruction;
-
-// PC logic.
-always @ (posedge i_clk) 
-        o_pc_ff <= i_pc_ff & {32{~i_reset}};
 
 // Branch states.
 localparam      SNT     =       0; // Strongly Not Taken.

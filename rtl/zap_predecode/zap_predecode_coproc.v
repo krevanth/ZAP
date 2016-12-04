@@ -73,7 +73,7 @@ begin
                 casez ( (!i_cpsr_ff[T]) ? i_instruction : 32'd0 )
                 MRC, MCR, LDC, STC, CDP:
                 begin
-                        o_instruction = 32'd0;
+                        o_instruction = {4'b1111, 28'd0}; // Pump out NV instruction.
                         o_valid       = 1'd0;
                         o_irq         = 1'd0;
                         o_fiq         = 1'd0;

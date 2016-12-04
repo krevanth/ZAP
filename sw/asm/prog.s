@@ -53,10 +53,6 @@ stmfd sp!, {r0-r12, r14}
 mrs r1, spsr
 orr r1, r1, #0x80
 msr spsr_c, r1
-
-// Attempt to read CP15 R0.
-mrc p15, 0, r1, c0, c0, 0
-
 ldmfd sp!, {r0-r12, pc}^
 
 there:
@@ -71,6 +67,10 @@ ldr sp, =#8000
 mrs r1, cpsr
 bic r1, r1, #0x80
 msr cpsr_c, r1
+
+// Enable cache (Uses a single bit to enable both caches).
+ldr r1, =#4100
+mcr p15, 0, r1, c1, c1, 0
 
 // Switch mode.
 mrs r2, cpsr

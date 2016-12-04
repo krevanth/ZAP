@@ -5,6 +5,8 @@
  * Verilog-2001
  */
 
+`include "config.vh"
+
 `default_nettype none
 
 module zap_cp15_cb #(
@@ -35,7 +37,8 @@ module zap_cp15_cb #(
         output reg      [31:0]                  o_baddr,
         output reg                              o_cache_inv,
         output reg                              o_tlb_inv,
-        output reg                              o_cache_en,
+        output reg                              o_dcache_en,
+        output reg                              o_icache_en,
         output reg                              o_mmu_en,
         output reg      [1:0]                   o_sr
 );
@@ -61,11 +64,25 @@ wire [31:0] r6 = r[6];
 
 always @*
 begin
-        o_cache_en = r[1][2];
+        o_dcache_en = r[1][2];  // Data cache.
+        o_icache_en = r[1][12]; // Instruction cache.
+
         o_mmu_en   = r[1][0];
         o_dac      = r[3];
         o_baddr    = r[2];
         o_sr       = {r[1][8],r[1][9]};
+
+        `ifdef FORCE_DCACHE_EN
+        o_dcache_en = 1'd1;
+        `endif
+
+        `ifdef FORCE_ICACHE_EN
+        o_icache_en = 1'd1;
+        `endif
+
+        `ifdef FORCE_MMU_EN
+        o_mmu_en = 1'd1;
+        `endif
 end
 
 // States.
@@ -85,6 +102,7 @@ begin
 end
 
 always @ (posedge i_clk)
+begin
 if ( i_reset )
 begin
         state       <= IDLE;
@@ -198,5 +216,5 @@ begin
         end
         endcase
 end
-
+end
 endmodule

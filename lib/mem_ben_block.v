@@ -13,6 +13,15 @@ module mem_ben_block128 #(
 
 reg [127:0] mem_ff [DEPTH-1:0];
 
+// Initialize block RAM to 0.
+initial
+begin: blk1
+        integer i;
+
+        for(i=0;i<DEPTH;i=i+1)
+                mem_ff[i] = 128'd0;
+end
+
 always @ (posedge i_clk)
 begin: block_ram
         if ( i_ren )

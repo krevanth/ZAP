@@ -131,6 +131,7 @@ end
 else if ( i_data_stall )
 begin
         // Stall unit. Outputs do not change.
+        o_dav_ff <= 1'd0;
 end
 else
 begin
