@@ -1,25 +1,26 @@
-Title  : ZAP - An ARM v4T compatible processor with cache/MMU support.
-Author : Revanth Kamaraj (revanth91kamaraj@gmail.com)
-License: MIT License.
-------------------------------------------------------------------------------
+# ZAP : An ARM v4T processor with cache/MMU.
+*Author* : Revanth Kamaraj (revanth91kamaraj@gmail.com)
+*License*: MIT License.
 
-NOTE: This cache/MMU section of the project is currently in an *experimental* state (See ISSUES page).
+##Description
+ZAP is an ARM compatible processor implementing the entire instruction set of
+ARM v4 and Thumb v1. It is also equipped with v4 compatible split cache and 
+memory management capabilities.
 
-Features:
+##Current Status
+ARM v4 support  : Working
+Thumb v1 support: Experimental
+MMU/Cache       : Experimental
+
+##Features
 - Supports v4 ARM instructions and v1 Thumb instructions.
-- (Experimental) Supports cache and MMU (v4 compatible) with configurable cache and TLB sizes.
+- Pipelined architecture (8 stages) : Fetch1, Fetch2, Decode, Issue, Shift, Execute, Memory, Writeback
 - Branch prediction supported.
+- Split I and D cache (Size can be configured using parameters).
+- Split I and D MMUs (TLB size can be configured using parameters).
 
-NOTE: Performing a TLB purge for a particular address will invalidate the 
-entire TLB.
-
-ZAP is an ARM processor compatible with v4T of the ARM instruction set. The
-processor is built around a an 8 stage pipeline:
-
+##Pipeline Overview
 FETCH => PRE-DECODE => DECODE => ISSUE => SHIFTER => ALU => MEMORY => WRITEBACK
-
-ARM ISA Version         : v4 
-THUMB ISA Version       : v1
 
 The pipeline is fully bypassed to allow most dependent instructions to execute 
 without stalls. The pipeline stalls for 3 cycles if there is an attempt to use 
@@ -28,18 +29,19 @@ a value loaded from memory immediately following it. 32x32+32=32 operations take
 non trivial shifts require registers a cycle early else the pipeline stalls 
 for 1 cycle.
 
-A simple ram model is provided in models/ram/model_ram.v for simulation
-purposes. 
+##Documentation
+Please read the documentation at 
+https://github.com/krevanth/ZAP/blob/master/docs/zap\_doc.pdf
 
-See the wiki for instructions.
+The document is incomplete and I will try my best to update it.
 
-See the documentation at 
-https://github.com/krevanth/ZAP/blob/master/docs/zap_doc.pdf
-
+##Feedback
 Please provide your feedback on the google forum...
 https://groups.google.com/d/forum/zap-devel
 
 -------------------------------------------------------------------------------
+
+##License.
 
 MIT License
 
