@@ -2,6 +2,10 @@
 
 `timescale 1ns/1ps
 
+`ifndef CMMU_EN
+        `define CMMU_EN
+`endif
+
 `ifndef SIM
         `define SIM
 `endif

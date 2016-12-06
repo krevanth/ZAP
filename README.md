@@ -9,8 +9,8 @@ memory management capabilities.
 
 ##Current Status
 ARM v4 support  : *Working*<br />
-Thumb v1 support: Bugs found. Experimental<br />
-MMU/Cache       : Bugs found. Experimental<br />
+Thumb v1 support: Experimental<br />
+MMU/Cache       : *Cache Working*. MMU is experimental<br />
 
 ##Features
 - Supports v4 ARM instructions and v1 Thumb instructions.
@@ -30,8 +30,7 @@ non trivial shifts require registers a cycle early else the pipeline stalls
 for 1 cycle.
 
 ##Documentation
-Please read the documentation at 
-https://github.com/krevanth/ZAP/blob/master/docs/zap\_doc.pdf
+[Link](https://github.com/krevanth/ZAP/blob/master/docs/zap_doc.pdf)
 
 The document is incomplete and I will try my best to update it.
 

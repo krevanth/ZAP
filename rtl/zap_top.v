@@ -35,6 +35,7 @@ wire sync_reset;
 
 localparam PHY_REGS = TOTAL_PHY_REGS;
 
+reg  stall;
 wire [31:0] instr;
 wire instr_valid_n;
 wire instr_abort;
@@ -103,6 +104,37 @@ u_zap_core
 .o_clear_from_decode    (clear_from_decode),
 .o_clear_from_writeback (clear_from_writeback)
 );
+
+`ifndef CMMU_EN
+
+always @*
+begin
+        // Pipeline external stall sequence.
+        if      ( clear_from_writeback )       stall = 1'd0;
+        else if ( data_stall )                 stall = 1'd1;
+        else if ( clear_from_alu )             stall = 1'd0;       
+        else if ( stall_from_shifter )         stall = 1'd1;
+        else if ( stall_from_issue )           stall = 1'd1;
+        else if ( stall_from_decode)           stall = 1'd1;
+        else                                   stall = 1'd0;
+end
+
+// Connect core directly to output.
+
+o_dram_wr_en = wen;
+o_dram_rd_en = ren;
+o_dram_data  = wdata;
+o_dram_addr  = addr;
+o_dram_ben   = ben;
+rdata        = i_dram_data;
+data_stall   = i_dram_stall;
+
+o_iram_rd_en  = !stall;
+o_iram_addr   = pc;
+instr         = i_iram_data;
+instr_valid_n = i_iram_stall;
+
+`else
 
 // Reset synchronizer for MMU.
 reset_sync u_reset_sync (.i_clk(i_clk), .i_reset(i_reset), .o_reset(sync_reset)); 
@@ -177,5 +209,7 @@ u_zap_icache_mmu (
 .o_ram_rd_en             (o_iram_rd_en), // RAM read command.
 .i_ram_done              (!i_iram_stall)     // RAM done indicator.
 );
+
+`endif
 
 endmodule
