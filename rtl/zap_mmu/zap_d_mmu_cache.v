@@ -220,7 +220,6 @@ reg [31:0] phy_addr_ff, phy_addr_nxt            ; // Physical address.
 reg [31:0] fsr_nxt,     fsr_ff                  ;
 reg [31:0] far_nxt,     far_ff                  ;
 reg [31:0] addr_buf                             ;
-reg        swa_nxt, swa_ff                      ; // Switch output flow.
 // ---------------------------------------------
 
 //=============================================================================
@@ -361,8 +360,7 @@ begin
            far = far_ff;
 
           // Cache read data.
-           o_rd_data = (!swa_ff && cache_en && state_ff != RD_DLY) ? adapt_cache_data ( addr_buf[3:2], cache_rdata ) :
-                       i_ram_rd_data;
+           o_rd_data =  cache_en ? adapt_cache_data ( addr_buf[3:2], cache_rdata ) : i_ram_rd_data;
 end
 
 function [31:0] adapt_cache_data ( input [1:0] shift, input [127:0] cd);
@@ -410,13 +408,12 @@ begin: blk1
         cache_ben       = 0;
         cache_wdata     = 0;
         state_nxt       = state_ff;
-        swa_nxt         = 1'd0;
 
         kill_memory_op;
 
          case ( state_ff ) //: CASE STARTS HERE
 
-         IDLE:
+         IDLE, RD_DLY:
          begin
 
                 if ( mmu_en ) // MMU enabled.
@@ -486,7 +483,9 @@ begin: blk1
 
                                 // Wait for a response.
                                 if ( i_ram_done )
+                                begin
                                         state_nxt = FETCH_L1_DESC;
+                                end
                         end
 
                         if ( o_fault ) // Dont do cache access.
@@ -502,12 +501,14 @@ begin: blk1
                         // No translation. Do cache access.
                         phy_addr_nxt = i_address;
                         o_fault      = 1'd0;
-                        state_nxt    = IDLE;
+                        state_nxt    = state_ff;
                         goahead      = 1'd1;
 
                         // Decide cacheability based on define.
                         `ifdef FORCE_D_CACHEABLE
                         cacheable = 1'd1;
+                        `elsif FORCE_D_RAND_CACHEABLE
+                        cacheable = $random; // NOT SYNTHESIZEABLE SO DO NOT DEFINE RAND_CACHEABLE DURING SYNTHESIS.
                         `else
                         cacheable = 1'd0; // If mmu is out, cache is also out.
                         `endif
@@ -522,43 +523,12 @@ begin: blk1
                 begin
                         if ( cache_en )
                         begin
-                                // If no fault, only then initiate a cache examination.  
-                                // If the item is non-cacheable.
-                                if (!cacheable ) // IF NOT CACHEABLE.
-                                begin
-                                        // Cache is disabled.
-
-                                        if ( i_write_en )
-                                        begin
-                                                // Generate memory write signals.
-                                                generate_memory_write;
-                                                o_stall = !i_ram_done;
-                                        end
-                                        else
-                                        begin
-                                                o_stall = 1'd1; //!i_ram_done;
-
-                                                // Generate memory read signals.
-                                                generate_memory_read(phy_addr_nxt);
-
-                                                // If RAM is done AND no stall, then
-                                                // move to RD_DLY.
-                                                if ( i_ram_done && !stall )
-                                                begin
-                                                        state_nxt = RD_DLY;
-                                                end
-                                        end
-                                end
-                                else
-                                begin
                                         // Cache is enabled. Check for a tag match.
                                         if ( (i_address[`VA__CACHE_TAG] == tag_rdata) && 
-                                             tag_rdav)
+                                             tag_rdav && (cacheable | state_ff == RD_DLY) )
                                         begin
                                                 // Tag matches - We are lucky! 
                                                 
-                                                state_nxt = IDLE;
-                                                 
                                                 if ( i_write_en )
                                                 begin
                                                         // Generate memory write signals.
@@ -567,6 +537,8 @@ begin: blk1
 
                                                         if ( i_ram_done && !stall )
                                                         begin
+                                                                state_nxt = state_ff;
+
                                                                 // Write to line cache.
                                                                 cache_wdata = 
                                                                 write_cache_line ( i_wr_data, i_ben, i_address[3:2] );            
@@ -577,6 +549,9 @@ begin: blk1
                                                         // Read. This is where we
                                                         // accelerate performance.
                                                         o_stall = 1'd0;
+
+                                                        // Go to IDLE state.
+                                                        state_nxt = IDLE;
                                                 end
                                         end
                                         else
@@ -593,8 +568,11 @@ begin: blk1
                                                 begin
                                                         state_nxt = CACHE_FILL_0; 
                                                 end
+                                                else
+                                                begin
+                                                        state_nxt = state_ff;
+                                                end
                                         end
-                                end
                         end
                         else
                         begin
@@ -614,17 +592,6 @@ begin: blk1
                         end
                 end // Else kill_memory_op or TLB transfer.
          end
-
-        RD_DLY:
-        begin
-                o_stall = 1'd0;
-                swa_nxt = 1'd1; // Change output flow on upcoming.
-
-                if ( !stall )
-                begin
-                        state_nxt = IDLE;         
-                end
-        end
 
          FETCH_L1_DESC:
          begin
@@ -767,15 +734,15 @@ begin: blk1
 
                 if ( i_ram_done )
                 begin
-                        state_nxt = REFRESH_CYCLE;
+                        state_nxt = REFRESH_CYCLE_CACHE;
                 end                        
         end
 
-        REFRESH_CYCLE:
+        REFRESH_CYCLE, REFRESH_CYCLE_CACHE:
         begin
                 o_stall   = 1'd1;
-                state_nxt = IDLE;
-                refresh = 1'd1;
+                state_nxt = state_ff == REFRESH_CYCLE_CACHE ? RD_DLY : IDLE;
+                refresh   = 1'd1;
         end
          endcase // : CASE ENDS HERE
 end
@@ -817,14 +784,12 @@ begin
                 buf0_ff <= 32'd0;
                 buf1_ff <= 32'd0;
                 buf2_ff <= 32'd0;
-                swa_ff  <= 1'd0;
         end
         else
         begin
                 buf0_ff <= buf0_nxt;
                 buf1_ff <= buf1_nxt;
                 buf2_ff <= buf2_nxt;
-                swa_ff  <= swa_nxt;
         end
 end
 

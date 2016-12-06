@@ -34,10 +34,28 @@
         `define THUMB_EN
 `endif
 
-`ifndef FORCE_I_CACHEABLE
-        `define FORCE_I_CACHEABLE
+//`ifndef FORCE_ICACHE_EN
+//        `define FORCE_ICACHE_EN
+//`endif
+//
+//`ifndef FORCE_DCACHE_EN
+//        `define FORCE_DCACHE_EN
+//`endif
+//
+//
+//`ifndef FORCE_I_CACHEABLE
+//        `define FORCE_I_CACHEABLE
+//`endif
+
+//`ifndef FORCE_D_CACHEABLE
+//     `define FORCE_D_CACHEABLE
+//`endif
+
+`ifndef FORCE_I_RAND_CACHEABLE
+        `define FORCE_I_RAND_CACHEABLE
 `endif
 
-`ifndef FORCE_D_CACHEABLE
-      `define FORCE_D_CACHEABLE
+`ifndef FORCE_D_RAND_CACHEABLE
+        `define FORCE_D_RAND_CACHEABLE
 `endif
+

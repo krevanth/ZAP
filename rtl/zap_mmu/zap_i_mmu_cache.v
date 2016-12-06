@@ -214,7 +214,7 @@ reg [31:0] phy_addr_ff, phy_addr_nxt            ; // Physical address.
 reg [31:0] fsr_nxt,     fsr_ff                  ;
 reg [31:0] far_nxt,     far_ff                  ;
 reg [31:0] pc_buf                               ; // For cache read re-time.
-reg        swa_nxt, swa_ff                      ; // Output switcher.
+reg        force_rd                             ; // Force read enable on caches.
 // ---------------------------------------------
 
 //=============================================================================
@@ -232,7 +232,7 @@ mem_inv_block #(.DEPTH(CACHE_SIZE/16), .WIDTH(CACHE_TAG_WDT)) u_cache_tag  (
         .i_clk          (i_clk)                                            ,
         .i_reset        (i_reset)                                          ,
         .i_inv          (cache_inv || !cache_en)                           ,
-        .i_ren          (!stall && !o_stall)                               ,
+        .i_ren          (force_rd || (!stall && !o_stall))                 ,
         .i_wen          ( i_ram_done ? tag_wen : 1'd0 )                    ,
         .i_raddr        (i_address_nxt[`VA__CACHE_INDEX])                  ,
         .i_waddr        (i_address[`VA__CACHE_INDEX])                      ,
@@ -375,7 +375,8 @@ begin
            far = far_ff;
 
             // Cache read data.
-            o_rd_data = (!swa_ff && cache_en && state_ff != RD_DLY) ? adapt_cache_data ( pc_buf[3:2], cache_rdata ) : i_ram_rd_data;
+            o_rd_data = cache_en ? adapt_cache_data ( pc_buf[3:2], cache_rdata ) : 
+                        i_ram_rd_data;
 end
 
 function [31:0] adapt_cache_data ( input [1:0] shift, input [127:0] cd);
@@ -412,13 +413,12 @@ begin: blk1
         cache_ben       = 0;
         cache_wdata     = 0;
         state_nxt       = state_ff;
-        swa_nxt         = 1'd0;
 
         kill_memory_op2;
 
          case ( state_ff ) //: CASE STARTS HERE
 
-         IDLE:
+         IDLE, RD_DLY:
          begin
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -501,7 +501,9 @@ begin: blk1
 
                                 // Wait for a response.
                                 if ( i_ram_done )
+                                begin
                                         state_nxt = FETCH_L1_DESC;
+                                end
                         end
 
                         // If a fault occurred, do not go ahead with cache access.
@@ -526,12 +528,14 @@ begin: blk1
                         // Stall witll be computed in cache access.
                         phy_addr_nxt = i_address;
                         o_fault      = 1'd0;
-                        state_nxt    = IDLE;
+                        state_nxt    = state_ff;
                         goahead      = 1'd1;
 
                         // Decide cacheability based on define.
                         `ifdef FORCE_I_CACHEABLE
                         cacheable = 1'd1;
+                        `elsif FORCE_I_RAND_CACHEABLE
+                        cacheable = $random;
                         `else
                         cacheable = 1'd0; // If mmu is out, cache is also out.
                         `endif
@@ -544,38 +548,21 @@ begin: blk1
                 begin
                         if ( cache_en )
                         begin
-                                // If the item is non-cacheable.
-                                if ( !cacheable )
-                                begin
-                                                o_stall = !i_ram_done;
-
-                                                // Cache is disabled.
-                                                 generate_memory_read2(phy_addr_nxt);
-
-                                                // If RAM is done AND no stall, then move
-                                                // to RD_DLY.
-                                                if ( i_ram_done && !stall )
-                                                begin
-                                                        swa_nxt   = 1'd1;
-                                                        state_nxt = RD_DLY;
-                                                end
-                                end
-                                else
-                                begin
-                                        // Cache is enabled. Check for a tag match.
+                                        // Cache is enabled. Check for a tag match and CACHEABILITY or in RD_DLY state.
                                         if ( (i_address[`VA__CACHE_TAG] == tag_rdata) && 
-                                             tag_rdav)
+                                             tag_rdav && (cacheable | state_ff == RD_DLY) )
                                         begin
                                                         // Read. This is where we
                                                         // accelerate performance.
                                                         o_stall = 1'd0;
 
-                                                        $display($time, "ICACHE :: Cache tag match! Read accelerated!");
+                                                        if ( !stall )
+                                                        begin 
+                                                                state_nxt = IDLE;
+                                                        end
                                         end
                                         else
                                         begin
-                                                $display($time, "ICACHE :: Cache no match. Request read on address %d...", {phy_addr_nxt[31:4], 4'd0});
-
                                                 // Place address.
                                                 generate_memory_read2({phy_addr_nxt[31:4], 4'd0});
 
@@ -584,12 +571,10 @@ begin: blk1
                                                 // Begin a linefill and update the tag.
                                                 if ( i_ram_done )
                                                 begin
-                                                        $display($time, "ICACHE : RAM delivering data on next clock cycle...");
                                                         state_nxt = CACHE_FILL_0; 
                                                 end
 
                                        end
-                                end
                         end
                         else
                         begin
@@ -597,24 +582,11 @@ begin: blk1
                                 o_ram_rd_en   = !stall; 
                                 o_stall       = !i_ram_done;
                                 o_fault       = 1'd0;
-                                //fsr           = 32'd0;
-                                //far           = 32'd0;
                                 fsr_nxt       = 32'd0;
                                 far_nxt       = 32'd0;
                         end
                 end // else kill_memory_op2 is activated or TLB transfer.
          end
-
-        RD_DLY:
-        begin
-                o_stall = 1'd1;
-
-                if ( !stall )
-                begin
-                        swa_nxt   = 1'd0; // Change output flow on upcoming.
-                        state_nxt = IDLE;         
-                end
-        end
 
          FETCH_L1_DESC:
          begin
@@ -757,23 +729,41 @@ begin: blk1
 
                 if ( i_ram_done )
                 begin
-                        state_nxt = REFRESH_CYCLE;
+                        state_nxt = REFRESH_CYCLE_CACHE;
                 end                        
         end
 
-        REFRESH_CYCLE:
+        REFRESH_CYCLE, REFRESH_CYCLE_CACHE:
         begin
                 o_stall   = 1'd1;
-                state_nxt = IDLE;
                 refresh   = 1'd1;
+                state_nxt = state_ff == REFRESH_CYCLE_CACHE ? RD_DLY : IDLE;
         end
+
          endcase // : CASE ENDS HERE
+end
+
+always @*
+begin
+        force_rd = 1'd0;
+
+                if      ( i_clear_from_writeback )   force_rd = 1'd1;
+                else if ( i_dcache_stall )           begin end
+                else if ( i_clear_from_alu)          force_rd = 1'd1;
+
+                else if ( i_stall_from_shifter || 
+                          i_stall_from_issue   || 
+                          i_stall_from_decode  ) 
+                                                begin end
+
+                else if ( i_clear_from_decode ) force_rd = 1'd1;
+                else begin end
+
 end
 
 // ============================================================================
 // SEQUENTIAL LOGIC.
 // ============================================================================
-
 
 always @ (posedge i_clk)
 begin
@@ -794,28 +784,6 @@ begin
 
                 else if ( i_clear_from_decode ) state_ff <= IDLE;
                 else state_ff <= state_nxt;
-        end
-end
-
-always @ (posedge i_clk)
-begin
-        if ( i_reset )  
-        begin
-                                                        swa_ff <= 1'd0;
-        end
-        else
-        begin
-                if      ( i_clear_from_writeback )      swa_ff <= 1'd0;
-                else if ( i_dcache_stall )              swa_ff <= swa_nxt;
-                else if ( i_clear_from_alu)             swa_ff <= 1'd0;
-
-                else if ( i_stall_from_shifter || 
-                          i_stall_from_issue   || 
-                          i_stall_from_decode  ) 
-                                                        swa_ff <= swa_nxt; // Keep movin'
-
-                else if ( i_clear_from_decode )         swa_ff <= 1'd0;
-                else                                    swa_ff <= swa_nxt;
         end
 end
 

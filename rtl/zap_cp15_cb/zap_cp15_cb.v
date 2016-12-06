@@ -51,7 +51,6 @@ module zap_cp15_cb #(
 
 reg [31:0] r [6:0]; // Coprocessor registers. R7 is write-only.
 reg [2:0]    state; // State variable.
-reg [31:0] fsr_dly;
 
 
 wire [31:0] r0 = r[0];
@@ -93,13 +92,6 @@ localparam READ         = 3;
 localparam READ_DLY     = 4;
 localparam TERM         = 5;
 
-always @ (posedge i_clk)
-begin
-        if ( i_reset )
-                fsr_dly <= 0;
-        else
-                fsr_dly <= i_fsr;
-end
 
 always @ (posedge i_clk)
 begin
@@ -135,7 +127,7 @@ begin
                 o_cp_done <= 1'd0;
 
                 // Keep monitoring FSR and FAR from MMU unit.
-                if ( (fsr_dly != i_fsr) && i_fsr[3:0] != 4'd0 )
+                if ( i_fsr[3:0] != 4'd0 )
                 begin
                         r[5] <= i_fsr;
                         r[6] <= i_far;
