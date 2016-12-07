@@ -121,18 +121,22 @@ end
 
 // Connect core directly to output.
 
-o_dram_wr_en = wen;
-o_dram_rd_en = ren;
-o_dram_data  = wdata;
-o_dram_addr  = addr;
-o_dram_ben   = ben;
-rdata        = i_dram_data;
-data_stall   = i_dram_stall;
-
-o_iram_rd_en  = !stall;
-o_iram_addr   = pc;
-instr         = i_iram_data;
-instr_valid_n = i_iram_stall;
+assign o_dram_wr_en = wen;
+assign o_dram_rd_en = ren;
+assign o_dram_data  = wdata;
+assign o_dram_addr  = addr;
+assign o_dram_ben   = ben;
+assign rdata        = i_dram_data;
+assign data_stall   = i_dram_stall;
+assign o_iram_rd_en  = !stall;
+assign o_iram_addr   = pc;
+assign instr         = i_iram_data;
+assign instr_valid_n = i_iram_stall;
+assign cp_done       = 1'd1;
+assign cp_reg_en     = 1'd0;
+assign cp_windex     = 0;
+assign cp_rindex     = 0;
+assign cp_wdata      = 0;
 
 `else
 

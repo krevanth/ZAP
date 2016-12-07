@@ -8,9 +8,7 @@ ARM v4 and Thumb v1. It is also equipped with v4 compatible split cache and
 memory management capabilities.
 
 ##Current Status
-ARM v4 support  : *Working*<br />
-Thumb v1 support: Experimental<br />
-MMU/Cache       : *Cache Working*. MMU is experimental<br />
+Beta release.
 
 ##Features
 - Supports v4 ARM instructions and v1 Thumb instructions.

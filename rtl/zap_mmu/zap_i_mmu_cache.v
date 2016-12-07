@@ -239,7 +239,7 @@ mem_inv_block #(.DEPTH(CACHE_SIZE/16), .WIDTH(CACHE_TAG_WDT)) u_cache_tag  (
         .i_wdata        (i_address[`VA__CACHE_TAG])                        ,
         .o_rdata        (tag_rdata)                                        ,
         .o_rdav         (tag_rdav)                                         ,
-        .i_refresh      (refresh)    
+        .i_refresh      (refresh && !force_rd)    
 )                                                                          ;
 // ------------------------------------------------------------------------
 
@@ -258,7 +258,7 @@ mem_inv_block #(.DEPTH(SECTION_TLB_ENTRIES), .WIDTH(SECTION_TLB_WDT)) sect (
         .i_wdata        (setlb_wdata)                                      ,
         .o_rdata        (setlb_rdata)                                      ,
         .o_rdav         (setlb_rdav)                                       ,
-        .i_refresh      (refresh)      
+        .i_refresh      (refresh && !force_rd)      
 )                                                                          ;
 // ------------------------------------------------------------------------
 
@@ -277,7 +277,7 @@ mem_inv_block #(.DEPTH(LPAGE_TLB_ENTRIES), .WIDTH(LPAGE_TLB_WDT)) u_lptlb  (
         .i_wdata        (lptlb_wdata)                                      ,
         .o_rdata        (lptlb_rdata)                                      ,
         .o_rdav         (lptlb_rdav)                                       ,
-        .i_refresh      (refresh)         
+        .i_refresh      (refresh && !force_rd)         
 )                                                                          ;
 // ------------------------------------------------------------------------
 
@@ -296,7 +296,7 @@ mem_inv_block #(.DEPTH(SPAGE_TLB_ENTRIES), .WIDTH(SPAGE_TLB_WDT)) u_sptlb  (
         .i_wdata        (sptlb_wdata)                                      ,
         .o_rdata        (sptlb_rdata)                                      ,
         .o_rdav         (sptlb_rdav)                                       ,
-        .i_refresh       (refresh)                                          
+        .i_refresh       (refresh && !force_rd)                                          
 )                                                                          ;
 // ------------------------------------------------------------------------
 

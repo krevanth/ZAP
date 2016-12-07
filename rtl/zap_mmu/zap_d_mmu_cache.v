@@ -385,7 +385,7 @@ begin: blk1
         reg cacheable;
         reg goahead;
 
-        $display($time, "*I: MMU cache trigerred!");
+//        $display($time, "*I: MMU cache trigerred!");
 
         goahead         = 1'd0;
         cacheable       = 1'd0;

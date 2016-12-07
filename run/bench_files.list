@@ -1,0 +1,2 @@
+$(ZAP_HOME)/testbench/zap_test.v
+$(ZAP_HOME)/testbench/ram_test.v

@@ -1,0 +1,31 @@
+// Include files search path.
++incdir+$(ZAP_HOME)/includes/
+
+// Library files search path.
++libdir+$(ZAP_HOME)/lib/
+
+// RTL files.
+$(ZAP_HOME)/rtl/zap_alu/alu.v
+$(ZAP_HOME)/rtl/zap_alu/zap_alu_main.v
+$(ZAP_HOME)/rtl/zap_core.v
+$(ZAP_HOME)/rtl/zap_cp15_cb/zap_cp15_cb.v
+$(ZAP_HOME)/rtl/zap_decode/zap_decode_main.v
+$(ZAP_HOME)/rtl/zap_decode/zap_decode.v
+$(ZAP_HOME)/rtl/zap_fetch/zap_fetch_main.v
+$(ZAP_HOME)/rtl/zap_issue/zap_issue_main.v
+$(ZAP_HOME)/rtl/zap_memory/zap_memory_main.v
+$(ZAP_HOME)/rtl/zap_mmu/zap_d_mmu_cache.v
+$(ZAP_HOME)/rtl/zap_mmu/zap_i_mmu_cache.v
+$(ZAP_HOME)/rtl/zap_predecode/ones_counter.v
+$(ZAP_HOME)/rtl/zap_predecode/zap_predecode_coproc.v
+$(ZAP_HOME)/rtl/zap_predecode/zap_predecode_main.v
+$(ZAP_HOME)/rtl/zap_predecode/zap_predecode_mem_fsm.v
+$(ZAP_HOME)/rtl/zap_predecode/zap_predecode_thumb.v
+$(ZAP_HOME)/rtl/zap_regf/bram.v
+$(ZAP_HOME)/rtl/zap_regf/bram_wrapper.v
+$(ZAP_HOME)/rtl/zap_regf/zap_register_file.v
+$(ZAP_HOME)/rtl/zap_shift/mult16x16.v
+$(ZAP_HOME)/rtl/zap_shift/zap_multiply.v
+$(ZAP_HOME)/rtl/zap_shift/zap_shifter_main.v
+$(ZAP_HOME)/rtl/zap_shift/zap_shift_shifter.v
+$(ZAP_HOME)/rtl/zap_top.v
