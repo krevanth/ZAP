@@ -48,6 +48,9 @@ print "Rand is $rand...\n";
 die "*E: Verilog Compilation Failed!\n" if system("iverilog -v -f $RTL_FILE_LIST -f $BENCH_FILE_LIST -o $VVP_PATH -g2001 -Winfloop -Wall -DSEED=$rand");
 die "*E: VVP execution error!\n" if system("vvp $VVP_PATH >> $LOG_FILE_PATH");
 
+# Check for success or failure.
+die "*E: Bad config.vh for synthesis! Please check!\n" unless system("grep \\*E $LOG_FILE_PATH");
+
 # A custom perl script to analyze the output log.
 die "*E: Could not post-process the log file!\n" if system("$POST_PROCESS");
 

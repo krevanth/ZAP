@@ -216,4 +216,21 @@ u_zap_icache_mmu (
 
 `endif
 
+
+// Ignored by synthesis.
+initial
+begin
+        `ifndef SIM
+                `ifdef FORCE_I_RAND_CACHEABLE
+                        $display("*E: Bad config.vh setting for synthesis...");
+                        $finish;
+                `endif
+
+                `ifdef FORCE_D_RAND_CACHEABLE
+                        $display("*E: Bad config.vh setting for synthesis...");
+                        $finish;
+                `endif
+        `endif
+end
+
 endmodule
