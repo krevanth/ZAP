@@ -397,6 +397,8 @@ begin: blk1
         o_stall         = 1'd1;
         fsr_nxt         = fsr_ff;
         far_nxt         = far_ff;
+        fsr             = fsr_ff;
+        far             = far_ff;
         o_fault         = 1'd0;
         phy_addr_nxt    = phy_addr_ff;
         refresh         = 1'd0;

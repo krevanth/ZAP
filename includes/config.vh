@@ -5,7 +5,7 @@
 `ifndef __CONFIG_VH__
 `define __CONFIG_VH__
 
-        `timescale 1ns/1ps
+//      `timescale 1ns/1ps
 
         `define CMMU_EN
         `define SIM
