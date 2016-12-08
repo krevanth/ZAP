@@ -38,6 +38,10 @@
         `define THUMB_EN
 `endif
 
+///////////////////////////////////////////////////////////////////////////////
+
+/* DO NOT DEFINE ANY OF THIS IF YOU ARE SYNTHESIZING! */
+
 //`ifndef FORCE_ICACHE_EN
 //        `define FORCE_ICACHE_EN
 //`endif
@@ -55,7 +59,6 @@
 //     `define FORCE_D_CACHEABLE
 //`endif
 
-/* DO NOT DEFINES THESE TWO IF YOU ARE SYNTHESIZING... */
 `ifndef FORCE_I_RAND_CACHEABLE
         `define FORCE_I_RAND_CACHEABLE
 `endif

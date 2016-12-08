@@ -6,4 +6,7 @@ parameter V = 38;
 parameter I = 7;
 parameter F = 6;
 parameter T = 5;
-`define CPSR_MODE 4:0
+
+`ifndef CPSR_MODE
+        `define CPSR_MODE 4:0
+`endif

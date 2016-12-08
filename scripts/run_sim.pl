@@ -37,37 +37,23 @@ system("ls -l | tee -a $LOG_FILE_PATH");
 die "*E: Translation Failed!" if system("perl $ZAP_HOME/scripts/do_it.pl $ASM_PATH $C_PATH $LINKER_PATH $TARGET_BIN_PATH $PROG_PATH");
 die "*E: Bin2Mem Failed!" if system("perl $ZAP_HOME/scripts/bin2mem.pl $TARGET_BIN_PATH $PROG_PATH");
 
-while (1)
-{
 
-        unless ( defined($force_seed) ) {
-               $rand           = int rand(0xffffffff); }
-        else {
-                $rand = $force_seed }
+unless ( defined($force_seed) ) {
+       $rand           = int rand(0xffffffff); }
+else {
+        $rand = $force_seed }
 
-        print "Rand is $rand...\n";
+print "Rand is $rand...\n";
 
-        die "*E: Verilog Compilation Failed!\n" if system("iverilog -v -f $RTL_FILE_LIST -f $BENCH_FILE_LIST -o $VVP_PATH -g2001 -Winfloop -Wall -DSEED=$rand");
-        die "*E: VVP execution error!\n" if system("vvp $VVP_PATH >> $LOG_FILE_PATH");
+die "*E: Verilog Compilation Failed!\n" if system("iverilog -v -f $RTL_FILE_LIST -f $BENCH_FILE_LIST -o $VVP_PATH -g2001 -Winfloop -Wall -DSEED=$rand");
+die "*E: VVP execution error!\n" if system("vvp $VVP_PATH >> $LOG_FILE_PATH");
 
-        # A custom perl script to analyze the output log.
-        die "*E: Could not post-process the log file!\n" if system("$POST_PROCESS > current_output");
+# A custom perl script to analyze the output log.
+die "*E: Could not post-process the log file!\n" if system("$POST_PROCESS");
 
-        # Run GTKWAVE.
-        #die "*E: GTKWave file open Error!\n" if system("gtkwave $VCD_PATH &");
+# Run GTKWAVE.
+die "*E: GTKWave file open Error!\n" if system("gtkwave $VCD_PATH &");
 
-        # Check fail status.
-        die "Simulation failed. Random was $rand for this run...\n" if system("diff current_output expected_output");
-
-        # Successful.
-        print "**************** SUCCESS! RUNNING AGAIN... ************************\n";
-
-        if ( defined($force_seed) )
-        {
-                print "Seed was forced. Exiting without looping...\n";
-                exit;
-        }
-}
 # Guard.
 sub check_ivl_version {
         my $x = `iverilog -V`;
