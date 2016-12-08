@@ -1,3 +1,6 @@
+`ifndef __FIELDS_VH__
+`define __FIELDS_VH__
+
 `define BASE_EXTEND             33
 `define BASE                    19:16
 `define SRCDEST_EXTEND          32
@@ -9,3 +12,5 @@
 `define DP_RN                   19:16   // ALU source.
 `define DP_RN_EXTEND            34      // ALU source extend.
 `define OPCODE_EXTEND           35      // To differential lower and higher -> 1 means higher.
+
+`endif
