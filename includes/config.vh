@@ -13,7 +13,7 @@
         `define IRQ_EN
         `define VCD_FILE_PATH "/tmp/zap.vcd"
         `define MEMORY_IMAGE "/tmp/prog.v"
-        `define MAX_CLOCK_CYCLES 100000
+        `define MAX_CLOCK_CYCLES 50000
         `define SEED 32'h12345678
         `define THUMB_EN
 
