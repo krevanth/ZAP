@@ -30,8 +30,8 @@ mov r14, #15
 ldmfd sp!, {r0-r12, pc}^
 
 SWI:
-ldr sp,=#6000
-ldr r11, =#5004
+ldr sp,=#2500
+ldr r11, =#2004
 mov r0, #12
 mov r1, #0
 mov r2, r0, lsr #32
@@ -61,7 +61,7 @@ mrs r2, cpsr
 bic r2, r2, #31
 orr r2, r2, #18 
 msr cpsr_c, r2
-ldr sp, =#8000
+ldr sp, =#3000
 
 // Enable interrupts.
 mrs r1, cpsr
@@ -77,7 +77,7 @@ mrs r2, cpsr
 bic r2, r2, #31
 orr r2, r2, #16
 msr cpsr_c, r2
-ldr sp,=#7000
+ldr sp,=#3500
 
 // Run main loop.
 bl main

@@ -2,8 +2,8 @@
 
 module zap_test;
 
-parameter RAM_SIZE = 8192;
-parameter START = 4992;
+parameter RAM_SIZE = 32768;
+parameter START = 1992;
 parameter COUNT = 120;
 
 reg             i_clk;
@@ -58,36 +58,26 @@ u_zap_top
 // ===========================
 model_ram
 #(
-        .SIZE_IN_BYTES(RAM_SIZE),
-        .INIT(0)
+        .SIZE_IN_BYTES(RAM_SIZE)
 )
-model_ram_data
+U_MODEL_RAM
 (
         .i_clk(i_clk),
-        .i_wen(o_dram_wr_en),
-        .i_ren(o_dram_rd_en),
-        .i_data(o_dram_data),
-        .i_ben(o_dram_ben),
-        .o_data(i_dram_data),
-        .i_addr(o_dram_addr),
-        .o_stall(i_dram_stall)        
-);
 
-model_ram
-#(
-        .SIZE_IN_BYTES(RAM_SIZE),
-        .INIT(1)
-)
-model_ram_instr
-(
-        .i_clk(i_clk),
-        .i_wen(1'd0),
-        .i_ren(o_iram_rd_en),
-        .i_data(32'd0),
-        .i_ben(4'd0),
-        .o_data(i_iram_data),
-        .i_addr(o_iram_addr),
-        .o_stall(i_iram_stall)  
+        // RW port.
+        .i_wen_rw   (o_dram_wr_en),
+        .i_ren_rw   (o_dram_rd_en),
+        .i_data_rw  (o_dram_data),
+        .i_ben_rw   (o_dram_ben),
+        .o_data_rw  (i_dram_data),
+        .i_addr_rw  (o_dram_addr),
+        .o_stall_rw (i_dram_stall),
+
+        // RO port.
+        .i_ren_ro   (o_iram_rd_en),
+        .o_data_ro  (i_iram_data),
+        .i_addr_ro  (o_iram_addr),
+        .o_stall_ro (i_iram_stall)  
 );
 
 
@@ -124,7 +114,7 @@ begin
 
         for(i=START;i<START+COUNT;i=i+4)
         begin
-                $display("DATA INITIAL :: mem[%d] = %x", i, {model_ram_data.ram[(i/4)]});
+                $display("DATA INITIAL :: mem[%d] = %x", i, {U_MODEL_RAM.ram[(i/4)]});
         end
 
         $dumpfile(`VCD_FILE_PATH);
@@ -140,7 +130,7 @@ begin
 
         for(i=START;i<START+COUNT;i=i+4)
         begin
-                $display("DATA mem[%d] = %x", i, {model_ram_data.ram[(i/4)]});
+                $display("DATA mem[%d] = %x", i, {U_MODEL_RAM.ram[(i/4)]});
         end
 
         $finish;

@@ -1,6 +1,6 @@
 void main (void)
 {
-        char *x = (char *)5000;
+        char *x = (char *)2000;
         x[0] = 5;
         x[1] = fact(x[0]);               
 }
