@@ -10,8 +10,7 @@
 // You can use this common module for both the I-cache and the D-cache.
 // Cache is write-through. Writes update both cache and main memory. Reads
 // will short circuit into cache itself. No write buffer is implemented in
-// this model. If both cache and MMU are disabled, the processor itself will
-// switch this module out.
+// this model. 
 // ----------------------------------------------------------------------------
 // Author:
 // Revanth Kamaraj
@@ -420,107 +419,164 @@ begin: blk1
 
                 if ( mmu_en ) // MMU enabled.
                 begin
-                        if ( (sptlb_rdata[`SPAGE_TLB__TAG] == i_address[`VA__SPAGE_TAG]) && sptlb_rdav )
+                        if ( (sptlb_rdata[`SPAGE_TLB__TAG] == 
+                               i_address[`VA__SPAGE_TAG]) && sptlb_rdav )
                         begin
+                                //
                                 // Entry found in small page TLB.
-                                o_fault = ! (check_spage_permissions
+                                //
+                                fsr_nxt = spage_fsr
                                 (
                                         i_address[`VA__SPAGE_AP_SEL],
                                         i_cpsr[4:0] == USR,
-                                        i_read_en,
-                                        i_write_en,
+                                        1'd1,
+                                        1'd0,
                                         sr,
                                         dac_reg,
                                         sptlb_rdata
-                                ) );
+                                ) ;
 
-                                phy_addr_nxt = {sptlb_rdata[`SPAGE_TLB__BASE], i_address[11:0]};
-                                cacheable = sptlb_rdata[`SECTION_TLB__CB] >> 1'd1;
+                                phy_addr_nxt = {sptlb_rdata[`SPAGE_TLB__BASE], 
+                                                i_address[11:0]};
+
+                                cacheable = sptlb_rdata[`SECTION_TLB__CB] >> 1;
+
+                                if ( fsr_nxt[3:0] != 4'd0 ) // Fault occured.
+                                begin
+                                        goahead   = 1'd0;       // Block cache access.
+                                        o_stall   = 1'd0;       // Don't stall.
+                                        o_fault   = 1'd1;       // Set fault.
+                                        far_nxt   = i_address;  // Set fault address.
+                                end
+                                else   // No fault.
+                                begin
+                                        goahead   = 1'd1;   // No fault.
+                                        o_stall   = 1'd0;   // No stall until now. 
+                                        far_nxt   = far_ff; // Keep values.
+                                        o_fault   = 1'd0;   // No fault.
+                                end
+
                         end
-                        else if ( (lptlb_rdata[`LPAGE_TLB__TAG] == i_address[`VA__LPAGE_TAG]) && lptlb_rdav )
+                        else if ( (lptlb_rdata[`LPAGE_TLB__TAG] == 
+                               i_address[`VA__LPAGE_TAG]) && lptlb_rdav )
                         begin
+                                //
                                 // Entry found in large page TLB.
-                                o_fault = ! (check_lpage_permissions
+                                //
+                                fsr_nxt = lpage_fsr
                                 (
                                         i_address[`VA__LPAGE_AP_SEL],
                                         i_cpsr[4:0] == USR,
-                                        i_read_en,
-                                        i_write_en,
+                                        1'd1,
+                                        1'd0,
                                         sr,
                                         dac_reg,
                                         lptlb_rdata
-                                ) );
+                                ) ;
 
-                                phy_addr_nxt = {lptlb_rdata[`LPAGE_TLB__BASE], i_address[15:0]};
-                                cacheable = lptlb_rdata[`LPAGE_TLB__CB] >> 1'd1;
+                                phy_addr_nxt = {lptlb_rdata[`LPAGE_TLB__BASE],
+                                                i_address[15:0]};
+
+                                cacheable = lptlb_rdata[`LPAGE_TLB__CB] >> 1;
+
+                                if ( fsr_nxt[3:0] != 4'd0 ) // Fault occured.
+                                begin
+                                        goahead   = 1'd0;       // Block cache access.
+                                        o_stall   = 1'd0;       // Don't stall.
+                                        o_fault   = 1'd1;       // Set fault.
+                                        far_nxt   = i_address;  // Set fault address.
+                                end
+                                else   // No fault.
+                                begin
+                                        goahead   = 1'd1;   // No fault.
+                                        o_stall   = 1'd0;   // No stall until now. 
+                                        far_nxt   = far_ff; // Keep values.
+                                        o_fault   = 1'd0;   // No fault.
+                                end
+
                         end
-                        else if ( (setlb_rdata[`SECTION_TLB__TAG] == i_address[`VA__SECTION_TAG]) && setlb_rdav )
+                        else if ( (setlb_rdata[`SECTION_TLB__TAG] == 
+                               i_address[`VA__SECTION_TAG]) && setlb_rdav )
                         begin
+                                //
                                 // Entry found in section TLB.
-                                o_fault = ! (check_section_permissions
+                                //
+                                fsr_nxt = section_fsr
                                 (
                                         i_cpsr[4:0] == USR,
-                                        i_read_en,
-                                        i_write_en,
+                                        1'd1,
+                                        1'd0,
                                         sr,
                                         dac_reg,
                                         setlb_rdata
-                                ) );
+                                ) ;
 
-                                phy_addr_nxt = {setlb_rdata[`SECTION_TLB__BASE],i_address[19:0]};
-                                cacheable = setlb_rdata[`SECTION_TLB__CB] >> 1'd1;
-                        end
-                        else
-                        begin
-                                // Dont go ahead with cache access.
-                                o_fault   = 1'd0;
-                                goahead   = 1'd0;
-                                o_stall   = 1'd1;
+                                phy_addr_nxt = {setlb_rdata[`SECTION_TLB__BASE],
+                                                i_address[19:0]};
 
-                                // Provide address on the bus.
-                                // Generate read.
-                                generate_memory_read (   
-                                {baddr  [`VA__TRANSLATION_BASE], 
-                               i_address[`VA__TABLE_INDEX], 2'd0});
+                                cacheable = setlb_rdata[`SECTION_TLB__CB] >> 1;
 
-                                // Wait for a response.
-                                if ( i_ram_done )
+                                if ( fsr_nxt[3:0] != 4'd0 ) // Fault occured.
                                 begin
-                                        state_nxt = FETCH_L1_DESC;
+                                        goahead   = 1'd0;       // Block cache access.
+                                        o_stall   = 1'd0;       // Don't stall.
+                                        o_fault   = 1'd1;       // Set fault.
+                                        far_nxt   = i_address;  // Set fault address.
                                 end
-                        end
+                                else   // No fault.
+                                begin
+                                        goahead   = 1'd1;   // No fault.
+                                        o_stall   = 1'd0;   // No stall until now. 
+                                        far_nxt   = far_ff; // Keep values.
+                                        o_fault   = 1'd0;   // No fault.
+                                end
 
-                        if ( o_fault ) // Dont do cache access.
-                        begin
-                                goahead = 1'd0;
-                                far_nxt = i_address;
-                                o_stall = 1'd0;
                         end
-                        else goahead = 1'd1; // Proceed with cache access. Compute stall later.
+                        else /* Entry not found. */
+                        begin
+                                //
+                                // Dont go ahead with cache access since we need
+                                // to fetch descriptor.
+                                //
+                                fsr_nxt   = fsr_ff;             // Preserve FSR.
+                                far_nxt   = far_ff;             // Preserve FAR.
+                                goahead   = 1'd0;               // Don't do cache access.
+                                o_fault   = 1'd0;               // No fault.
+                                o_stall   = 1'd1;               // Stall CPU.
+                                state_nxt = START_DESC_FETCH;   // Initiate DESC_FETCH.
+                        end
                 end
-                else // MMU Disabled 
+                else /* MMU is off */
                 begin
-                        // No translation. Do cache access.
+                        //
+                        // No translation as MMU is OFF. Go ahead with cache access.
+                        // Stall witll be computed in cache access.
+                        //
                         phy_addr_nxt = i_address;
                         o_fault      = 1'd0;
                         state_nxt    = state_ff;
                         goahead      = 1'd1;
+                        fsr_nxt      = 0; // If mmu is off, set statii to 0.
+                        far_nxt      = 0;
+                        o_stall      = 0; // No stall so far.
 
+                        //
                         // Decide cacheability based on define.
-                        `ifdef FORCE_D_CACHEABLE
-                        cacheable = 1'd1;
-                        `elsif FORCE_D_RAND_CACHEABLE
-                        cacheable = $random; // NOT SYNTHESIZEABLE SO DO NOT DEFINE RAND_CACHEABLE DURING SYNTHESIS.
+                        //
+                        `ifdef FORCE_I_CACHEABLE
+                                cacheable = 1'd1;
+                        `elsif FORCE_I_RAND_CACHEABLE
+                                cacheable = $random; // DO NOT SET THIS FOR SYNTHESIS.
                         `else
-                        cacheable = 1'd0; // If mmu is out, cache is also out.
+                                cacheable = 1'd0; // If mmu is out, cache is also out.
                         `endif
                 end
 
 ///////////////////////////////////////////////////////////////////////////////
 
-                o_stall = 1'd0;
-
-                // Active request to cache pending...
+                //
+                // Active request to cache pending/maccess pending...
+                //
                 if ( goahead && (i_read_en || i_write_en) )
                 begin
                         if ( cache_en )
@@ -533,18 +589,9 @@ begin: blk1
                                                 
                                                 if ( i_write_en )
                                                 begin
-                                                        // Generate memory write signals.
-                                                        generate_memory_write ();
-                                                        o_stall = !i_ram_done;
-
-                                                        if ( i_ram_done && !stall )
-                                                        begin
-                                                                state_nxt = state_ff;
-
-                                                                // Write to line cache.
-                                                                cache_wdata = 
-                                                                write_cache_line ( i_wr_data, i_ben, i_address[3:2] );            
-                                                       end
+                                                        // Stall CPU and go to write state.
+                                                        o_stall = 1'd1;
+                                                        state_nxt = ( state_ff == IDLE ) ? MEM_WRITE_IDLE : MEM_WRITE_RD_DLY;
                                                 end
                                                 else // Read 
                                                 begin
@@ -558,22 +605,9 @@ begin: blk1
                                         end
                                         else
                                         begin
-                                                // No tag match. DO the drill...
-
-                                                // Place address.
-                                                generate_memory_read({phy_addr_nxt[31:4], 4'd0});
-
-                                                // Begin a linefill and update the tag.
-                                                o_stall  = 1'd1;
-
-                                                if ( i_ram_done )
-                                                begin
-                                                        state_nxt = CACHE_FILL_0; 
-                                                end
-                                                else
-                                                begin
-                                                        state_nxt = state_ff;
-                                                end
+                                                // Begin a linefill.
+                                                o_stall = 1'd1;
+                                                state_nxt = START_CACHE_FILL;
                                         end
                         end
                         else
@@ -586,8 +620,6 @@ begin: blk1
                                 o_ram_rd_en   = i_read_en; 
                                 o_stall       = !i_ram_done;
                                 o_fault       = 1'd0;
-                                //fsr           = 32'd0;
-                                //far           = 32'd0;
                                 fsr_nxt       = 32'd0;
                                 far_nxt       = 32'd0;
                                 state_nxt     = IDLE;
@@ -595,9 +627,94 @@ begin: blk1
                 end // Else kill_memory_op or TLB transfer.
          end
 
+        MEM_WRITE_IDLE:
+        begin
+                 // Generate memory write signals to write to physical address.
+                 generate_memory_write ( phy_addr_ff );
+                 o_stall = 1'd1;
+
+                 if ( i_ram_done && !stall )
+                 begin
+                         // Go to IDLE.
+                         state_nxt = IDLE;
+
+                        // Pull out of stall.
+                        o_stall = 1'd0;
+
+                         // Write to line cache with virtual address.
+                         cache_wdata = 
+                         write_cache_line ( i_wr_data, i_ben, i_address[3:2] );            
+                end
+
+        end
+
+        MEM_WRITE_RD_DLY:
+        begin
+                 // Generate memory write signals to write to physical address.
+                 generate_memory_write ( phy_addr_ff );
+                 o_stall = 1'd1;
+
+                 if ( i_ram_done && !stall )
+                 begin
+                         // Go to RD_DLY.
+                         state_nxt = RD_DLY;
+
+                        // Pull out of stall.
+                        o_stall = 1'd0;
+
+                         // Write to line cache with virtual address.
+                         cache_wdata = 
+                         write_cache_line ( i_wr_data, i_ben, i_address[3:2] );            
+                end
+
+        end
+
+        START_CACHE_FILL:
+        begin
+                // Stall CPU.
+                o_fault = 1'd0;
+                o_stall = 1'd1;
+
+                // Place address.
+                generate_memory_read({phy_addr_ff[31:4], 4'd0});
+
+                // Wait for response.
+                if ( i_ram_done )
+                begin
+                        state_nxt = CACHE_FILL_0; 
+                end
+                else
+                begin
+                        state_nxt = state_ff;
+                end
+        end
+
+        START_DESC_FETCH:
+        begin
+                // Stall CPU.
+                o_fault   = 1'd0;
+                o_stall   = 1'd1;
+
+                // Provide address on the bus.
+                // Generate read.
+                generate_memory_read (   
+                {baddr  [`VA__TRANSLATION_BASE], 
+                 i_address[`VA__TABLE_INDEX], 2'd0});
+
+                // Wait for a response.
+                if ( i_ram_done )
+                begin
+                        state_nxt = FETCH_L1_DESC;
+                end
+        end
+
          FETCH_L1_DESC:
          begin
                 o_stall = 1'd1;
+
+                // Get another level of fetch in case PAGE_ID.
+                generate_memory_read ({i_ram_rd_data[`L1_PAGE__PTBR], 
+                                       i_address[`VA__L2_TABLE_INDEX], 2'd0});
 
                 case ( i_ram_rd_data[`ID] )
                 SECTION_ID:
@@ -622,12 +739,6 @@ begin: blk1
 
                         // Store the current one (Only domain sel).
                         phy_addr_nxt[3:0] = i_ram_rd_data[`L1_PAGE__DAC_SEL];
-
-        
-                        // Get another level of fetch.
-                        generate_memory_read ({i_ram_rd_data[`L1_PAGE__PTBR], 
-                                        i_address[`VA__L2_TABLE_INDEX], 2'd0});
-
                 end
 
                 default:
@@ -793,6 +904,16 @@ begin
                 buf1_ff <= buf1_nxt;
                 buf2_ff <= buf2_nxt;
         end
+end
+
+initial
+begin
+        `ifndef SIM
+                `ifdef FORCE_D_RAND_CACHEABLE
+                        $display("*E: Bad config.vh setting for synthesis...");
+                        $finish;
+                `endif
+        `endif
 end
 
 endmodule // zap_d_mmu_cache.v

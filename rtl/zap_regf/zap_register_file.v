@@ -117,6 +117,18 @@ module zap_register_file #(
         output reg                            o_icache_resample
 );
 
+// PC and CPSR are separate registers.
+reg     [31:0]  cpsr_ff, cpsr_nxt;
+reg     [31:0]  pc_ff, pc_nxt;
+
+reg [$clog2(PHY_REGS)-1:0]     wa1, wa2;
+reg [31:0]                     wdata1, wdata2;
+reg                            wen;
+
+`ifdef SIM
+integer irq_addr = 0;
+`endif
+
 // Coprocessor accesses.
 always @ (posedge i_clk) 
 begin
@@ -135,10 +147,6 @@ localparam FIQ_VECTOR   = 32'h0000001C;
 `include "modes.vh"
 `include "cpsr.vh"
 
-// PC and CPSR are separate registers.
-reg     [31:0]  cpsr_ff, cpsr_nxt;
-reg     [31:0]  pc_ff, pc_nxt;
-
 // CPSR dedicated output.
 always @*
 begin
@@ -146,10 +154,6 @@ begin
         o_pc_nxt        = pc_nxt & 32'hfffffffe;
         o_cpsr_nxt      = cpsr_nxt;
 end
-
-reg [$clog2(PHY_REGS)-1:0]     wa1, wa2;
-reg [31:0]                     wdata1, wdata2;
-reg                            wen;
 
 bram_wrapper u_bram_wrapper
 (
@@ -303,6 +307,11 @@ begin: blk1
                 pc_nxt = IRQ_VECTOR; 
                 wen    = 1;
                 wdata1 = `ARM_MODE ? i_wr_data : i_pc_buf_ff ;
+
+                `ifdef SIM
+                irq_addr = wdata1;
+                `endif
+
                 wa1    = PHY_IRQ_R14;
                 wa2    = PHY_IRQ_SPSR;
                 wdata2 = cpsr_ff;

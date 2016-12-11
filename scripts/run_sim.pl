@@ -6,7 +6,7 @@ use warnings;
 my $rand;
 my $force_seed;
 
-        if ( @ARGV )        {
+        if ( @ARGV == 1 )        {
                 $force_seed = $ARGV[0];
         }
         else        {
@@ -26,6 +26,7 @@ my $TARGET_BIN_PATH = "/tmp/prog.bin";
 my $POST_PROCESS    = "perl $ZAP_HOME/scripts/post_process.pl $LOG_FILE_PATH";
 my $RTL_FILE_LIST   = "$ZAP_HOME/run/rtl_files.list";
 my $BENCH_FILE_LIST = "$ZAP_HOME/run/bench_files.list";
+my $EXPECTED_OUTPUT = "/tmp/expected_factorial_output.txt";
 
 check_ivl_version();
 
@@ -52,10 +53,36 @@ die "*E: VVP execution error!\n" if system("vvp $VVP_PATH >> $LOG_FILE_PATH");
 die "*E: Bad config.vh for synthesis! Please check!\n" unless system("grep \\*E $LOG_FILE_PATH");
 
 # A custom perl script to analyze the output log.
-die "*E: Could not post-process the log file!\n" if system("$POST_PROCESS");
+
+if ( @ARGV == 2 )
+{
+        print "Writing to $EXPECTED_OUTPUT...\n";
+        die "*E: Could not post-process the log file!\n" if system("$POST_PROCESS | tee $EXPECTED_OUTPUT");
+}
+else
+{
+        print "Writing to curr_ZAP.txt\n";
+        die "*E: Could not post-process the log file!\n" if system("$POST_PROCESS | tee /tmp/curr_ZAP.txt");
+}
+
+# If you provide an argument. The script looks for $EXPECTED_OUTPUT
+if ( @ARGV == 2 )
+{
+        print "Second argument provided. Performing check...\n";
+        die "*E: Diff returned some differences between current and expected ouptut" if system("diff /tmp/curr_ZAP.txt $EXPECTED_OUTPUT");
+}
 
 # Run GTKWAVE.
-die "*E: GTKWave file open Error!\n" if system("gtkwave $VCD_PATH &");
+if ( @ARGV == 0 )
+{
+        die "*E: GTKWave file open Error!\n" if system("gtkwave $VCD_PATH &");
+}
+
+# Exit
+print "*** Exited with return value 0 ***\n";
+exit 0;
+
+###############################################################################
 
 # Guard.
 sub check_ivl_version {

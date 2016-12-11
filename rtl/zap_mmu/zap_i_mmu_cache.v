@@ -10,8 +10,7 @@
 // You can use this common module for both the I-cache and the D-cache.
 // Cache is write-through. Writes update both cache and main memory. Reads
 // will short circuit into cache itself. No write buffer is implemented in
-// this model. If both cache and MMU are disabled, the processor itself will
-// switch this module out.
+// this model. 
 // ----------------------------------------------------------------------------
 // Author:
 // Revanth Kamaraj
@@ -430,8 +429,10 @@ begin: blk1
                         if ( (sptlb_rdata[`SPAGE_TLB__TAG] == 
                                i_address[`VA__SPAGE_TAG]) && sptlb_rdav )
                         begin
+                                //
                                 // Entry found in small page TLB.
-                                o_fault = ! (check_spage_permissions
+                                //
+                                fsr_nxt = spage_fsr
                                 (
                                         i_address[`VA__SPAGE_AP_SEL],
                                         i_cpsr[4:0] == USR,
@@ -440,18 +441,36 @@ begin: blk1
                                         sr,
                                         dac_reg,
                                         sptlb_rdata
-                                ) );
+                                ) ;
 
                                 phy_addr_nxt = {sptlb_rdata[`SPAGE_TLB__BASE], 
                                                 i_address[11:0]};
 
                                 cacheable = sptlb_rdata[`SECTION_TLB__CB] >> 1;
+
+                                if ( fsr_nxt[3:0] != 4'd0 ) // Fault occured.
+                                begin
+                                        goahead   = 1'd0;       // Block cache access.
+                                        o_stall   = 1'd0;       // Don't stall.
+                                        o_fault   = 1'd1;       // Set fault.
+                                        far_nxt   = i_address;  // Set fault address.
+                                end
+                                else   // No fault.
+                                begin
+                                        goahead   = 1'd1;   // No fault.
+                                        o_stall   = 1'd0;   // No stall until now. 
+                                        far_nxt   = far_ff; // Keep values.
+                                        o_fault   = 1'd0;   // No fault.
+                                end
+
                         end
                         else if ( (lptlb_rdata[`LPAGE_TLB__TAG] == 
                                i_address[`VA__LPAGE_TAG]) && lptlb_rdav )
                         begin
+                                //
                                 // Entry found in large page TLB.
-                                o_fault = ! (check_lpage_permissions
+                                //
+                                fsr_nxt = lpage_fsr
                                 (
                                         i_address[`VA__LPAGE_AP_SEL],
                                         i_cpsr[4:0] == USR,
@@ -460,18 +479,36 @@ begin: blk1
                                         sr,
                                         dac_reg,
                                         lptlb_rdata
-                                ) );
+                                ) ;
 
                                 phy_addr_nxt = {lptlb_rdata[`LPAGE_TLB__BASE],
                                                 i_address[15:0]};
 
                                 cacheable = lptlb_rdata[`LPAGE_TLB__CB] >> 1;
+
+                                if ( fsr_nxt[3:0] != 4'd0 ) // Fault occured.
+                                begin
+                                        goahead   = 1'd0;       // Block cache access.
+                                        o_stall   = 1'd0;       // Don't stall.
+                                        o_fault   = 1'd1;       // Set fault.
+                                        far_nxt   = i_address;  // Set fault address.
+                                end
+                                else   // No fault.
+                                begin
+                                        goahead   = 1'd1;   // No fault.
+                                        o_stall   = 1'd0;   // No stall until now. 
+                                        far_nxt   = far_ff; // Keep values.
+                                        o_fault   = 1'd0;   // No fault.
+                                end
+
                         end
                         else if ( (setlb_rdata[`SECTION_TLB__TAG] == 
                                i_address[`VA__SECTION_TAG]) && setlb_rdav )
                         begin
+                                //
                                 // Entry found in section TLB.
-                                o_fault = ! (check_section_permissions
+                                //
+                                fsr_nxt = section_fsr
                                 (
                                         i_cpsr[4:0] == USR,
                                         1'd1,
@@ -479,73 +516,74 @@ begin: blk1
                                         sr,
                                         dac_reg,
                                         setlb_rdata
-                                ) );
+                                ) ;
 
                                 phy_addr_nxt = {setlb_rdata[`SECTION_TLB__BASE],
                                                 i_address[19:0]};
 
                                 cacheable = setlb_rdata[`SECTION_TLB__CB] >> 1;
-                        end
-                        else
-                        begin
-                                // Dont go ahead with cache access.
-                                o_fault   = 1'd0;
-                                goahead   = 1'd0;
-                                o_stall   = 1'd1;
 
-                                // Value of cacheable does not matter.
-
-                                // Provide address on the bus.
-                                // Generate read.
-                                generate_memory_read2 (   
-                                {baddr  [`VA__TRANSLATION_BASE], 
-                               i_address[`VA__TABLE_INDEX], 2'd0});
-
-                                // Wait for a response.
-                                if ( i_ram_done )
+                                if ( fsr_nxt[3:0] != 4'd0 ) // Fault occured.
                                 begin
-                                        state_nxt = FETCH_L1_DESC;
+                                        goahead   = 1'd0;       // Block cache access.
+                                        o_stall   = 1'd0;       // Don't stall.
+                                        o_fault   = 1'd1;       // Set fault.
+                                        far_nxt   = i_address;  // Set fault address.
                                 end
-                        end
+                                else   // No fault.
+                                begin
+                                        goahead   = 1'd1;   // No fault.
+                                        o_stall   = 1'd0;   // No stall until now. 
+                                        far_nxt   = far_ff; // Keep values.
+                                        o_fault   = 1'd0;   // No fault.
+                                end
 
-                        // If a fault occurred, do not go ahead with cache access.
-                        // But do not stall. Value of cacheable does not matter.
-                        if ( o_fault )
-                        begin
-                                goahead   = 1'd0;
-                                o_stall   = 1'd0;
-                                far_nxt   = i_address;
                         end
-                        else
+                        else /* Entry not found. */
                         begin
-                                // If no fault, cacheable would have been set.
-
-                                goahead = 1'd1; // Go ahead with cache access.
-                                                // Stall will be computed later.
+                                //
+                                // Dont go ahead with cache access since we need
+                                // to fetch descriptor.
+                                //
+                                fsr_nxt   = fsr_ff;             // Preserve FSR.
+                                far_nxt   = far_ff;             // Preserve FAR.
+                                goahead   = 1'd0;               // Don't do cache access.
+                                o_fault   = 1'd0;               // No fault.
+                                o_stall   = 1'd1;               // Stall CPU.
+                                state_nxt = START_DESC_FETCH;   // Initiate DESC_FETCH.
                         end
                 end
                 else
                 begin
-                        // No translation. Go ahead with cache access.
+                        //
+                        // No translation as MMU is OFF. Go ahead with cache access.
                         // Stall witll be computed in cache access.
+                        //
                         phy_addr_nxt = i_address;
                         o_fault      = 1'd0;
                         state_nxt    = state_ff;
                         goahead      = 1'd1;
+                        fsr_nxt      = 0;
+                        far_nxt      = 0;
+                        o_stall      = 0; // No stall so far.
 
+                        //
                         // Decide cacheability based on define.
+                        //
                         `ifdef FORCE_I_CACHEABLE
-                        cacheable = 1'd1;
+                                cacheable = 1'd1;
                         `elsif FORCE_I_RAND_CACHEABLE
-                        cacheable = $random;
+                                cacheable = $random; // DO NOT SET THIS FOR SYNTHESIS.
                         `else
-                        cacheable = 1'd0; // If mmu is out, cache is also out.
+                                cacheable = 1'd0; // If mmu is out, cache is also out.
                         `endif
                 end
 
 ///////////////////////////////////////////////////////////////////////////////
 
-                // Active request to cache pending...
+                //
+                // Permissions check out, we can access memory.
+                //
                 if ( goahead )
                 begin
                         if ( cache_en )
@@ -565,20 +603,12 @@ begin: blk1
                                         end
                                         else
                                         begin
-                                                // Place address.
-                                                generate_memory_read2({phy_addr_nxt[31:4], 4'd0});
-
+                                                // No match, start cache fill.
                                                 o_stall   = 1'd1;
-
-                                                // Begin a linefill and update the tag.
-                                                if ( i_ram_done )
-                                                begin
-                                                        state_nxt = CACHE_FILL_0; 
-                                                end
-
-                                       end
+                                                state_nxt = START_CACHE_FILL;
+                                        end
                         end
-                        else
+                        else // Fall back access.
                         begin
                                 o_ram_address = phy_addr_nxt;
                                 o_ram_rd_en   = !stall; 
@@ -587,12 +617,55 @@ begin: blk1
                                 fsr_nxt       = 32'd0;
                                 far_nxt       = 32'd0;
                         end
-                end // else kill_memory_op2 is activated or TLB transfer.
+                end // Else access is killed or TLB takes over.
+         end
+
+         START_CACHE_FILL:
+         begin
+                 // Stall CPU.
+                 o_fault = 1'd0;
+                 o_stall = 1'd1;
+
+                 // Place address.
+                 generate_memory_read2({phy_addr_ff[31:4], 4'd0});
+
+                 // Wait for response.
+                 if ( i_ram_done )
+                 begin
+                         state_nxt = CACHE_FILL_0; 
+                 end
+                 else
+                 begin
+                         state_nxt = state_ff;
+                 end
+         end
+
+         START_DESC_FETCH:
+         begin
+                 // Stall CPU.
+                 o_fault   = 1'd0;
+                 o_stall   = 1'd1;
+
+                 // Provide address on the bus.
+                 // Generate read.
+                 generate_memory_read2 (   
+                 {baddr  [`VA__TRANSLATION_BASE], 
+                  i_address[`VA__TABLE_INDEX], 2'd0});
+
+                 // Wait for a response.
+                 if ( i_ram_done )
+                 begin
+                         state_nxt = FETCH_L1_DESC;
+                 end
          end
 
          FETCH_L1_DESC:
          begin
                 o_stall = 1'd1;
+
+                // Get another level of fetch - prpr in case.
+                generate_memory_read2 ({i_ram_rd_data[`L1_PAGE__PTBR], 
+                                      i_address[`VA__L2_TABLE_INDEX], 2'd0});
 
                 case ( i_ram_rd_data[`ID] )
                 SECTION_ID:
@@ -619,10 +692,6 @@ begin: blk1
                         phy_addr_nxt[3:0] = i_ram_rd_data[`L1_PAGE__DAC_SEL];
 
         
-                        // Get another level of fetch.
-                        generate_memory_read2 ({i_ram_rd_data[`L1_PAGE__PTBR], 
-                                        i_address[`VA__L2_TABLE_INDEX], 2'd0});
-
                 end
 
                 default:
@@ -808,5 +877,16 @@ begin
                 buf2_ff <= buf2_nxt;
         end
 end
+
+initial
+begin
+        `ifndef SIM
+                `ifdef FORCE_I_RAND_CACHEABLE
+                        $display("*E: Bad config.vh setting for synthesis...");
+                        $finish;
+                `endif
+        `endif
+end
+
 
 endmodule // zap_i_mmu_cache.v

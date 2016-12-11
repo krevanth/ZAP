@@ -16,7 +16,11 @@ localparam CACHE_FILL_3         = 8;
 localparam REFRESH_CYCLE        = 9;
 localparam RD_DLY               = 10;
 localparam REFRESH_CYCLE_CACHE  = 11;
-localparam NUMBER_OF_STATES     = 12;
+localparam START_CACHE_FILL     = 12;
+localparam START_DESC_FETCH     = 13;
+localparam MEM_WRITE_IDLE       = 14;
+localparam MEM_WRITE_RD_DLY     = 15;
+localparam NUMBER_OF_STATES     = 16;
 
 parameter CACHE_TAG_WDT = 31 - 4 - $clog2(CACHE_SIZE/16) + 1;
 

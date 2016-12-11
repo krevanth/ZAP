@@ -72,6 +72,27 @@ msr cpsr_c, r1
 ldr r1, =#4100
 mcr p15, 0, r1, c1, c1, 0
 
+// Write out identitiy section mapping. Write 16KB to register 2.
+mov r1, #1
+mov r1, r1, lsl #14
+mcr p15, 0, r1, c2, c0, 1
+
+// Set domain access control to all 1s.
+mvn r1, #0
+mcr p15, 0, r1, c3, c0, 0
+
+// Set up a section desctiptor for identity mapping that is Cachaeable.
+mov r1, #1
+mov r1, r1, lsl #14
+mov r2, #14  // Cacheable descriptor.
+str r2, [r1] // Write identity section desctiptor to 16KB location.
+ldr r6, [r1]
+mov r7, r1
+
+// ENABLE MMU
+ldr r1, =#4101
+mcr p15, 0, r1, c1, c1, 0
+
 // Switch mode.
 mrs r2, cpsr
 bic r2, r2, #31

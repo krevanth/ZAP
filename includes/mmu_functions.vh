@@ -13,10 +13,10 @@ end
 endtask
 
 
-task generate_memory_write;
+task generate_memory_write ( input [31:0] address );
 begin
            o_ram_wr_data = i_wr_data;
-           o_ram_address = phy_addr_nxt;  
+           o_ram_address = address;  
            o_ram_ben     = i_ben;
            o_ram_wr_en   = 1'd1;
            o_ram_rd_en   = 1'd0;
