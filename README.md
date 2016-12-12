@@ -8,7 +8,7 @@ ARM v4 and Thumb v1. It is also equipped with v4 compatible split cache and
 memory management capabilities.
 
 ##Current Status
-Beta release.
+Experimental.
 
 ##Features
 - Supports v4 ARM instructions and v1 Thumb instructions.
