@@ -14,7 +14,6 @@
         `define VCD_FILE_PATH "/tmp/zap.vcd"
         `define MEMORY_IMAGE "/tmp/prog.v"
         `define MAX_CLOCK_CYCLES 200000
-//        `define SEED 32'h12345678 // Pass this on the command line.
         `define THUMB_EN
 
 /* DO NOT DEFINE ANY OF THIS IF YOU ARE SYNTHESIZING! */
