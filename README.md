@@ -2,7 +2,7 @@
 *Author* : Revanth Kamaraj (revanth91kamaraj@gmail.com)<br />
 *License*: MIT License.<br />
 
-# NOTE: Thumb is not supported.
+## NOTE: The Thumb instruction set is not supported because implementing it may require a license.
 
 ##Description
 ZAP is an ARM compatible processor implementing the ARM v4 instruction set 
