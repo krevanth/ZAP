@@ -7,7 +7,7 @@
 // RTL files.
 $(ZAP_HOME)/rtl/zap_alu/alu.v
 $(ZAP_HOME)/rtl/zap_alu/zap_alu_main.v
-$(ZAP_HOME)/rtl/zap_core.v
+$(ZAP_HOME)/rtl/zap_core/zap_core.v
 $(ZAP_HOME)/rtl/zap_cp15_cb/zap_cp15_cb.v
 $(ZAP_HOME)/rtl/zap_decode/zap_decode_main.v
 $(ZAP_HOME)/rtl/zap_decode/zap_decode.v
@@ -28,6 +28,6 @@ $(ZAP_HOME)/rtl/zap_shift/zap_multiply.v
 $(ZAP_HOME)/rtl/zap_shift/zap_shifter_main.v
 $(ZAP_HOME)/rtl/zap_shift/zap_shift_shifter.v
 $(ZAP_HOME)/rtl/zap_mem_shm/zap_mem_shm.v
-$(ZAP_HOME)/rtl/zap_top.v
+$(ZAP_HOME)/rtl/TOP/zap_top.v
 $(ZAP_HOME)/rtl/zap_predecode/zap_predecode_compress.v
 

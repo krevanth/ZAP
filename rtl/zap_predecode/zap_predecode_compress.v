@@ -69,7 +69,7 @@ begin
         o_fiq                   = i_fiq;
         o_force32_align         = 0;
 
-        `ifdef THUMB_EN
+        `ifdef COMPRESS_EN
         if ( i_cpsr_ff[T] && i_instruction_valid ) // COMPRESSED mode.
         begin
                 casez ( i_instruction[15:0] )

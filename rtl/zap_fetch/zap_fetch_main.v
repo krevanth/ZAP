@@ -122,8 +122,8 @@ begin
                 end
 
                 // Pump PC + 8 or 4 down the pipeline. The number depends on
-                // ARM/Thumb mode.
-                o_pc_plus_8_ff <= i_pc_ff + 32'd8;
+                // ARM/Compressed mode.
+                o_pc_plus_8_ff <= i_cpsr_ff[T] ? ( i_pc_ff + 32'd4 ) : ( i_pc_ff + 32'd8 );
 
                 // PC.
                 o_pc_ff <= i_pc_ff;
