@@ -32,8 +32,8 @@ module zap_predecode_compress
         input wire              i_irq,
         input wire              i_fiq,
 
-        // Ensure Thumb mode is active.
-        input wire [31:0]       i_cpsr_ff, // To ensure Thumb mode is active.
+        // Ensure COMPRESSED mode is active.
+        input wire [31:0]       i_cpsr_ff, // To ensure COMPRESSED mode is active.
 
         // Output to the ARM decoder.
         output reg [34:0]       o_instruction,
@@ -60,7 +60,7 @@ always @ (posedge i_clk)
                 offset_ff <= offset_nxt;
 always @*
 begin
-        // If you are not in Thumb mode, just pass stuff on.
+        // If you are not in COMPRESSED mode, just pass stuff on.
         o_instruction_valid     = i_instruction_valid;
         o_und                   = 0;
         o_instruction           = i_instruction;
@@ -70,7 +70,7 @@ begin
         o_force32_align         = 0;
 
         `ifdef THUMB_EN
-        if ( i_cpsr_ff[T] && i_instruction_valid ) // Thumb mode.
+        if ( i_cpsr_ff[T] && i_instruction_valid ) // COMPRESSED mode.
         begin
                 casez ( i_instruction[15:0] )
                         T_ADD_SUB_LO            : decode_add_sub_lo; 
@@ -95,7 +95,7 @@ begin
                         default: 
                         begin
                                 `ifdef SIM
-                                        $display($time, "%m: Not implemented in Thumb decoder!!!");
+                                        $display($time, "%m: Not implemented in COMPRESSED decoder!!!");
                                 `endif
 
                                 o_und = 1;
@@ -485,7 +485,7 @@ endtask
 
 task decode_shift;
 begin
-        // Thumb shift instructions. Decompress to ARM with instruction specified shift.
+        // Compressed shift instructions. Decompress to ARM with instruction specified shift.
         o_instruction           = 32'd0;                // Extension -> 0.
         o_instruction[31:28]    = AL;                   // Always execute.
         o_instruction[27:26]    = 2'b00;                // Data processing.
