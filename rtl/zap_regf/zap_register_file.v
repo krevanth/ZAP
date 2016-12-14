@@ -405,7 +405,6 @@ begin
 
                 // CPSR.
                 cpsr_ff <= cpsr_nxt;
-                cpsr_ff[T] <= 1'd0; // THUMB IS NOT SUPPORTED.
         end
 end
 

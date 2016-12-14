@@ -108,6 +108,7 @@ module zap_predecode_main #(
 `include "cpsr.vh"
 `include "global_functions.vh"
 
+wire                            o_comp_und_nxt;
 wire    [3:0]                   o_condition_code_nxt;
 wire                            o_irq_nxt;
 wire                            o_fiq_nxt;
@@ -168,7 +169,7 @@ begin
                 o_irq_ff                                <= o_irq_nxt & !i_cpu_mode[I]; // If mask is 1, do not pass.
                 o_fiq_ff                                <= o_fiq_nxt & !i_cpu_mode[F]; // If mask is 1, do not pass.
                 o_abt_ff                                <= o_abt_nxt;                    
-                o_und_ff                                <= 1'd0;
+                o_und_ff                                <= o_comp_und_nxt && i_instruction_valid;
                 o_pc_plus_8_ff                          <= i_pc_plus_8_ff;
                 o_pc_ff                                 <= i_pc_ff;
                 o_force32align_ff                       <= o_force32align_nxt;
@@ -238,11 +239,25 @@ u_zap_decode_coproc
         .o_copro_word_ff(o_copro_word_ff)
 );
 
-assign arm_instruction          = cp_instruction;
-assign arm_instruction_valid    = cp_instruction_valid;
-assign arm_irq                  = cp_irq;
-assign arm_fiq                  = cp_fiq;
-assign o_force32align_nxt       = 1'd0;
+// Implements a custom 16-bit compressed instruction set.
+zap_predecode_compress
+u_zap_predecode_compress
+(
+        .i_clk(i_clk),
+        .i_reset(i_reset),
+        .i_irq(cp_irq),
+        .i_fiq(cp_fiq),
+        .i_instruction(cp_instruction),
+        .i_instruction_valid(cp_instruction_valid),
+        .i_cpsr_ff(i_cpu_mode),
+
+        .o_instruction(arm_instruction),
+        .o_instruction_valid(arm_instruction_valid),
+        .o_irq(arm_irq),
+        .o_fiq(arm_fiq),
+        .o_force32_align(o_force32align_nxt),
+        .o_und(o_comp_und_nxt)
+);
 
 // Branch states.
 localparam      SNT     =       0; // Strongly Not Taken.

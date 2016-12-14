@@ -12,7 +12,8 @@ It is also equipped with v4 compatible split cache and memory management capabil
 Experimental.
 
 ##Features
-- Supports v4 ARM instructions.
+- Supports v4 32-bit ARM instructions.
+- Supports a custom 16-bit instruction set.
 - Pipelined architecture (8 stages) : Fetch1, Fetch2, Decode, Issue, Shift, Execute, Memory, Writeback
 - Branch prediction supported.
 - Split I and D cache (Size can be configured using parameters).
