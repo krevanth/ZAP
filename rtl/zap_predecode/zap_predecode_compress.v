@@ -9,7 +9,11 @@ HDL --
 Verilog-2005
 
 Description --
-Implements some 16-bit instructions.
+Implements a custom 16-bit instruction decoder.
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
+!!! THIS IS NOT COMPATIBLE WITH THUMB. DO NOT ATTEMPT TO RUN THUMB CODE ON THIS - IT WILL NOT WORK !!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 Author --
 Revanth Kamaraj.
