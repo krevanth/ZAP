@@ -103,8 +103,12 @@ end
 integer seed = `SEED;
 
 `ifdef IRQ_EN
+
 always @ (negedge i_clk)
-        i_irq = $random(seed);
+begin
+        i_irq = $random;
+end
+
 `endif
 
 initial

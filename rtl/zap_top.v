@@ -35,6 +35,20 @@ wire sync_reset;
 
 localparam PHY_REGS = TOTAL_PHY_REGS;
 
+wire [31:0] DRAM_WDATA;
+wire [31:0] DRAM_RDATA;
+wire [31:0] DRAM_ADDR ;
+wire        DRAM_REN  ;
+wire        DRAM_WEN  ;
+wire [3:0]  DRAM_BEN  ;
+wire        DRAM_STALL;
+
+wire [31:0] IRAM_DATA;
+wire [31:0] IRAM_ADDR;
+wire        IRAM_REN;
+wire        IRAM_STALL;
+
+reg  clear;
 reg  stall;
 wire [31:0] instr;
 wire instr_valid_n;
@@ -172,15 +186,51 @@ u_zap_mmu_dcache (
 .i_reg_rd_data           (cp_rdata),
 .o_reg_wr_index          (cp_windex),
 .o_reg_rd_index          (cp_rindex),
-.o_ram_wr_data           (o_dram_data), // RAM write data.
-.i_ram_rd_data           (i_dram_data), // RAM read data.
-.o_ram_address           (o_dram_addr), // RAM address.
-.o_ram_rd_en             (o_dram_rd_en), // RAM read command.
-.o_ram_wr_en             (o_dram_wr_en), // RAM write command.
-.o_ram_ben               (o_dram_ben), // RAM byte enable.
-.i_ram_done              (!i_dram_stall)  // RAM done indicator.
+
+.o_ram_wr_data           ( DRAM_WDATA), // RAM write data.
+.i_ram_rd_data           ( DRAM_RDATA), // RAM read data.
+.o_ram_address           ( DRAM_ADDR ), // RAM address.
+.o_ram_rd_en             ( DRAM_REN  ), // RAM read command.
+.o_ram_wr_en             ( DRAM_WEN  ), // RAM write command.
+.o_ram_ben               ( DRAM_BEN  ), // RAM byte enable.
+.i_ram_done              (!DRAM_STALL)  // RAM done indicator.
 );
 
+
+zap_mem_shm U_ZAP_MEM_SHM
+(
+        .i_clk          (i_clk),
+        .i_reset        (i_reset),
+        .i_cpu_address  (DRAM_ADDR),
+        .i_cpu_data     (DRAM_WDATA),
+        .i_cpu_ren      (DRAM_REN),
+        .i_cpu_wen      (DRAM_WEN),
+        .o_cpu_data     (DRAM_RDATA),
+        .o_cpu_stall    (DRAM_STALL),
+        .i_cpu_flush    (1'd0), //(clear_from_writeback),
+        .i_cpu_ben      (DRAM_BEN),
+
+        .o_ram_addr     (o_dram_addr),
+        .o_ram_rd_en    (o_dram_rd_en),     
+        .o_ram_wr_en    (o_dram_wr_en),
+        .o_ram_ben      (o_dram_ben),
+        .o_ram_data     (o_dram_data),
+        .i_ram_data     (i_dram_data),
+        .i_ram_stall    (i_dram_stall)
+);
+
+always @*
+begin
+        // Pipeline external stall sequence.
+        if      ( clear_from_writeback )       clear = 1'd1;
+        else if ( data_stall )                 clear = 1'd0;
+        else if ( clear_from_alu )             clear = 1'd1;       
+        else if ( stall_from_shifter )         clear = 1'd0;
+        else if ( stall_from_issue )           clear = 1'd0;
+        else if ( stall_from_decode)           clear = 1'd0;
+        else if ( clear_from_decode)           clear = 1'd1;
+        else                                   clear = 1'd0;
+end
 
 // =============================
 // MMU - INSTRUCTION.
@@ -207,12 +257,44 @@ u_zap_icache_mmu (
 
 .i_cp_word               (cp_word),
 .i_cp_dav                (cp_dav),
-.i_reg_rd_data           (cp_rdata),  
-.i_ram_rd_data           (i_iram_data),  // RAM read data.
-.o_ram_address           (o_iram_addr),  // RAM address.
-.o_ram_rd_en             (o_iram_rd_en), // RAM read command.
-.i_ram_done              (!i_iram_stall)     // RAM done indicator.
+.i_reg_rd_data           (cp_rdata), 
+ 
+.i_ram_rd_data           (IRAM_DATA), //(i_iram_data),  // RAM read data.
+.o_ram_address           (IRAM_ADDR), //(o_iram_addr),  // RAM address.
+.o_ram_rd_en             (IRAM_REN),  // (o_iram_rd_en), // RAM read command.
+.i_ram_done              (!IRAM_STALL) // (!i_iram_stall)     // RAM done indicator.
 );
+
+/*
+assign IRAM_DATA    = i_iram_data;
+assign o_iram_addr  = IRAM_ADDR;
+assign o_iram_rd_en = IRAM_REN;
+assign IRAM_STALL   = i_iram_stall;
+*/
+
+zap_mem_shm U_ZAP_MEM_SHM_CODE
+(
+        .i_clk          (i_clk),
+        .i_reset        (i_reset),
+        .i_cpu_address  (IRAM_ADDR),
+        .i_cpu_data     (32'd0),
+        .i_cpu_ren      (IRAM_REN),
+        .i_cpu_wen      (1'd0),
+        .o_cpu_data     (IRAM_DATA),
+        .o_cpu_stall    (IRAM_STALL),
+        .i_cpu_flush    (clear),
+        .i_cpu_ben      (4'd0),
+
+        .o_ram_addr     (o_iram_addr),
+        .o_ram_rd_en    (o_iram_rd_en),     
+        .o_ram_wr_en    (),
+        .o_ram_ben      (),
+        .o_ram_data     (),
+        .i_ram_data     (i_iram_data),
+        .i_ram_stall    (i_iram_stall)
+);
+
+
 
 `endif
 

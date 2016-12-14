@@ -13,7 +13,7 @@
         `define IRQ_EN
         `define VCD_FILE_PATH "/tmp/zap.vcd"
         `define MEMORY_IMAGE "/tmp/prog.v"
-        `define MAX_CLOCK_CYCLES 200000
+        `define MAX_CLOCK_CYCLES 100000
 
 /* DO NOT DEFINE ANY OF THIS IF YOU ARE SYNTHESIZING! */
 
