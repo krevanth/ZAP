@@ -25,7 +25,10 @@ module zap_top
         output  wire            o_iram_rd_en,
         input   wire   [31:0]   i_iram_data,
         output  wire   [31:0]   o_iram_addr,
-        input   wire            i_iram_stall
+        input   wire            i_iram_stall,
+
+        // Unused.
+        output  wire            o_unused_ok
 );
 
 wire sync_reset;
@@ -116,7 +119,9 @@ u_zap_core
 .o_stall_from_issue     (stall_from_issue),
 .o_stall_from_decode    (stall_from_decode),
 .o_clear_from_decode    (clear_from_decode),
-.o_clear_from_writeback (clear_from_writeback)
+.o_clear_from_writeback (clear_from_writeback),
+
+.o_unused_ok            (o_unused_ok)
 );
 
 `ifndef CMMU_EN
@@ -151,6 +156,8 @@ assign cp_reg_en     = 1'd0;
 assign cp_windex     = 0;
 assign cp_rindex     = 0;
 assign cp_wdata      = 0;
+assign instr_abort   = 0; // FIXED.
+assign data_abort    = 0; // FIXED.
 
 `else
 

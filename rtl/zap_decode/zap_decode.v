@@ -94,7 +94,9 @@ module zap_decode #(
                 output  reg                             o_und,
 
                 // ARM <-> Thumb switch indicator. Indicated on a BX.
-                output  reg                             o_switch
+                output  reg                             o_switch,
+
+                output  wire                            o_unused_ok
 );
 
 `include "regs.vh"
@@ -669,5 +671,7 @@ begin
         o_shift_operation       = instruction[6:5];
 end
 endtask
+
+assign o_unused_ok = |i_cpsr_ff[31:6];
 
 endmodule

@@ -89,12 +89,17 @@ module zap_core
                 output wire     [31:0]                  o_pc_nxt,               // Upcoming address for I-cache. 
 
                 // Pipeline stall and clear signals.
-                output wire o_clear_from_alu                     ,    // |
-                output wire o_stall_from_shifter                 ,    // |
-                output wire o_stall_from_issue                   ,    // |
-                output wire o_stall_from_decode                  ,    // V Low Priority.
-                output wire o_clear_from_decode                  ,    // V
-                output wire o_clear_from_writeback
+                output wire                             o_clear_from_alu                     ,    // |
+                output wire                             o_stall_from_shifter                 ,    // |
+                output wire                             o_stall_from_issue                   ,    // |
+                output wire                             o_stall_from_decode                  ,    // V Low Priority.
+                output wire                             o_clear_from_decode                  ,    // V
+                output wire                             o_clear_from_writeback               ,
+
+                ////////////////////////////////////////////
+                // Unused. IGNORE THIS.
+                ////////////////////////////////////////////
+                output wire                             o_unused_ok
 );
 
 `include "regs.vh"
@@ -130,6 +135,10 @@ wire o_irq_ack;
 // -------------------------------
 // Wires.
 // -------------------------------
+
+wire unused_ok_1, unused_ok_2, unused_ok_3, unused_ok_4;
+
+assign o_unused_ok = unused_ok_1 | unused_ok_2 | unused_ok_3 | unused_ok_4;
 
 wire reset;
 
@@ -369,7 +378,9 @@ u_zap_fetch_main (
         .i_confirm_from_alu             (confirm_from_alu),
         .i_pc_from_alu                  (shifter_pc_ff),
         .i_taken                        (shifter_taken_ff),
-        .o_taken_ff                     (fetch_bp_state)
+        .o_taken_ff                     (fetch_bp_state),
+
+        .o_unused_ok                    (unused_ok_1)
 );
 
 // PREDECODE STAGE //
@@ -430,7 +441,9 @@ u_zap_predecode (
         .o_instruction_ff               (predecode_inst),
         .o_instruction_valid_ff         (predecode_val),
 
-        .o_taken_ff                     (predecode_taken)
+        .o_taken_ff                     (predecode_taken),
+
+        .o_unused_ok                    (unused_ok_2)
 );
 
 // DECODE STAGE //
@@ -489,7 +502,9 @@ u_zap_decode_main (
         .o_swi_ff                       (decode_swi_ff),
         .o_und_ff                       (decode_und_ff),
         .o_force32align_ff              (decode_force32_ff),
-        .o_taken_ff                     (decode_taken_ff)
+        .o_taken_ff                     (decode_taken_ff),
+
+        .o_unused_ok                    (unused_ok_4)
 );
 
 // ISSUE //
@@ -948,7 +963,9 @@ u_zap_regf
         .o_hijack_op2           (wb_hijack_op2),
         .o_hijack_cin           (wb_hijack_cin),
 
-        .i_hijack_sum           (alu_hijack_sum)
+        .i_hijack_sum           (alu_hijack_sum),
+
+        .o_unused_ok            (unused_ok_3)
 );
 
 // Pipeline controls exposed.

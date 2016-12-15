@@ -114,7 +114,10 @@ module zap_register_file #(
         input wire     [32:0]                 i_hijack_sum,
 
         // Resample.
-        output reg                            o_icache_resample
+        output reg                            o_icache_resample,
+        
+        // Unused OK.
+        output wire                           o_unused_ok
 );
 
 // PC and CPSR are separate registers.
@@ -157,7 +160,6 @@ end
 
 bram_wrapper u_bram_wrapper
 (
- .i_clk          (       i_clk           ),
  .i_clk_2x       (       i_clk_2x        ),
 
  .i_reset        (       i_reset         ),       
@@ -407,5 +409,7 @@ begin
                 cpsr_ff <= cpsr_nxt;
         end
 end
+
+assign  o_unused_ok = o_fiq_ack || o_irq_ack || o_icache_resample || i_hijack_sum[32];
 
 endmodule

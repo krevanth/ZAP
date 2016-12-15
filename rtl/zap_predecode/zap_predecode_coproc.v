@@ -39,7 +39,9 @@ module zap_predecode_coproc #(
         output reg              o_stall_from_decode,      // Stall from decode.
 
         output reg                        o_copro_dav_ff,           // Are we really asking for the coprocessor.
-        output reg  [31:0]                o_copro_word_ff          // The entire instruction is passed to the coprocessor.
+        output reg  [31:0]                o_copro_word_ff,         // The entire instruction is passed to the coprocessor.
+
+        output wire                     o_unused_ok
 );
 
 `include "cpsr.vh"
@@ -140,6 +142,10 @@ begin
         begin
                 clear;
         end
+        else if ( i_data_stall )
+        begin
+                // Preserve values.
+        end
         else if ( i_clear_from_alu )
         begin
                 clear;
@@ -167,5 +173,7 @@ begin
 end
 endtask
 
+assign o_unused_ok =    i_cpsr_ff[4:0]  || 
+                        i_cpsr_ff[31:6];
 
 endmodule

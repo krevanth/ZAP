@@ -98,7 +98,9 @@ module zap_predecode_main #(
 
         // Clear from decode.
         output reg                              o_clear_from_decode,
-        output reg [31:0]                       o_pc_from_decode
+        output reg [31:0]                       o_pc_from_decode,
+
+        output wire o_unused_ok
 );
 
 `include "cc.vh"
@@ -132,6 +134,11 @@ wire cp_irq;
 wire cp_fiq;
 
 reg [1:0] taken_nxt;
+
+wire unused_ok_1, unused_ok_2;
+
+// Unused.
+assign o_unused_ok = unused_ok_1 | unused_ok_2;
 
 // Abort
 assign  o_abt_nxt = i_abt;
@@ -236,7 +243,9 @@ u_zap_decode_coproc
 
         // Coprocessor interface.
         .o_copro_dav_ff(o_copro_dav_ff),
-        .o_copro_word_ff(o_copro_word_ff)
+        .o_copro_word_ff(o_copro_word_ff),
+
+        .o_unused_ok(unused_ok_1)
 );
 
 // Implements a custom 16-bit compressed instruction set.
@@ -322,7 +331,9 @@ zap_predecode_mem_fsm u_zap_mem_fsm (
         .o_fiq(o_fiq_nxt),
         .o_instruction(o_instruction_nxt),
         .o_instruction_valid(o_instruction_valid_nxt),
-        .o_stall_from_decode(mem_fetch_stall)
+        .o_stall_from_decode(mem_fetch_stall),
+
+        .o_unused_ok(unused_ok_2)
 );
 
 endmodule

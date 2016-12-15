@@ -63,7 +63,9 @@ module zap_predecode_mem_fsm
 
         // Possibly masked interrupts.
         output reg              o_irq,
-        output reg              o_fiq
+        output reg              o_fiq,
+
+        output wire             o_unused_ok
 );
 
 `include "fields.vh"
@@ -489,5 +491,7 @@ ones_counter u_ones_counter
         .i_word(i_instruction[15:0]),
         .o_offset(oc_offset)
 );
+
+assign o_unused_ok = i_cpsr[31:6] || i_cpsr[4:0];
 
 endmodule

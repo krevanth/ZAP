@@ -8,7 +8,7 @@
 //      `timescale 1ns/1ps
 
         `define CMMU_EN
-//      `define COMPRESSED_EN
+        `define COMPRESSED_EN
         `define SIM
         `define STALL
         `define IRQ_EN

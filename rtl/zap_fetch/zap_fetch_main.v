@@ -56,7 +56,10 @@ module zap_fetch_main #(
                 input wire         i_confirm_from_alu,
                 input wire [31:0]  i_pc_from_alu,
                 input wire [1:0]   i_taken,
-                output wire [1:0]  o_taken_ff
+                output wire [1:0]  o_taken_ff,
+
+                // Unused.
+                output wire        o_unused_ok
 );
 
 `include "cpsr.vh"
@@ -186,5 +189,10 @@ endfunction
 
 `undef x
 `undef y
+
+assign o_unused_ok =      i_cpsr_ff[4:0]   || 
+                        i_cpsr_ff[31:6]  || 
+                        i_pc_from_alu[0] || 
+                        i_pc_from_alu[31:$clog2(BP_ENTRIES) + 1];
 
 endmodule

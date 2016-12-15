@@ -7,7 +7,6 @@
 
 module bram_wrapper
 (
-        input wire              i_clk,
         input wire              i_clk_2x,
 
         input wire              i_reset,
