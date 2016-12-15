@@ -5,7 +5,7 @@
 ##Description
 ZAP is an ARM processor core based on the ARMv4 architecture.
 It is equipped with split write-through caches and memory management capabilities.
-ZAP does not include the Thumb instruction set from v4T.
+ZAP does not include the Thumb instruction set from ARMv4T.
 
 ##Current Status
 Experimental.
