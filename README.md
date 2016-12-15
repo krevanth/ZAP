@@ -1,18 +1,17 @@
-# ZAP : An ARM v4 processor with cache/MMU.
+# ZAP : An ARMv4 architecture compatible processor core.
 *Author* : Revanth Kamaraj (revanth91kamaraj@gmail.com)<br />
 *License*: MIT License.<br />
 
-### NOTE: The Thumb instruction set is not supported because implementing it may require a license.
-
 ##Description
-ZAP is an ARM compatible processor implementing the ARM v4 instruction set 
-It is also equipped with v4 compatible split cache and memory management capabilities.
+ZAP is an ARM processor core based on the ARMv4 architecture.
+It is equipped with split write-through caches and memory management capabilities.
+ZAP does not include the Thumb instruction set from v4T.
 
 ##Current Status
 Experimental.
 
 ##Features
-- Supports v4 32-bit ARM instructions.
+- Compatible with the ARMv4 architecture.
 - Supports a custom 16-bit instruction set.
 - Pipelined architecture (8 stages) : Fetch1, Fetch2, Decode, Issue, Shift, Execute, Memory, Writeback
 - Branch prediction supported.
