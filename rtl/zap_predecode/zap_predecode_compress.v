@@ -50,8 +50,6 @@ module zap_predecode_compress
         output reg              o_fiq
 );
 
-reg [11:0] offset_ff, offset_nxt;       // Remember offset.
-
 `include "cc.vh"
 `include "cpsr.vh"
 `include "instruction_patterns.vh"
@@ -59,21 +57,29 @@ reg [11:0] offset_ff, offset_nxt;       // Remember offset.
 `include "shtype.vh"
 `include "regs.vh"
 
+`ifdef COMPRESS_EN
+
+reg [11:0] offset_ff, offset_nxt;       // Remember offset.
+
 always @ (posedge i_clk) 
         if ( i_instruction_valid )
                 offset_ff <= offset_nxt;
+`endif
+
 always @*
 begin
         // If you are not in COMPRESSED mode, just pass stuff on.
         o_instruction_valid     = i_instruction_valid;
         o_und                   = 0;
         o_instruction           = i_instruction;
-        offset_nxt              = i_instruction[11:0];
         o_irq                   = i_irq;
         o_fiq                   = i_fiq;
         o_force32_align         = 0;
 
         `ifdef COMPRESS_EN
+
+        offset_nxt = i_instruction[11:0];
+
         if ( i_cpsr_ff[T] && i_instruction_valid ) // COMPRESSED mode.
         begin
                 casez ( i_instruction[15:0] )
@@ -108,6 +114,8 @@ begin
         end
         `endif
 end
+
+`ifdef COMPRESS_EN
 
 task decode_get_addr;
 begin: dcdGetAddr
@@ -503,5 +511,7 @@ begin
         o_instruction[3:0]      = i_instruction[5:3];   // Shifter source.
 end
 endtask
+
+`endif
 
 endmodule
