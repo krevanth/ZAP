@@ -1,9 +1,9 @@
-# ZAP : An ARMv4 architecture compatible processor core.
+# ZAP : An open source ARM processor (ARMv4 architecture compatible)
 *Author* : Revanth Kamaraj (revanth91kamaraj@gmail.com)<br />
 *License*: MIT License.<br />
 
 ##Description
-ZAP is an ARM processor core based on the ARMv4 architecture.
+ZAP is an ARM processor core based on the ARMv4 architecture "ARM" instruction set.
 It is equipped with split write-through caches and memory management capabilities.
 ZAP does not include the Thumb instruction set from ARMv4T.
 
