@@ -111,14 +111,10 @@ module zap_register_file #(
         output reg    [31:0]                  o_hijack_op2,
         output reg                            o_hijack_cin,
         output reg                            o_hijack,
-        input wire     [32:0]                 i_hijack_sum,
-
-        // Resample.
-        output reg                            o_icache_resample,
-        
-        // Unused OK.
-        output wire                           o_unused_ok
+        input wire     [32:0]                 i_hijack_sum
 );
+
+wire _unused_ok_;
 
 // PC and CPSR are separate registers.
 reg     [31:0]  cpsr_ff, cpsr_nxt;
@@ -193,7 +189,6 @@ begin: blk1
 
         $display($time, "Reg file always block trigger!");
 
-        o_icache_resample = 1'd0;
 
         o_hijack    =  0;
         o_hijack_op1 = 0;
@@ -225,7 +220,6 @@ begin: blk1
         else if ( i_clear_from_alu )
         begin
                 pc_nxt = i_pc_from_alu;
-                o_icache_resample = 1'd1;
         end
         else if ( i_stall_from_issue )
         begin
@@ -238,7 +232,6 @@ begin: blk1
         else if ( i_clear_from_decode )
         begin
                 pc_nxt = i_pc_from_decode;
-                o_icache_resample = 1'd1;
         end
         else if ( i_stall_from_decode )
         begin
@@ -410,6 +403,6 @@ begin
         end
 end
 
-assign  o_unused_ok = o_fiq_ack || o_irq_ack || o_icache_resample || i_hijack_sum[32];
+assign  _unused_ok_ = o_fiq_ack && o_irq_ack && i_hijack_sum[32];
 
 endmodule

@@ -126,11 +126,10 @@ module zap_decode_main #(
         output reg                              o_force32align_ff,
 
         // Branch.
-        output reg    [1:0]                     o_taken_ff,
-
-        // Unused.
-        output wire                             o_unused_ok
+        output reg    [1:0]                     o_taken_ff
 );
+
+
 
 `include "index_immed.vh"
 `include "cpsr.vh"
@@ -309,8 +308,7 @@ u_zap_decode (
         .o_mem_unsigned_halfword_enable(o_mem_unsigned_halfword_enable_nxt),
         .o_mem_translate(o_mem_translate_nxt),
         .o_und(o_und_nxt),
-        .o_switch(o_switch_nxt),
-        .o_unused_ok(o_unused_ok)
+        .o_switch(o_switch_nxt)
 );      
 
 endmodule

@@ -93,11 +93,11 @@ module zap_decode #(
                 // Unrecognized instruction.
                 output  reg                             o_und,
 
-                // ARM <-> Thumb switch indicator. Indicated on a BX.
-                output  reg                             o_switch,
-
-                output  wire                            o_unused_ok
+                // ARM <-> Compressed switch indicator. Indicated on a BX.
+                output  reg                             o_switch
 );
+
+wire _unused_ok_;
 
 `include "regs.vh"
 `include "shtype.vh"
@@ -672,6 +672,6 @@ begin
 end
 endtask
 
-assign o_unused_ok = |i_cpsr_ff[31:6];
+assign _unused_ok_ = &i_cpsr_ff[31:6];
 
 endmodule
