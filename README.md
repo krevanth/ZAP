@@ -30,10 +30,11 @@ non trivial shifts require registers a cycle early else the pipeline stalls
 for 1 cycle.
 
 ##Documentation
-[Link](https://github.com/krevanth/ZAP/blob/master/docs/zap_doc.pdf)
-[Link](https://github.com/krevanth/ZAP/blob/master/docs/armref.pdf)
+[Project Documentation](https://github.com/krevanth/ZAP/blob/master/docs/zap_doc.pdf)
 
-The document is incomplete and I will try my best to update it.
+[Instruction Format Quick Reference](https://github.com/krevanth/ZAP/blob/master/docs/armref.pdf)
+
+The project documentation is incomplete and I will try my best to update it.
 
 ##Feedback
 Please provide your feedback on the google forum...
