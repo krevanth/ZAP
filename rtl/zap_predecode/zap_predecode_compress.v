@@ -78,8 +78,6 @@ begin
 
         `ifdef COMPRESS_EN
 
-        offset_nxt = i_instruction[11:0];
-
         if ( i_cpsr_ff[T] && i_instruction_valid ) // COMPRESSED mode.
         begin
                 casez ( i_instruction[15:0] )
