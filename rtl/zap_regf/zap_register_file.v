@@ -102,19 +102,24 @@ module zap_register_file #(
         // Clear from writeback
         output reg                           o_clear_from_writeback,
 
-        // Acks.
-        output reg                           o_fiq_ack,
-        output reg                           o_irq_ack,
-
         // Hijack I/F
         output reg    [31:0]                  o_hijack_op1,
         output reg    [31:0]                  o_hijack_op2,
         output reg                            o_hijack_cin,
         output reg                            o_hijack,
-        input wire     [32:0]                 i_hijack_sum
+        input wire     [31:0]                 i_hijack_sum
 );
 
-wire _unused_ok_;
+`ifdef SIM
+
+reg fiq_ack;
+reg irq_ack;
+reg und_ack;
+reg dabt_ack;
+reg iabt_ack;
+reg swi_ack;
+
+`endif
 
 // PC and CPSR are separate registers.
 reg     [31:0]  cpsr_ff, cpsr_nxt;
@@ -189,6 +194,14 @@ begin: blk1
 
         $display($time, "Reg file always block trigger!");
 
+        `ifdef SIM
+                fiq_ack = 0;
+                irq_ack = 0;
+                und_ack = 0;
+                dabt_ack = 0;
+                iabt_ack = 0;
+                swi_ack = 0;
+        `endif
 
         o_hijack    =  0;
         o_hijack_op1 = 0;
@@ -202,8 +215,6 @@ begin: blk1
         wdata2 = 32'd0;
 
         o_clear_from_writeback = 0;
-        o_fiq_ack = 0;
-        o_irq_ack = 0;
 
         pc_nxt = pc_ff;
         cpsr_nxt = cpsr_ff;
@@ -283,6 +294,11 @@ begin: blk1
                 wa2    = PHY_ABT_SPSR;
                 wdata2 = cpsr_ff;
                 cpsr_nxt[`CPSR_MODE]  = ABT;
+
+                `ifdef SIM
+                        dabt_ack = 1'd1;
+                `endif
+
         end
         else if ( i_fiq )
         begin
@@ -294,8 +310,11 @@ begin: blk1
                 wa2    = PHY_FIQ_SPSR;
                 wdata2 = cpsr_ff;
                 cpsr_nxt[`CPSR_MODE]  = FIQ;
-                o_fiq_ack = 1'd1;
                 cpsr_nxt[F] = 1'd1;
+
+                `ifdef SIM
+                        fiq_ack = 1'd1;
+                `endif
         end
         else if ( i_irq )
         begin
@@ -311,8 +330,11 @@ begin: blk1
                 wa2    = PHY_IRQ_SPSR;
                 wdata2 = cpsr_ff;
                 cpsr_nxt[`CPSR_MODE]  = IRQ;
-                o_irq_ack = 1'd1;
                 // Returns do LR - 4 to get back to the same instruction.
+
+                `ifdef SIM
+                        irq_ack = 1'd1;
+                `endif
         end
         else if ( i_instr_abt )
         begin
@@ -324,6 +346,10 @@ begin: blk1
                 wa2    = PHY_ABT_SPSR;
                 wdata2 = cpsr_ff;
                 cpsr_nxt[`CPSR_MODE]  = ABT;
+
+                `ifdef SIM
+                        iabt_ack = 1'd1;
+                `endif
         end
         else if ( i_swi )
         begin
@@ -335,6 +361,10 @@ begin: blk1
                 wa2    = PHY_SVC_SPSR;
                 wdata2 = cpsr_ff;
                 cpsr_nxt[`CPSR_MODE]  = SVC;
+
+                `ifdef SIM
+                        swi_ack = 1'd1;
+                `endif
         end
         else if ( i_und )
         begin
@@ -346,6 +376,10 @@ begin: blk1
                 wa2    = PHY_UND_SPSR;
                 wdata2 = cpsr_ff;
                 cpsr_nxt[`CPSR_MODE]  = UND;
+
+                `ifdef SIM
+                        und_ack = 1'd1;
+                `endif
         end
         else if ( i_copro_reg_en )
         begin
@@ -402,7 +436,5 @@ begin
                 cpsr_ff <= cpsr_nxt;
         end
 end
-
-assign  _unused_ok_ = o_fiq_ack && o_irq_ack && i_hijack_sum[32];
 
 endmodule

@@ -63,7 +63,7 @@ module zap_predecode_main #(
         input wire  [31:0]                      i_pc_plus_8_ff,
 
         // CPU mode. Taken from CPSR.
-        input   wire    [31:0]                   i_cpu_mode,
+        input   wire                            i_cpu_mode_t, i_cpu_mode_i, i_cpu_mode_f,
 
         // Instruction input.
         input     wire  [31:0]                  i_instruction,    
@@ -166,8 +166,8 @@ begin
         // If no stall, only then update...
         else
         begin
-                o_irq_ff                                <= o_irq_nxt & !i_cpu_mode[I]; // If mask is 1, do not pass.
-                o_fiq_ff                                <= o_fiq_nxt & !i_cpu_mode[F]; // If mask is 1, do not pass.
+                o_irq_ff                                <= o_irq_nxt & !i_cpu_mode_i; // If mask is 1, do not pass.
+                o_fiq_ff                                <= o_fiq_nxt & !i_cpu_mode_f; // If mask is 1, do not pass.
                 o_abt_ff                                <= o_abt_nxt;                    
                 o_und_ff                                <= o_comp_und_nxt && i_instruction_valid;
                 o_pc_plus_8_ff                          <= i_pc_plus_8_ff;
@@ -210,7 +210,7 @@ u_zap_decode_coproc
         .i_fiq(i_instruction_valid ? i_fiq : 1'd0),
         .i_instruction(i_instruction_valid ? i_instruction : 32'd0),
         .i_valid(i_instruction_valid),
-        .i_cpsr_ff(i_cpu_mode),
+        .i_cpsr_ff_t(i_cpu_mode_t),
 
         // Clear and stall signals.
         .i_clear_from_writeback(i_clear_from_writeback),
@@ -249,7 +249,7 @@ u_zap_predecode_compress
         .i_fiq(cp_fiq),
         .i_instruction(cp_instruction),
         .i_instruction_valid(cp_instruction_valid),
-        .i_cpsr_ff(i_cpu_mode),
+        .i_cpsr_ff_t(i_cpu_mode_t),
 
         .o_instruction(arm_instruction),
         .o_instruction_valid(arm_instruction_valid),
@@ -310,7 +310,7 @@ zap_predecode_mem_fsm u_zap_mem_fsm (
         .i_instruction_valid(arm_instruction_valid),
         .i_fiq(arm_fiq),
         .i_irq(arm_irq),
-        .i_cpsr(i_cpu_mode),
+        .i_cpsr_t(i_cpu_mode_t),
 
         .i_clear_from_writeback(i_clear_from_writeback),
         .i_data_stall(i_data_stall),          

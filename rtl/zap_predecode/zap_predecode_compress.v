@@ -37,7 +37,7 @@ module zap_predecode_compress
         input wire              i_fiq,
 
         // Ensure COMPRESSED mode is active.
-        input wire [31:0]       i_cpsr_ff, // To ensure COMPRESSED mode is active.
+        input wire              i_cpsr_ff_t, // To ensure COMPRESSED mode is active.
 
         // Output to the ARM decoder.
         output reg [34:0]       o_instruction,
@@ -57,14 +57,11 @@ module zap_predecode_compress
 `include "shtype.vh"
 `include "regs.vh"
 
-`ifdef COMPRESS_EN
-
 reg [11:0] offset_ff, offset_nxt;       // Remember offset.
 
 always @ (posedge i_clk) 
         if ( i_instruction_valid )
                 offset_ff <= offset_nxt;
-`endif
 
 always @*
 begin
@@ -75,10 +72,12 @@ begin
         o_irq                   = i_irq;
         o_fiq                   = i_fiq;
         o_force32_align         = 0;
+        offset_nxt              = i_instruction[11:0];
 
         `ifdef COMPRESS_EN
 
-        if ( i_cpsr_ff[T] && i_instruction_valid ) // COMPRESSED mode.
+
+        if ( i_cpsr_ff_t && i_instruction_valid ) // COMPRESSED mode.
         begin
                 casez ( i_instruction[15:0] )
                         T_ADD_SUB_LO            : decode_add_sub_lo; 
@@ -458,7 +457,7 @@ begin
                 1'd0:
                 begin
                         // Store the offset and send out a dummy instruction.
-                        offset_nxt      = i_instruction[11:0];
+                        // offset_nxt      = i_instruction[11:0];
                         o_instruction   = 32'd0;
                         o_irq           = 1'd0;
                         o_fiq           = 1'd0;
@@ -467,7 +466,7 @@ begin
                 begin
                         // Generate a full jump.
                         o_instruction = {1'd1, 2'b0, AL, 3'b101, 1'b1, 24'd0};
-                        o_instruction[23:0] = ($signed(offset_nxt) << 12) | (offset_ff); 
+                        o_instruction[23:0] = ($signed(offset_ff) << 12) | (i_instruction[11:0]); 
                         o_irq           = 1'd0;
                         o_fiq           = 1'd0;
                 end

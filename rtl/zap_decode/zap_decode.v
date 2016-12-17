@@ -59,7 +59,7 @@ module zap_decode #(
                 input    wire                           i_instruction_valid,
 
                 // CPSR.
-                input   wire    [31:0]                  i_cpsr_ff, 
+                input   wire    [4:0]                   i_cpsr_ff_mode, 
  
                 // This signal is used to check the validity of a pipeline stage.
                 output   reg    [3:0]                   o_condition_code,
@@ -96,8 +96,6 @@ module zap_decode #(
                 // ARM <-> Compressed switch indicator. Indicated on a BX.
                 output  reg                             o_switch
 );
-
-wire _unused_ok_;
 
 `include "regs.vh"
 `include "shtype.vh"
@@ -422,7 +420,7 @@ endtask
 task decode_bx( input [34:0] i_instruction );
 begin: tskDecodeBx
         reg [31:0] temp;
-        temp = i_instruction;
+        temp = i_instruction[31:0];
         temp[11:4] = 0;
 
         `ifdef SIM
@@ -538,7 +536,7 @@ begin
 
         // Part of the instruction will silently fail when changing mode bits
         // in user mode. This is as per the ARM spec.
-        if  ( i_cpsr_ff[5:0] == USR )
+        if  ( i_cpsr_ff_mode == USR )
         begin
                 o_alu_source[2:0] = 3'b0;
         end
@@ -671,7 +669,5 @@ begin
         o_shift_operation       = instruction[6:5];
 end
 endtask
-
-assign _unused_ok_ = &i_cpsr_ff[31:6];
 
 endmodule

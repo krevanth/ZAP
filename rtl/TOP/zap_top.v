@@ -267,13 +267,6 @@ u_zap_icache_mmu (
 .i_ram_done              (!IRAM_STALL) // (!i_iram_stall)     // RAM done indicator.
 );
 
-/*
-assign IRAM_DATA    = i_iram_data;
-assign o_iram_addr  = IRAM_ADDR;
-assign o_iram_rd_en = IRAM_REN;
-assign IRAM_STALL   = i_iram_stall;
-*/
-
 zap_mem_shm U_ZAP_MEM_SHM_CODE
 (
         .i_clk          (i_clk),

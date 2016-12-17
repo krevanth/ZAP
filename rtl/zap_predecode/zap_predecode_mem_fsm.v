@@ -43,7 +43,7 @@ module zap_predecode_mem_fsm
         input wire              i_fiq,
 
         // CPSR
-        input wire [31:0]       i_cpsr,
+        input wire              i_cpsr_t,
 
         // Pipeline control signals.
         input wire              i_clear_from_writeback,
@@ -66,7 +66,6 @@ module zap_predecode_mem_fsm
         output reg              o_fiq
 );
 
-wire _unused_ok_;
 
 `include "fields.vh"
 `include "opcodes.vh"
@@ -195,7 +194,7 @@ begin
                                 // presenting new data.
                                 o_stall_from_decode = 1'd1;
 
-                                if ( i_cpsr[T] == 1'd0 ) // ARM
+                                if ( i_cpsr_t == 1'd0 ) // ARM
                                 begin
                                         // PC is 8 bytes ahead.
                                         // Craft a SUB LR, PC, 4.
@@ -300,7 +299,7 @@ begin
                         reg [3:0] pri_enc_out;
 
                         pri_enc_out = pri_enc(reglist_ff);
-                        reglist_nxt = reglist_ff & ~(1 << pri_enc_out); 
+                        reglist_nxt = reglist_ff & ~(16'd1 << pri_enc_out); 
 
                         o_irq = 0;
                         o_fiq = 0;
@@ -448,20 +447,46 @@ begin
 end
 endfunction
 
+/*
 // Priority encoder.
 function [3:0] pri_enc ( input [15:0] in );
 begin: priEncFn
-        integer i;
+        reg signed [4:0] i;
         pri_enc = 4'd0;
 
         // PC is the last.
         for(i=15;i>=0;i=i-1)
                 if ( in[i] == 1'd1 )
                         pri_enc = i;
-       
 end
 endfunction
+*/
 
+// Priority encoder.
+function [3:0] pri_enc ( input [15:0] in );
+begin: priEncFn
+                casez ( in )
+                16'b????_????_????_???1: pri_enc = 4'd0;
+                16'b????_????_????_??10: pri_enc = 4'd1;
+                16'b????_????_????_?100: pri_enc = 4'd2;
+                16'b????_????_????_1000: pri_enc = 4'd3;
+                16'b????_????_???1_0000: pri_enc = 4'd4;
+                16'b????_????_??10_0000: pri_enc = 4'd5;
+                16'b????_????_?100_0000: pri_enc = 4'd6;
+                16'b????_????_1000_0000: pri_enc = 4'd7;
+                16'b????_???1_0000_0000: pri_enc = 4'd8;
+                16'b????_??10_0000_0000: pri_enc = 4'd9;
+                16'b????_?100_0000_0000: pri_enc = 4'hA;
+                16'b????_1000_0000_0000: pri_enc = 4'hB;
+                16'b???1_0000_0000_0000: pri_enc = 4'hC;
+                16'b??10_0000_0000_0000: pri_enc = 4'hD;
+                16'b?100_0000_0000_0000: pri_enc = 4'hE;
+                16'b1000_0000_0000_0000: pri_enc = 4'hF;
+                default:                 pri_enc = 4'h0;
+                endcase
+end
+endfunction
+       
 always @ (posedge i_clk)
 begin
         if      ( i_reset )                             clear;
@@ -492,6 +517,5 @@ ones_counter u_ones_counter
         .o_offset(oc_offset)
 );
 
-assign _unused_ok_ = i_cpsr[31:6] && i_cpsr[4:0];
 
 endmodule

@@ -14,7 +14,7 @@ module zap_predecode_coproc #(
         input wire [31:0]       i_instruction,
         input wire              i_valid,
 
-        input wire [31:0]       i_cpsr_ff,
+        input wire              i_cpsr_ff_t,
 
         input wire              i_irq,
         input wire              i_fiq,
@@ -41,8 +41,6 @@ module zap_predecode_coproc #(
         output reg                        o_copro_dav_ff,           // Are we really asking for the coprocessor.
         output reg  [31:0]                o_copro_word_ff          // The entire instruction is passed to the coprocessor.
 );
-
-wire _unused_ok_;
 
 `include "cpsr.vh"
 `include "regs.vh"
@@ -72,7 +70,7 @@ begin
         case ( state_ff )
         IDLE:
                 // Activate only if no thumb.
-                casez ( (!i_cpsr_ff[T]) ? i_instruction : 32'd0 )
+                casez ( (!i_cpsr_ff_t) ? i_instruction : 32'd0 )
                 MRC, MCR, LDC, STC, CDP:
                 begin
                         o_instruction = {4'b1111, 28'd0}; // Pump out NV instruction.
@@ -172,8 +170,5 @@ begin
                 o_copro_dav_ff      <= 1'd0; 
 end
 endtask
-
-assign _unused_ok_ =    i_cpsr_ff[4:0]  && 
-                        i_cpsr_ff[31:6];
 
 endmodule

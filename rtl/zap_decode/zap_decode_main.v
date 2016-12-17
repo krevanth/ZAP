@@ -67,7 +67,9 @@ module zap_decode_main #(
         input wire  [31:0]                      i_pc_plus_8_ff,
 
         // CPU mode. Taken from CPSR.
-        input   wire    [31:0]                   i_cpu_mode,
+        input   wire    [4:0]                   i_cpsr_ff_mode, // Mode.
+        input   wire                            i_cpsr_ff_i, // IRQ state.
+        input   wire                            i_cpsr_ff_f, // FIQ state.
 
         // Instruction input.
         input     wire  [35:0]                  i_instruction,    
@@ -132,7 +134,7 @@ module zap_decode_main #(
 
 
 `include "index_immed.vh"
-`include "cpsr.vh"
+//`include "cpsr.vh"
 `include "cc.vh"
 `include "regs.vh"
 `include "modes.vh"
@@ -205,8 +207,8 @@ begin
         // If no stall, only then update...
         else
         begin
-                o_irq_ff                                <= o_irq_nxt & !i_cpu_mode[I]; // If mask is 1, do not pass.
-                o_fiq_ff                                <= o_fiq_nxt & !i_cpu_mode[F]; // If mask is 1, do not pass.
+                o_irq_ff                                <= o_irq_nxt & !i_cpsr_ff_i; // If mask is 1, do not pass.
+                o_fiq_ff                                <= o_fiq_nxt & !i_cpsr_ff_f; // If mask is 1, do not pass.
                 o_swi_ff                                <= o_swi_nxt;
                 o_abt_ff                                <= o_abt_nxt;                    
                 o_und_ff                                <= (o_und_nxt || i_thumb_und) && i_instruction_valid;
@@ -257,25 +259,25 @@ wire [$clog2(ARCH_REGS)-1:0]    mem_srcdest_index_nxt;
 // This section translates the indices from the decode stage converts
 // into a physical index. 
 assign  o_destination_index_nxt = 
-        translate ( destination_index_nxt, i_cpu_mode[4:0] );
+        translate ( destination_index_nxt, i_cpsr_ff_mode );
         
 assign  o_alu_source_nxt = 
         (alu_source_nxt[32] == IMMED_EN ) ?
         alu_source_nxt :
-        translate ( alu_source_nxt, i_cpu_mode[4:0] );
+        translate ( alu_source_nxt, i_cpsr_ff_mode );
 
 assign  o_shift_source_nxt = 
         (shift_source_nxt[32] == IMMED_EN ) ?
         shift_source_nxt :
-        translate ( shift_source_nxt, i_cpu_mode[4:0] );
+        translate ( shift_source_nxt, i_cpsr_ff_mode );
 
 assign  o_shift_length_nxt =
         (shift_length_nxt[32] == IMMED_EN ) ?
         shift_length_nxt :
-        translate ( shift_length_nxt, i_cpu_mode[4:0] );
+        translate ( shift_length_nxt, i_cpsr_ff_mode );
 
 assign  o_mem_srcdest_index_nxt =       
-        translate ( mem_srcdest_index_nxt, i_cpu_mode[4:0] );
+        translate ( mem_srcdest_index_nxt, i_cpsr_ff_mode );
 
 // Bulk of the decode logic is here.
 zap_decode #(
@@ -289,7 +291,7 @@ u_zap_decode (
         .i_abt(i_abt),
         .i_instruction(i_instruction),          
         .i_instruction_valid(i_instruction_valid),
-        .i_cpsr_ff(i_cpu_mode),
+        .i_cpsr_ff_mode(i_cpsr_ff_mode),
         .o_condition_code(o_condition_code_nxt),
         .o_destination_index(destination_index_nxt),
         .o_alu_source(alu_source_nxt),

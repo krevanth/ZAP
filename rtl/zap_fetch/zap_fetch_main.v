@@ -38,7 +38,7 @@ module zap_fetch_main #(
                 input wire [31:0] i_pc_ff,               // Program counter.
 
                 // Comes from CPSR
-                input wire [31:0] i_cpsr_ff,            // CPSR.
+                input wire        i_cpsr_ff_t,           // CPSR T bit.
 
                 // From I-cache.
                 input wire [31:0] i_instruction,         // A 32-bit ZAP instruction + some bits.
@@ -125,7 +125,7 @@ begin
 
                 // Pump PC + 8 or 4 down the pipeline. The number depends on
                 // ARM/Compressed mode.
-                o_pc_plus_8_ff <= i_cpsr_ff[T] ? ( i_pc_ff + 32'd4 ) : ( i_pc_ff + 32'd8 );
+                o_pc_plus_8_ff <= i_cpsr_ff_t ? ( i_pc_ff + 32'd4 ) : ( i_pc_ff + 32'd8 );
 
                 // PC.
                 o_pc_ff <= i_pc_ff;
@@ -189,9 +189,7 @@ endfunction
 `undef x
 `undef y
 
-assign _unused_ok_ =    i_cpsr_ff[4:0]   && 
-                        i_cpsr_ff[31:6]  && 
-                        i_pc_from_alu[0] && 
-                        i_pc_from_alu[31:$clog2(BP_ENTRIES) + 1];
+assign _unused_ok_ =   i_pc_from_alu[0] && 
+                       i_pc_from_alu[31:$clog2(BP_ENTRIES) + 1];
 
 endmodule

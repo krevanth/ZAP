@@ -78,10 +78,6 @@ module zap_core
                 // Determines user or supervisory mode. - REGISTERED.
                 output wire      [31:0]                 o_cpsr,                 // CPSR. Cache must use this to determine VM scheme for instruction fetches.
 
-                //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                /* UNREGISTERED SIGNALS. USED FOR CONNECTING CACHES/MMU. IF YOU DO NOT HAVE THEM, LEAVE THESE UNCONNECTED. */
-                /////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
                 // Data cache access signals.
                 output wire     [31:0]                  o_address_nxt,          // Upcoming address for D-Cache.
  
@@ -97,40 +93,20 @@ module zap_core
                 output wire                             o_clear_from_writeback               
 );
 
+localparam ARCH_REGS = 32;
+localparam ALU_OPS   = 32;
+localparam SHIFT_OPS = 7;
+localparam PHY_REGS  = TOTAL_PHY_REGS;
+localparam FLAG_WDT  = 32;
+
 `include "regs.vh"
-
-//Debug only.
-wire o_fiq_ack;
-wire o_irq_ack;
-
-        // For several reasons, we need more architectural registers than
-        // what ARM specifies. We also need more physical registers. This has
-        // *nothing* to do with superscalar terminology. THIS PROCESSOR IS A 
-        // SINGLE ISSUE SCALAR PROCESSOR.
-        localparam ARCH_REGS = 32;
-
-        // Although ARM mentions only 16 ALU operations, the processor
-        // internally performs many more operations.
-        localparam ALU_OPS   = 32;
-
-        // Apart from the 4 specified by ARM, an undocumented RORI is present
-        // to help deal with immediate rotates.
-        localparam SHIFT_OPS = 7;
-
-        // Number of physical registers. Architectural registers map to
-        // physical registers in a fixed way.
-        localparam PHY_REGS = TOTAL_PHY_REGS;
-
-        // Width of the flags.
-        localparam FLAG_WDT = 32;
-
 `include "cc.vh"
 `include "modes.vh"
+`include "cpsr.vh"
 
 // -------------------------------
 // Wires.
 // -------------------------------
-
 
 wire reset;
 
@@ -317,7 +293,7 @@ wire wb_hijack;
 wire [31:0] wb_hijack_op1;
 wire [31:0] wb_hijack_op2;
 wire wb_hijack_cin;
-wire [32:0] alu_hijack_sum;
+wire [31:0] alu_hijack_sum;
 
 // ------------------------------
 // Assign statements.
@@ -358,7 +334,7 @@ u_zap_fetch_main (
         .i_instruction                  (i_instruction),
         .i_valid                        (i_valid),
         .i_instr_abort                  (i_instr_abort),
-        .i_cpsr_ff                      (alu_flags_ff),
+        .i_cpsr_ff_t                    (alu_flags_ff[T]),
 
         // Output.
         .o_instruction                  (fetch_instruction),
@@ -395,7 +371,13 @@ u_zap_predecode (
         .i_abt                          (fetch_instr_abort),
         .i_pc_plus_8_ff                 (fetch_pc_plus_8_ff),
         .i_pc_ff                        (fetch_pc_ff),
-        .i_cpu_mode                     (alu_flags_ff),
+
+//        .i_cpu_mode                     (alu_flags_ff),
+
+        .i_cpu_mode_t                   (alu_flags_ff[T]),
+        .i_cpu_mode_f                   (alu_flags_ff[F]),
+        .i_cpu_mode_i                   (alu_flags_ff[I]),
+
         .i_instruction                  (fetch_instruction),
         .i_instruction_valid            (fetch_valid),
         .i_taken                        (fetch_bp_state),
@@ -457,7 +439,12 @@ u_zap_decode_main (
         .i_abt                          (predecode_abt),
         .i_pc_plus_8_ff                 (predecode_pc_plus_8),
         .i_pc_ff                        (predecode_pc),
-        .i_cpu_mode                     (alu_flags_ff),
+       // .i_cpu_mode                     (alu_flags_ff),
+       
+        .i_cpsr_ff_mode                 (alu_flags_ff[`CPSR_MODE]),
+        .i_cpsr_ff_i                    (alu_flags_ff[I]),
+        .i_cpsr_ff_f                    (alu_flags_ff[F]),
+       
         .i_instruction                  (predecode_inst),
         .i_instruction_valid            (predecode_val),
         .i_taken                        (predecode_taken),
@@ -939,9 +926,6 @@ u_zap_regf
         .o_pc_nxt               (o_pc_nxt),
         .o_cpsr_nxt             (cpsr_nxt),
         .o_clear_from_writeback (clear_from_writeback),
-
-        .o_fiq_ack              (o_fiq_ack),
-        .o_irq_ack              (o_irq_ack),
 
         .o_hijack               (wb_hijack),
         .o_hijack_op1           (wb_hijack_op1),

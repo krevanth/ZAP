@@ -34,7 +34,7 @@ module zap_alu_main #(
         input wire      [31:0]             i_hijack_op1,
         input wire      [31:0]             i_hijack_op2,
         input wire                         i_hijack_cin,
-        output wire     [32:0]             o_hijack_sum,
+        output wire     [31:0]             o_hijack_sum,
 
         // Clock and reset.
         input wire                         i_clk,                  // ZAP clock.
