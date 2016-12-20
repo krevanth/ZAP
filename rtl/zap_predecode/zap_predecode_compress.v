@@ -98,8 +98,6 @@ begin
         o_force32_align         = 0;
         offset_nxt              = i_instruction[11:0];
 
-        `ifdef COMPRESS_EN
-
 
         if ( i_cpsr_ff_t && i_instruction_valid ) // COMPRESSED mode.
         begin
@@ -133,10 +131,8 @@ begin
                         end
                 endcase 
         end
-        `endif
 end
 
-`ifdef COMPRESS_EN
 
 task decode_get_addr;
 begin: dcdGetAddr
@@ -533,6 +529,5 @@ begin
 end
 endtask
 
-`endif
 
 endmodule

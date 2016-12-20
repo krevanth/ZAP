@@ -2,13 +2,35 @@
 
 // Set up an interrupt vector table.
 _Reset   : b there
-_Undef   : b __undef
+_Undef   : b UNDEF
 _Swi     : b SWI
 _Pabt    : b __pabt
 _Dabt    : b __dabt
 reserved : b _Reset
 irq      : b IRQ
 fiq      : b __fiq
+
+UNDEF:
+// Undefined vector.
+// LR Points to next instruction.
+stmfa sp!, {r0-r12, r14}
+// Corrupt registers.
+mov r0, #1
+mov r1, #2
+mov r2, #3
+mov r3, #4
+mov r4, #5
+mov r5, #6
+mov r6, #7
+mov r7, #8
+mov r8, #9
+mov r9, #10
+mov r10, #12
+mov r11, #13
+mov r12, #14
+mov r14, #15
+// Restore them.
+ldmfa sp!, {r0-r12, pc}^
 
 IRQ:
 sub r14, r14, #4
@@ -62,6 +84,14 @@ bic r2, r2, #31
 orr r2, r2, #18 
 msr cpsr_c, r2
 ldr sp, =#3000
+
+// Switch to UND mode.
+mrs r3, cpsr
+bic r3, r3, #31
+orr r3, r3, #27
+msr cpsr_c, r3
+mov r4, #1
+ldr sp, =#3500
 
 // Enable interrupts.
 mrs r1, cpsr

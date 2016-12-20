@@ -6,7 +6,8 @@
 ZAP is an ARM processor core based on the ARMv4 architecture "ARM instruction set".
 It is equipped with ARMv4 compatible split write-through caches and memory management capabilities.
 ZAP does not include the 16-bit "Thumb instruction set" from the ARMv4T architecture nor does it support 
-"Thumb2 instruction sets" either. However, a custom 16-bit instruction set is supported.
+"Thumb2 instruction sets" either. However, a custom 16-bit instruction set is supported for a 
+very *Thumb-like* ISA.
 
 ##Current Status
 Experimental.

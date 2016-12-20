@@ -220,6 +220,10 @@ begin
         o_stall_from_decode = mem_fetch_stall || cp_stall;
 end
 
+/////////////////////////////////////////////////////////////////////////////////////
+
+`ifdef CMMU_EN
+
 // This unit handles coprocessor stuff.
 zap_predecode_coproc 
 #(
@@ -263,6 +267,22 @@ u_zap_decode_coproc
         .o_copro_word_ff(o_copro_word_ff)
 );
 
+`else
+
+assign cp_instruction           = i_instruction_valid ? i_instruction : 32'd0;
+assign cp_instruction_valid     = i_instruction_valid;
+assign cp_irq                   = i_instruction_valid ? i_irq : 1'd0;
+assign cp_fiq                   = i_instruction_valid ? i_fiq : 1'd0;
+assign cp_stall                 = 1'd0;
+assign o_copro_dav_ff           = 1'd0;
+assign o_copro_word_ff          = 32'd0;
+
+`endif
+
+///////////////////////////////////////////////////////////////////////////////////////////
+
+`ifdef COMPRESS_EN
+
 // Implements a custom 16-bit compressed instruction set.
 zap_predecode_compress
 u_zap_predecode_compress
@@ -282,6 +302,17 @@ u_zap_predecode_compress
         .o_force32_align(o_force32align_nxt),
         .o_und(o_comp_und_nxt)
 );
+
+`else
+
+assign arm_instruction = cp_instruction;
+assign arm_instruction_valid = cp_instruction_valid;
+assign arm_irq = cp_irq;
+assign arm_fiq = cp_fiq;
+assign o_force32align_nxt = 1'd0;
+assign o_comp_und_nxt = 1'd0;
+
+`endif
 
 // Branch states.
 localparam      SNT     =       0; // Strongly Not Taken.
