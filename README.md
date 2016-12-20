@@ -14,7 +14,7 @@ Experimental.
 
 ##Features
 - Compatible with the ARMv4 architecture.
-- Supports a custom 16-bit instruction set.
+- Supports a custom 16-bit instruction set (*Thumb* like).
 - 8-stage pipeline design : Fetch1, Fetch2, Decode, Issue, Shift, Execute, Memory, Writeback
 - Branch prediction is supported.
 - Split I and D cache (Size can be configured using parameters).
