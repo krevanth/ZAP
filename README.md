@@ -13,7 +13,7 @@ very *Thumb-like* ISA.
 Experimental.
 
 ##Features
-- Compatible with the ARMv4 architecture.
+- Compatible with the ARMv4 architecture. Can execute *all* 32-bit ARM instructions specified by the ARMv4T architecture.
 - Supports a custom 16-bit instruction set (*Thumb* like).
 - 8-stage pipeline design : Fetch1, Fetch2, Decode, Issue, Shift, Execute, Memory, Writeback
 - Branch prediction is supported.
