@@ -171,16 +171,13 @@ localparam      WNT     =       1; // Weakly Not Taken.
 localparam      WT      =       2; // Weakly Taken.
 localparam      ST      =       3; // Strongly Taken.
 
-`define x i_pc_from_alu[$clog2(BP_ENTRIES):1]
-`define y i_pc_ff[$clog2(BP_ENTRIES):1]
-
 ram_simple
 #(.DEPTH(BP_ENTRIES), .WIDTH(2)) u_br_ram
 (
         .i_clk(i_clk),
         .i_wr_en(!i_data_stall && (i_clear_from_alu || i_confirm_from_alu)),
-        .i_wr_addr(`x),
-        .i_rd_addr(`y),
+        .i_wr_addr(i_pc_from_alu[$clog2(BP_ENTRIES):1]),
+        .i_rd_addr(i_pc_ff[$clog2(BP_ENTRIES):1]),
         .i_wr_data(compute(i_taken, i_clear_from_alu)),
         .i_rd_en(1'd1),
         .o_rd_data(o_taken_ff) 
@@ -209,9 +206,6 @@ begin
                 end
 end
 endfunction
-
-`undef x
-`undef y
 
 assign _unused_ok_ =   i_pc_from_alu[0] && 
                        i_pc_from_alu[31:$clog2(BP_ENTRIES) + 1];
