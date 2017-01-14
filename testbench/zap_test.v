@@ -7,7 +7,7 @@ parameter START = 1992;
 parameter COUNT = 120;
 
 reg             i_clk;
-reg             i_clk_2x;
+reg             i_clk_multipump;
 reg             i_reset;
 
 reg             i_irq;
@@ -34,7 +34,7 @@ zap_top
 u_zap_top 
 (
         .i_clk(i_clk),
-        .i_clk_2x(i_clk_2x),
+        .i_clk_multipump(i_clk_multipump),
         .i_reset(i_reset),
         .i_irq(i_irq),
         .i_fiq(i_fiq),
@@ -94,10 +94,10 @@ always #10 i_clk = !i_clk;
 
 initial
 begin
-        i_clk_2x = 0;
+        i_clk_multipump = 0;
 
         #5;
-        forever #5 i_clk_2x = !i_clk_2x;        
+        forever #5 i_clk_multipump = !i_clk_multipump;        
 end
 
 integer seed = `SEED;

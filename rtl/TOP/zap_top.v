@@ -30,7 +30,7 @@ module zap_top
 (
         // Clock and reset.
         input   wire            i_clk,
-        input   wire            i_clk_2x,
+        input   wire            i_clk_multipump,
         input   wire            i_reset,
 
         // Interrupts.
@@ -106,7 +106,7 @@ zap_core
 u_zap_core 
 (
 .i_clk                  (i_clk),
-.i_clk_2x               (i_clk_2x),
+.i_clk_multipump        (i_clk_multipump),
 .i_reset                (i_reset),
 .i_instruction          (instr),
 .i_valid                (!instr_valid_n),

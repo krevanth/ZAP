@@ -35,7 +35,7 @@ module block_ram #(
         parameter       DEPTH           =       64
 )
 (
-        input wire                      i_clk_2x,
+        input wire                      i_clk_multipump,
 
         input wire      [ADDR_WDT-1:0]  i_addr_a,
         input wire      [ADDR_WDT-1:0]  i_addr_b,
@@ -107,7 +107,7 @@ begin: blk1
                 mem[i] = 0;
 end
 
-always @ (posedge i_clk_2x)
+always @ (posedge i_clk_multipump)
 begin
         if ( i_wen )
         begin
@@ -116,7 +116,7 @@ begin
         end
 end
 
-always @ (posedge i_clk_2x)
+always @ (posedge i_clk_multipump)
 begin
         o_rd_data_a     <= mem [ i_addr_a ];
 end

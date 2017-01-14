@@ -31,7 +31,7 @@ SOFTWARE.
 
 module bram_wrapper
 (
-        input wire              i_clk_2x,
+        input wire              i_clk_multipump,
 
         input wire              i_reset,
 
@@ -102,7 +102,7 @@ genvar gi;
 generate
         for(gi=0;gi<4;gi=gi+1) begin: BLK
         block_ram R1 (
-                .i_clk_2x(i_clk_2x), 
+                .i_clk_multipump(i_clk_multipump), 
                 .i_addr_a(addr_a[gi]), 
                 .i_addr_b(addr_b[gi]), 
                 .i_wen(wen), 
@@ -113,7 +113,7 @@ generate
         end
 endgenerate
 
-always @ (posedge i_clk_2x)
+always @ (posedge i_clk_multipump)
 begin
         if ( i_reset )
                 phase <= READ_PH;
