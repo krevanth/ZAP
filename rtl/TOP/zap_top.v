@@ -201,7 +201,6 @@ u_zap_mmu_dcache (
 .i_cpsr                  ({cpsr[31:5], force_user ? USR : cpsr[4:0]}), // CPSR from CPU.
 .o_rd_data               (rdata), // Data read. Pipeline register.
 
-/* CAN CAUSE COMBO LOOP */
 .o_stall                 (data_stall), // Not registered.
 .o_fault                 (data_abort), // Not registered.
 
@@ -278,7 +277,6 @@ u_zap_icache_mmu (
 .i_cpsr                  (cpsr), // CPSR from CPU.
 .o_rd_data               (instr), // Data read. Pipeline register.
 
-/* CAN CAUSE COMBO LOOP */
 .o_stall                 (instr_valid_n), // Not registered.
 .o_fault                 (instr_abort), // Not registered.
 
