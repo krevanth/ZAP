@@ -1,48 +1,48 @@
-/*
-MIT License
+///////////////////////////////////////////////////////////////////////////////
 
-Copyright (c) 2016 Revanth Kamaraj (Email: revanth91kamaraj@gmail.com)
+// 
+// MIT License
+// 
+// Copyright (C) 2016,2017 Revanth Kamaraj (Email: revanth91kamaraj@gmail.com)
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+// 
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+///////////////////////////////////////////////////////////////////////////////
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+// 
+//  Filename --
+//  zap_issue_stage.v
+// 
+//  Description --
+//  This stage converts register indices into actual values. Register indices
+//  are also pumped forward to allow resolution in the shift stage. PC
+//  references must be resolved here since the value gives PC + 8. Instructions
+//  requiring shifts stall if the target registers are in the outputs of this
+//  stage. We do not issue a multiply if the source is still in the output of this 
+//  stage just like shifts.
+// 
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-*/
+///////////////////////////////////////////////////////////////////////////////
 
 `default_nettype none
 `include "config.vh"
-
-/*
- Filename --
- zap_issue_stage.v
-
- HDL --
- Verilog-2005
-
- Description --
- This stage converts register indices into actual values. Register indices
- are also pumped forward to allow resolution in the shift stage. PC
- references must be resolved here since the value gives PC + 8. Instructions
- requiring shifts stall if the target registers are in the outputs of this
- stage. We do not issue a multiply if the source is still in the output of this 
- stage just like shifts.
-
- Copyright --
- (C) 2016 Revanth Kamaraj.
-*/
 
 module zap_issue_main
 #(
@@ -55,8 +55,12 @@ module zap_issue_main
         // internally performs many more operations.
         parameter ALU_OPS   = 32,
 
+        // Number of supported shift operations.
         parameter SHIFT_OPS = 5
 )
+
+///////////////////////////////////////////////////////////////////////////////
+
 (
         // PC in
         input wire [31:0]                       i_pc_ff,
@@ -82,9 +86,11 @@ module zap_issue_main
         // From decode
         input wire  [31:0]                      i_pc_plus_8_ff,
 
+        //
         // Inputs from decode.
-        // Look at decode_stage.v for the meaning of these ports...
-         
+        // Look at the decode stage for the meaning of these ports...
+        //         
+
         input wire      [3:0]                   i_condition_code_ff,
         
         input wire      [$clog2(PHY_REGS )-1:0] i_destination_index_ff,
@@ -113,38 +119,61 @@ module zap_issue_main
         input wire                              i_abt_ff,                               
         input wire                              i_swi_ff,                               
 
+        //
         // From register file. Read ports.
+        //
+
         input wire  [31:0]                      i_rd_data_0,
         input wire  [31:0]                      i_rd_data_1,
         input wire  [31:0]                      i_rd_data_2,
         input wire  [31:0]                      i_rd_data_3,
 
-        // Force 32.
+        // Force 32 bit address alignment.
         input wire                              i_force32align_ff,
         output reg                              o_force32align_ff,
 
-        // undefined instr.
+        // For undefined instr.
         input wire                         i_und_ff,
         output reg                         o_und_ff,
 
-        // FEEDBACK INPUTS...
+        //
+        // Feedback Network
+        //
 
         // Destination index feedback. Each stage is represented as
         // combinational logic followed by flops(FFs).
-        input wire  [$clog2(PHY_REGS )-1:0]     i_shifter_destination_index_ff,  // The ALU never changes the destination anyway.
-        input wire  [$clog2(PHY_REGS )-1:0]     i_alu_destination_index_ff,      // Flopped destination from the ALU.
-        input wire  [$clog2(PHY_REGS )-1:0]     i_memory_destination_index_ff,   // Flopped destination in memory stage.
 
-        // Data valid for each stage in the pipeline. Used to validate the
+        // The ALU never changes destination anyway. Destination from shifter.
+        input wire  [$clog2(PHY_REGS )-1:0]     i_shifter_destination_index_ff,
+
+        // Flopped destination from the ALU.
+        input wire  [$clog2(PHY_REGS )-1:0]     i_alu_destination_index_ff,      
+
+        // Flopped destination from the memory stage.
+        input wire  [$clog2(PHY_REGS )-1:0]     i_memory_destination_index_ff, 
+
+        // Data valid(dav) for each stage in the pipeline. Used to validate the
         // pipeline vector when sniffing for register values yet to be written.
-        input wire                              i_alu_dav_nxt,                  // Taken from ALU_nxt instead of shifter_ff because ALU can change this.
+
+        // Taken from alu_nxt instead of shifter_ff because ALU can invalidate
+        // instructions.
+        input wire                              i_alu_dav_nxt,            
         input wire                              i_alu_dav_ff,
         input wire                              i_memory_dav_ff,
 
-        // The actual thing we need, the value of stuff we are sniffing for.
-        input wire  [31:0]                      i_alu_destination_value_nxt,     // Taken from ALU_nxt since ALU can change this.
-        input wire  [31:0]                      i_alu_destination_value_ff,      // ALU flopped result.
-        input wire  [31:0]                      i_memory_destination_value_ff,   // Result in the memory area.
+        //
+        // The actual thing we need (i.e. data), 
+        // the value of stuff we are looking for.
+        //
+
+        // Taken from alu_nxt since ALU can change this.
+        input wire  [31:0]                      i_alu_destination_value_nxt,    
+
+        // ALU flopped result.
+        input wire  [31:0]                      i_alu_destination_value_ff,      
+
+        // Result in the memory stage of the pipeline.
+        input wire  [31:0]                      i_memory_destination_value_ff,   
 
         // For load-store locks and memory acceleration, we need srcdest
         // index. Memory loads can be accelerated with a direct load from
@@ -152,31 +181,38 @@ module zap_issue_main
         input wire  [5:0]                       i_shifter_mem_srcdest_index_ff,
         input wire  [5:0]                       i_alu_mem_srcdest_index_ff,
         input wire  [5:0]                       i_memory_mem_srcdest_index_ff,
-        input wire                              i_shifter_mem_load_ff,           // 1 if load.
+        input wire                              i_shifter_mem_load_ff,//1 if load.
         input wire                              i_alu_mem_load_ff,
         input wire                              i_memory_mem_load_ff,
 
-        // Memory accelerator values for LOADS.
-        input wire  [31:0]                      i_memory_mem_srcdest_value_ff,   // External memory data bus is connected to this.
+        // Memory accelerator values for loads. External memory bys is
+        // connected to this.
+        input wire  [31:0]                      i_memory_mem_srcdest_value_ff,   
 
-        // AT switch.
+        // ARM to compressed switch.
         input wire i_switch_ff,
         output reg o_switch_ff,
 
+        //
         // Outputs to register file.
+        //
+
         output reg      [$clog2(PHY_REGS )-1:0] o_rd_index_0,
         output reg      [$clog2(PHY_REGS )-1:0] o_rd_index_1,
         output reg      [$clog2(PHY_REGS )-1:0] o_rd_index_2,
         output reg      [$clog2(PHY_REGS )-1:0] o_rd_index_3,
 
-        // Outputs to SHIFT stage.
+        //
+        // Outputs to shifter stage.
+        //
 
         output reg       [3:0]                   o_condition_code_ff,
         output reg       [$clog2(PHY_REGS )-1:0] o_destination_index_ff,
         output reg       [$clog2(ALU_OPS)-1:0]   o_alu_operation_ff,
         output reg       [$clog2(SHIFT_OPS)-1:0] o_shift_operation_ff,
         output reg                               o_flag_update_ff,
-        
+
+        // Memory operation related.        
         output reg     [$clog2(PHY_REGS )-1:0]   o_mem_srcdest_index_ff,            
         output reg                               o_mem_load_ff,                     
         output reg                               o_mem_store_ff,
@@ -187,41 +223,54 @@ module zap_issue_main
         output reg                               o_mem_unsigned_halfword_enable_ff,
         output reg                               o_mem_translate_ff,                
         
+        // Interrupts.
         output reg                               o_irq_ff,
         output reg                               o_fiq_ff,
         output reg                               o_abt_ff,
         output reg                               o_swi_ff,
 
-        // Register values are obtained here.
+        // Register values are given here.
+
+        // ALU source value would be the value of non-shifted operand in ARM.
         output reg      [31:0]                  o_alu_source_value_ff,
+
+        // Shifter source value would be the value of the operand to be shifted.
         output reg      [31:0]                  o_shift_source_value_ff,
+
+        // Shift length i.e., amount to shift i.e, shamt.
         output reg      [31:0]                  o_shift_length_value_ff,
+
+        // For stores, value to be stored.
         output reg      [31:0]                  o_mem_srcdest_value_ff, 
-                                                // For stores.
 
         // Indices/Immeds go here. It might seem odd that we are sending index
         // values and register values (above). The issue stage selects
-        // the appropriate value.
+        // the appropriate value. Note again that while the above are values,
+        // these are indexes/immediates.
         output reg      [32:0]                  o_alu_source_ff,
         output reg      [32:0]                  o_shift_source_ff,
 
-        // Stall everything before this.
+        // Stall everything before this if 1.
         output reg                              o_stall_from_issue,
 
         // The PC value.
         output reg     [31:0]                   o_pc_plus_8_ff,
 
-        // Shifter disable indicator. In the next stage, the output
+        // Shifter disable. In the next stage, the output
         // will bypass the shifter. Not actually bypass it but will
         // go to the ALU value corrector unit via a MUX.
         output reg                              o_shifter_disable_ff
 );
+
+///////////////////////////////////////////////////////////////////////////////
 
 `include "cc.vh"
 `include "index_immed.vh"
 `include "regs.vh"
 `include "shtype.vh"
 `include "opcodes.vh"
+
+///////////////////////////////////////////////////////////////////////////////
 
 reg o_shifter_disable_nxt;
 
@@ -319,35 +368,90 @@ end
 always @*
 begin
 
-`ifdef SIM
         $display($time, "%m: ########### Getting ALU source value... ##################");
-`endif
-
-o_alu_source_value_nxt  = 
-get_register_value ( i_alu_source_ff,       0,i_shifter_destination_index_ff, i_alu_dav_nxt, i_alu_destination_value_nxt, i_alu_destination_value_ff, 
-                     i_alu_destination_index_ff, i_alu_dav_ff, i_memory_destination_index_ff, i_memory_dav_ff, i_memory_mem_srcdest_index_ff, i_memory_mem_load_ff,
-                     i_rd_data_0, i_rd_data_1, i_rd_data_2, i_rd_data_3 );
-
-`ifdef SIM
+        
+        o_alu_source_value_nxt  = 
+        get_register_value (    i_alu_source_ff, 
+                                0, 
+                                i_shifter_destination_index_ff, 
+                                i_alu_dav_nxt, 
+                                i_alu_destination_value_nxt, 
+                                i_alu_destination_value_ff, 
+                                i_alu_destination_index_ff, 
+                                i_alu_dav_ff, 
+                                i_memory_destination_index_ff, 
+                                i_memory_dav_ff, 
+                                i_memory_mem_srcdest_index_ff, 
+                                i_memory_mem_load_ff, 
+                                i_rd_data_0, 
+                                i_rd_data_1, 
+                                i_rd_data_2, 
+                                i_rd_data_3 
+        );
+        
         $display($time, "%m: ################## DONE! ######################");
-`endif
+        
+        o_shift_source_value_nxt= 
+        get_register_value (    i_shift_source_ff,     
+                                1,
+                                i_shifter_destination_index_ff, 
+                                i_alu_dav_nxt, 
+                                i_alu_destination_value_nxt, 
+                                i_alu_destination_value_ff,
+                                i_alu_destination_index_ff, 
+                                i_alu_dav_ff, 
+                                i_memory_destination_index_ff, 
+                                i_memory_dav_ff, 
+                                i_memory_mem_srcdest_index_ff, 
+                                i_memory_mem_load_ff,
+                                i_rd_data_0, 
+                                i_rd_data_1, 
+                                i_rd_data_2, 
+                                i_rd_data_3 
+        );
+        
+        o_shift_length_value_nxt= 
+        get_register_value (    i_shift_length_ff,     
+                                2,
+                                i_shifter_destination_index_ff, 
+                                i_alu_dav_nxt, 
+                                i_alu_destination_value_nxt, 
+                                i_alu_destination_value_ff,
+                                i_alu_destination_index_ff, 
+                                i_alu_dav_ff, 
+                                i_memory_destination_index_ff, 
+                                i_memory_dav_ff, 
+                                i_memory_mem_srcdest_index_ff, 
+                                i_memory_mem_load_ff,
+                                i_rd_data_0, 
+                                i_rd_data_1, 
+                                i_rd_data_2, 
+                                i_rd_data_3 
+        );
+        
+        // Value of a register index, never an immediate.
+        o_mem_srcdest_value_nxt = 
+        get_register_value (    i_mem_srcdest_index_ff,
+                                3,
+                                i_shifter_destination_index_ff, 
+                                i_alu_dav_nxt, 
+                                i_alu_destination_value_nxt, 
+                                i_alu_destination_value_ff,
+                                i_alu_destination_index_ff, 
+                                i_alu_dav_ff, 
+                                i_memory_destination_index_ff, 
+                                i_memory_dav_ff, 
+                                i_memory_mem_srcdest_index_ff, 
+                                i_memory_mem_load_ff,
+                                i_rd_data_0, 
+                                i_rd_data_1, 
+                                i_rd_data_2, 
+                                i_rd_data_3    
+        ); 
 
-o_shift_source_value_nxt= 
-get_register_value ( i_shift_source_ff,     1,i_shifter_destination_index_ff, i_alu_dav_nxt, i_alu_destination_value_nxt, i_alu_destination_value_ff,
-                     i_alu_destination_index_ff, i_alu_dav_ff, i_memory_destination_index_ff, i_memory_dav_ff, i_memory_mem_srcdest_index_ff, i_memory_mem_load_ff,
-                     i_rd_data_0, i_rd_data_1, i_rd_data_2, i_rd_data_3 );
-
-o_shift_length_value_nxt= 
-get_register_value ( i_shift_length_ff,     2,i_shifter_destination_index_ff, i_alu_dav_nxt, i_alu_destination_value_nxt, i_alu_destination_value_ff,
-                     i_alu_destination_index_ff, i_alu_dav_ff, i_memory_destination_index_ff, i_memory_dav_ff, i_memory_mem_srcdest_index_ff, i_memory_mem_load_ff,
-                     i_rd_data_0, i_rd_data_1, i_rd_data_2, i_rd_data_3 );
-
-o_mem_srcdest_value_nxt = 
-get_register_value ( i_mem_srcdest_index_ff,3,i_shifter_destination_index_ff, i_alu_dav_nxt, i_alu_destination_value_nxt, i_alu_destination_value_ff,
-                     i_alu_destination_index_ff, i_alu_dav_ff, i_memory_destination_index_ff, i_memory_dav_ff, i_memory_mem_srcdest_index_ff, i_memory_mem_load_ff,
-                     i_rd_data_0, i_rd_data_1, i_rd_data_2, i_rd_data_3    ); 
-//Naturally an index...
 end
+
+///////////////////////////////////////////////////////////////////////////////
 
 // Apply index to register file.
 always @*
@@ -358,92 +462,107 @@ begin
         o_rd_index_3 = i_mem_srcdest_index_ff;
 end
 
+///////////////////////////////////////////////////////////////////////////////
+
 // Straightforward read feedback function. Looks at all stages of the pipeline
-// to sniff out the latest value of the register. Does not sniff the shifter
-// stage since no useful information can be obtained from that. There is some 
-// complexity here to perform accelerated memory reads. Immediates get read
-// here.
+// to extract the latest value of the register. 
+// There is some complexity here to perform accelerated memory reads. 
 function [31:0] get_register_value ( 
-        input [32:0]                    index,                                  // Index to search for. This might be a constant too. 
-        input [1:0]                     rd_port,                                // Register read port activated. This is like look-ahead.
-        input [32:0]                    i_shifter_destination_index_ff,         // Destination on shifter flops.
-        input                           i_alu_dav_nxt,                          // ALU output is valid.
-        input [31:0]                    i_alu_destination_value_nxt,            // ALU immediate result.
-        input [31:0]                    i_alu_destination_value_ff,             // ALU flopped result.
-        input [$clog2(PHY_REGS)-1:0]    i_alu_destination_index_ff,             // ALU flopped destination index.
-        input                           i_alu_dav_ff,                           // ALU result valid flopped.
-        input [$clog2(PHY_REGS)-1:0]    i_memory_destination_index_ff,          // Memory stage destination index (POINTER).
-        input                           i_memory_dav_ff,                        // Memory stage valid
-        input [$clog2(PHY_REGS)-1:0]    i_memory_mem_srcdest_index_ff,          // Memory stage srcdest index.
-        input                           i_memory_mem_load_ff,                   // Memory load.
-        input [31:0]                    i_rd_data_0, i_rd_data_1, i_rd_data_2, i_rd_data_3
+
+        // The register inex to search for. This might be a constant too.
+        input [32:0]                    index,                                 
+
+        // Register read port activated for this function.
+        input [1:0]                     rd_port,                                
+
+        // Destination on the output of the shifter stage.
+        input [32:0]                    i_shifter_destination_index_ff,      
+
+        // ALU output is valid.
+        input                           i_alu_dav_nxt,     
+
+        // ALU output.
+        input [31:0]                    i_alu_destination_value_nxt,      
+
+        // ALU flopped result.
+        input [31:0]                    i_alu_destination_value_ff,   
+
+        // ALU flopped destination index.
+        input [$clog2(PHY_REGS)-1:0]    i_alu_destination_index_ff,             
+
+        // Valid flopped (EX stage).
+        input                           i_alu_dav_ff,                          
+
+        // Memory stage destination index (pointer)
+        input [$clog2(PHY_REGS)-1:0]    i_memory_destination_index_ff,   
+
+        // Memory stage valid.
+        input                           i_memory_dav_ff,                      
+
+        // Memory stage srcdest index. The srcdest is basically the data
+        // register index.
+        input [$clog2(PHY_REGS)-1:0]    i_memory_mem_srcdest_index_ff,      
+
+        // Memory load instruction in memory stage.    
+        input                           i_memory_mem_load_ff,               
+
+        // Data read from register file.
+        input [31:0]                    i_rd_data_0, i_rd_data_1, i_rd_data_2, i_rd_data_3 
 );
+
 reg [31:0] get;
+
 begin
 
-        `ifdef SIM
         $display($time, "Received index as %d and rd_port %d", index, rd_port);
-        `endif
 
         if   ( index[32] )                 // Catch constant here.
         begin
-                        `ifdef SIM
                         $display($time, "Constant detect. Returning %x", index[31:0]);
-                        `endif 
 
                         get = index[31:0]; 
         end
         else if ( index == PHY_RAZ_REGISTER )   // Catch RAZ here.
         begin
                // Return 0. 
-                `ifdef SIM
-                        $display($time, "RAZ returned 0...");
-                `endif 
+               $display($time, "RAZ returned 0...");
 
                 get = 32'd0;
         end
-        else if   ( index == ARCH_PC )          // Catch PC here. ARCH = PHY so no problem.
+        else if   ( index == ARCH_PC )  // Catch PC here. ARCH index = PHY index so no problem.
         begin
                  get = i_pc_plus_8_ff;
-
-                 `ifdef SIM
-                        $display($time, "PC requested... given as %x", get);
-                 `endif
+                 $display($time, "PC requested... given as %x", get);
         end
         else if ( index == PHY_CPSR )   // Catch CPSR here.
         begin
                 get = i_cpu_mode; 
         end
-        else if   ( index == i_shifter_destination_index_ff && i_alu_dav_nxt  )                 
-        begin
-                        get =  i_alu_destination_value_nxt;         
 
-                       `ifdef SIM
+        // Match in ALU stage.
+        else if   ( index == i_shifter_destination_index_ff && i_alu_dav_nxt  )                 
+        begin   // ALU effectively never changes destination so no need to look at _nxt.
+                        get =  i_alu_destination_value_nxt;         
                         $display($time, "Matched shifter destination index %x ... given as %x", i_shifter_destination_index_ff, get);
-                        `endif
         end
+
+        // Match in output of ALU stage.
         else if   ( index == i_alu_destination_index_ff && i_alu_dav_ff       )                 
         begin
                         get =  i_alu_destination_value_ff;
-
-                        `ifdef SIM
                         $display($time, "Matched ALU destination index %x ... given as %x", i_alu_destination_index_ff, get);
-                        `endif
         end
+
+        // Match in output of memory stage.
         else if   ( index == i_memory_destination_index_ff && i_memory_dav_ff )                
         begin 
                         get =  i_memory_destination_value_ff;
-
-                        `ifdef SIM
                         $display($time, "Matched memory destination index %x ... given as %x", i_memory_destination_index_ff, get);
-                        `endif
         end
-        else                          
+        else    // Index not found in the pipeline, fallback to register access.                     
         begin                        
 
-                `ifdef SIM
                 $display($time, "Register read on rd_port %x", rd_port );
-                `endif
                                   
                 case ( rd_port )
                         0: get = i_rd_data_0;
@@ -452,17 +571,13 @@ begin
                         3: get = i_rd_data_3;
                 endcase
 
-                `ifdef SIM
                 $display($time, "Reg read -> Returned value %x", get);
-                `endif
         end
 
         // The memory accelerator. If the requires stuff is present in the memory unit, short circuit.
         if ( index == i_memory_mem_srcdest_index_ff && i_memory_mem_load_ff && i_memory_dav_ff )
         begin
-                `ifdef SIM
                 $display($time, "Memory accelerator gets value %x", i_memory_mem_srcdest_value_ff);
-                `endif
 
                 get = i_memory_mem_srcdest_value_ff;
         end
@@ -471,43 +586,73 @@ begin
 end
 endfunction 
 
+///////////////////////////////////////////////////////////////////////////////
+
 // Stall all previous stages if a lock occurs.
 always @*
 begin
         o_stall_from_issue = lock;
 end
 
+///////////////////////////////////////////////////////////////////////////////
+
 always @*
 begin
         // Look for reads from registers to be loaded from memory. Four
         // register sources may cause a load lock.
         load_lock =     determine_load_lock 
-                        ( i_alu_source_ff  , o_mem_srcdest_index_ff, o_condition_code_ff, 
-                         o_mem_load_ff, i_shifter_mem_srcdest_index_ff, i_alu_dav_nxt, 
-                        i_shifter_mem_load_ff, i_alu_mem_srcdest_index_ff, i_alu_dav_ff, 
+                        ( i_alu_source_ff  , 
+                        o_mem_srcdest_index_ff, 
+                        o_condition_code_ff, 
+                        o_mem_load_ff, 
+                        i_shifter_mem_srcdest_index_ff, 
+                        i_alu_dav_nxt, 
+                        i_shifter_mem_load_ff, 
+                        i_alu_mem_srcdest_index_ff, 
+                        i_alu_dav_ff, 
                         i_alu_mem_load_ff ) 
                         || 
                         determine_load_lock 
-                        ( i_shift_source_ff, o_mem_srcdest_index_ff, 
-                        o_condition_code_ff, o_mem_load_ff, i_shifter_mem_srcdest_index_ff, 
-                        i_alu_dav_nxt, i_shifter_mem_load_ff, i_alu_mem_srcdest_index_ff, 
-                        i_alu_dav_ff, i_alu_mem_load_ff ) 
+                        ( 
+                        i_shift_source_ff, 
+                        o_mem_srcdest_index_ff, 
+                        o_condition_code_ff, 
+                        o_mem_load_ff, 
+                        i_shifter_mem_srcdest_index_ff, 
+                        i_alu_dav_nxt, 
+                        i_shifter_mem_load_ff, 
+                        i_alu_mem_srcdest_index_ff, 
+                        i_alu_dav_ff, 
+                        i_alu_mem_load_ff ) 
                         ||
                         determine_load_lock 
-                        ( i_shift_length_ff, o_mem_srcdest_index_ff, 
-                        o_condition_code_ff, o_mem_load_ff, i_shifter_mem_srcdest_index_ff, 
-                        i_alu_dav_nxt, i_shifter_mem_load_ff, i_alu_mem_srcdest_index_ff, 
-                        i_alu_dav_ff, i_alu_mem_load_ff )
+                        ( i_shift_length_ff, 
+                        o_mem_srcdest_index_ff, 
+                        o_condition_code_ff, 
+                        o_mem_load_ff, 
+                        i_shifter_mem_srcdest_index_ff, 
+                        i_alu_dav_nxt, 
+                        i_shifter_mem_load_ff, 
+                        i_alu_mem_srcdest_index_ff, 
+                        i_alu_dav_ff, 
+                        i_alu_mem_load_ff )
                         ||
                         determine_load_lock
-                        ( i_mem_srcdest_index_ff, o_mem_srcdest_index_ff, 
-                        o_condition_code_ff, o_mem_load_ff, i_shifter_mem_srcdest_index_ff, 
-                        i_alu_dav_nxt, i_shifter_mem_load_ff, i_alu_mem_srcdest_index_ff, 
-                        i_alu_dav_ff, i_alu_mem_load_ff );
+                        ( i_mem_srcdest_index_ff, 
+                        o_mem_srcdest_index_ff, 
+                        o_condition_code_ff, 
+                        o_mem_load_ff, 
+                        i_shifter_mem_srcdest_index_ff, 
+                        i_alu_dav_nxt, 
+                        i_shifter_mem_load_ff, 
+                        i_alu_mem_srcdest_index_ff, 
+                        i_alu_dav_ff, 
+                        i_alu_mem_load_ff );
 
         // A shift lock occurs if the current instruction requires a shift amount as a register
         // other than LSL #0 or RORI if the operands are right on the output of this
-        // stage.
+        // stage because in that case we do not have the register value and thus
+        // a shift lock.
         shift_lock =    (!(
                                 i_shift_operation_ff    == LSL && 
                                 i_shift_length_ff[31:0] == 32'd0 && 
@@ -526,7 +671,10 @@ begin
                         )) || 
                         (
                                 // If it is a multiply and stuff is locked.
-                                (i_alu_operation_ff == UMLALL || i_alu_operation_ff == UMLALH || i_alu_operation_ff == SMLALL || i_alu_operation_ff == SMLALH) && 
+                                (i_alu_operation_ff == UMLALL || 
+                                 i_alu_operation_ff == UMLALH || 
+                                 i_alu_operation_ff == SMLALL || 
+                                 i_alu_operation_ff == SMLALH) && 
                                 (
                                         shifter_lock_check ( i_shift_source_ff, o_destination_index_ff, o_condition_code_ff ) ||
                                         shifter_lock_check ( i_shift_length_ff, o_destination_index_ff, o_condition_code_ff ) ||
@@ -543,6 +691,8 @@ begin
                                 ); 
         // If it is LSL #0, we can disable the shifter.
 end
+
+///////////////////////////////////////////////////////////////////////////////
 
 // Shifter lock check.
 function shifter_lock_check ( 
@@ -564,6 +714,10 @@ begin
 end        
 endfunction
 
+///////////////////////////////////////////////////////////////////////////////
+
+// Load lock. Activated when a read from a register follows a load to that
+// register.
 function determine_load_lock ( 
 input [32:0]                    index,
 input [$clog2(PHY_REGS)-1:0]    o_mem_srcdest_index_ff,
@@ -579,7 +733,7 @@ input                           i_alu_mem_load_ff
 begin
         determine_load_lock = 1'd0;
 
-        // Look for that index <- mem instruction in the required pipeline stages. 
+        // Look for that load instruction in the required pipeline stages. 
         // If found, we cannot issue the current instruction since old value 
         // will be read.
         if ( 
@@ -601,4 +755,6 @@ begin
 end
 endfunction
 
-endmodule
+///////////////////////////////////////////////////////////////////////////////
+
+endmodule // zap_issue_main.v

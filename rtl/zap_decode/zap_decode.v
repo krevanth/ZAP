@@ -1,62 +1,56 @@
-/*
-MIT License
+// 
+// MIT License
+// 
+// Copyright (c) 2016 Revanth Kamaraj (Email: revanth91kamaraj@gmail.com)
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+// 
 
-Copyright (c) 2016 Revanth Kamaraj (Email: revanth91kamaraj@gmail.com)
+///////////////////////////////////////////////////////////////////////////////
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+// 
+//  Filename --
+//  zap_decode.v
+// 
+//  Description --
+//  This is the ZAP decode unit. You must precede this unit with an FSM to
+//  manage more complex instructions. This decoder works for all ARM
+//  instructions except long multiply. The majority of outputs of this unit are
+//  expected to go to the ISSUE stage. 
+// 
+//  Note --
+//  You may have noticed that the sources and shift lengths are 33-bit. The
+//  upper bit is used to indicate the type of value [31:0] has. If [33] is
+//  IMMED_EN, then [31:0] is a 32-bit immediate value. If [33] is INDEX_EN, then
+//  [31:0] is a register index (although only the lower 5-bits are actually
+//  used if the number of arch regs i.e., ARCH_REGS = 32, for example).
+// 
+//  For notation, Rs means Rm of ARM. The ARM Rs is just refered to here without
+//  a name and as a part select.
+// 
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-*/
+///////////////////////////////////////////////////////////////////////////////
 
 `default_nettype none
 `include "config.vh"
 
-/*
- Filename --
- zap_decode.v
-
- HDL --
- Verilog-2005
-
- Description --
- This is the ZAP decode unit. You must precede this unit with an FSM to
- manage more complex instructions. This decoder works for all ARM
- instructions except long multiply. The majority of outputs of this unit are
- expected to go to the ISSUE stage. 
-
- Note --
- You may have noticed that the sources and shift lengths are 33-bit. The
- upper bit is used to indicate the type of value [31:0] has. If [33] is
- IMMED_EN, then [31:0] is a 32-bit immediate value. If [33] is INDEX_EN, then
- [31:0] is a register index (although only the lower 5-bits are actually
- used if the number of arch regs i.e., ARCH_REGS = 32, for example).
-
- For notation, Rs means Rm of ARM. The ARM Rs is just refered to here without
- a name and as a part select.
-
- Dependencies --
- None
-
- Author --
- Revanth Kamaraj.
-
- License --
- MIT license.
-*/
+///////////////////////////////////////////////////////////////////////////////
 
 module zap_decode #(
 
@@ -73,13 +67,21 @@ module zap_decode #(
         // Number of shift operations.
         parameter SHIFT_OPS = 6
 )
+
+///////////////////////////////////////////////////////////////////////////////
+
 (
                 // I/O Ports.
                 input   wire                            i_irq, i_fiq, i_abt,
                
  
                 // From the FSM.
-                input    wire   [35:0]                  i_instruction,          // The upper 2-bit [34:33] are {rd/ptr,rm/srcdest}. The upper most bit is for opcode extend.
+                
+                input    wire   [35:0]                  i_instruction,          
+                // The upper 2-bit [34:33] are to extend {rd/ptr,rm/srcdest}. 
+                // The upper most bit is for opcode extend.
+                
+                // Instruction valid. 
                 input    wire                           i_instruction_valid,
 
                 // CPSR.
@@ -88,31 +90,51 @@ module zap_decode #(
                 // This signal is used to check the validity of a pipeline stage.
                 output   reg    [3:0]                   o_condition_code,
                 
-                // Where the primary output of the instruction must go to. Make this RAZ to throw away the primary output to a void.
+                // Where the primary output of the instruction must go to. 
+                // Make this RAZ to throw away the primary output to a void.
                 output   reg    [$clog2(ARCH_REGS)-1:0] o_destination_index,
                 
-                // The ALU source is the source that is fed directly to the ALU without the barrel shifter. For multiplication, o_alu_source simply becomes an operand.
+                // The ALU source is the source that is fed directly to the ALU 
+                // without the barrel shifter. For multiplication, 
+                // o_alu_source simply becomes an operand.
                 output   reg    [32:0]                  o_alu_source,
                 output   reg    [$clog2(ALU_OPS)-1:0]   o_alu_operation,
                 
-                // Stuff related to the shifter. For multiplication, the source and length simply become two operands.
+                // Stuff related to the shifter. For multiplication, the 
+                // source and length simply become two operands.
                 output   reg    [32:0]                  o_shift_source,
                 output   reg    [$clog2(SHIFT_OPS)-1:0] o_shift_operation,
                 output   reg    [32:0]                  o_shift_length,
                 
-                // Update the flags. Note that writing to CPSR will cause a flag-update (if you asked for) even if this is 0.
+                // Update the flags. Note that writing to CPSR will cause a 
+                // flag-update (if you asked for) even if this is 0.
                 output  reg                             o_flag_update,
-                
-                // Things related to memory operations.
-                output  reg   [$clog2(ARCH_REGS)-1:0]   o_mem_srcdest_index,            // Data register.
-                output  reg                             o_mem_load,                     // Type of operation...
+               
+                // 
+                // Things related to memory operations. Memory operation
+                // related ports start with a mem_.
+                //
+
+                // Data register.
+                output  reg   [$clog2(ARCH_REGS)-1:0]   o_mem_srcdest_index,
+
+                // Type of operation.
+                output  reg                             o_mem_load,      
+
+                // Store operation.
                 output  reg                             o_mem_store,
-                output  reg                             o_mem_pre_index,                // Indicate pre-ALU tap for address.
-                output  reg                             o_mem_unsigned_byte_enable,     // Byte enable (unsigned).
+
+                // Take pre-ALU tap for address if 1 because it is pre-index.
+                output  reg                             o_mem_pre_index,    
+
+                // Memory operation size.
+                output  reg                             o_mem_unsigned_byte_enable,
                 output  reg                             o_mem_signed_byte_enable,       
                 output  reg                             o_mem_signed_halfword_enable,
                 output  reg                             o_mem_unsigned_halfword_enable,
-                output  reg                             o_mem_translate,                // Force user's view of memory.
+
+                // Force user view of memory.
+                output  reg                             o_mem_translate,   
                 
                 // Unrecognized instruction.
                 output  reg                             o_und,
@@ -121,20 +143,33 @@ module zap_decode #(
                 output  reg                             o_switch
 );
 
+///////////////////////////////////////////////////////////////////////////////
+
 `include "regs.vh"
 `include "shtype.vh"
 `include "opcodes.vh"
 `include "modes.vh"
 `include "cc.vh"
 `include "instruction_patterns.vh"
-`include "sh_params.vh"
 `include "cpsr.vh"
 `include "index_immed.vh"
 `include "fields.vh"
 
-reg bx, dp, br, mrs, msr, ls, mult, halfword_ls, swi, dp1, dp2, dp3;
+///////////////////////////////////////////////////////////////////////////////
 
-// Main reg is here...
+// Related to memory operations.
+localparam [1:0] SIGNED_BYTE            = 2'd0;
+localparam [1:0] UNSIGNED_HALF_WORD     = 2'd1;
+localparam [1:0] SIGNED_HALF_WORD       = 2'd2;
+
+///////////////////////////////////////////////////////////////////////////////
+
+`ifdef SIM
+// Debug only.
+reg bx, dp, br, mrs, msr, ls, mult, halfword_ls, swi, dp1, dp2, dp3;
+`endif
+
+///////////////////////////////////////////////////////////////////////////////
 
 always @*
 begin: mainBlk1
@@ -161,18 +196,20 @@ begin: mainBlk1
         o_und                           = 0;
         o_switch                        = 0;
 
-        bx  = 0;
-        dp  = 0; 
-        br  = 0; 
-        mrs = 0; 
-        msr = 0; 
-        ls = 0; 
-        mult = 0; 
-        halfword_ls = 0; 
-        swi = 0; 
-        dp1 = 0;
-        dp2 = 0;
-        dp3 = 0;
+        `ifdef SIM
+                bx  = 0;
+                dp  = 0; 
+                br  = 0; 
+                mrs = 0; 
+                msr = 0; 
+                ls = 0; 
+                mult = 0; 
+                halfword_ls = 0; 
+                swi = 0; 
+                dp1 = 0;
+                dp2 = 0;
+                dp3 = 0;
+        `endif
 
                 // Based on our pattern match, call the appropriate task
                 if ( i_fiq || i_irq || i_abt )
@@ -191,38 +228,46 @@ begin: mainBlk1
                 end
                 else if ( i_instruction_valid )
                 casez ( i_instruction[31:0] )
-                BX_INST:                                        decode_bx ( i_instruction );
-                MRS:                                            decode_mrs ( i_instruction );   
-                MSR,MSR_IMMEDIATE:                              decode_msr ( i_instruction );
+                BX_INST:                      decode_bx ( i_instruction );
+                MRS:                          decode_mrs ( i_instruction );   
+                MSR,MSR_IMMEDIATE:            decode_msr ( i_instruction );
+
                 DATA_PROCESSING_IMMEDIATE, 
                 DATA_PROCESSING_REGISTER_SPECIFIED_SHIFT, 
-                DATA_PROCESSING_INSTRUCTION_SPECIFIED_SHIFT:    decode_data_processing ( i_instruction );
-                BRANCH_INSTRUCTION:                             decode_branch ( i_instruction );   
-                LS_INSTRUCTION_SPECIFIED_SHIFT,LS_IMMEDIATE:    decode_ls ( i_instruction );
-                MULT_INST:                                      decode_mult ( i_instruction );
-                LMULT_INST:                                     decode_lmult( i_instruction );
-                HALFWORD_LS:                                    decode_halfword_ls ( i_instruction );
-                SOFTWARE_INTERRUPT:                             decode_swi ( i_instruction );
+                DATA_PROCESSING_INSTRUCTION_SPECIFIED_SHIFT:    
+                                      decode_data_processing ( i_instruction );
+
+                BRANCH_INSTRUCTION:    decode_branch ( i_instruction );   
+
+                LS_INSTRUCTION_SPECIFIED_SHIFT,
+                LS_IMMEDIATE:    decode_ls ( i_instruction );
+
+                MULT_INST:              decode_mult ( i_instruction );
+                LMULT_INST:             decode_lmult( i_instruction );
+                HALFWORD_LS:            decode_halfword_ls ( i_instruction );
+                SOFTWARE_INTERRUPT:     decode_swi ( i_instruction );
+
                 default:
                 begin
                         decode_und ( i_instruction );
                 end
                 endcase
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 
+                        `ifdef SIM
                         // Debugging purposes.
                         if ( i_instruction_valid )
                         casez ( i_instruction[31:0] )
-                        BX_INST:                                        bx  = 1;
+                        BX_INST:                                       bx  = 1;
 
-                        MRS:                                            mrs = 1;
-                        MSR,MSR_IMMEDIATE:                              msr = 1;
+                        MRS:                                           mrs = 1;
+                        MSR,MSR_IMMEDIATE:                             msr = 1;
 
                         DATA_PROCESSING_IMMEDIATE, 
                         DATA_PROCESSING_REGISTER_SPECIFIED_SHIFT, 
-                        DATA_PROCESSING_INSTRUCTION_SPECIFIED_SHIFT:    dp  = 1;
-                        BRANCH_INSTRUCTION:                             br  = 1;   
+                        DATA_PROCESSING_INSTRUCTION_SPECIFIED_SHIFT:   dp  = 1;
+                        BRANCH_INSTRUCTION:                            br  = 1;   
  
                         LS_INSTRUCTION_SPECIFIED_SHIFT,LS_IMMEDIATE:    
                         begin
@@ -231,42 +276,45 @@ begin: mainBlk1
                                 else
                                         ls  = 2;  // Store
                         end
-                        MULT_INST:                                      mult            = 1;
-                        HALFWORD_LS:                                    halfword_ls     = 1; 
-                        SOFTWARE_INTERRUPT:                             swi             = 1;         
+                        MULT_INST:                        mult            = 1;
+                        HALFWORD_LS:                      halfword_ls     = 1; 
+                        SOFTWARE_INTERRUPT:               swi             = 1;         
                         endcase
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                        `endif
 
 end
 
-// Task definitions.
+///////////////////////////////////////////////////////////////////////////////
 
-task decode_lmult ( input [35:0] i_instruction ); // Only this uses bit 35. rm.rs + {rh, rn}
+// Decode long multiplication.
+task decode_lmult ( input [35:0] i_instruction ); 
+// Uses bit 35. rm.rs + {rh, rn}
 begin: tskLDecodeMult
 
         o_condition_code        =       i_instruction[31:28];
         o_flag_update           =       i_instruction[20];
 
         // ARM rd.
-        o_destination_index     =       {i_instruction[`DP_RD_EXTEND], i_instruction[19:16]};
-        // For MUL, Rd and Rn are interchanged. For 64bit, this is normally high register.
+        o_destination_index     =       {i_instruction[`DP_RD_EXTEND], 
+                                         i_instruction[19:16]};
+        // For MUL, Rd and Rn are interchanged. 
+        // For 64bit, this is normally high register.
 
         o_alu_source            =       i_instruction[11:8]; // ARM rs
         o_alu_source[32]        =       INDEX_EN;
 
-        o_shift_source          =       {i_instruction[`DP_RS_EXTEND], i_instruction[`DP_RS]};
+        o_shift_source          =       {i_instruction[`DP_RS_EXTEND], 
+                                         i_instruction[`DP_RS]};
         o_shift_source[32]      =       INDEX_EN;            // ARM rm 
 
         // ARM rn
         o_shift_length          =       i_instruction[24] ? 
-                                        {i_instruction[`DP_RN_EXTEND], i_instruction[`DP_RD]} : 32'd0;
+                                        {i_instruction[`DP_RN_EXTEND], 
+                                         i_instruction[`DP_RD]} : 32'd0;
 
-        o_shift_length[32]      =       i_instruction[24] ? INDEX_EN : IMMED_EN;
+        o_shift_length[32]      =       i_instruction[24] ? INDEX_EN:IMMED_EN;
 
-        `ifdef SIM
-                $display($time, "Long multiplication detected!");
-        `endif
+        $display($time, "Long multiplication detected!");
 
         // We need to generate output code.
         case ( i_instruction[22:21] )
@@ -304,12 +352,12 @@ begin: tskLDecodeMult
 end
 endtask
 
+///////////////////////////////////////////////////////////////////////////////
+
+// Decode undefined instructions.
 task decode_und( input [34:0] i_instruction );
 begin
-        `ifdef SIM
-                $display($time, "Undefined instruction detected! You may continue the simulation...");
-                //$stop;
-        `endif
+        $display($time, "Undefined instruction detected! You may continue the simulation...");
 
         // Say instruction is undefined.
         o_und = 1;
@@ -328,13 +376,15 @@ begin
 end
 endtask
 
+///////////////////////////////////////////////////////////////////////////////
+
+// Decode software interrupt instructions.
 task decode_swi( input [34:0] i_instruction );
 begin: tskDecodeSWI
 
-        `ifdef SIM
-                $display($time, "%m:SWI decode...");
-        `endif
+        $display($time, "%m:SWI decode...");
 
+        // Generate LR = PC - 4
         o_condition_code    = AL;
         o_alu_operation     = SUB;
         o_alu_source        = ARCH_PC;
@@ -348,13 +398,14 @@ begin: tskDecodeSWI
 end
 endtask
 
+///////////////////////////////////////////////////////////////////////////////
+
+// Decode halfword LOAD/STORE.
 task decode_halfword_ls( input [34:0] i_instruction );
 begin: tskDecodeHalfWordLs
         reg [11:0] temp, temp1;
 
-        `ifdef SIM
                 $display($time, "%m: Halfword decode...");
-        `endif
 
         temp = i_instruction;
         temp1 = i_instruction;
@@ -375,7 +426,8 @@ begin: tskDecodeHalfWordLs
         end
 
         o_alu_operation     = i_instruction[23] ? ADD : SUB;
-        o_alu_source        = {i_instruction[`BASE_EXTEND], i_instruction[`BASE]}; // Pointer register.
+        o_alu_source        = { i_instruction[`BASE_EXTEND], 
+                                i_instruction[`BASE]}; // Pointer register.
         o_alu_source[32]    = INDEX_EN;
         o_mem_load          = i_instruction[20];
         o_mem_store         = !o_mem_load;
@@ -387,7 +439,8 @@ begin: tskDecodeHalfWordLs
                                 o_alu_source : 
                                 RAZ_REGISTER; // Pointer register already added.
 
-        o_mem_srcdest_index = {i_instruction[`SRCDEST_EXTEND], i_instruction[`SRCDEST]};
+        o_mem_srcdest_index = {i_instruction[`SRCDEST_EXTEND], 
+                               i_instruction[`SRCDEST]};
 
         // Transfer size.
 
@@ -409,28 +462,32 @@ begin: tskDecodeHalfWordLs
 end
 endtask
 
+///////////////////////////////////////////////////////////////////////////////
+
+// Decode short multiplication.
 task decode_mult( input [34:0] i_instruction );
 begin: tskDecodeMult
 
-        `ifdef SIM
-                $display($time, "%m: MLT 32x32 -> 32 decode...");
-        `endif
+        $display($time, "%m: MLT 32x32 -> 32 decode...");
 
         o_condition_code        =       i_instruction[31:28];
         o_flag_update           =       i_instruction[20];
         o_alu_operation         =       UMLALL;
-        o_destination_index     =       {i_instruction[`DP_RD_EXTEND], i_instruction[19:16]};
+        o_destination_index     =       {i_instruction[`DP_RD_EXTEND], 
+                                         i_instruction[19:16]};
 
         // For MUL, Rd and Rn are interchanged.
         o_alu_source            =       i_instruction[11:8]; // ARM rs
         o_alu_source[32]        =       INDEX_EN;
 
-        o_shift_source          =       {i_instruction[`DP_RS_EXTEND], i_instruction[`DP_RS]};
+        o_shift_source          =       {i_instruction[`DP_RS_EXTEND], 
+                                         i_instruction[`DP_RS]};
         o_shift_source[32]      =       INDEX_EN;            // ARM rm 
 
         // ARM rn - Set for accumulate.
         o_shift_length          =       i_instruction[21] ? 
-                                        {i_instruction[`DP_RN_EXTEND], i_instruction[`DP_RD]} : 32'd0;
+                                        {i_instruction[`DP_RN_EXTEND], 
+                                         i_instruction[`DP_RD]} : 32'd0;
 
         o_shift_length[32]      =       i_instruction[21] ? INDEX_EN : IMMED_EN;
 
@@ -439,6 +496,9 @@ begin: tskDecodeMult
 end
 endtask
 
+///////////////////////////////////////////////////////////////////////////////
+
+// BX decode.
 // Converted into a MOV to PC. The task of setting the T-bit in the CPSR is
 // the job of the writeback stage.
 task decode_bx( input [34:0] i_instruction );
@@ -447,9 +507,7 @@ begin: tskDecodeBx
         temp = i_instruction[31:0];
         temp[11:4] = 0;
 
-        `ifdef SIM
                 $display($time, "%m: BX decode...");
-        `endif
 
         process_instruction_specified_shift(temp[11:0]);
 
@@ -467,13 +525,13 @@ begin: tskDecodeBx
 end
 endtask
 
+///////////////////////////////////////////////////////////////////////////////
+
 // Task for decoding load-store instructions.
 task decode_ls( input [34:0] i_instruction );
 begin: tskDecodeLs
 
-        `ifdef SIM
-                $display($time, "%m: LS decode...");
-        `endif
+        $display($time, "%m: LS decode...");
 
         o_condition_code = i_instruction[31:28];
 
@@ -491,7 +549,9 @@ begin: tskDecodeLs
         end
 
         o_alu_operation = i_instruction[23] ? ADD : SUB;
-        o_alu_source    = {i_instruction[`BASE_EXTEND], i_instruction[`BASE]}; // Pointer register.
+
+        // Pointer register.
+        o_alu_source    = {i_instruction[`BASE_EXTEND], i_instruction[`BASE]};
         o_alu_source[32] = INDEX_EN;
         o_mem_load          = i_instruction[20];
         o_mem_store         = !o_mem_load;
@@ -517,12 +577,11 @@ begin: tskDecodeLs
 end
 endtask
 
+///////////////////////////////////////////////////////////////////////////////
+
 task decode_mrs( input [34:0] i_instruction );
 begin
-
-        `ifdef SIM
-                $display($time, "%m: MRS decode...");
-        `endif
+        $display($time, "%m: MRS decode...");
 
         process_immediate ( i_instruction[11:0] );
         
@@ -534,11 +593,11 @@ begin
 end
 endtask
 
+///////////////////////////////////////////////////////////////////////////////
+
 task decode_msr( input [34:0] i_instruction );
 begin
-        `ifdef SIM
-                $display($time, "%m: MSR decode...");
-        `endif
+        $display($time, "%m: MSR decode...");
 
         if ( i_instruction[25] ) // Immediate present.
         begin
@@ -553,7 +612,13 @@ begin
         o_destination_index = i_instruction[22] ? ARCH_CURR_SPSR : ARCH_CPSR;
 
         o_condition_code = i_instruction[31:28];
+
+        // Make srcdest as SPSR. useful for MMOV.
+        o_mem_srcdest_index = ARCH_CURR_SPSR;
+
+        // Select SPSR or CPSR.
         o_alu_operation  = i_instruction[22] ? MMOV : FMOV;
+
         o_alu_source     = i_instruction[25] ? (i_instruction[19:16] & 4'b1000) 
                            : (i_instruction[19:16] & 4'b1001);
         o_alu_source[32] = IMMED_EN;
@@ -567,11 +632,11 @@ begin
 end
 endtask
 
+///////////////////////////////////////////////////////////////////////////////
+
 task decode_branch( input [34:0] i_instruction );
 begin
-        `ifdef SIM
-                $display($time, "%m: B decode...");
-        `endif
+        $display($time, "%m: B decode...");
 
         // A branch is decayed into PC = PC + $signed(immed)
         o_condition_code        = i_instruction[31:28];
@@ -587,13 +652,13 @@ begin
 end
 endtask
 
+///////////////////////////////////////////////////////////////////////////////
+
 // Common data processing handles the common section of all 3 data processing
 // formats.
 task decode_data_processing( input [34:0] i_instruction );
 begin
-        `ifdef SIM
-                $display($time, "%m: Normal DP decode... Received %x %b", i_instruction, i_instruction);
-        `endif
+        $display($time, "%m: Normal DP decode... Received %x %b", i_instruction, i_instruction);
 
         o_condition_code        = i_instruction[31:28];
         o_alu_operation         = i_instruction[24:21];
@@ -624,15 +689,13 @@ begin
 end
 endtask
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 
 // If an immediate value is to be rotated right by an immediate value, this mode is used.
 task process_immediate ( input [34:0] instruction );
 begin
 
-        `ifdef SIM
         $display("%m Process immediate...");
-        `endif
 
         dp1 = 1;
 
@@ -644,16 +707,17 @@ begin
 end
 endtask
 
-// The shifter source is a register but the amount to shift is in the instruction itself.
+///////////////////////////////////////////////////////////////////////////////
+
+// The shifter source is a register but the 
+// amount to shift is in the instruction itself.
 task process_instruction_specified_shift ( input [34:0] instruction );
 begin
-        `ifdef SIM
-                $display("%m Process instruction specified shift...");
-        `endif
-
+        $display("%m Process instruction specified shift...");
         dp2 = 1;
 
-        // ROR #0 = RRC, ASR #0 = ASR #32, LSL #0 = LSL #0, LSR #0 = LSR #32 ROR #n = ROR_1 #n ( n > 0 )
+        // ROR #0 = RRC, ASR #0 = ASR #32, LSL #0 = LSL #0, LSR #0 = LSR #32 
+        // ROR #n = ROR_1 #n ( n > 0 )
         o_shift_length          = instruction[11:7];
         o_shift_length[32]      = IMMED_EN;
         o_shift_source          = {i_instruction[`DP_RS_EXTEND],instruction[`DP_RS]};
@@ -668,7 +732,8 @@ begin
                         if ( !o_shift_length[31:0] ) 
                                 o_shift_operation    = RRC;
                         else
-                                o_shift_operation    = ROR_1; // Differs in carry generation behavior.
+                                o_shift_operation    = ROR_1; 
+                                // Differs in carry generation behavior.
                 end
         endcase
 
@@ -677,12 +742,12 @@ begin
 end
 endtask
 
+///////////////////////////////////////////////////////////////////////////////
+
 // The source register and the amount of shift are both in registers.
 task process_register_specified_shift ( input [34:0] instruction );
 begin
-        `ifdef SIM
         $display("%m Process register specified shift...");
-        `endif
 
         dp3 = 1;
 
@@ -694,4 +759,6 @@ begin
 end
 endtask
 
-endmodule
+///////////////////////////////////////////////////////////////////////////////
+
+endmodule // zap_decode.v

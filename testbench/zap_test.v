@@ -1,10 +1,14 @@
-`include "config.vh"
-
 module zap_test;
 
 parameter RAM_SIZE = 32768;
 parameter START = 1992;
 parameter COUNT = 120;
+
+`define STALL
+`define IRQ_EN
+`define VCD_FILE_PATH   "/tmp/zap.vcd"
+`define MEMORY_IMAGE    "/tmp/prog.v"
+`define MAX_CLOCK_CYCLES 100000
 
 reg             i_clk;
 reg             i_clk_multipump;
@@ -30,7 +34,26 @@ wire [31:0]      o_iram_addr;
 // =========================
 // Processor core.
 // =========================
-zap_top 
+zap_top #(
+
+        // enable cache and mmu.
+        .CACHE_MMU_ENABLE(1),
+
+        // enable 16-bit support.
+        .COMPRESSED_EN(1),
+
+        // data config.
+        .DATA_SECTION_TLB_ENTRIES(4),
+        .DATA_LPAGE_TLB_ENTRIES(8),
+        .DATA_SPAGE_TLB_ENTRIES(16),
+        .DATA_CACHE_SIZE(1024),
+
+        // code config.
+        .CODE_SECTION_TLB_ENTRIES(4),
+        .CODE_LPAGE_TLB_ENTRIES(8),
+        .CODE_SPAGE_TLB_ENTRIES(16),
+        .CODE_CACHE_SIZE(1024)
+) 
 u_zap_top 
 (
         .i_clk(i_clk),

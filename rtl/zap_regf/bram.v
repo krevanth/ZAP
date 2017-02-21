@@ -1,33 +1,37 @@
-/*
-MIT License
+///////////////////////////////////////////////////////////////////////////////
 
-Copyright (c) 2016 Revanth Kamaraj (Email: revanth91kamaraj@gmail.com)
+// 
+// MIT License
+// 
+// Copyright (C) 2016,2017 Revanth Kamaraj (Email: revanth91kamaraj@gmail.com)
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+// 
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-*/
-
-/*
- * Will synthesize to a 2 write port, 1 read port block RAM.
- */
+// 
+// Will synthesize to a 2 write port, 1 read port block RAM.
+// 
 
 `default_nettype none
 `include "config.vh"
+
+///////////////////////////////////////////////////////////////////////////////
 
 module block_ram #(
         parameter       DATA_WDT        =       32,
@@ -47,6 +51,8 @@ module block_ram #(
 
         output reg      [DATA_WDT-1:0]  o_rd_data_a
 );
+
+///////////////////////////////////////////////////////////////////////////////
 
 reg [DATA_WDT-1:0] mem [DEPTH-1:0];
 
@@ -99,6 +105,8 @@ reg [DATA_WDT-1:0] mem [DEPTH-1:0];
         wire [31:0] r45; assign r45 = mem[45];
 `endif
 
+///////////////////////////////////////////////////////////////////////////////
+
 initial
 begin: blk1
         integer i;
@@ -106,6 +114,8 @@ begin: blk1
         for(i=0;i<DEPTH;i=i+1)
                 mem[i] = 0;
 end
+
+///////////////////////////////////////////////////////////////////////////////
 
 always @ (posedge i_clk_multipump)
 begin
@@ -116,9 +126,13 @@ begin
         end
 end
 
+///////////////////////////////////////////////////////////////////////////////
+
 always @ (posedge i_clk_multipump)
 begin
         o_rd_data_a     <= mem [ i_addr_a ];
 end
 
-endmodule
+///////////////////////////////////////////////////////////////////////////////
+
+endmodule // block_ram

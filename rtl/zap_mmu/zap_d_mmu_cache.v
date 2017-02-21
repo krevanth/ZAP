@@ -1,51 +1,59 @@
-/*
-MIT License
+///////////////////////////////////////////////////////////////////////////////
 
-Copyright (c) 2016 Revanth Kamaraj (Email: revanth91kamaraj@gmail.com)
+// 
+// MIT License
+// 
+// Copyright (C) 2016, 2017 Revanth Kamaraj (Email: revanth91kamaraj@gmail.com)
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+// 
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+///////////////////////////////////////////////////////////////////////////////
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-*/
-
-`include "config.vh"
-
-// ============================================================================
-// Filename:
+//
+// Filename --
 // zap_d_mmu_cache.v
-// ----------------------------------------------------------------------------
-// Description:
+//
+// Description --
 // The cache/MMU setup for the ZAP processor core. This is the top module. You
 // need a CP15 wrapper to properly interface this with the rest of the core.
 // You can use this common module for both the I-cache and the D-cache.
 // Cache is write-through. Writes update both cache and main memory. Reads
 // will short circuit into cache itself. No write buffer is implemented in
 // this model. 
-// ----------------------------------------------------------------------------
-// Author:
-// Revanth Kamaraj
-// (C) 2016.
-// ----------------------------------------------------------------------------
-// License: MIT
-// ============================================================================
+//
 
+///////////////////////////////////////////////////////////////////////////////
+
+`include "config.vh"
 `default_nettype none
 
-module zap_d_mmu_cache #(parameter PHY_REGS = 64) (
+module zap_d_mmu_cache #(
+
+        parameter PHY_REGS            = 64,    // Physical registers.
+        parameter SECTION_TLB_ENTRIES =  4,    // Section TLB entries.
+        parameter LPAGE_TLB_ENTRIES   =  8,    // Large page TLB entries.
+        parameter SPAGE_TLB_ENTRIES   =  16,   // Small page TLB entries.
+        parameter CACHE_SIZE          =  1024  // Cache size in bytes.
+
+) 
+(
 
 // ============================================================================
 // PORT LIST 
@@ -110,8 +118,6 @@ output wire [$clog2(PHY_REGS)-1:0]      o_reg_wr_index,
 // ---------------------------------------------
 // RAM interface signals.                       |
 // ---------------------------------------------
-// Technically unregistered.                    |
-// ---------------------------------------------|
 output  reg     [31:0]          o_ram_wr_data   , // RAM write data.
 input   wire    [31:0]          i_ram_rd_data   , // RAM read data.
 output  reg     [31:0]          o_ram_address   , // RAM address.
@@ -137,7 +143,6 @@ input   wire                    i_ram_done        // RAM done indicator.
 // -----------------------------
 `include                 "mmu.vh"
 `include       "mmu_functions.vh"
-`include        "basic_checks.vh"
 `include               "modes.vh"
 // -----------------------------
 
@@ -587,12 +592,19 @@ begin: blk1
                         //
                         // Decide cacheability based on define.
                         //
-                        `ifdef FORCE_I_CACHEABLE
-                                cacheable = 1'd1;
-                        `elsif FORCE_I_RAND_CACHEABLE
-                                cacheable = $random; // DO NOT SET THIS FOR SYNTHESIS.
+
+                        `ifdef SIM
+                                // Simulation only.
+                                `ifdef FORCE_I_CACHEABLE
+                                        cacheable = 1'd1;    // Always cacheable.
+                                `elsif FORCE_I_RAND_CACHEABLE
+                                        cacheable = $random; // Randomly set cacheable.
+                                `else
+                                        cacheable = 1'd0;    // If mmu is out, cache is also out.
+                                `endif
                         `else
-                                cacheable = 1'd0; // If mmu is out, cache is also out.
+                                // Synthesis.
+                                cacheable = 1'd0; // If MMU is off, cache too is.
                         `endif
                 end
 
@@ -881,7 +893,7 @@ begin: blk1
                 state_nxt = state_ff == REFRESH_CYCLE_CACHE ? RD_DLY : IDLE;
                 refresh   = 1'd1;
         end
-         endcase // : CASE ENDS HERE
+        endcase // : CASE ENDS HERE
 end
 
 function [127:0] write_cache_line (input [31:0] wr_data, input [3:0] ben, input [1:0] index  );
@@ -930,15 +942,42 @@ begin
         end
 end
 
-initial
+///////////////////////////////////////////////////////////////////////////////
+
+
+task kill_memory_op; // Kill memory operation of RW memory.
 begin
-        `ifndef SIM
-                `ifdef FORCE_D_RAND_CACHEABLE
-                        $display("*E: Bad config.vh setting for synthesis...");
-                        $finish;
-                `endif
-        `endif
+        o_ram_wr_en   = 1'd0;
+        o_ram_rd_en   = 1'd0;
+        o_ram_address = 32'd0;
+        o_ram_ben     = 4'd0;
+        o_ram_wr_data = 32'd0;
 end
+endtask
+
+// Generate memory write on RW memory.
+task generate_memory_write ( input [31:0] address );
+begin
+           o_ram_wr_data = i_wr_data;
+           o_ram_address = address;  
+           o_ram_ben     = i_ben;
+           o_ram_wr_en   = 1'd1;
+           o_ram_rd_en   = 1'd0;
+end
+endtask
+
+// Generate memory read on RW memory.
+task generate_memory_read ( input [31:0] address );
+begin
+           o_ram_wr_data = 32'd0;
+           o_ram_ben     = 4'd0;
+           o_ram_address = address;  
+           o_ram_wr_en   = 1'd0;
+           o_ram_rd_en   = 1'd1;
+end
+endtask
+
+///////////////////////////////////////////////////////////////////////////////
 
 endmodule // zap_d_mmu_cache.v
 

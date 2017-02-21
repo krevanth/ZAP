@@ -1,56 +1,55 @@
-/*
-MIT License
+///////////////////////////////////////////////////////////////////////////////
 
-Copyright (c) 2016 Revanth Kamaraj (Email: revanth91kamaraj@gmail.com)
+// 
+// MIT License
+// 
+// Copyright (c) 2016 Revanth Kamaraj (Email: revanth91kamaraj@gmail.com)
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+// 
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+///////////////////////////////////////////////////////////////////////////////
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+// 
+//  Filename --
+//  zap_decode_mem_fsm.v
+// 
+//  Description --
+//  This module sequences ARM LDM/STM CISC instructions into simpler RISC
+//  instructions. Basically LDM -> LDRs and STM -> STRs. Supports a base restored
+//  abort model. Start instruction carries interrupt information so this cannot
+//  block interrupts if there is a sequence of these.
+// 
+// Also handles SWAP instruction.
+// 
+// SWAP steps:
+// - Read data from [Rn] into DUMMY. - LDR DUMMY0, [Rn]
+// - Write data in Rm to [Rn]        - STR Rm, [Rn]
+// - Copy data from DUMMY to Rd.     - MOV Rd, DUMMY0
+// 
+// 
+// 
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-*/
+///////////////////////////////////////////////////////////////////////////////
 
 `default_nettype none
 `include "config.vh"
-
-/*
- Filename --
- zap_decode_mem_fsm.v
-
- HDL --
- Verilog-2005
-
- Description --
- This module sequences ARM LDM/STM CISC instructions into simpler RISC
- instructions. Basically LDM -> LDRs and STM -> STRs. Supports a base restored
- abort model. Start instruction carries interrupt information so this cannot
- block interrupts if there is a sequence of these.
-
-Also handles SWAP instruction.
-
-SWAP steps:
-- Read data from [Rn] into DUMMY. - LDR DUMMY0, [Rn]
-- Write data in Rm to [Rn]        - STR Rm, [Rn]
-- Copy data from DUMMY to Rd.     - MOV Rd, DUMMY0
-
- Dependencies --
- None
-
- Author --
- Revanth Kamaraj 
-*/
 
 module zap_predecode_mem_fsm
 (
@@ -76,28 +75,31 @@ module zap_predecode_mem_fsm
         input wire              i_stall_from_shifter,
         input wire              i_issue_stall,
 
+        // Instruction output.
         output reg [35:0]       o_instruction,
         output reg              o_instruction_valid,
-        output reg              o_stall_from_decode,// Inputs to this module must not  change
-                                                    // if this is seen as 1. The interrupt 
-                                                    // sequencer may choose not to override this
-                                                    // since it too monitors the input instruction.
-                                                    // LDMs and STMs may be interrupted. Others
-                                                    // cannot.
+
+        // We generate a stall.
+        output reg              o_stall_from_decode,
 
         // Possibly masked interrupts.
         output reg              o_irq,
         output reg              o_fiq
 );
 
+///////////////////////////////////////////////////////////////////////////////
 
 `include "fields.vh"
 `include "opcodes.vh"
 `include "regs.vh"
 `include "cpsr.vh"
 
+///////////////////////////////////////////////////////////////////////////////
+
+//
 // Instruction breakup
 // These assignments are repeated in the function.
+//
 wire [3:0] base    = i_instruction[`BASE];
 wire [3:0] srcdest = i_instruction[`SRCDEST];
 wire [3:0] cc      = i_instruction[31:28];
@@ -115,6 +117,12 @@ wire [11:0] branch_offset = i_instruction[11:0];
 // Ones counter offset.
 wire [11:0] oc_offset;
 
+// Registers.
+reg     [2:0]   state_ff, state_nxt;
+reg     [15:0]  reglist_ff, reglist_nxt;
+
+///////////////////////////////////////////////////////////////////////////////
+
 // States.
 localparam IDLE         = 0;
 localparam MEMOP        = 1;
@@ -124,9 +132,7 @@ localparam SWAP2        = 4;
 localparam LMULT_BUSY   = 5;
 localparam BL_S1        = 6;
 
-// Registers.
-reg     [2:0]   state_ff, state_nxt;
-reg     [15:0]  reglist_ff, reglist_nxt;
+///////////////////////////////////////////////////////////////////////////////
 
 // Next state and output logic.
 always @*
@@ -145,25 +151,32 @@ begin
         case ( state_ff )
                 IDLE:
                 begin
+                        // LDM/STM detected...
                         if ( id == 3'b100 && i_instruction_valid )
                         begin
                                 // Backup base register.
                                 // MOV DUMMY0, Base
 
-                                `ifdef SIM
-                                        $display($time, "%m: Load/Store Multiple detected!");
-                                `endif
+                                $display($time, "%m: Load/Store Multiple detected!");
                                 
                                 if ( up )
                                 begin
-                                        o_instruction = {cc, 2'b00, 1'b0, MOV, 1'b0, 4'd0, 4'd0, 8'd0, base};
-                                        {o_instruction[`DP_RD_EXTEND], o_instruction[`DP_RD]} = ARCH_DUMMY_REG0;
+                                        o_instruction = {cc, 2'b00, 1'b0, MOV, 
+                                                 1'b0, 4'd0, 4'd0, 8'd0, base};
+
+                                        {o_instruction[`DP_RD_EXTEND], 
+                                         o_instruction[`DP_RD]} 
+                                                = ARCH_DUMMY_REG0;
                                 end
                                 else
                                 begin
                                         // SUB DUMMY0, BASE, OFFSET
-                                        o_instruction = {cc, 2'b00, 1'b1, SUB, 1'd0, base, 4'd0, oc_offset};
-                                        {o_instruction[`DP_RD_EXTEND], o_instruction[`DP_RD]} = ARCH_DUMMY_REG0;
+                                        o_instruction = {cc, 2'b00, 1'b1, SUB, 
+                                                  1'd0, base, 4'd0, oc_offset};
+
+                                        {o_instruction[`DP_RD_EXTEND], 
+                                         o_instruction[`DP_RD]} = 
+                                                ARCH_DUMMY_REG0;
                                 end
 
                                 o_instruction_valid = 1'd1;
@@ -172,19 +185,19 @@ begin
                                 state_nxt = MEMOP;  
                                 o_stall_from_decode = 1'd1; 
 
-                                // Since this instruction does not change the actual state of the CPU,
-                                // an interrupt may be taken on this.
+                                // Since this instruction does not change the 
+                                // actual state of the CPU, an interrupt may be 
+                                // taken on this.
                                 o_irq = i_irq;
                                 o_fiq = i_fiq;
                         end
-                        else if ( i_instruction[27:23] == 5'b00010 && i_instruction[21:20] == 2'b00 && i_instruction[11:4] == 4'b1001 )
+                        else if ( i_instruction[27:23] == 5'b00010 && 
+                                  i_instruction[21:20] == 2'b00 && 
+                                  i_instruction[11:4] == 4'b1001 )
                         begin
-                                /* Swap */
+                                // Swap 
                                 
-                                `ifdef SIM
-                                        $display($time, "%m: Detected SWAP instruction!");
-                                `endif
-
+                                $display($time, "%m: Detected SWAP instruction!");
 
                                 o_irq = i_irq;
                                 o_fiq = i_fiq;
@@ -192,13 +205,19 @@ begin
                                 // dummy = *(rn) - LDR ARCH_DUMMY_REG0, [rn, #0]
                                 state_nxt = SWAP1;
 
-                                o_instruction  = {cc, 3'b010, 1'd1, 1'd0, i_instruction[22], 1'd0, 1'd1, i_instruction[19:16], 4'b0000, 12'd0}; // The 0000 is replaced with dummy0 in next line.
-                                {o_instruction[`SRCDEST_EXTEND], o_instruction[`SRCDEST]} = ARCH_DUMMY_REG0;  
-                                o_instruction_valid     = 1'd1;      
+                                o_instruction  = {cc, 3'b010, 1'd1, 1'd0, 
+                                i_instruction[22], 1'd0, 1'd1, 
+                                i_instruction[19:16], 4'b0000, 12'd0}; 
+                                // The 0000 is replaced with dummy0 below.
 
+                                {o_instruction[`SRCDEST_EXTEND], 
+                                 o_instruction[`SRCDEST]} = ARCH_DUMMY_REG0;  
+
+                                o_instruction_valid = 1'd1;      
                                 o_stall_from_decode = 1'd1;  
                         end
-                        else if ( i_instruction[27:23] == 5'd1 && i_instruction[7:4] == 4'b1001 )
+                        else if ( i_instruction[27:23] == 5'd1 && 
+                                  i_instruction[7:4] == 4'b1001 )
                         begin
                                         // LMULT
                                         state_nxt           = LMULT_BUSY;
@@ -208,7 +227,8 @@ begin
                                         o_instruction       = i_instruction;
                                         o_instruction_valid = i_instruction_valid;
                         end
-                        else if (    i_instruction[27:25] == 3'b101 && i_instruction[24] ) // BL.
+                        else if ( i_instruction[27:25] == 3'b101 && 
+                                  i_instruction[24] ) // BL.
                         begin
                                 // Move to new state. In that state, we will 
                                 // generate a plain branch.
@@ -222,13 +242,17 @@ begin
                                 begin
                                         // PC is 8 bytes ahead.
                                         // Craft a SUB LR, PC, 4.
-                                        o_instruction = {i_instruction[31:28], 28'h24FE004};
+                                        o_instruction = {i_instruction[31:28], 
+                                                         28'h24FE004};
                                 end
                                 else
                                 begin
                                         // PC is 4 bytes ahead...
-                                        // Craft a SUB LR, PC, 1 so that return goes to the next Thumb instruction and making LSB of LR = 1.
-                                         o_instruction = {i_instruction[31:28], 28'h24FE001};
+                                        // Craft a SUB LR, PC, 1 so that return 
+                                        // goes to the next 16bit instruction 
+                                        // and making LSB of LR = 1.
+                                         o_instruction = {i_instruction[31:28], 
+                                                                28'h24FE001};
                                 end
 
                                 // Sell it as a valid instruction
@@ -290,7 +314,10 @@ begin
                         o_stall_from_decode = 1'd1;
 
                         o_instruction_valid = 1;
-                        o_instruction = {cc, 3'b010, 1'd1, 1'd0, i_instruction[22], 1'd0, 1'd0, i_instruction[19:16], i_instruction[3:0]};
+                        o_instruction = {cc, 3'b010, 1'd1, 1'd0, 
+                                        i_instruction[22], 1'd0, 1'd0, 
+                                        i_instruction[19:16], 
+                                        i_instruction[3:0]};
 
                         state_nxt = SWAP2;
                 end
@@ -303,14 +330,19 @@ begin
 
                         rd = i_instruction[15:12];
 
-                        o_stall_from_decode = 1'd0; // Let decode get the next instruction in on the upcoming cycle.
+                        // Let decoding get next instruction in on the upcoming
+                        // cycle.
+                        o_stall_from_decode = 1'd0; 
                         o_instruction_valid = 1'd1;
 
                         o_irq = 0;
                         o_fiq = 0;
 
-                        o_instruction = {cc, 2'b00, 1'd0, MOV, 1'd0, 4'b0000, rd, 12'd0}; // ALU source does not matter.
-                        {o_instruction[`DP_RS_EXTEND], o_instruction[`DP_RS]} = ARCH_DUMMY_REG0;
+                        o_instruction = {cc, 2'b00, 1'd0, MOV, 1'd0, 4'b0000, 
+                                         rd, 12'd0}; // ALU src doesn't matter.
+
+                        {o_instruction[`DP_RS_EXTEND], o_instruction[`DP_RS]} 
+                                        = ARCH_DUMMY_REG0;
 
                         state_nxt = IDLE;
                 end
@@ -328,8 +360,10 @@ begin
                         o_irq = 0;
                         o_fiq = 0;
 
-                        // The map function generates a base restore instruction if reglist = 0.
-                        o_instruction = map ( i_instruction, pri_enc_out, reglist_ff );
+                        // The map function generates a base restore 
+                        // instruction if reglist = 0.
+                        o_instruction = map ( i_instruction, pri_enc_out, 
+                                                                reglist_ff );
                         o_instruction_valid = 1'd1;
 
                         if ( reglist_ff == 0 )
@@ -352,20 +386,29 @@ begin
                         end
                 end
 
-                // If needed, we finally write to the program counter as either a MOV PC, LR or MOVS PC, LR.
+                // If needed, we finally write to the program counter as 
+                // either a MOV PC, LR or MOVS PC, LR.
                 WRITE_PC:
                 begin
                         // MOV(S) PC, ARCH_DUMMY_REG1
                         state_nxt = IDLE;
                         o_stall_from_decode = 1'd0;      
-                        o_instruction = { cc, 2'b00, 1'd0, MOV, s_bit, 4'd0, ARCH_PC, 8'd0, 4'd0 };
-                        {o_instruction[`DP_RS_EXTEND], o_instruction[`DP_RS]} = ARCH_DUMMY_REG1; 
+
+                        o_instruction = 
+                        { cc, 2'b00, 1'd0, MOV, s_bit, 4'd0, ARCH_PC, 
+                                                                8'd0, 4'd0 };
+
+                        {o_instruction[`DP_RS_EXTEND], o_instruction[`DP_RS]} 
+                                        = ARCH_DUMMY_REG1; 
+
                         o_instruction_valid = 1'd1;                 
                         o_irq = 0;
                         o_fiq = 0;
                 end
         endcase
 end
+
+///////////////////////////////////////////////////////////////////////////////
 
 function [33:0] map ( input [31:0] instr, input [3:0] enc, input [15:0] list );
 // These override the globals within the function scope.
@@ -384,7 +427,8 @@ reg restore;
 begin
         restore = 0;
 
-        // All variables used inside the function depend solely on the input args.
+        // All variables used inside the function depend solely on the i/p args.
+        // Thus repeating the assignments.
                 
         base            = instr[`BASE];
         srcdest         = instr[`SRCDEST];
@@ -407,12 +451,12 @@ begin
         map[27:26] = 2'b01;         // Memory instruction.
 
         map[`SRCDEST] = enc;         
-        {map[`BASE_EXTEND],map[`BASE]} = ARCH_DUMMY_REG0; // Use this as the base register.
+        {map[`BASE_EXTEND],map[`BASE]} = ARCH_DUMMY_REG0;//Use as base register.
 
-        // If !up, then DA -> IB and DB -> IA.
+        // If not up, then DA -> IB and DB -> IA.
         if ( !up ) // DA or DB.
         begin
-                map[24]   = !map[24];   // Post <---> Pre
+                map[24]   = !map[24];   // Post <---> Pre switch.
         end
 
         // Since the indexing has swapped (possibly), we must rethink map[21].
@@ -434,13 +478,18 @@ begin
 
                         if ( up ) // Original instruction asked increment.
                         begin
-                                map = { cc, 2'b0, 1'b0, MOV, 1'b0, 4'd0, base, 8'd0, 4'd0 };
-                                {map[`DP_RS_EXTEND],map[`DP_RS]} = ARCH_DUMMY_REG0;  
+                                map = 
+                                { cc, 2'b0, 1'b0, MOV, 1'b0, 4'd0, 
+                                                base, 8'd0, 4'd0 };
+
+                                {map[`DP_RS_EXTEND],map[`DP_RS]} = 
+                                                ARCH_DUMMY_REG0;  
                         end
                         else
                         begin // Restore.
                                 // SUB BASE, BASE, #OFFSET
-                                map = {cc, 2'b00, 1'b1, SUB, 1'd0, base, base, oc_offset};
+                                map = {cc, 2'b00, 1'b1, SUB, 
+                                                1'd0, base, base, oc_offset};
                         end
                 end
                 else
@@ -448,43 +497,37 @@ begin
                         map = 32'd0; // Wasted cycle.
                 end
         end
-        else if ( (store && s_bit) || (load && s_bit && !list[15]) ) // STR with S bit or LDR with S bit and no PC - force user bank access.
+        else if ( (store && s_bit) || (load && s_bit && !list[15]) ) 
+        // STR with S bit or LDR with S bit and no PC - force user bank access.
         begin
                         case ( map[`SRCDEST] ) // Force user bank.
-                        8:      {map[`SRCDEST_EXTEND],map[`SRCDEST]}  = ARCH_USR2_R8;
-                        9:      {map[`SRCDEST_EXTEND],map[`SRCDEST]}  = ARCH_USR2_R9;
-                        10:     {map[`SRCDEST_EXTEND],map[`SRCDEST]}  = ARCH_USR2_R10;
-                        11:     {map[`SRCDEST_EXTEND],map[`SRCDEST]}  = ARCH_USR2_R11;
-                        12:     {map[`SRCDEST_EXTEND],map[`SRCDEST]}  = ARCH_USR2_R12;
-                        13:     {map[`SRCDEST_EXTEND],map[`SRCDEST]}  = ARCH_USR2_R13;
-                        14:     {map[`SRCDEST_EXTEND],map[`SRCDEST]}  = ARCH_USR2_R14;
+                        8: {map[`SRCDEST_EXTEND],map[`SRCDEST]} = ARCH_USR2_R8;
+                        9: {map[`SRCDEST_EXTEND],map[`SRCDEST]} = ARCH_USR2_R9;
+                        10:{map[`SRCDEST_EXTEND],map[`SRCDEST]} = ARCH_USR2_R10;
+                        11:{map[`SRCDEST_EXTEND],map[`SRCDEST]} = ARCH_USR2_R11;
+                        12:{map[`SRCDEST_EXTEND],map[`SRCDEST]} = ARCH_USR2_R12;
+                        13:{map[`SRCDEST_EXTEND],map[`SRCDEST]} = ARCH_USR2_R13;
+                        14:{map[`SRCDEST_EXTEND],map[`SRCDEST]} = ARCH_USR2_R14;
                         endcase
         end
-        else if ( load && enc == 15  ) // Load with PC in register list. Load to dummy register. Will never use user bank.
+        else if ( load && enc == 15  ) 
+        //
+        // Load with PC in register list. Load to dummy register. 
+        // Will never use user bank.
+        //
         begin
+                        //
                         // If S = 1, perform an atomic return.
                         // If S = 0, just write to PC i.e., a jump.
                         //
                         // For now, load to ARCH_DUMMY_REG1.
+                        //
                         {map[`SRCDEST_EXTEND],map[`SRCDEST]} = ARCH_DUMMY_REG1;
         end
 end
 endfunction
 
-/*
-// Priority encoder.
-function [3:0] pri_enc ( input [15:0] in );
-begin: priEncFn
-        reg signed [4:0] i;
-        pri_enc = 4'd0;
-
-        // PC is the last.
-        for(i=15;i>=0;i=i-1)
-                if ( in[i] == 1'd1 )
-                        pri_enc = i;
-end
-endfunction
-*/
+///////////////////////////////////////////////////////////////////////////////
 
 // Priority encoder.
 function [3:0] pri_enc ( input [15:0] in );
@@ -510,12 +553,14 @@ begin: priEncFn
                 endcase
 end
 endfunction
+
+///////////////////////////////////////////////////////////////////////////////
        
 always @ (posedge i_clk)
 begin
         if      ( i_reset )                             clear;
         else if ( i_clear_from_writeback)               clear;
-        else if ( i_data_stall )                        begin end       // Stall the CPU.
+        else if ( i_data_stall )                        begin end // Stall CPU.
         else if ( i_clear_from_alu )                    clear;
         else if ( i_stall_from_shifter )                begin end
         else if ( i_issue_stall )                       begin end
@@ -526,6 +571,8 @@ begin
         end
 end
 
+///////////////////////////////////////////////////////////////////////////////
+
 // Unit is reset.
 task clear;
 begin
@@ -534,6 +581,8 @@ begin
 end
 endtask
 
+///////////////////////////////////////////////////////////////////////////////
+
 // The register jumps to the bottom of the list and starts processing.
 ones_counter u_ones_counter 
 (
@@ -541,5 +590,6 @@ ones_counter u_ones_counter
         .o_offset(oc_offset)
 );
 
+///////////////////////////////////////////////////////////////////////////////
 
-endmodule
+endmodule // zap_predecode_mem_fsm.v

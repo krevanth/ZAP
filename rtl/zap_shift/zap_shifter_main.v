@@ -1,38 +1,46 @@
-/*
-MIT License
+///////////////////////////////////////////////////////////////////////////////
 
-Copyright (c) 2016 Revanth Kamaraj (Email: revanth91kamaraj@gmail.com)
+// 
+// MIT License
+// 
+// Copyright (C) 2016,2017 Revanth Kamaraj (Email: revanth91kamaraj@gmail.com)
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+// 
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-*/
+//////////////////////////////////////////////////////////////////////////////
 
 `default_nettype none
 `include "config.vh"
 
+//
 // Filename --
 // zap_shift_stage.v 
 //
-// Author --
-// Revanth Kamaraj
-//
 // Description --
 // This stage contains the barrel shifter and the conflict resolver system.
+// The conflict resolver system resolves issue errors for back to back instructions
+// which occurs due to the 2 stage EX (Shifter and ALU are different). This
+// improves performance rather than having to stall back to back instructions.
+//
+
+///////////////////////////////////////////////////////////////////////////////
 
 module zap_shifter_main
 #(
@@ -41,9 +49,7 @@ module zap_shifter_main
         parameter SHIFT_OPS = 5
 )
 (
-        // =============================
         // Clock and reset.
-        // =============================
         input wire                               i_clk,
         input wire                               i_reset,
 
@@ -55,21 +61,17 @@ module zap_shifter_main
         input wire   [1:0]                       i_taken_ff,
         output reg   [1:0]                       o_taken_ff,
 
-        // ==============================
-        // Stall and clear.
-        // ==============================
+        // Stall and clear. Hi to low priority.
         input wire i_clear_from_writeback, // | High Priority.
         input wire i_data_stall,           // |
         input wire i_clear_from_alu,       // V Low Priority.
 
-        // ------------------------------
         // Next CPSR.
-        // ------------------------------
-        input wire [31:0] i_cpsr_nxt, // Next CPSR
+        input wire [31:0] i_cpsr_nxt, 
 
-        // ==============================
-        // Things from Issue.
-        // ==============================
+        //
+        // Things from Issue. Please see issue stage for signal details.
+        //
 
         input wire       [3:0]                   i_condition_code_ff,
         input wire       [$clog2(PHY_REGS )-1:0] i_destination_index_ff,
@@ -116,22 +118,20 @@ module zap_shifter_main
         input wire                         i_und_ff,
         output reg                         o_und_ff,
 
-        // ===============================
         // Value from ALU for resolver.
-        // ===============================
         input wire   [31:0]                     i_alu_value_nxt,
 
         // Force 32.
         input wire                         i_force32align_ff,
         output reg                         o_force32align_ff,
 
-        // AT indicator.
+        // ARM <-> Compressed switch indicator.
         input wire      i_switch_ff,
         output reg      o_switch_ff,
 
-        // ===============================
+        //
         // Outputs.
-        // ===============================
+        //
 
         // Specific to this stage.
         output reg      [31:0]                  o_mem_srcdest_value_ff,
@@ -172,12 +172,15 @@ module zap_shifter_main
         output wire                             o_stall_from_shifter
 );
 
+///////////////////////////////////////////////////////////////////////////////
+
 `include "opcodes.vh"
 `include "index_immed.vh"
 `include "cc.vh"
 `include "regs.vh"
 `include "modes.vh"
-//`include "global_functions.vh"
+
+///////////////////////////////////////////////////////////////////////////////
 
 wire nozero_nxt;
 wire [31:0] shout;
@@ -188,6 +191,8 @@ reg shift_carry_nxt;
 wire shifter_enabled = !i_disable_shifter_ff;
 
 wire [31:0] mult_out;
+
+///////////////////////////////////////////////////////////////////////////////
 
 // The MAC unit.
 zap_multiply
@@ -206,7 +211,9 @@ u_zap_multiply
 
         .i_alu_operation_ff(i_alu_operation_ff),
 
-        .i_cc_satisfied (i_condition_code_ff == 4'd15 ? 1'd0 : 1'd1), // ( is_cc_satisfied ( i_condition_code_ff, i_cpsr_nxt[31:28] ) ) -- Causing timing issues in Xilinx ISE.
+        .i_cc_satisfied (i_condition_code_ff == 4'd15 ? 1'd0 : 1'd1), 
+        // ( is_cc_satisfied ( i_condition_code_ff, i_cpsr_nxt[31:28] ) ) 
+        // -- Causing timing issues in Xilinx ISE.
 
         .i_rm(i_alu_source_value_ff),
         .i_rn(i_shift_length_value_ff),
@@ -218,7 +225,9 @@ u_zap_multiply
         .o_nozero(nozero_nxt)
 );
 
-task clear;
+///////////////////////////////////////////////////////////////////////////////
+
+task clear; // Clear the unit out.
 begin
            o_condition_code_ff               <= NV;
            o_irq_ff                          <= 0; 
@@ -229,6 +238,8 @@ begin
            o_destination_index_ff[4]         <= 1;
 end
 endtask
+
+///////////////////////////////////////////////////////////////////////////////
 
 always @ (posedge i_clk)
 begin
@@ -252,8 +263,12 @@ begin
         begin
            o_condition_code_ff               <= i_condition_code_ff;                                     
            o_destination_index_ff            <= i_destination_index_ff;
-           o_alu_operation_ff                <= (i_alu_operation_ff == UMLALL || i_alu_operation_ff == UMLALH || i_alu_operation_ff == SMLALL || i_alu_operation_ff == SMLALH) ? 
-                                                MOV : i_alu_operation_ff; // Multiplication needs transformation.
+           o_alu_operation_ff                <= (i_alu_operation_ff == UMLALL || 
+                                                 i_alu_operation_ff == UMLALH || 
+                                                 i_alu_operation_ff == SMLALL || 
+                                                i_alu_operation_ff == SMLALH) ? 
+                                                MOV : i_alu_operation_ff; 
+                                        // Multiplication becomes a MOV for ALU.
            o_flag_update_ff                  <= i_flag_update_ff;
            o_mem_srcdest_index_ff            <= i_mem_srcdest_index_ff;           
            o_mem_load_ff                     <= i_mem_load_ff;                    
@@ -282,6 +297,8 @@ begin
    end
 end
 
+///////////////////////////////////////////////////////////////////////////////
+
 // Barrel shifter.
 zap_shift_shifter  #(
         .SHIFT_OPS(SHIFT_OPS)
@@ -296,26 +313,27 @@ U_SHIFT
         .o_carry        ( shcarry )
 );
 
-// For ALU source value (rn)
+///////////////////////////////////////////////////////////////////////////////
+
+// Resolve conflict for ALU source value (rn)
 always @*
 begin
-                `ifdef SIM
-                        $display($time, "==> %m: Resolving ALU source value...");
-                `endif
+                $display($time, "==> %m: Resolving ALU source value...");
 
                 rn = resolve_conflict ( i_alu_source_ff, i_alu_source_value_ff, 
                                         o_destination_index_ff, i_alu_value_nxt, i_alu_dav_nxt ); 
 
-                `ifdef SIM
-                        $display($time, "%m: ************** DONE RESOLVING ALU SOURCE VALUE *********************");
-                `endif
+                $display($time, "%m: ************** DONE RESOLVING ALU SOURCE VALUE *********************");
 end
 
-// For shifter source value.
+///////////////////////////////////////////////////////////////////////////////
+
+// Resolve conflict for shifter source value.
 always @*
 begin
         // If we issue a multiply.
-        if ( i_alu_operation_ff == UMLALL || i_alu_operation_ff == UMLALH || i_alu_operation_ff == SMLALL || i_alu_operation_ff == SMLALH )
+        if ( i_alu_operation_ff == UMLALL || i_alu_operation_ff == UMLALH || 
+             i_alu_operation_ff == SMLALL || i_alu_operation_ff == SMLALH )
         begin
                 // Get result from multiplier.
                 rm              = mult_out;
@@ -342,17 +360,20 @@ begin
         end
 end
 
+///////////////////////////////////////////////////////////////////////////////
+
 // Mem srcdest index. Used for
-// stores.
+// stores. Resolve conflict.
 always @*
 begin
         mem_srcdest_value = resolve_conflict ( i_mem_srcdest_index_ff, i_mem_srcdest_value_ff,
                                                o_destination_index_ff, i_alu_value_nxt, i_alu_dav_nxt );  
 end
 
+///////////////////////////////////////////////////////////////////////////////
 
 // This will resolve conflicts for back to back instruction execution.
-// The function entirely depends only on the inputs.
+// The function entirely depends only on the inputs to the function.
 function [31:0] resolve_conflict ( 
         input    [32:0]                  index_from_issue,       // Index from issue stage. Could have immed too.
         input    [31:0]                  value_from_issue,       // Issue speculatively read value.
@@ -361,41 +382,33 @@ function [31:0] resolve_conflict (
         input                            result_from_alu_valid   // Result from ALU is VALID.
 );
 begin
-        `ifdef SIM
-                $display($time, "%m: ================ resolve_conflict ==================");
-                $display($time, "%m: index from issue = %d value from issue = %d index from this stage = %d result from alu = %d", index_from_issue, value_from_issue, index_from_this_stage, result_from_alu);
-                $display($time, "%m: ====================================================");
-        `endif
+        $display($time, "%m: ================ resolve_conflict ==================");
+        $display($time, "%m: index from issue = %d value from issue = %d index from this stage = %d result from alu = %d", index_from_issue, value_from_issue, index_from_this_stage, result_from_alu);
+        $display($time, "%m: ====================================================");
 
         if ( index_from_issue[32] == IMMED_EN )
         begin
                 resolve_conflict = index_from_issue[31:0];
 
-                `ifdef SIM
                         $display($time, "%m: => It is an immediate value.");
-                `endif
         end 
         else if ( index_from_this_stage == index_from_issue[$clog2(PHY_REGS)-1:0] && result_from_alu_valid )
         begin
                 resolve_conflict = result_from_alu;
 
-                `ifdef SIM
                         $display($time, "%m: => Getting result from ALU!");
-                `endif
         end
         else
         begin
                 resolve_conflict = value_from_issue[31:0];
 
-                `ifdef SIM
                         $display($time, "%m: => No changes!");
-                `endif
         end
 
-        `ifdef SIM
                 $display($time, "%m: ==> Final result is %d", resolve_conflict);
-        `endif
 end
 endfunction
 
-endmodule
+///////////////////////////////////////////////////////////////////////////////
+
+endmodule // zap_shifter_main.v

@@ -1,48 +1,42 @@
-/*
-MIT License
-
-Copyright (c) 2016 Revanth Kamaraj (Email: revanth91kamaraj@gmail.com)
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-*/
+// 
+// MIT License
+// 
+// Copyright (C) 2016,2017 Revanth Kamaraj (Email: revanth91kamaraj@gmail.com)
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+// 
 
 `default_nettype none
 `include "config.vh"
 
-/* 
- Filename --
- zap_register_file.v
-
- HDL --
- Verilog-2005
-
- Description --
- The ZAP register file. The register file is a memory structure
- with 46 x 32-bit registers. Intended to be implemented using flip-flops. 
- The register file provides dedicated ports for accessing the PC and CPSR
- registers. Atomic register updates for interrupt processing is done here.
-
- Define SIM to turn on debugging messages.
-
- Copyright --
- (C) 2016 Revanth Kamaraj.
-*/
+//  
+//  Filename --
+//  zap_register_file.v
+// 
+//  Description --
+//  The ZAP register file. The register file is a memory structure
+//  with 46 x 32-bit registers. Intended to be implemented using flip-flops. 
+//  The register file provides dedicated ports for accessing the PC and CPSR
+//  registers. Atomic register updates for interrupt processing is done here.
+// 
+//  Define SIM to turn on debugging messages.
+// 
 
 module zap_register_file #(
         parameter FLAG_WDT = 32, // Flags width a.k.a CPSR.
@@ -134,6 +128,8 @@ module zap_register_file #(
         input wire     [31:0]                 i_hijack_sum
 );
 
+///////////////////////////////////////////////////////////////////////////////
+
 `ifdef SIM
 
 reg fiq_ack;
@@ -157,11 +153,15 @@ reg                            wen;
 integer irq_addr = 0;
 `endif
 
+///////////////////////////////////////////////////////////////////////////////
+
 // Coprocessor accesses.
 always @ (posedge i_clk) 
 begin
         o_copro_reg_rd_data_ff <= i_reset ? 0 : o_rd_data_0;
 end
+
+///////////////////////////////////////////////////////////////////////////////
 
 localparam RST_VECTOR   = 32'h00000000;
 localparam UND_VECTOR   = 32'h00000004;
@@ -171,9 +171,13 @@ localparam DABT_VECTOR  = 32'h00000010;
 localparam IRQ_VECTOR   = 32'h00000018;
 localparam FIQ_VECTOR   = 32'h0000001C;
 
+///////////////////////////////////////////////////////////////////////////////
+
 `include "regs.vh"
 `include "modes.vh"
 `include "cpsr.vh"
+
+///////////////////////////////////////////////////////////////////////////////
 
 // CPSR dedicated output.
 always @*
@@ -182,6 +186,8 @@ begin
         o_pc_nxt        = pc_nxt & 32'hfffffffe;
         o_cpsr_nxt      = cpsr_nxt;
 end
+
+///////////////////////////////////////////////////////////////////////////////
 
 bram_wrapper u_bram_wrapper
 (
@@ -207,6 +213,8 @@ bram_wrapper u_bram_wrapper
  .o_rd_data_c    (       o_rd_data_2     ),
  .o_rd_data_d    (       o_rd_data_3     )
 );
+
+///////////////////////////////////////////////////////////////////////////////
 
 `define ARM_MODE (cpsr_ff[T] == 1'd0)
 
@@ -439,6 +447,8 @@ begin: blk1
         end
 end
 
+///////////////////////////////////////////////////////////////////////////////
+
 always @ (posedge i_clk)
 begin
         if ( i_reset )
@@ -461,4 +471,4 @@ begin
         end
 end
 
-endmodule
+endmodule // zap_register_file.v

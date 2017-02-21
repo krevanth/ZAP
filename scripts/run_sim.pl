@@ -3,6 +3,18 @@
 use strict;
 use warnings;
 
+###############################################################################
+# Perl script to simulate the ZAP processor. This script itself calls other
+# scripts and programts.
+# 1. The script compiles asm and C files into an BIN image.
+# 2. The BIN file is converter into a set of Verilog assignments (Memory Image).
+# 3. The simulation is run using the generated memory image.
+# 4. The post processing script is applied on the generated log file.
+#
+# Usage :
+# perl run_sim.pl <optional seed value>
+###############################################################################
+
 my $rand;
 my $force_seed;
 

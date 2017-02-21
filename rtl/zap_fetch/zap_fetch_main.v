@@ -1,191 +1,267 @@
-/*
-MIT License
+///////////////////////////////////////////////////////////////////////////////
 
-Copyright (c) 2016 Revanth Kamaraj (Email: revanth91kamaraj@gmail.com)
+// 
+// MIT License
+// 
+// Copyright (C) 2016,2017 Revanth Kamaraj (Email: revanth91kamaraj@gmail.com)
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+// 
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+///////////////////////////////////////////////////////////////////////////////
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+// 
+// Filename --
+// zap_fetch_stage.v
+// 
+// Summary --
+// Fetch unit and branch predictor for the ZAP processor.
+// 
+// Description --
+// This is the simple I-cache frontend to the processor. This stage simply
+// serves as a buffer for instructions. This allows maximum cycle time for
+// the I-cache. Data aborts are handled by pumping an extra signal down the
+// pipeline. Data aborts piggyback off AND R0, R0, R0. 
+// 
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-*/
+///////////////////////////////////////////////////////////////////////////////
 
 `default_nettype none
 `include "config.vh"
 
-/*
-Filename --
-zap_fetch_stage.v
-
-HDL --
-Verilog-2005
-
-Description --
-This is the simple I-cache frontend to the processor. This stage simply
-serves as a buffer for instructions. This allows maximum cycle time for
-the I-cache. Data aborts are handled by pumping an extra signal down the
-pipeline. Data aborts piggyback off AND R0, R0, R0. 
-*/
+///////////////////////////////////////////////////////////////////////////////
 
 module zap_fetch_main #(
+
+        // Branch predictor entries.
         parameter BP_ENTRIES = 1024
 )
+
+///////////////////////////////////////////////////////////////////////////////
+
 (
-                // Clock and reset.
-                input wire i_clk,          // ZAP clock.        
-                input wire i_reset,        // Active high synchronous reset.
-                
-                // From other parts of the pipeline. These
-                // signals either tell the unit to invalidate
-                // its outputs or freeze in place.
-                input wire i_clear_from_writeback, // | High Priority.
-                input wire i_data_stall,           // |
-                input wire i_clear_from_alu,       // |
-                input wire i_stall_from_shifter,   // |
-                input wire i_stall_from_issue,     // |
-                input wire i_stall_from_decode,    // V Low Priority.
-                input wire i_clear_from_decode,    // V
+// Clock and reset.
+input wire i_clk,          // ZAP clock.        
+input wire i_reset,        // Active high synchronous reset.
 
-                // Comes from Wb.
-                input wire [31:0] i_pc_ff,               // Program counter.
+// 
+// From other parts of the pipeline. These
+// signals either tell the unit to invalidate
+// its outputs or freeze in place.
+//
+input wire i_clear_from_writeback, // | High Priority.
+input wire i_data_stall,           // |
+input wire i_clear_from_alu,       // |
+input wire i_stall_from_shifter,   // |
+input wire i_stall_from_issue,     // |
+input wire i_stall_from_decode,    // | Low Priority.
+input wire i_clear_from_decode,    // V
 
-                // Comes from CPSR
-                input wire        i_cpsr_ff_t,           // CPSR T bit.
+// Comes from WB unit.
+input wire [31:0] i_pc_ff,         // Program counter.
 
-                // From I-cache.
-                input wire [31:0] i_instruction,         // A 32-bit ZAP instruction + some bits.
-                input wire        i_valid,               // Instruction valid indicator.
-                input wire        i_instr_abort,         // Instruction abort fault.
-                
-                // To decode.
-                output reg [31:0]  o_instruction,       // The 32-bit instruction.
-                output reg         o_valid,             // Instruction valid.
-                output reg         o_instr_abort,       // Indication of an abort.       
-                output reg [31:0]  o_pc_plus_8_ff,      // PC +8 ouput.
-                output reg [31:0]  o_pc_ff,             // PC output.
+// Comes from CPSR
+input wire        i_cpsr_ff_t,     // CPSR T bit.
 
-                // For BP.
-                input wire         i_confirm_from_alu,
-                input wire [31:0]  i_pc_from_alu,
-                input wire [1:0]   i_taken,
-                output wire [1:0]  o_taken_ff
+// From I-cache.
+input wire [31:0] i_instruction,   // A 32-bit ZAP instruction plus some bits.
+input wire        i_valid,         // Instruction valid indicator.
+input wire        i_instr_abort,   // Instruction abort fault.
+
+// To decode.
+output reg [31:0]  o_instruction,  // The 32-bit instruction.
+output reg         o_valid,        // Instruction valid.
+output reg         o_instr_abort,  // Indication of an abort.       
+output reg [31:0]  o_pc_plus_8_ff, // PC +8 ouput.
+output reg [31:0]  o_pc_ff,        // PC output.
+
+// For BP.
+input wire         i_confirm_from_alu,  // Confirm branch prediction from ALU.
+input wire [31:0]  i_pc_from_alu,       // Address of branch. 
+input wire [1:0]   i_taken,             // Predicted status.
+output wire [1:0]  o_taken_ff           // Prediction.
+
 );
 
-wire _unused_ok_;
+///////////////////////////////////////////////////////////////////////////////
 
-`include "cpsr.vh"
+`include "cpsr.vh" // For T bit.
+
+///////////////////////////////////////////////////////////////////////////////
+
+// Unused signals are assigned to this.
+wire _unused_ok_;
 
 // If an instruction abort occurs, this unit sleeps until it is woken up.
 reg sleep_ff;
 
+///////////////////////////////////////////////////////////////////////////////
+
+//
 // This is the instruction payload on an abort
 // because no instruction is actually available on
-// an abort.
+// an abort. This is AND R0, R0, R0 which is a NOP.
+//
 localparam ABORT_PAYLOAD = 32'd0;
 
+// Branch states.
+localparam  [1:0]    SNT     =       2'b00; // Strongly Not Taken.
+localparam  [1:0]    WNT     =       2'b01; // Weakly Not Taken.
+localparam  [1:0]    WT      =       2'b10; // Weakly Taken.
+localparam  [1:0]    ST      =       2'b11; // Strongly Taken.
+
+///////////////////////////////////////////////////////////////////////////////
+
+//
+// NOTE: If an instruction is invalid, only then can it be tagged with any
+// kind of interrupt. Thus, the MMU must make instruction valid as 1 before
+// attaching an abort interrupt to it even though the instruction generated
+// might be invalid. Such an instruction is not actually executed.
+//
+
+//
 // This stage simply forwards data from the
 // I-cache downwards.
+//
 always @ (posedge i_clk)
 begin
         if (  i_reset )                          
         begin
+                // Unit has no valid output.
                 o_valid         <= 1'd0;
+
+                // Do not signal any abort.
                 o_instr_abort   <= 1'd0;
-                sleep_ff        <= 1'd0;        // Wake unit up.
-                o_pc_plus_8_ff  <= 32'd8;
-                o_pc_ff         <= 32'd0;
+
+                // Wake unit up.
+                sleep_ff        <= 1'd0;
         end
-        else if ( i_clear_from_writeback )       
-        begin   
-                o_valid         <= 1'd0;
-                o_instr_abort   <= 1'd0;
-                sleep_ff        <= 1'd0;        // Wake unit up.
-        end
+        else if ( i_clear_from_writeback )       clear_unit;
         else if ( i_data_stall)                  begin end // Save state.
-        else if ( i_clear_from_alu )             
-        begin
-                o_valid         <= 1'd0;
-                o_instr_abort   <= 1'd0;
-                sleep_ff        <= 1'd0;        // Wake unit up.
-        end
+        else if ( i_clear_from_alu )             clear_unit;
         else if ( i_stall_from_shifter )         begin end // Save state.
         else if ( i_stall_from_issue )           begin end // Save state.
         else if ( i_stall_from_decode)           begin end // Save state.
-        else if ( i_clear_from_decode )
+        else if ( i_clear_from_decode )          clear_unit;
+
+        // If unit is sleeping.
+        else if ( sleep_ff ) 
         begin
+                // Nothing valid to be sent.
                 o_valid         <= 1'd0;
+
+                // No aborts.
                 o_instr_abort   <= 1'd0;
-                sleep_ff        <= 1'd0;
+
+                // Keep sleeping.
+                sleep_ff        <= 1'd1;        
         end
-        else if ( sleep_ff )
-        begin
-                o_valid         <= 1'd0;
-                o_instr_abort   <= 1'd0;
-                sleep_ff        <= 1'd1;
-        end
+
+        // Data from memory is valid. This could also be used to signal
+        // an instruction access abort.
         else if ( i_valid )
         begin
-                // Instruction aborts occur with i_valid as 1.
+                // Instruction aborts occur with i_valid as 1. See NOTE.
                 o_valid         <= 1'd1;
                 o_instr_abort   <= i_instr_abort;
 
                 // Put unit to sleep on an abort.
-                if ( i_instr_abort )
-                begin
-                        sleep_ff <= 1'd1;
-                end
+                sleep_ff        <= i_instr_abort;
 
+                //
                 // Pump PC + 8 or 4 down the pipeline. The number depends on
                 // ARM/Compressed mode.
-                o_pc_plus_8_ff <= i_cpsr_ff_t ? ( i_pc_ff + 32'd4 ) : ( i_pc_ff + 32'd8 );
+                //
+                o_pc_plus_8_ff <= i_cpsr_ff_t ? ( i_pc_ff + 32'd4 ) : 
+                                                ( i_pc_ff + 32'd8 );
 
-                // PC.
+                // PC is pumped down the pipeline.
                 o_pc_ff <= i_pc_ff;
         end
         else
         begin
+                // Invalidate the output.
                 o_valid        <= 1'd0;
         end
 end
 
+///////////////////////////////////////////////////////////////////////////////
 
-// iCache takes care of stall issues.
+//
+// The memory is assumed to be pipelined hence the pipeline register is in 
+// the Icache itself.
+//
 always @* 
         o_instruction = i_instruction;
 
-// Branch states.
-localparam      SNT     =       0; // Strongly Not Taken.
-localparam      WNT     =       1; // Weakly Not Taken.
-localparam      WT      =       2; // Weakly Taken.
-localparam      ST      =       3; // Strongly Taken.
+///////////////////////////////////////////////////////////////////////////////
 
+//
+// Branch State RAM.
+// Holds the 2-bit state for a range of branches. Whenever a branch is
+// either detected as correctly taken or incorrectly taken, this RAM is
+// updated. Each entry in the RAM corresponds to a virtual memory address
+// whether or not it be a legit branch or not. 
+//
 ram_simple
 #(.DEPTH(BP_ENTRIES), .WIDTH(2)) u_br_ram
 (
         .i_clk(i_clk),
-        .i_wr_en(!i_data_stall && (i_clear_from_alu || i_confirm_from_alu)),
+
+        // The reason that a no-stall condition is included is that
+        // if the pipeline stalls, this memory should be trigerred multiply
+        // times.
+        .i_wr_en(       !i_data_stall             && 
+                        !i_stall_from_issue       && 
+                        !i_stall_from_decode      && 
+                        !i_stall_from_shifter     && 
+                        (i_clear_from_alu || i_confirm_from_alu)),
+
+        // Lower bits of the PC index into the branch RAM for read and
+        // write addresses.
         .i_wr_addr(i_pc_from_alu[$clog2(BP_ENTRIES):1]),
         .i_rd_addr(i_pc_ff[$clog2(BP_ENTRIES):1]),
+
+        // Write the new state.
         .i_wr_data(compute(i_taken, i_clear_from_alu)),
-        .i_rd_en(1'd1),
+
+        // Read when there is no stall.
+        .i_rd_en( 
+                        !i_data_stall             && 
+                        !i_stall_from_issue       && 
+                        !i_stall_from_decode      && 
+                        !i_stall_from_shifter      
+        ),
+
+        // Send the read data over to o_taken_ff which is a 2-bit value.
         .o_rd_data(o_taken_ff) 
 );
 
-// Memory writes.
+///////////////////////////////////////////////////////////////////////////////
+
+//
+// Branch Memory writes.
+// Implements a 4-state predictor. 
+//
 function [1:0] compute ( input [1:0] i_taken, input i_clear_from_alu );
 begin
+                // Branch was predicted incorrectly. 
                 if ( i_clear_from_alu )
                 begin
                         case ( i_taken )
@@ -195,7 +271,7 @@ begin
                         ST:  compute = WT;
                         endcase
                 end
-                else
+                else // Confirm from alu that branch was correctly predicted.
                 begin
                         case ( i_taken )
                         SNT: compute = SNT;
@@ -207,7 +283,30 @@ begin
 end
 endfunction
 
+///////////////////////////////////////////////////////////////////////////////
+
+//
+// This task clears out the unit and refreshes it for a new
+// service session. Will wake the unit up and clear the outputs.
+//
+task clear_unit;
+begin
+                // No valid output.
+                o_valid         <= 1'd0;
+
+                // No aborts since we are clearing out the unit.
+                o_instr_abort   <= 1'd0;
+
+                // Wake up the unit.
+                sleep_ff        <= 1'd0;
+end
+endtask
+
+///////////////////////////////////////////////////////////////////////////////
+
 assign _unused_ok_ =   i_pc_from_alu[0] && 
                        i_pc_from_alu[31:$clog2(BP_ENTRIES) + 1];
 
-endmodule
+///////////////////////////////////////////////////////////////////////////////
+
+endmodule // zap_fetch_main.v

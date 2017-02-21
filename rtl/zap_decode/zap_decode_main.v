@@ -1,46 +1,42 @@
-/*
-MIT License
+// 
+// MIT License
+// 
+// Copyright (c) 2016 Revanth Kamaraj (Email: revanth91kamaraj@gmail.com)
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+// 
 
-Copyright (c) 2016 Revanth Kamaraj (Email: revanth91kamaraj@gmail.com)
+///////////////////////////////////////////////////////////////////////////////
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+// 
+// Filename --
+// zap_decode_stage.v
+// 
+// Description --
+// This is the ARM decode stage of ZAP. It will decode 32-bit instructions
+// and generate control signals.
+// 
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-*/
+///////////////////////////////////////////////////////////////////////////////
 
 `default_nettype none
 `include "config.vh"
-
-/*
-Filename --
-zap_decode_stage.v
-
-Author --
-Revanth Kamaraj
-
-Description --
-This is the ARM decode stage of ZAP.
-
-Author --
-Revanth Kamaraj
-
-License --
-Released under the MIT license.
-*/
 
 module zap_decode_main #(
         // For several reasons, we need more architectural registers than
@@ -59,11 +55,13 @@ module zap_decode_main #(
         parameter PHY_REGS = 46
 )
 (
+        //
+        // Inputs.      
+        //
+
         // Clock and reset.
         input   wire                    i_clk,
         input   wire                    i_reset,
-
-/////////////////////////////////////////////////////////////////////////////////////////////
 
         // Branch state.
         input   wire     [1:0]                  i_taken,
@@ -74,7 +72,7 @@ module zap_decode_main #(
         // FOrce 32-bit
         input   wire                            i_force32align,
 
-        // Clear and stall signals. 
+        // Clear and stall signals. High to low priority.
         input wire                              i_clear_from_writeback, // | Priority
         input wire                              i_data_stall,           // |
         input wire                              i_clear_from_alu,       // |
@@ -92,14 +90,17 @@ module zap_decode_main #(
 
         // CPU mode. Taken from CPSR.
         input   wire    [4:0]                   i_cpsr_ff_mode, // Mode.
-        input   wire                            i_cpsr_ff_i, // IRQ state.
-        input   wire                            i_cpsr_ff_f, // FIQ state.
+        input   wire                            i_cpsr_ff_i,    // IRQ state.
+        input   wire                            i_cpsr_ff_f,    // FIQ state.
 
         // Instruction input.
         input     wire  [35:0]                  i_instruction,    
         input     wire                          i_instruction_valid,
 
-/////////////////////////////////////////////////////////////////////////////////////////// 
+        //
+        // Outputs.
+        //
+
  
         // This signal is used to check the validity of a pipeline stage.
         output   reg    [3:0]                   o_condition_code_ff,
@@ -110,11 +111,14 @@ module zap_decode_main #(
         
         // The ALU source is the source that is fed directly to the ALU without the
         // barrel shifter. For multiplication, o_alu_source simply becomes an operand.
+        // For alu_source_ff, if bit 32 is 1, then [31:0] is a constant else 
+        // [31:0] is a register index (lower 6-bit effectively).
         output   reg    [32:0]                  o_alu_source_ff,
         output   reg    [$clog2(ALU_OPS)-1:0]   o_alu_operation_ff,
         
         // Stuff related to the shifter. For multiplication, the source and length
-        // simply become two operands.
+        // simply become two operands. For shift_source_ff and shift_length_ff,
+        // bit 32 has the same meaning as for o_alu_source_ff.
         output   reg    [32:0]                  o_shift_source_ff,
         output   reg    [$clog2(SHIFT_OPS)-1:0] o_shift_operation_ff,
         output   reg    [32:0]                  o_shift_length_ff,
@@ -124,45 +128,66 @@ module zap_decode_main #(
         output  reg                             o_flag_update_ff,
         
         // Things related to memory operations.
-        output  reg   [$clog2(PHY_REGS)-1:0]    o_mem_srcdest_index_ff,            // Data register index.
-        output  reg                             o_mem_load_ff,                     // Type of operation...
+
+        // Data register index. Register is read 
+        // for stores and written for loads.
+        output  reg   [$clog2(PHY_REGS)-1:0]    o_mem_srcdest_index_ff,       
+
+        // Load or store.
+        output  reg                             o_mem_load_ff,                    
         output  reg                             o_mem_store_ff,
-        output  reg                             o_mem_pre_index_ff,                // Indicate pre-ALU tap for address.
-        output  reg                             o_mem_unsigned_byte_enable_ff,     // Byte enable (unsigned).
+
+        // Indicate pre-ALU tap for address since pre-index.
+        output  reg                             o_mem_pre_index_ff,                
+
+        // Access size and type.
+
+        // Unsigned byte access.
+        output  reg                             o_mem_unsigned_byte_enable_ff,    
+
+        // Signed byte access.
         output  reg                             o_mem_signed_byte_enable_ff,       
+
+        // Signed halfword access.
         output  reg                             o_mem_signed_halfword_enable_ff,
+
+        // Unsigned halfword access.
         output  reg                             o_mem_unsigned_halfword_enable_ff,
-        output  reg                             o_mem_translate_ff,                // Force user's view of memory.
+
+        // Force user view of memory.
+        output  reg                             o_mem_translate_ff,        
         
-        // PC output.
+        // PC output. Simply clocked out.
         output  reg  [31:0]                     o_pc_plus_8_ff,       
         output  reg  [31:0]                     o_pc_ff,
 
         // Switch.
         output  reg                             o_switch_ff,
  
-        // Interrupts.
-        output  reg                             o_irq_ff,
-        output  reg                             o_fiq_ff,
-        output  reg                             o_abt_ff,
-        output  reg                             o_und_ff,
-        output  reg                             o_swi_ff,  // EX tests for condition validity.
+        // Interrupts. 
+        output  reg                             o_irq_ff, // Goes through mask.
+        output  reg                             o_fiq_ff, // Goes through mask.
+        output  reg                             o_abt_ff, // Clocked out.
+        output  reg                             o_und_ff, // Undefined instr.
+        output  reg                             o_swi_ff, // SWI encountered.
+        // EXECUTE tests for condition validity and triggers SWI.
 
-        // Force 32-bit alignment on memory accesses.
+        // Force 32-bit alignment on memory accesses. Simply clocked out.
         output reg                              o_force32align_ff,
 
-        // Branch.
+        // Branch state. Simply clocked out.
         output reg    [1:0]                     o_taken_ff
 );
 
-
+///////////////////////////////////////////////////////////////////////////////
 
 `include "index_immed.vh"
-//`include "cpsr.vh"
 `include "cc.vh"
 `include "regs.vh"
 `include "modes.vh"
 `include "global_functions.vh"
+
+///////////////////////////////////////////////////////////////////////////////
 
 wire    [3:0]                   o_condition_code_nxt;
 wire    [$clog2(PHY_REGS )-1:0] o_destination_index_nxt;
@@ -172,15 +197,15 @@ wire    [32:0]                  o_shift_source_nxt;
 wire    [$clog2(SHIFT_OPS)-1:0] o_shift_operation_nxt;
 wire    [32:0]                  o_shift_length_nxt;
 wire                            o_flag_update_nxt;
-wire   [$clog2(PHY_REGS )-1:0]  o_mem_srcdest_index_nxt;            // Data register.
-wire                            o_mem_load_nxt;                     // Type of operation...
+wire   [$clog2(PHY_REGS )-1:0]  o_mem_srcdest_index_nxt; // Data register.
+wire                            o_mem_load_nxt;          // Type of operation...
 wire                            o_mem_store_nxt;
-wire                            o_mem_pre_index_nxt;                // Indicate pre-ALU tap for address.
-wire                            o_mem_unsigned_byte_enable_nxt;     // Byte enable (unsigned).
+wire                            o_mem_pre_index_nxt;// Indicate pre-ALU tap for address.
+wire                            o_mem_unsigned_byte_enable_nxt;// Byte enable (unsigned).
 wire                            o_mem_signed_byte_enable_nxt;       
 wire                            o_mem_signed_halfword_enable_nxt;
 wire                            o_mem_unsigned_halfword_enable_nxt;
-wire                            o_mem_translate_nxt;                // Force user's view of memory.
+wire                            o_mem_translate_nxt;// Force user's view of memory.
 wire                            o_force_locked_access_nxt;
 wire                            o_irq_nxt;
 wire                            o_fiq_nxt;
@@ -189,17 +214,58 @@ reg                             o_swi_nxt;
 wire                            o_und_nxt;
 wire                            o_switch_nxt;
 
+wire [$clog2(ARCH_REGS)-1:0]    destination_index_nxt;
+wire [32:0]                     alu_source_nxt;
+wire [32:0]                     shift_source_nxt;
+wire [32:0]                     shift_length_nxt;
+wire [$clog2(ARCH_REGS)-1:0]    mem_srcdest_index_nxt;
+
+///////////////////////////////////////////////////////////////////////////////
+
+// Abort
+assign  o_abt_nxt = (i_abt || i_thumb_und) && i_instruction_valid;
+
+// IRQ and FIQ next state.
+assign  o_irq_nxt = i_irq & !i_cpsr_ff_i; // Pass only when mask is 0.
+assign  o_fiq_nxt = i_fiq & !i_cpsr_ff_f;  // Pass only when mask is 0.
+
+//
+// This section translates the indices from the decode stage converts
+// into a physical index. This is needed because the decode stage extracts
+// architectural register numbers.
+//
+assign  o_destination_index_nxt = // Always a register so no need for IMMED_EN. 
+        translate ( destination_index_nxt, i_cpsr_ff_mode );
+        
+assign  o_alu_source_nxt = 
+        (alu_source_nxt[32] == IMMED_EN ) ? // Constant...?
+        alu_source_nxt : // Pass constant on.
+        translate ( alu_source_nxt, i_cpsr_ff_mode ); // Translate index.
+
+assign  o_shift_source_nxt = 
+        (shift_source_nxt[32] == IMMED_EN ) ? // Constant...?
+        shift_source_nxt : // Pass constant on.
+        translate ( shift_source_nxt, i_cpsr_ff_mode ); // Translate index.
+
+assign  o_shift_length_nxt =
+        (shift_length_nxt[32] == IMMED_EN ) ? // Constant...?
+        shift_length_nxt : // Pass constant on.
+        translate ( shift_length_nxt, i_cpsr_ff_mode ); // Translate index.
+
+assign  o_mem_srcdest_index_nxt = // Always a register so no need for IMMED_EN.       
+        translate ( mem_srcdest_index_nxt, i_cpsr_ff_mode );
+
+
+///////////////////////////////////////////////////////////////////////////////
+
 always @*
 begin
         // The actual decision whether or not to execute this is taken in EX stage.
-        // Passed instructions are pointless anyway since they will not be executed.
+        // At this point, we don't do anything with the SWI except take note.
         o_swi_nxt = &i_instruction[27:24]; 
 end
 
-// Abort
-assign  o_abt_nxt = i_abt;
-assign  o_irq_nxt = i_irq;
-assign  o_fiq_nxt = i_fiq;
+///////////////////////////////////////////////////////////////////////////////
 
 // Flop the outputs to break the pipeline at this point.
 always @ (posedge i_clk)
@@ -231,11 +297,11 @@ begin
         // If no stall, only then update...
         else
         begin
-                o_irq_ff                                <= o_irq_nxt & !i_cpsr_ff_i; // If mask is 1, do not pass.
-                o_fiq_ff                                <= o_fiq_nxt & !i_cpsr_ff_f; // If mask is 1, do not pass.
+                o_irq_ff                                <= o_irq_nxt; 
+                o_fiq_ff                                <= o_fiq_nxt; 
                 o_swi_ff                                <= o_swi_nxt;
                 o_abt_ff                                <= o_abt_nxt;                    
-                o_und_ff                                <= (o_und_nxt || i_thumb_und) && i_instruction_valid;
+                o_und_ff                                <= o_und_nxt;
                 o_condition_code_ff                     <= o_condition_code_nxt;
                 o_destination_index_ff                  <= o_destination_index_nxt;
                 o_alu_source_ff                         <= o_alu_source_nxt;
@@ -261,7 +327,10 @@ begin
         end
 end
 
-task clear;
+///////////////////////////////////////////////////////////////////////////////
+
+task clear; // Clear and refresh the unit. Clear everything and a set a dummy
+            // output to NV acting like a reset.
 begin
                 o_irq_ff                                <= 0;
                 o_fiq_ff                                <= 0;
@@ -274,34 +343,7 @@ begin
 end
 endtask
 
-wire [$clog2(ARCH_REGS)-1:0]    destination_index_nxt;
-wire [32:0]                     alu_source_nxt;
-wire [32:0]                     shift_source_nxt;
-wire [32:0]                     shift_length_nxt;
-wire [$clog2(ARCH_REGS)-1:0]    mem_srcdest_index_nxt;
-
-// This section translates the indices from the decode stage converts
-// into a physical index. 
-assign  o_destination_index_nxt = 
-        translate ( destination_index_nxt, i_cpsr_ff_mode );
-        
-assign  o_alu_source_nxt = 
-        (alu_source_nxt[32] == IMMED_EN ) ?
-        alu_source_nxt :
-        translate ( alu_source_nxt, i_cpsr_ff_mode );
-
-assign  o_shift_source_nxt = 
-        (shift_source_nxt[32] == IMMED_EN ) ?
-        shift_source_nxt :
-        translate ( shift_source_nxt, i_cpsr_ff_mode );
-
-assign  o_shift_length_nxt =
-        (shift_length_nxt[32] == IMMED_EN ) ?
-        shift_length_nxt :
-        translate ( shift_length_nxt, i_cpsr_ff_mode );
-
-assign  o_mem_srcdest_index_nxt =       
-        translate ( mem_srcdest_index_nxt, i_cpsr_ff_mode );
+///////////////////////////////////////////////////////////////////////////////
 
 // Bulk of the decode logic is here.
 zap_decode #(
@@ -337,4 +379,6 @@ u_zap_decode (
         .o_switch(o_switch_nxt)
 );      
 
-endmodule
+///////////////////////////////////////////////////////////////////////////////
+
+endmodule // zap_decode_main.v

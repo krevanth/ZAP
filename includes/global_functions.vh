@@ -1,34 +1,64 @@
-/*
-MIT License
+///////////////////////////////////////////////////////////////////////////////
 
-Copyright (c) 2016 Revanth Kamaraj (Email: revanth91kamaraj@gmail.com)
+// 
+// MIT License
+// 
+// Copyright (c) 2016, 2017 Revanth Kamaraj (Email: revanth91kamaraj@gmail.com)
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+// 
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+///////////////////////////////////////////////////////////////////////////////
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+//
+// Filename --
+// functions.vh
+//
+// Summary --
+// This file contains 2 functions used by the processor in several modules.
+//
+// Detail --
+// Contains functions:
+// translate()
+// is_cc_satisfied()
+//
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-*/
+///////////////////////////////////////////////////////////////////////////////
 
-// ===========================
-// Translate FUNCTION.
-// ===========================
-function [$clog2(PHY_REGS)-1:0] translate ( input [$clog2(PHY_REGS)-1:0] index, input [4:0] cpu_mode );
+// 
+// Translate function.
+// 
+//
+// Used to implement ARM modes. The register file is basically a flat array
+// of registers. Based on mode, we select some of those to implement banking.
+//
+
+function [$clog2(PHY_REGS)-1:0] translate (
+ 
+        input [$clog2(PHY_REGS)-1:0] index, // Requested instruction index.
+        input [4:0] cpu_mode                // Current CPU mode.
+
+);
 begin
         translate = index; // Avoid latch inference.
 
+        // User/System mode assignments.
         case ( index )
                       0:      translate = PHY_USR_R0; 
                       1:      translate = PHY_USR_R1;                            
@@ -46,9 +76,12 @@ begin
                       13:     translate = PHY_USR_R13;
                       14:     translate = PHY_USR_R14;
                       15:     translate = PHY_PC;
+
             RAZ_REGISTER:     translate = PHY_RAZ_REGISTER;
                ARCH_CPSR:     translate = PHY_CPSR;
           ARCH_CURR_SPSR:     translate = PHY_CPSR;
+
+              // USR2 registers are looped back to USER registers.
               ARCH_USR2_R8:   translate = PHY_USR_R8;
               ARCH_USR2_R9:   translate = PHY_USR_R9;
               ARCH_USR2_R10:  translate = PHY_USR_R10;
@@ -56,10 +89,12 @@ begin
               ARCH_USR2_R12:  translate = PHY_USR_R12;
               ARCH_USR2_R13:  translate = PHY_USR_R13;
               ARCH_USR2_R14:  translate = PHY_USR_R14;
+
               ARCH_DUMMY_REG0:translate = PHY_DUMMY_REG0;
               ARCH_DUMMY_REG1:translate = PHY_DUMMY_REG1;
         endcase
 
+        // Override per specific mode.
         case ( cpu_mode )
                 FIQ:
                 begin
@@ -114,7 +149,12 @@ begin
 end
 endfunction
 
-///////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+//
+// Function to check if condition is satisfied for instruction
+// execution. Returns 1 if satisfied, 0 if not.
+//
 
 function is_cc_satisfied 
 ( 
@@ -148,3 +188,4 @@ begin: blk1
 end
 endfunction
 
+///////////////////////////////////////////////////////////////////////////////

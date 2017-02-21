@@ -1,78 +1,80 @@
-/*
-MIT License
+// 
+// MIT License
+// 
+// Copyright (C) 2016, 2017 Revanth Kamaraj (Email: revanth91kamaraj@gmail.com)
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+// 
 
-Copyright (c) 2016 Revanth Kamaraj (Email: revanth91kamaraj@gmail.com)
+///////////////////////////////////////////////////////////////////////////////
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+//
+// Filename --
+// zap_decode_compress.v
+// 
+// Description --
+// Implements a 16-bit instruction decoder. The 16-bit instruction set is
+// not logically organized so as to save on encoding and thus the functions 
+// seem a bit complex.
+// 
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-*/
+///////////////////////////////////////////////////////////////////////////////
 
 `default_nettype none
 `include "config.vh"
 
-/*
-Filename --
-zap_decode_compress.v
+///////////////////////////////////////////////////////////////////////////////
 
-HDL --
-Verilog-2005
-
-Description --
-Implements a custom 16-bit instruction decoder.
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
-!!! THIS IS NOT COMPATIBLE WITH THUMB. DO NOT ATTEMPT TO RUN THUMB CODE ON THIS - IT WILL NOT WORK !!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-Author --
-Revanth Kamaraj.
-
-License --
-Released under the MIT License.
-*/
-
-module zap_predecode_compress
-(
+module zap_predecode_compress (
         // Clock and reset.
         input wire              i_clk,
         input wire              i_reset,
 
         // Input from I-cache.
+        // Instruction and valid qualifier.
         input wire [31:0]       i_instruction,
         input wire              i_instruction_valid,
 
-        // Interrupts.
+        // Interrupts. Active high level sensitive signals.
         input wire              i_irq,
         input wire              i_fiq,
 
-        // Ensure COMPRESSED mode is active.
-        input wire              i_cpsr_ff_t, // To ensure COMPRESSED mode is active.
+        // Ensure compressed mode is active (T bit).
+        input wire              i_cpsr_ff_t, 
 
-        // Output to the ARM decoder.
+        //
+        // Outputs to the ARM decoder.
+        // 
+        
+        // Instruction, valid, undefined by this decoder and force 32-bit
+        // align signals (requires memory to keep lower 2 bits as 00).
         output reg [34:0]       o_instruction,
         output reg              o_instruction_valid,
         output reg              o_und,
-        output reg              o_force32_align, // Forces the memory access unit to ignore the lower 2-bits of the address.
+        output reg              o_force32_align, 
 
-        // Interrupt outputs.
+        // Interrupt status output.
         output reg              o_irq,
         output reg              o_fiq
 );
+
+///////////////////////////////////////////////////////////////////////////////
 
 `include "cc.vh"
 `include "cpsr.vh"
@@ -81,15 +83,23 @@ module zap_predecode_compress
 `include "shtype.vh"
 `include "regs.vh"
 
-reg [11:0] offset_ff, offset_nxt;       // Remember offset.
+///////////////////////////////////////////////////////////////////////////////
 
+reg [11:0] offset_ff, offset_nxt;  // Remember offset.
+
+///////////////////////////////////////////////////////////////////////////////
+
+// Keep buferring offset since a long offset is constructed using consecutive
+// valid compressed instructions.
 always @ (posedge i_clk) 
         if ( i_instruction_valid )
                 offset_ff <= offset_nxt;
 
+///////////////////////////////////////////////////////////////////////////////
+
 always @*
 begin
-        // If you are not in COMPRESSED mode, just pass stuff on.
+        // If you are not in compressed mode, just pass stuff on.
         o_instruction_valid     = i_instruction_valid;
         o_und                   = 0;
         o_instruction           = i_instruction;
@@ -99,7 +109,7 @@ begin
         offset_nxt              = i_instruction[11:0];
 
 
-        if ( i_cpsr_ff_t && i_instruction_valid ) // COMPRESSED mode.
+        if ( i_cpsr_ff_t && i_instruction_valid ) // compressed mode enable
         begin
                 casez ( i_instruction[15:0] )
                         T_ADD_SUB_LO            : decode_add_sub_lo; 
@@ -123,16 +133,14 @@ begin
                         T_MOD_SP                : decode_mod_sp;
                         default: 
                         begin
-                                `ifdef SIM
-                                        $display($time, "%m: Not implemented in COMPRESSED decoder!!!");
-                                `endif
-
-                                o_und = 1;
+                                $display($time, "%m: Not implemented in compressed decoder!!!");
+                                o_und = 1; // Will take UND trap.
                         end
                 endcase 
         end
 end
 
+///////////////////////////////////////////////////////////////////////////////
 
 task decode_get_addr;
 begin: dcdGetAddr
@@ -146,15 +154,17 @@ begin: dcdGetAddr
         o_instruction = 0;
 
         // ADD Rd, PC, imm
-        o_instruction[31:0] = {AL, 2'b00, 1'b1, ADD, 1'd0, 4'd15, rd, imm};           // PC
+        o_instruction[31:0] = {AL, 2'b00, 1'b1, ADD, 1'd0, 4'd15, rd, imm}; 
 
         // ADD Rd, SP, imm
         if ( i_instruction[11] ) // SP
         begin
-                o_instruction[31:0] = {AL, 2'b00, 1'b1, ADD, 1'd0, 4'd13, rd, imm};  // SP
+            o_instruction[31:0] = {AL, 2'b00, 1'b1, ADD, 1'd0, 4'd13, rd, imm}; 
         end
 end
 endtask
+
+///////////////////////////////////////////////////////////////////////////////
 
 task decode_mod_sp;
 begin: dcdModSp
@@ -170,14 +180,19 @@ begin: dcdModSp
         // SUB/ADD R13, R13, imm
         if ( i_instruction[7] != 0 ) // SUB
         begin
-                o_instruction[31:0] = {AL, 2'b00, 1'b1, SUB, 1'd0, 4'd13, 4'd13, imm};  
+         o_instruction[31:0] = {AL, 2'b00, 1'b1, SUB, 1'd0, 4'd13, 4'd13, imm};  
         end
 end
 endtask
 
+///////////////////////////////////////////////////////////////////////////////
+
 task decode_pop_push;
 begin: decodePopPush
-        // Uses an FD stack. Thus it is DA type i.e., post index down by 4. Writeback is implicit so make W = 0.
+        //
+        // Uses an FD stack. Thus it is DA type i.e., post index down by 4. 
+        // Writeback is implicit so make W = 0.
+        //
 
         reg [3:0] base;
         reg [15:0] reglist; 
@@ -196,9 +211,12 @@ begin: decodePopPush
                 reglist[14] = 1'd1;
         end
 
-        o_instruction = {AL, 3'b100, 1'd0, 1'd0, 1'd0, 1'd1, i_instruction[11], base, reglist};
+        o_instruction = {AL, 3'b100, 1'd0, 1'd0, 1'd0, 1'd1, i_instruction[11], 
+                                                        base, reglist};
 end
 endtask
+
+///////////////////////////////////////////////////////////////////////////////
 
 task decode_ldmia_stmia;
 begin: dcdLdmiaStmia
@@ -211,9 +229,12 @@ begin: dcdLdmiaStmia
         reglist = i_instruction[7:0];
 
         o_instruction = 0;
-        o_instruction = {AL, 3'b100, 1'd0, 1'd1, 1'd0, 1'd1, i_instruction[11], base, reglist};
+        o_instruction = {AL, 3'b100, 1'd0, 1'd1, 1'd0, 1'd1, i_instruction[11], 
+                                base, reglist};
 end
 endtask
+
+///////////////////////////////////////////////////////////////////////////////
 
 task decode_sp_rel_ldr_str;
 begin: dcdLdrRelStr
@@ -226,9 +247,12 @@ begin: dcdLdrRelStr
         imm    = i_instruction[7:0] << 2;
 
         o_instruction = 0;
-        o_instruction = {AL, 3'b010, 1'd1, 1'd0, 1'd0, 1'd0, i_instruction[11], base, srcdest, imm};
+        o_instruction = {AL, 3'b010, 1'd1, 1'd0, 1'd0, 1'd0, i_instruction[11], 
+                        base, srcdest, imm};
 end
 endtask
+
+///////////////////////////////////////////////////////////////////////////////
 
 task decode_ldrh_strh_reg;
 begin: dcdLdrhStrh
@@ -249,24 +273,26 @@ begin: dcdLdrhStrh
 
         if ( X == 0 )
         begin
-                case({H,S})
-                0: o_instruction = {AL, 3'b011, 1'd1, 1'd0, 1'd0, 1'd0, 1'd0, base, srcdest, offset};// STR
-                1: o_instruction = {AL, 3'b011, 1'd1, 1'd0, 1'd1, 1'd0, 1'd0, base, srcdest, offset};// STRB
-                2: o_instruction = {AL, 3'b011, 1'd1, 1'd0, 1'd0, 1'd0, 1'd1, base, srcdest, offset};// LDR
-                3: o_instruction = {AL, 3'b011, 1'd1, 1'd0, 1'd1, 1'd0, 1'd1, base, srcdest, offset};// LDRB
-                endcase
+          case({H,S})
+          0: o_instruction = {AL, 3'b011, 1'd1, 1'd0, 1'd0, 1'd0, 1'd0, base, srcdest, offset};// STR
+          1: o_instruction = {AL, 3'b011, 1'd1, 1'd0, 1'd1, 1'd0, 1'd0, base, srcdest, offset};// STRB
+          2: o_instruction = {AL, 3'b011, 1'd1, 1'd0, 1'd0, 1'd0, 1'd1, base, srcdest, offset};// LDR
+          3: o_instruction = {AL, 3'b011, 1'd1, 1'd0, 1'd1, 1'd0, 1'd1, base, srcdest, offset};// LDRB
+          endcase
         end
         else
         begin
-                case({S,H})
-                0: o_instruction = {AL, 3'b000, 1'd1, 1'd0, 1'd0, 1'd0, 1'd0, base, srcdest, 4'd0, 2'b01,offset[3:0]};// STRH
-                1: o_instruction = {AL, 3'b000, 1'd1, 1'd0, 1'd0, 1'd0, 1'd1, base, srcdest, 4'd0, 2'b01,offset[3:0]};// LDRH
-                2: o_instruction = {AL, 3'b000, 1'd1, 1'd0, 1'd0, 1'd0, 1'd1, base, srcdest, 4'd0, 2'b10,offset[3:0]};// LDSB
-                3: o_instruction = {AL, 3'b000, 1'd1, 1'd0, 1'd0, 1'd0, 1'd1, base, srcdest, 4'd0, 2'b11,offset[3:0]};// LDSH
-                endcase
+         case({S,H})
+         0: o_instruction = {AL, 3'b000, 1'd1, 1'd0, 1'd0, 1'd0, 1'd0, base, srcdest, 4'd0, 2'b01,offset[3:0]};// STRH
+         1: o_instruction = {AL, 3'b000, 1'd1, 1'd0, 1'd0, 1'd0, 1'd1, base, srcdest, 4'd0, 2'b01,offset[3:0]};// LDRH
+         2: o_instruction = {AL, 3'b000, 1'd1, 1'd0, 1'd0, 1'd0, 1'd1, base, srcdest, 4'd0, 2'b10,offset[3:0]};// LDSB
+         3: o_instruction = {AL, 3'b000, 1'd1, 1'd0, 1'd0, 1'd0, 1'd1, base, srcdest, 4'd0, 2'b11,offset[3:0]};// LDSH
+         endcase
         end
 end
 endtask
+
+///////////////////////////////////////////////////////////////////////////////
 
 task decode_ldrh_strh_5bit_off;
 begin: dcdLdrhStrh5BitOff
@@ -282,9 +308,12 @@ begin: dcdLdrhStrh5BitOff
         imm[7:0] = i_instruction[10:6] << 1;  
 
         // Unsigned halfword transfer
-        o_instruction = {AL, 3'b000, 1'd1, 1'd0, 1'd1, 1'd0, i_instruction[11], rn, rd, imm[7:4], 2'b01,imm[3:0]};
+        o_instruction = {AL, 3'b000, 1'd1, 1'd0, 1'd1, 1'd0, i_instruction[11], 
+                                        rn, rd, imm[7:4], 2'b01,imm[3:0]};
 end
 endtask
+
+///////////////////////////////////////////////////////////////////////////////
 
 task decode_ldr_str_5bit_off;
 begin: dcLdrStr5BitOff
@@ -302,9 +331,12 @@ begin: dcLdrStr5BitOff
         else
                 imm[11:0] = i_instruction[10:6];
 
-        o_instruction = {AL, 3'b010, 1'd1, 1'd0, i_instruction[12], 1'd0, i_instruction[11], rn, rd, imm};
+        o_instruction = {AL, 3'b010, 1'd1, 1'd0, i_instruction[12], 1'd0, 
+                                               i_instruction[11], rn, rd, imm};
 end
 endtask
+
+///////////////////////////////////////////////////////////////////////////////
 
 task decode_pc_rel_load;
 begin: dcPcRelLoad
@@ -316,9 +348,12 @@ begin: dcPcRelLoad
 
         o_force32_align = 1'd1;
         o_instruction = 0;
-        o_instruction = {AL, 3'b010, 1'd1, 1'd0, 1'd0, 1'd0, 1'd1, 4'b1111, rd, imm};  
+        o_instruction = {AL, 3'b010, 1'd1, 1'd0, 1'd0, 1'd0, 
+                                        1'd1, 4'b1111, rd, imm};  
 end
 endtask
+
+///////////////////////////////////////////////////////////////////////////////
 
 task decode_alu_hi;
 begin:dcAluHi
@@ -334,19 +369,19 @@ begin:dcAluHi
         rs = {i_instruction[6], i_instruction[5:3]};
 
         case(op)
-                0: o_instruction[31:0] = {AL, 2'b00, 1'b0, ADD, 1'b0, rd, rd, 8'd0, rs}; // ADD Rd, Rd, Rs 
-                1: o_instruction[31:0] = {AL, 2'b00, 1'b0, CMP, 1'b1, rd, rd, 8'd0, rs}; // CMP Rd, Rs
-                2: o_instruction[31:0] = {AL, 2'b00, 1'b0, MOV, 1'b0, rd, rd, 8'd0, rs}; // MOV Rd, Rs
-                3:
-                begin
-                        `ifdef SIM
-                                $display($time, "%m: This should never happen, should be taken by BX...!");
-                        `endif
-                        $finish;
-                end
+        0: o_instruction[31:0] = {AL, 2'b00, 1'b0, ADD, 1'b0, rd, rd, 8'd0, rs}; // ADD Rd, Rd, Rs 
+        1: o_instruction[31:0] = {AL, 2'b00, 1'b0, CMP, 1'b1, rd, rd, 8'd0, rs}; // CMP Rd, Rs
+        2: o_instruction[31:0] = {AL, 2'b00, 1'b0, MOV, 1'b0, rd, rd, 8'd0, rs}; // MOV Rd, Rs
+        3:
+        begin
+                $display($time, "%m: This should never happen, should be taken by BX...!");
+                $finish;
+        end
         endcase
 end
 endtask
+
+///////////////////////////////////////////////////////////////////////////////
 
 task decode_alu_lo;
 begin: tskDecAluLo
@@ -361,25 +396,27 @@ begin: tskDecAluLo
         o_instruction = 0;
 
         case(op)
-                0:      o_instruction[31:0] = {AL, 2'b00, 1'b0, AND, 1'd1, rd, rd, 8'd0, rs};                   // ANDS Rd, Rd, Rs
-                1:      o_instruction[31:0] = {AL, 2'b00, 1'b0, EOR, 1'd1, rd, rd, 8'd0, rs};                   // EORS Rd, Rd, Rs
-                2:      o_instruction[31:0] = {AL, 2'b00, 1'b0, MOV, 1'd1, rd, rd, rs, 1'd0, LSL, 1'd1, rd};    // MOVS Rd, Rd, LSL Rs
-                3:      o_instruction[31:0] = {AL, 2'b00, 1'b0, MOV, 1'd1, rd, rd, rs, 1'd0, LSR, 1'd1, rd};    // MOVS Rd, Rd, LSR Rs
-                4:      o_instruction[31:0] = {AL, 2'b00, 1'b0, MOV, 1'd1, rd, rd, rs, 1'd0, ASR, 1'd1, rd};    // MOVS Rd, Rd, ASR Rs
-                5:      o_instruction[31:0] = {AL, 2'b00, 1'b0, ADC, 1'd1, rd, rd, 8'd0, rs};                   // ADCS Rd, Rd, Rs
-                6:      o_instruction[31:0] = {AL, 2'b00, 1'b0, SBC, 1'd1, rd, rd, 8'd0, rs};                   // SBCS Rd, Rs, Rs        
-                7:      o_instruction[31:0] = {AL, 2'b00, 1'b0, MOV, 1'd1, rd, rd, rs, 1'd0, ROR, 1'd1, rd};    // MOVS Rd, Rd, ROR Rs.
-                8:      o_instruction[31:0] = {AL, 2'b00, 1'b0, TST, 1'd1, rd, rd, 8'd0, rs};                   // TST Rd, Rs
-                9:      o_instruction[31:0] = {AL, 2'b00, 1'b1, RSB, 1'd1, rs, rd, 12'd0};                      // Rd = 0 - Rs
-                10:     o_instruction[31:0] = {AL, 2'b00, 1'b1, CMP, 1'd1, rd, rd, 8'd0, rs};                   // CMP Rd, Rs
-                11:     o_instruction[31:0] = {AL, 2'b00, 1'b1, CMN, 1'd1, rd, rd, 8'd0, rs};                   // CMN Rd, Rs
-                12:     o_instruction[31:0] = {AL, 2'b00, 1'b1, ORR, 1'd1, rd, rd, 8'd0, rs};                   // ORRS Rd, Rd, rs 
-                13:     o_instruction[31:0] = {AL, 4'b0000, 3'b000, 1'd1, rd, 4'd0, rd, 4'b1001, rs};           // MULS Rd, Rs, Rd
-                14:     o_instruction[31:0] = {AL, 2'b00, 1'b1, BIC, 1'd1, rd, rd, 8'd0, rs};                   // BICS rd, rd, rs 
-                15:     o_instruction[31:0] = {AL, 2'b00, 1'b1, MVN, 1'd1, rd, rd, 8'd0, rs};                   // MVNS rd, rd, rs
+        0:      o_instruction[31:0] = {AL, 2'b00, 1'b0, AND, 1'd1, rd, rd, 8'd0, rs};                   // ANDS Rd, Rd, Rs
+        1:      o_instruction[31:0] = {AL, 2'b00, 1'b0, EOR, 1'd1, rd, rd, 8'd0, rs};                   // EORS Rd, Rd, Rs
+        2:      o_instruction[31:0] = {AL, 2'b00, 1'b0, MOV, 1'd1, rd, rd, rs, 1'd0, LSL, 1'd1, rd};    // MOVS Rd, Rd, LSL Rs
+        3:      o_instruction[31:0] = {AL, 2'b00, 1'b0, MOV, 1'd1, rd, rd, rs, 1'd0, LSR, 1'd1, rd};    // MOVS Rd, Rd, LSR Rs
+        4:      o_instruction[31:0] = {AL, 2'b00, 1'b0, MOV, 1'd1, rd, rd, rs, 1'd0, ASR, 1'd1, rd};    // MOVS Rd, Rd, ASR Rs
+        5:      o_instruction[31:0] = {AL, 2'b00, 1'b0, ADC, 1'd1, rd, rd, 8'd0, rs};                   // ADCS Rd, Rd, Rs
+        6:      o_instruction[31:0] = {AL, 2'b00, 1'b0, SBC, 1'd1, rd, rd, 8'd0, rs};                   // SBCS Rd, Rs, Rs        
+        7:      o_instruction[31:0] = {AL, 2'b00, 1'b0, MOV, 1'd1, rd, rd, rs, 1'd0, ROR, 1'd1, rd};    // MOVS Rd, Rd, ROR Rs.
+        8:      o_instruction[31:0] = {AL, 2'b00, 1'b0, TST, 1'd1, rd, rd, 8'd0, rs};                   // TST Rd, Rs
+        9:      o_instruction[31:0] = {AL, 2'b00, 1'b1, RSB, 1'd1, rs, rd, 12'd0};                      // Rd = 0 - Rs
+        10:     o_instruction[31:0] = {AL, 2'b00, 1'b1, CMP, 1'd1, rd, rd, 8'd0, rs};                   // CMP Rd, Rs
+        11:     o_instruction[31:0] = {AL, 2'b00, 1'b1, CMN, 1'd1, rd, rd, 8'd0, rs};                   // CMN Rd, Rs
+        12:     o_instruction[31:0] = {AL, 2'b00, 1'b1, ORR, 1'd1, rd, rd, 8'd0, rs};                   // ORRS Rd, Rd, rs 
+        13:     o_instruction[31:0] = {AL, 4'b0000, 3'b000, 1'd1, rd, 4'd0, rd, 4'b1001, rs};           // MULS Rd, Rs, Rd
+        14:     o_instruction[31:0] = {AL, 2'b00, 1'b1, BIC, 1'd1, rd, rd, 8'd0, rs};                   // BICS rd, rd, rs 
+        15:     o_instruction[31:0] = {AL, 2'b00, 1'b1, MVN, 1'd1, rd, rd, 8'd0, rs};                   // MVNS rd, rd, rs
         endcase
 end
 endtask
+
+///////////////////////////////////////////////////////////////////////////////
 
 task decode_mcas_imm;
 begin: tskDecodeMcasImm
@@ -418,6 +455,8 @@ begin: tskDecodeMcasImm
 end
 endtask
 
+///////////////////////////////////////////////////////////////////////////////
+
 task decode_add_sub_lo;
 begin: tskDecodeAddSubLo
         reg [3:0] rn, rd, rs;
@@ -455,6 +494,8 @@ begin: tskDecodeAddSubLo
 end
 endtask
 
+///////////////////////////////////////////////////////////////////////////////
+
 task decode_conditional_branch;
 begin
         // An MSB of 1 indicates a left shift of 1.
@@ -463,6 +504,8 @@ begin
 end        
 endtask
 
+///////////////////////////////////////////////////////////////////////////////
+
 task decode_unconditional_branch;
 begin
         // An MSB of 1 indicates a left shift of 1.
@@ -470,6 +513,8 @@ begin
         o_instruction[23:0]     = $signed(i_instruction[10:0]);        
 end
 endtask
+
+///////////////////////////////////////////////////////////////////////////////
 
 task decode_bl;
 begin
@@ -494,6 +539,8 @@ begin
 end
 endtask
 
+///////////////////////////////////////////////////////////////////////////////
+
 task decode_bx;
 begin
         // Generate a BX Rm.
@@ -503,6 +550,8 @@ begin
 end
 endtask
 
+///////////////////////////////////////////////////////////////////////////////
+
 task decode_swi;
 begin
         // Generate a SWI.
@@ -511,6 +560,8 @@ begin
         o_instruction[7:0]   = i_instruction[7:0]; 
 end
 endtask
+
+///////////////////////////////////////////////////////////////////////////////
 
 task decode_shift;
 begin
@@ -529,5 +580,6 @@ begin
 end
 endtask
 
+///////////////////////////////////////////////////////////////////////////////
 
 endmodule

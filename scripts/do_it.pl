@@ -1,5 +1,13 @@
 #!/usr/bin/perl -w
 
+###############################################################################
+# A Perl script to automate compilation of code. It accepts an assembly file
+# and a C file along with a linker script.
+###############################################################################
+
+use strict;
+use warnings;
+
 die "Usage: perl do_it.pl <asm_file> <c_file> <linker_script> <target_bin> <target_verilog_file>" if (@ARGV != 5);
 
 my $asm_file            =            $ARGV[0];

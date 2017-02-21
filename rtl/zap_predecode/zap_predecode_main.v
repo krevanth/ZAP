@@ -1,63 +1,75 @@
-/*
-MIT License
+///////////////////////////////////////////////////////////////////////////////
 
-Copyright (c) 2016 Revanth Kamaraj (Email: revanth91kamaraj@gmail.com)
+// 
+// MIT License
+// 
+// Copyright (c) 2016, 2017 Revanth Kamaraj (Email: revanth91kamaraj@gmail.com)
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+// 
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+///////////////////////////////////////////////////////////////////////////////
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+// 
+// Filename --
+// zap_decode_stage.v
+// 
+// Description --
+// ZAP decode stage. This is the top level decode stage of the ZAP.
+// 
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-*/
+///////////////////////////////////////////////////////////////////////////////
 
 `default_nettype none
 `include "config.vh"
 
-/*
-Filename --
-zap_decode_stage.v
-
-Author --
-Revanth Kamaraj
-
-Description --
-ZAP decode stage. This is the top level decode stage of the ZAP.
-
-Author --
-Revanth Kamaraj
-
-License --
-Released under the MIT license.
-*/
+///////////////////////////////////////////////////////////////////////////////
 
 module zap_predecode_main #(
+        //
         // For several reasons, we need more architectural registers than
         // what ARM specifies. We also need more physical registers.
+        //
         parameter ARCH_REGS = 32,
 
+        //
         // Although ARM mentions only 16 ALU operations, the processor
         // internally performs many more operations.
+        //
         parameter ALU_OPS   = 32,
 
+        //
         // Apart from the 4 specified by ARM, an undocumented RORI is present
         // to help deal with immediate rotates.
+        //
         parameter SHIFT_OPS = 5,
 
         // Number of physical registers.
-        parameter PHY_REGS = 46
+        parameter PHY_REGS = 46,
+
+        // Cache and MMU enable.
+        parameter CACHE_MMU_ENABLE = 1,
+
+        // Compressed ISA support.
+        parameter COMPRESSED_EN = 1
 )
+///////////////////////////////////////////////////////////////////////////////
 (
         // Clock and reset.
         input   wire                            i_clk,
@@ -66,8 +78,8 @@ module zap_predecode_main #(
         // Branch state.
         input   wire     [1:0]                  i_taken,
 
-        // Clear and stall signals. 
-        input wire                              i_clear_from_writeback, // | Priority
+        // Clear and stall signals. From high to low priority.
+        input wire                              i_clear_from_writeback, // |Pri 
         input wire                              i_data_stall,           // |
         input wire                              i_clear_from_alu,       // |
         input wire                              i_stall_from_shifter,   // |
@@ -78,16 +90,20 @@ module zap_predecode_main #(
         input   wire                            i_fiq,
         input   wire                            i_abt,
 
-        // Coprocessor module related.
-        input   wire                            i_pipeline_dav, // Is 0 if all pipeline is INVALID.
+        // Is 0 if all pipeline is invalid. Used for coprocessor.
+        input   wire                            i_pipeline_dav, 
+
+        // Coprocessor done.
         input   wire                            i_copro_done,
 
         // PC input.
         input wire  [31:0]                      i_pc_ff,
         input wire  [31:0]                      i_pc_plus_8_ff,
 
-        // CPU mode. Taken from CPSR.
-        input   wire                            i_cpu_mode_t, i_cpu_mode_i, i_cpu_mode_f,
+        // CPU mode. Taken from CPSR in the ALU.
+        input   wire                            i_cpu_mode_t, // T mode.
+                                                i_cpu_mode_i, // I mask.
+                                                i_cpu_mode_f, // F mask.
 
         // Instruction input.
         input     wire  [31:0]                  i_instruction,    
@@ -125,12 +141,24 @@ module zap_predecode_main #(
         output reg [31:0]                       o_pc_from_decode
 );
 
+///////////////////////////////////////////////////////////////////////////////
+
 `include "cc.vh"
 `include "regs.vh"
 `include "modes.vh"
 `include "index_immed.vh"
 `include "cpsr.vh"
 `include "global_functions.vh"
+
+///////////////////////////////////////////////////////////////////////////////
+
+// Branch states.
+localparam      SNT     =       0; // Strongly Not Taken.
+localparam      WNT     =       1; // Weakly Not Taken.
+localparam      WT      =       2; // Weakly Taken.
+localparam      ST      =       3; // Strongly Taken.
+
+///////////////////////////////////////////////////////////////////////////////
 
 wire                            o_comp_und_nxt;
 wire    [3:0]                   o_condition_code_nxt;
@@ -157,8 +185,12 @@ wire cp_fiq;
 
 reg [1:0] taken_nxt;
 
+///////////////////////////////////////////////////////////////////////////////
+
 // Abort
 assign  o_abt_nxt = i_abt;
+
+///////////////////////////////////////////////////////////////////////////////
 
 // Flop the outputs to break the pipeline at this point.
 always @ (posedge i_clk)
@@ -190,16 +222,17 @@ begin
         // If no stall, only then update...
         else
         begin
-                o_irq_ff                                <= o_irq_nxt & !i_cpu_mode_i; // If mask is 1, do not pass.
-                o_fiq_ff                                <= o_fiq_nxt & !i_cpu_mode_f; // If mask is 1, do not pass.
-                o_abt_ff                                <= o_abt_nxt;                    
-                o_und_ff                                <= o_comp_und_nxt && i_instruction_valid;
-                o_pc_plus_8_ff                          <= i_pc_plus_8_ff;
-                o_pc_ff                                 <= i_pc_ff;
-                o_force32align_ff                       <= o_force32align_nxt;
-                o_taken_ff                              <= taken_nxt;
-                o_instruction_ff                        <= o_instruction_nxt;
-                o_instruction_valid_ff                  <= o_instruction_valid_nxt;
+                // Do not pass IRQ and FIQ if mask is 1.
+                o_irq_ff               <= o_irq_nxt & !i_cpu_mode_i; 
+                o_fiq_ff               <= o_fiq_nxt & !i_cpu_mode_f; 
+                o_abt_ff               <= o_abt_nxt;                    
+                o_und_ff               <= o_comp_und_nxt && i_instruction_valid;
+                o_pc_plus_8_ff         <= i_pc_plus_8_ff;
+                o_pc_ff                <= i_pc_ff;
+                o_force32align_ff      <= o_force32align_nxt;
+                o_taken_ff             <= taken_nxt;
+                o_instruction_ff       <= o_instruction_nxt;
+                o_instruction_valid_ff <= o_instruction_valid_nxt;
         end
 end
 
@@ -220,9 +253,11 @@ begin
         o_stall_from_decode = mem_fetch_stall || cp_stall;
 end
 
-/////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 
-`ifdef CMMU_EN
+generate
+begin: gblk1
+if ( CACHE_MMU_ENABLE ) begin: cm_en
 
 // This unit handles coprocessor stuff.
 zap_predecode_coproc 
@@ -267,7 +302,9 @@ u_zap_decode_coproc
         .o_copro_word_ff(o_copro_word_ff)
 );
 
-`else
+end
+else // Else generate block.
+begin: cm_dis
 
 assign cp_instruction           = i_instruction_valid ? i_instruction : 32'd0;
 assign cp_instruction_valid     = i_instruction_valid;
@@ -277,48 +314,54 @@ assign cp_stall                 = 1'd0;
 assign o_copro_dav_ff           = 1'd0;
 assign o_copro_word_ff          = 32'd0;
 
-`endif
+end
 
-///////////////////////////////////////////////////////////////////////////////////////////
+end
+endgenerate
 
-`ifdef COMPRESS_EN
+///////////////////////////////////////////////////////////////////////////////
 
-// Implements a custom 16-bit compressed instruction set.
-zap_predecode_compress
-u_zap_predecode_compress
-(
-        .i_clk(i_clk),
-        .i_reset(i_reset),
-        .i_irq(cp_irq),
-        .i_fiq(cp_fiq),
-        .i_instruction(cp_instruction),
-        .i_instruction_valid(cp_instruction_valid),
-        .i_cpsr_ff_t(i_cpu_mode_t),
+generate 
+begin: gblk2 
+        if ( COMPRESSED_EN ) 
+        begin: cmp_en
 
-        .o_instruction(arm_instruction),
-        .o_instruction_valid(arm_instruction_valid),
-        .o_irq(arm_irq),
-        .o_fiq(arm_fiq),
-        .o_force32_align(o_force32align_nxt),
-        .o_und(o_comp_und_nxt)
-);
+                // Implements a custom 16-bit compressed instruction set.
+                zap_predecode_compress
+                u_zap_predecode_compress
+                (
+                        .i_clk(i_clk),
+                        .i_reset(i_reset),
+                        .i_irq(cp_irq),
+                        .i_fiq(cp_fiq),
+                        .i_instruction(cp_instruction),
+                        .i_instruction_valid(cp_instruction_valid),
+                        .i_cpsr_ff_t(i_cpu_mode_t),
+                
+                        .o_instruction(arm_instruction),
+                        .o_instruction_valid(arm_instruction_valid),
+                        .o_irq(arm_irq),
+                        .o_fiq(arm_fiq),
+                        .o_force32_align(o_force32align_nxt),
+                        .o_und(o_comp_und_nxt)
+                );
 
-`else
+        end 
+        else 
+        begin: cmp_dis
 
-assign arm_instruction = cp_instruction;
-assign arm_instruction_valid = cp_instruction_valid;
-assign arm_irq = cp_irq;
-assign arm_fiq = cp_fiq;
-assign o_force32align_nxt = 1'd0;
-assign o_comp_und_nxt = 1'd0;
+                assign arm_instruction = cp_instruction;
+                assign arm_instruction_valid = cp_instruction_valid;
+                assign arm_irq = cp_irq;
+                assign arm_fiq = cp_fiq;
+                assign o_force32align_nxt = 1'd0;
+                assign o_comp_und_nxt = 1'd0;
 
-`endif
+        end
+end
+endgenerate
 
-// Branch states.
-localparam      SNT     =       0; // Strongly Not Taken.
-localparam      WNT     =       1; // Weakly Not Taken.
-localparam      WT      =       2; // Weakly Taken.
-localparam      ST      =       3; // Strongly Taken.
+///////////////////////////////////////////////////////////////////////////////
 
 always @*
 begin:bprblk1
@@ -335,11 +378,16 @@ begin:bprblk1
         else
                 addr_final = addr << 2;
 
+        //
+        // Perform actions as mentioned by the predictor unit in the fetch
+        // stage.
+        //
         if ( arm_instruction[27:25] == 3'b101 && arm_instruction_valid )
         begin
-                if ( i_taken[1] || arm_instruction[31:28] == AL ) // Taken or Strongly Taken or Always taken.
+                if ( i_taken[1] || arm_instruction[31:28] == AL ) 
+                // Taken or Strongly Taken or Always taken.
                 begin
-                        // Take the branch.
+                        // Take the branch. Clear pre-fetched instruction.
                         o_clear_from_decode = 1'd1;
 
                         // Predict new PC.
@@ -350,12 +398,15 @@ begin:bprblk1
                 end
                 else // Not Taken or Weakly Not Taken.
                 begin
-                        // Else dont.
+                        // Else dont take the branch since pre-fetched 
+                        // instruction is correct.
                         o_clear_from_decode = 1'd0;
                         o_pc_from_decode    = 32'd0;
                 end
         end
 end
+
+///////////////////////////////////////////////////////////////////////////////
 
 // This FSM handles LDM/STM/SWAP/SWAPB/BL/LMULT
 zap_predecode_mem_fsm u_zap_mem_fsm (
@@ -379,5 +430,7 @@ zap_predecode_mem_fsm u_zap_mem_fsm (
         .o_instruction_valid(o_instruction_valid_nxt),
         .o_stall_from_decode(mem_fetch_stall)
 );
+
+///////////////////////////////////////////////////////////////////////////////
 
 endmodule

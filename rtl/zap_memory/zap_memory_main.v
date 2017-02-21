@@ -1,41 +1,42 @@
-/*
-MIT License
-
-Copyright (c) 2016 Revanth Kamaraj (Email: revanth91kamaraj@gmail.com)
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-*/
+//
+// MIT License
+// 
+// Copyright (c) 2016 Revanth Kamaraj (Email: revanth91kamaraj@gmail.com)
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+// 
 
 `default_nettype none
 `include "config.vh"
 
-/*
-Filename --
-zap_memory_main.v
+// 
+// Filename --
+// zap_memory_main.v
+// 
+// Description --
+// This stage merely acts as a buffer in between the ALU stage and the register 
+// file (i.e., writeback stage). This stage is intended to allow the memory to 
+// use up 1 clock cycle to perform operations without the pipeline losing 
+// throughput.
+// 
 
-HDL --
-Verilog 2005.
-
-Description --
-This stage merely acts as a buffer in between the ALU stage and the register file (i.e., writeback stage). This stage is intended
-to allow the memory to use up 1 clock cycle to perform operations without the pipeline losing throughput. *See line 107*.
-*/
+///////////////////////////////////////////////////////////////////////////////
 
 module zap_memory_main
 #(
@@ -79,18 +80,18 @@ module zap_memory_main
 
         // Memory SRCDEST index. For loads, this tells the register file where to
         // put the read data.
-        input wire [$clog2(PHY_REGS)-1:0]   i_mem_srcdest_index_ff,     // Set to RAZ if invalid.
+        input wire [$clog2(PHY_REGS)-1:0]   i_mem_srcdest_index_ff,// Set to RAZ if invalid.
 
-        // SRCDEST value too.
+        // SRCDEST value.
         input wire [31:0]                   i_mem_srcdest_value_ff,
 
-        // memory size.
+        // Memory size and type.
         input wire                          i_sbyte_ff, 
                                             i_ubyte_ff, 
                                             i_shalf_ff, 
                                             i_uhalf_ff,
 
-        // undefined instr.
+        // Undefined instr.
         input wire                         i_und_ff,
         output reg                         o_und_ff,
 
@@ -119,6 +120,8 @@ module zap_memory_main
 
 `include "regs.vh"
 
+///////////////////////////////////////////////////////////////////////////////
+
 reg                             i_mem_load_ff2          ;
 reg [31:0]                      i_mem_srcdest_value_ff2 ;
 reg [1:0]                       i_mem_address_ff2       ;
@@ -126,6 +129,8 @@ reg                             i_sbyte_ff2             ;
 reg                             i_ubyte_ff2             ;
 reg                             i_shalf_ff2             ;
 reg                             i_uhalf_ff2             ;
+
+///////////////////////////////////////////////////////////////////////////////
 
 task clear;
 begin
@@ -139,10 +144,12 @@ begin
 end
 endtask
 
-/*
-        On reset or on a clear from WB, we will disable the vectors
-        in this unit. Else, we will just flop everything out.
-*/
+///////////////////////////////////////////////////////////////////////////////
+
+// 
+// On reset or on a clear from WB, we will disable the vectors
+// in this unit. Else, we will just flop everything out.
+// 
 always @ (posedge i_clk)
 if ( i_reset )
 begin
@@ -175,6 +182,8 @@ begin
         o_mem_fault           <= i_mem_fault;
 end
 
+///////////////////////////////////////////////////////////////////////////////
+
 always @ (posedge i_clk)
 begin
         if ( !i_data_stall )
@@ -189,18 +198,38 @@ begin
         end
 end
 
+///////////////////////////////////////////////////////////////////////////////
+
 always @*
 o_mem_rd_data         = transform((i_mem_load_ff2 ? i_mem_rd_data : 
                         i_mem_srcdest_value_ff2), i_mem_address_ff2, 
                         i_sbyte_ff2, i_ubyte_ff2, i_shalf_ff2, i_uhalf_ff2, 
                         i_mem_load_ff2);
 
-/*
- * Memory always loads 32-bit to processor. We will rotate that here as we wish.
- */
-function [31:0] transform ( input [31:0] data, input [1:0] address, input sbyte, input ubyte, input shalf, input uhalf, input mem_load_ff );
+///////////////////////////////////////////////////////////////////////////////
+
+//
+// Memory always loads 32-bit to processor. 
+// We will rotate that here as we wish.
+//
+
+function [31:0] transform ( 
+
+        // Data and address.
+        input [31:0]    data, 
+        input [1:0]     address, 
+
+        // Memory access type.
+        input           sbyte, 
+        input           ubyte, 
+        input           shalf, 
+        input           uhalf,
+
+        // Memory load. 
+        input           mem_load_ff 
+);
 begin: trFn
-        reg [31:0] d;
+        reg [31:0] d; // Data.
 
         transform = 0;
         d         = data;
@@ -252,5 +281,7 @@ begin: trFn
         end
 end
 endfunction
+
+///////////////////////////////////////////////////////////////////////////////
 
 endmodule

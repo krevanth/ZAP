@@ -1,121 +1,134 @@
-/*
-MIT License
+///////////////////////////////////////////////////////////////////////////////
 
-Copyright (c) 2016 Revanth Kamaraj (Email: revanth91kamaraj@gmail.com)
+// 
+// MIT License
+// 
+// Copyright (c) 2016,2017 Revanth Kamaraj (Email: revanth91kamaraj@gmail.com)
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+// 
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+///////////////////////////////////////////////////////////////////////////////
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+// 
+// Filename --
+// zap_top.v
+// 
+// Summary --
+// ZAP CPU core.
+// 
+// Description --
+// This is the bare ZAP core. 
+// 
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-*/
+///////////////////////////////////////////////////////////////////////////////
 
 `default_nettype none
 `include "config.vh"
 
-/*
-Filename --
-zap_top.v
+///////////////////////////////////////////////////////////////////////////////
 
-HDL --
-Verilog-2005
+module zap_core #(parameter [0:0] CACHE_MMU_ENABLE = 1'd1,
+parameter [0:0] COMPRESSED_EN = 1'd1 ) (
+//
+// Clock and reset.
+//
 
-Description --
-This is the TOP module of the ZAP core. 
+input wire                              i_clk,                  // ZAP clock.        
+input wire                              i_clk_multipump,        // 2x ZAP clock for register file.
+input wire                              i_reset,                // Active high synchronous reset.
 
-Author --
-Revanth Kamaraj.
+//                
+// From I-cache.
+//
 
-License --
-Released under the MIT license.
-*/
+input wire [31:0]                       i_instruction,          // A 32-bit ZAP instruction.
+input wire                              i_valid,                // Instruction valid.
+input wire                              i_instr_abort,          // Instruction abort fault.
 
-module zap_core
-(
-                // Clock and reset.
-                input wire                              i_clk,                  // ZAP clock.        
+//
+// Memory access.
+//
 
-                input wire                              i_clk_multipump,        // 2x ZAP clock for register file.
+output wire                             o_read_en,              // Memory load
+output wire                             o_write_en,             // Memory store.
 
-                input wire                              i_reset,                // Active high synchronous reset.
-                                
-                // From I-cache.
-                input wire [31:0]                       i_instruction,          // A 32-bit ZAP instruction.
-                input wire                              i_valid,                // Instruction valid.
-                input wire                              i_instr_abort,          // Instruction abort fault.
+// Memory address. Always aligned to 32-bit.
+output wire[31:0]                       o_address,              
 
+// Force user view.
+output wire                             o_mem_translate,
 
-                // Memory access - ALL ARE REGISTERED..
-                output wire                             o_read_en,              // Memory load
-                output wire                             o_write_en,             // Memory store.
-                output wire[31:0]                       o_address,              // Memory address.
+// DCache Memory stall.
+input wire                              i_data_stall,
 
-                // User view - REGISTERED.
-                output wire                             o_mem_translate,
+// Memory abort.
+input wire                              i_data_abort,
 
-                // DCache Memory stall.
-                input wire                              i_data_stall,
-                
-                // Memory abort.
-                input wire                              i_data_abort,
+// Memory read data.
+input wire  [31:0]                      i_rd_data,
 
-                // Memory read data.
-                input wire  [31:0]                      i_rd_data,
+// Memory write data - REGISTERED. duplicate as needed.
+output wire [31:0]                      o_wr_data,
 
-                // Memory write data - REGISTERED. duplicate as needed.
-                output wire [31:0]                      o_wr_data,
+//
+// Memory write byte enables. 
+// This is 1-hot for BYTE, 2-hot for HALFWORD and all 4 hot - WORD.
+//
+output wire  [3:0]                      o_ben,                  
 
-                // Memory write byte enables. Implement this as 1-hot BYTE 2-hot - HALF 4hot - WORD.
-                output wire  [3:0]                      o_ben,                  // Byte enables for memory write.
+// Interrupts. Active high.
+input wire                              i_fiq,                  // FIQ signal.
+input wire                              i_irq,                  // IRQ signal.
 
-                // Interrupts.
-                input wire                              i_fiq,                  // FIQ signal.
-                input wire                              i_irq,                  // IRQ signal.
+// Low Bandwidth Coprocessor (COP) I/F.
+input wire                              i_copro_done,   // COP done.
+output wire                             o_copro_dav,    // COP command valid.
+output wire  [31:0]                     o_copro_word,   // COP command.
+input wire                              i_copro_reg_en, // COP controls registers.
+input wire      [$clog2(PHY_REGS)-1:0]  i_copro_reg_wr_index,// Reg. file write index.
+input wire      [$clog2(PHY_REGS)-1:0]  i_copro_reg_rd_index,// Reg. file read index.
+input wire      [31:0]                  i_copro_reg_wr_data, // Reg. file write data.
+output wire     [31:0]                  o_copro_reg_rd_data, // Reg. file read data.
 
+// Program counter.
+output wire     [31:0]                  o_pc,                   
 
-                // Coprocessor.
-                input wire                              i_copro_done,
-                output wire                             o_copro_dav,
-                output wire  [31:0]                     o_copro_word,
-                input wire                              i_copro_reg_en,         // Coprocessor controls register file.
-                input wire      [$clog2(PHY_REGS)-1:0]  i_copro_reg_wr_index,   // Register write index.
-                input wire      [$clog2(PHY_REGS)-1:0]  i_copro_reg_rd_index,   // Register read index.
-                input wire      [31:0]                  i_copro_reg_wr_data,    // Register write data.
-                output wire     [31:0]                  o_copro_reg_rd_data,    // Coprocessor read data from register file.
+// Determines user or supervisory mode. Cache must use this for VM.
+output wire      [31:0]                 o_cpsr,                 
 
+// Upcoming address for D-Cache.
+output wire     [31:0]                  o_address_nxt,     
 
-                // Program counter - REGISTERED.
-                output wire     [31:0]                  o_pc,                   // Program counter.
+// Upcoming address for I-cache.
+output wire     [31:0]                  o_pc_nxt,               
 
-                // Determines user or supervisory mode. - REGISTERED.
-                output wire      [31:0]                 o_cpsr,                 // CPSR. Cache must use this to determine VM scheme for instruction fetches.
-
-                // Data cache access signals.
-                output wire     [31:0]                  o_address_nxt,          // Upcoming address for D-Cache.
- 
-                // Instruction cache access signals.
-                output wire     [31:0]                  o_pc_nxt,               // Upcoming address for I-cache. 
-
-                // Pipeline stall and clear signals.
-                output wire                             o_clear_from_alu                     ,    // |
-                output wire                             o_stall_from_shifter                 ,    // |
-                output wire                             o_stall_from_issue                   ,    // |
-                output wire                             o_stall_from_decode                  ,    // V Low Priority.
-                output wire                             o_clear_from_decode                  ,    // V
-                output wire                             o_clear_from_writeback               
+// Pipeline stall and clear signals. Hi to lo priority order.
+output wire                             o_clear_from_alu,    // |
+output wire                             o_stall_from_shifter,// |
+output wire                             o_stall_from_issue,  // |
+output wire                             o_stall_from_decode, // | Low Priority.
+output wire                             o_clear_from_decode, // V
+output wire                             o_clear_from_writeback   
 );
+
+///////////////////////////////////////////////////////////////////////////////
 
 localparam ARCH_REGS = 32;
 localparam ALU_OPS   = 32;
@@ -123,16 +136,16 @@ localparam SHIFT_OPS = 7;
 localparam PHY_REGS  = TOTAL_PHY_REGS;
 localparam FLAG_WDT  = 32;
 
+///////////////////////////////////////////////////////////////////////////////
+
 `include "regs.vh"
 `include "cc.vh"
 `include "modes.vh"
 `include "cpsr.vh"
 
-// -------------------------------
-// Wires.
-// -------------------------------
+///////////////////////////////////////////////////////////////////////////////
 
-wire reset;
+wire reset; // From synchronizer.
 
 // Clear and stall signals.
 wire stall_from_decode;
@@ -235,35 +248,35 @@ wire [$clog2(PHY_REGS)-1:0]     rd_index_2;
 wire [$clog2(PHY_REGS)-1:0]     rd_index_3;
 
 // Shift
-wire [$clog2(PHY_REGS)-1:0] shifter_mem_srcdest_index_ff;
-wire shifter_mem_load_ff;
-wire shifter_mem_store_ff;
-wire shifter_mem_pre_index_ff;
-wire shifter_mem_unsigned_byte_enable_ff;
-wire shifter_mem_signed_byte_enable_ff;
-wire shifter_mem_signed_halfword_enable_ff;
-wire shifter_mem_unsigned_halfword_enable_ff;
-wire shifter_mem_translate_ff;
-wire [3:0] shifter_condition_code_ff;
-wire [$clog2(PHY_REGS)-1:0] shifter_destination_index_ff;
-wire [$clog2(ALU_OPS)-1:0] shifter_alu_operation_ff;
-wire shifter_nozero_ff;
-wire shifter_flag_update_ff;
-wire [31:0] shifter_mem_srcdest_value_ff;
-wire [31:0] shifter_alu_source_value_ff;
-wire [31:0] shifter_shifted_source_value_ff;
-wire shifter_shift_carry_ff;
-wire [31:0] shifter_pc_plus_8_ff;
-wire [31:0] shifter_pc_ff;
-wire shifter_irq_ff;
-wire shifter_fiq_ff;
-wire shifter_abt_ff;
-wire shifter_swi_ff;
-wire shifter_switch_ff;
-wire shifter_force32_ff;
-wire shifter_und_ff;
-wire stall_from_shifter;
-wire [1:0] shifter_taken_ff;
+wire [$clog2(PHY_REGS)-1:0]     shifter_mem_srcdest_index_ff;
+wire                            shifter_mem_load_ff;
+wire                            shifter_mem_store_ff;
+wire                            shifter_mem_pre_index_ff;
+wire                            shifter_mem_unsigned_byte_enable_ff;
+wire                            shifter_mem_signed_byte_enable_ff;
+wire                            shifter_mem_signed_halfword_enable_ff;
+wire                            shifter_mem_unsigned_halfword_enable_ff;
+wire                            shifter_mem_translate_ff;
+wire [3:0]                      shifter_condition_code_ff;
+wire [$clog2(PHY_REGS)-1:0]     shifter_destination_index_ff;
+wire [$clog2(ALU_OPS)-1:0]      shifter_alu_operation_ff;
+wire                            shifter_nozero_ff;
+wire                            shifter_flag_update_ff;
+wire [31:0]                     shifter_mem_srcdest_value_ff;
+wire [31:0]                     shifter_alu_source_value_ff;
+wire [31:0]                     shifter_shifted_source_value_ff;
+wire                            shifter_shift_carry_ff;
+wire [31:0]                     shifter_pc_plus_8_ff;
+wire [31:0]                     shifter_pc_ff;
+wire                            shifter_irq_ff;
+wire                            shifter_fiq_ff;
+wire                            shifter_abt_ff;
+wire                            shifter_swi_ff;
+wire                            shifter_switch_ff;
+wire                            shifter_force32_ff;
+wire                            shifter_und_ff;
+wire                            stall_from_shifter;
+wire [1:0]                      shifter_taken_ff;
 
 // ALU
 wire [$clog2(SHIFT_OPS)-1:0]    alu_shift_operation_ff;
@@ -282,7 +295,7 @@ wire [FLAG_WDT-1:0]             alu_flags_ff;
 wire [$clog2(PHY_REGS)-1:0]     alu_mem_srcdest_index_ff;
 wire                            alu_mem_load_ff;
 wire                            alu_und_ff;
-wire [31:0]                     alu_cpsr_nxt; //TODO: Eliminate this  and place MAC in ALU itself.
+wire [31:0]                     alu_cpsr_nxt; 
 wire                            confirm_from_alu;
 wire                            alu_sbyte_ff;
 wire                            alu_ubyte_ff;
@@ -313,23 +326,32 @@ wire [31:0] rd_data_2;
 wire [31:0] rd_data_3;
 wire [31:0] cpsr_nxt, cpsr;
 
-wire wb_hijack;
+wire        wb_hijack;
 wire [31:0] wb_hijack_op1;
 wire [31:0] wb_hijack_op2;
-wire wb_hijack_cin;
+wire        wb_hijack_cin;
 wire [31:0] alu_hijack_sum;
 
-// ------------------------------
-// Assign statements.
-// ------------------------------
+///////////////////////////////////////////////////////////////////////////////
+
 assign o_cpsr        = alu_flags_ff;
 assign o_address     = {alu_address_ff[31:2], 2'd0};
+assign o_read_en     = alu_mem_load_ff; 
 
-// ---------------------------
-// Instances.
-// ---------------------------
+// Pipeline controls exposed.
+assign o_clear_from_writeback = clear_from_writeback;
+assign o_clear_from_alu     = clear_from_alu;
+assign o_stall_from_shifter = stall_from_shifter;
+assign o_stall_from_issue   = stall_from_issue;
+assign o_stall_from_decode  = stall_from_decode;
+assign o_clear_from_decode  = clear_from_decode;
 
-// RESET SYNCHRONIZER //
+
+///////////////////////////////////////////////////////////////////////////////
+
+// ==========================
+// RESET SYNCHRONIZER 
+// ==========================
 reset_sync
 U_RST_SYNC
 (
@@ -338,7 +360,11 @@ U_RST_SYNC
         .o_reset(reset)
 );
 
-// FETCH STAGE //
+///////////////////////////////////////////////////////////////////////////////
+
+// =========================
+// FETCH STAGE 
+// =========================
 zap_fetch_main
 #(
         .BP_ENTRIES(1024)
@@ -373,12 +399,18 @@ u_zap_fetch_main (
         .o_taken_ff                     (fetch_bp_state)
 );
 
-// PREDECODE STAGE //
+///////////////////////////////////////////////////////////////////////////////
+
+// =========================
+// PREDECODE STAGE 
+// =========================
 zap_predecode_main #(
         .ARCH_REGS(ARCH_REGS),
         .PHY_REGS(PHY_REGS),
         .SHIFT_OPS(SHIFT_OPS),
-        .ALU_OPS(ALU_OPS)
+        .ALU_OPS(ALU_OPS),
+        .CACHE_MMU_ENABLE(CACHE_MMU_ENABLE),
+        .COMPRESSED_EN(COMPRESSED_EN)
 )
 u_zap_predecode (
         // Input.
@@ -396,8 +428,6 @@ u_zap_predecode (
         .i_pc_plus_8_ff                 (fetch_pc_plus_8_ff),
         .i_pc_ff                        (fetch_pc_ff),
 
-//        .i_cpu_mode                     (alu_flags_ff),
-
         .i_cpu_mode_t                   (alu_flags_ff[T]),
         .i_cpu_mode_f                   (alu_flags_ff[F]),
         .i_cpu_mode_i                   (alu_flags_ff[I]),
@@ -408,12 +438,12 @@ u_zap_predecode (
 
         .i_copro_done                   (i_copro_done),
         .i_pipeline_dav                 (
-                                                predecode_val                      ||     
-                                                (decode_condition_code    != NV)   ||
-                                                (issue_condition_code_ff  != NV)   ||
-                                                (shifter_condition_code_ff!= NV)   ||
-                                                alu_dav_ff                         ||
-                                                memory_dav_ff                      
+                                          predecode_val                      ||     
+                                          (decode_condition_code    != NV)   ||
+                                          (issue_condition_code_ff  != NV)   ||
+                                          (shifter_condition_code_ff!= NV)   ||
+                                          alu_dav_ff                         ||
+                                          memory_dav_ff                      
                                         ),
 
         // Output.
@@ -440,7 +470,11 @@ u_zap_predecode (
         .o_taken_ff                     (predecode_taken)
 );
 
-// DECODE STAGE //
+///////////////////////////////////////////////////////////////////////////////
+
+// =====================
+// DECODE STAGE 
+// =====================
 
 zap_decode_main #(
         .ARCH_REGS(ARCH_REGS),
@@ -504,7 +538,11 @@ u_zap_decode_main (
         .o_taken_ff                     (decode_taken_ff)
 );
 
-// ISSUE //
+///////////////////////////////////////////////////////////////////////////////
+
+// ==================
+// ISSUE 
+// ==================
 
 zap_issue_main #(
         .PHY_REGS(PHY_REGS),
@@ -621,7 +659,11 @@ u_zap_issue_main
         .o_shifter_disable_ff           (issue_shifter_disable_ff)
 );
 
-// SHIFTER STAGE //
+///////////////////////////////////////////////////////////////////////////////
+
+// =======================
+// SHIFTER STAGE 
+// =======================
 
 zap_shifter_main #(
         .PHY_REGS(PHY_REGS),
@@ -723,7 +765,11 @@ u_zap_shifter_main
         .o_stall_from_shifter           (stall_from_shifter)
 );
 
-// ALU STAGE //
+///////////////////////////////////////////////////////////////////////////////
+
+// ===============
+// ALU STAGE 
+// ===============
 
 zap_alu_main #(
         .PHY_REGS(PHY_REGS),
@@ -750,8 +796,8 @@ u_zap_alu_main
 
          .i_clk                          (i_clk),
          .i_reset                        (reset),
-         .i_clear_from_writeback         (clear_from_writeback),     // | High Priority
-         .i_data_stall                   (i_data_stall),             // V Low Priority
+         .i_clear_from_writeback         (clear_from_writeback),// | High Pri
+         .i_data_stall                   (i_data_stall),        // V Low Pri
 
          .i_cpsr_nxt                     (cpsr_nxt), // FROM WB
          .i_flag_update_ff               (shifter_flag_update_ff),
@@ -782,7 +828,7 @@ u_zap_alu_main
 
          .i_condition_code_ff           (shifter_condition_code_ff),
          .i_destination_index_ff        (shifter_destination_index_ff),
-         .i_alu_operation_ff            (shifter_alu_operation_ff),  // { OP, S }
+         .i_alu_operation_ff            (shifter_alu_operation_ff),  // {OP,S}
 
          .i_data_mem_fault              (i_data_abort),
 
@@ -799,11 +845,13 @@ u_zap_alu_main
          .o_dav_nxt                     (alu_dav_nxt),
 
          .o_pc_plus_8_ff                (alu_pc_plus_8_ff),
-         .o_mem_address_ff              (alu_address_ff),                    // Memory addresss sent. Memory system should ignore lower 2 bits.
+
+         // Data access address. Ignore [1:0].
+         .o_mem_address_ff              (alu_address_ff),    
          .o_clear_from_alu              (clear_from_alu),
          .o_pc_from_alu                 (pc_from_alu),
          .o_destination_index_ff        (alu_destination_index_ff),
-         .o_flags_ff                    (alu_flags_ff),                 // Output flags.
+         .o_flags_ff                    (alu_flags_ff),       // Output flags.
          .o_flags_nxt                   (alu_cpsr_nxt),
 
          .o_mem_srcdest_value_ff           (o_wr_data),        
@@ -822,9 +870,10 @@ u_zap_alu_main
         .o_address_nxt ( o_address_nxt )
 );
 
-assign o_read_en = alu_mem_load_ff; 
 
-// MEMORY //
+// ====================
+// MEMORY 
+// ====================
 
 zap_memory_main #(
        .PHY_REGS(PHY_REGS) 
@@ -850,8 +899,8 @@ u_zap_memory_main
         .i_flags_ff                     (alu_flags_ff), 
         
         .i_mem_load_ff                  (alu_mem_load_ff),
-        .i_mem_rd_data                  (i_rd_data),            // From memory <----- EXTERNAL.
-        .i_mem_fault                    (i_data_abort),         // From memory <----- EXTERNAL.
+        .i_mem_rd_data                  (i_rd_data),   // From memory.
+        .i_mem_fault                    (i_data_abort),// From memory.
         .o_mem_fault                    (memory_data_abt_ff),         
 
         .i_dav_ff                       (alu_dav_ff),
@@ -863,9 +912,12 @@ u_zap_memory_main
         .i_fiq_ff                       (alu_fiq_ff),
         .i_instr_abort_ff               (alu_abt_ff),
         .i_swi_ff                       (alu_swi_ff),
-         
-        .i_mem_srcdest_index_ff         (alu_mem_srcdest_index_ff), // Used to accelerate loads.
-        .i_mem_srcdest_value_ff         (o_wr_data),                // Can come in handy.        
+        
+        // Used to speed up loads. 
+        .i_mem_srcdest_index_ff         (alu_mem_srcdest_index_ff), 
+
+        // Can come in handy since this is reused for several other things.
+        .i_mem_srcdest_value_ff         (o_wr_data),                        
  
         .o_alu_result_ff                (memory_alu_result_ff),
         .o_flags_ff                     (memory_flags_ff),         
@@ -887,7 +939,11 @@ u_zap_memory_main
         .o_mem_rd_data                 (memory_mem_rd_data)
 );
 
-// WRITEBACK //
+///////////////////////////////////////////////////////////////////////////////
+
+// ==================
+// WRITEBACK 
+// ==================
 
 zap_register_file #(
         .PHY_REGS(PHY_REGS)
@@ -912,7 +968,8 @@ u_zap_regf
 
         .i_code_stall           (!i_valid),
 
-        .i_mem_load_ff          (memory_mem_load_ff), // Used to valid writes on i_wr_index1.
+        // Used to valid writes on i_wr_index1.
+        .i_mem_load_ff          (memory_mem_load_ff), 
 
         .i_rd_index_0           (rd_index_0), 
         .i_rd_index_1           (rd_index_1), 
@@ -922,8 +979,8 @@ u_zap_regf
         .i_wr_index             (memory_destination_index_ff),
         .i_wr_data              (memory_alu_result_ff),
         .i_flags                (memory_flags_ff),
-        .i_wr_index_1           (memory_mem_srcdest_index_ff),  // Memory load index.
-        .i_wr_data_1            (memory_mem_rd_data),        // Memory load data.
+        .i_wr_index_1           (memory_mem_srcdest_index_ff),// load index.
+        .i_wr_data_1            (memory_mem_rd_data),         // load data.
 
         .i_irq                  (memory_irq_ff),
         .i_fiq                  (memory_fiq_ff),
@@ -959,12 +1016,6 @@ u_zap_regf
         .i_hijack_sum           (alu_hijack_sum)
 );
 
-// Pipeline controls exposed.
-assign o_clear_from_writeback = clear_from_writeback;
-assign o_clear_from_alu     = clear_from_alu;
-assign o_stall_from_shifter = stall_from_shifter;
-assign o_stall_from_issue   = stall_from_issue;
-assign o_stall_from_decode  = stall_from_decode;
-assign o_clear_from_decode  = clear_from_decode;
+///////////////////////////////////////////////////////////////////////////////
 
-endmodule
+endmodule // zap_core.v
