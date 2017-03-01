@@ -697,7 +697,9 @@ begin
 
         $display("%m Process immediate...");
 
+        `ifdef SIM
         dp1 = 1;
+        `endif
 
         o_shift_length          = instruction[11:8] << 1'd1;
         o_shift_length[32]      = IMMED_EN;
@@ -714,7 +716,9 @@ endtask
 task process_instruction_specified_shift ( input [34:0] instruction );
 begin
         $display("%m Process instruction specified shift...");
+        `ifdef SIM
         dp2 = 1;
+        `endif
 
         // ROR #0 = RRC, ASR #0 = ASR #32, LSL #0 = LSL #0, LSR #0 = LSR #32 
         // ROR #n = ROR_1 #n ( n > 0 )
@@ -749,7 +753,9 @@ task process_register_specified_shift ( input [34:0] instruction );
 begin
         $display("%m Process register specified shift...");
 
+        `ifdef SIM
         dp3 = 1;
+        `endif
 
         o_shift_length          = instruction[11:8];
         o_shift_length[32]      = INDEX_EN;
