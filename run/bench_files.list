@@ -1,2 +1,0 @@
-$(ZAP_HOME)/testbench/zap_test.v
-$(ZAP_HOME)/testbench/model_ram.v

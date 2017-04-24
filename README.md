@@ -1,69 +1,64 @@
-# ZAP : An open source ARM processor (ARMv4 architecture compatible)
-*Author* : Revanth Kamaraj (revanth91kamaraj@gmail.com)<br />
-*License*: MIT License.<br />
+## ZAP : An open source ARM processor (ARMv4T architecture compatible)
 
-##Description
-ZAP is an ARM processor core based on the ARMv4 architecture "ARM instruction set".
-It is equipped with ARMv4 compatible split write-through caches and 
-memory management capabilities. There is support for a 16-bit instruction 
-set (Thumb v1 like).
+Author : Revanth Kamaraj (revanth91kamaraj@gmail.com)
+License: MIT License.
 
-##Current Status
-EXPERIMENTAL. 
+## Description 
+ZAP is an ARM processor core based on the ARMv4T architecture 
+It is equipped with ARMv4 compatible split writeback caches and memory 
+management capabilities. ARMv4 and Thumbv1 instruction sets are supported.
 
-##Features
-- Compatible with the ARMv4 architecture. Can execute 32-bit ARMv4 code.
-- Supports a compressed 16-bit Thumb like instruction set.
-- 8-stage pipeline design : Fetch1, Fetch2, Decode, Issue, Shift, Execute, Memory, Writeback.
-- Branch prediction is supported.
-- Split I and D cache (Size can be configured using parameters).
-- Split I and D MMUs (TLB size can be configured using parameters).
+## Current Status : EXPERIMENTAL, UNSTABLE
 
-##Pipeline Overview
+## Features :
+
+    Compatible with the ARMv4T architecture. Can execute 32-bit ARMv4 and 16 bit Thumb v1 code.
+    8-stage pipeline design : Fetch1, Fetch2, Decode, Issue, Shift, Execute, Memory, Writeback.
+    Branch prediction is supported.
+    Split I and D writeback cache (Size can be configured using parameters).
+    Split I and D MMUs (TLB size can be configured using parameters).
+
+## Pipeline Overview : 
+
 FETCH => PRE-DECODE => DECODE => ISSUE => SHIFTER => ALU => MEMORY => WRITEBACK
 
 The pipeline is fully bypassed to allow most dependent instructions to execute 
-without stalls. The pipeline stalls for 3 cycles if there is an attempt to use 
-a value loaded from memory immediately following it. 32x32+32=32 operations take 
-6 clock cycles while 32x32+64=64 takes 12 clock cycles. Multiplication and 
-non trivial shifts require registers a cycle early else the pipeline stalls 
-for 1 cycle.
+without stalls. The pipeline stalls for 3 cycles if there is an attempt to 
+use a value loaded from memory immediately following it. 32x32+32=32 
+operations take 6 clock cycles while 32x32+64=64 takes 12 clock cycles. 
+Multiplication and non trivial shifts require registers a cycle early else 
+the pipeline stalls for 1 cycle.
 
-##Documentation
-[Project Documentation](https://github.com/krevanth/ZAP/blob/master/docs/zap_doc.pdf)
+## Documentation Project Documentation :
 
-[Instruction Format Quick Reference](https://github.com/krevanth/ZAP/blob/master/docs/armref.pdf)
+Please see docs folder.
 
-The project documentation is incomplete and I will try my best to update it.
+## Feedback :
 
-##Feedback
-Please provide your feedback on the google forum...
-https://groups.google.com/d/forum/zap-devel
+Please provide your feedback on the google forum : https://groups.google.com/d/forum/zap-devel
 
--------------------------------------------------------------------------------
+## To simulate using Icarus Verilog :
 
-##License.
+Please see hw/sim/sample\_command.csh and hw/sim/run\_sim.pl
+Enter hw/sim and run "csh sample\_command.csh" from the terminal. The command
+will run the factorial test case (see sw/factorial).
 
-MIT License
+## License :
 
-Copyright (C) 2016,2017 Revanth Kamaraj (Email: revanth91kamaraj@gmail.com)
+Copyright (C) 2016, 2017 Revanth Kamaraj.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
--------------------------------------------------------------------------------
+
