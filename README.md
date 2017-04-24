@@ -31,7 +31,7 @@ the pipeline stalls for 1 cycle.
 
 ## Documentation Project Documentation :
 
-Please see docs folder.
+Will include soon.
 
 ## Feedback :
 
