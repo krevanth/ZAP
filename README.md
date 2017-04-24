@@ -1,7 +1,7 @@
 ## ZAP : An open source ARM processor (ARMv4T architecture compatible)
 
 Author : Revanth Kamaraj (revanth91kamaraj@gmail.com)
-License: MIT License.
+License: GPL v2.
 
 ## Description 
 ZAP is an ARM processor core based on the ARMv4T architecture 
@@ -41,7 +41,8 @@ Please provide your feedback on the google forum : https://groups.google.com/d/f
 
 Please see hw/sim/sample\_command.csh and hw/sim/run\_sim.pl
 Enter hw/sim and run "csh sample\_command.csh" from the terminal. The command
-will run the factorial test case (see sw/factorial).
+will run the factorial test case (see sw/factorial). Ensure that you have
+GTKWave installed at your site.
 
 ## License :
 
