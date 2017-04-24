@@ -1,5 +1,5 @@
 # Push repo
-/push_repo.bash
+/push_repo.pl
 
 # Windows image file caches
 Thumbs.db
