@@ -35,7 +35,7 @@ operations take 6 clock cycles while 32x32+64=64 takes 12 clock cycles.
 Multiplication and non trivial shifts require registers a cycle early else 
 the pipeline stalls for 1 cycle.
 
-## Documentation Project Documentation :
+## Project Documentation :
 
 Will include soon.
 
