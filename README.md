@@ -1,18 +1,23 @@
-## ZAP : An open source ARM processor (ARMv4T architecture compatible)
+## ZAP : An open source ARM processor (ARMv4T ISA compatible)
 
-Author : Revanth Kamaraj (revanth91kamaraj@gmail.com)
-License: GPL v2.
+# Author        : Revanth Kamaraj (revanth91kamaraj@gmail.com)
+# License       : GPL v2
 
 ## Description 
-ZAP is an ARM processor core based on the ARMv4T architecture 
-It is equipped with ARMv4 compatible split writeback caches and memory 
+ZAP is a pipelined ARM processor core that can execute the ARMv4T instruction
+set. It is equipped with ARMv4 compatible split writeback caches and memory 
 management capabilities. ARMv4 and Thumbv1 instruction sets are supported.
+The processor core uses an 8 stage pipeline.
 
-## Current Status : EXPERIMENTAL, UNSTABLE
+## Current Status : VERY EXPERIMENTAL, HIGHLY UNSTABLE
+
+## Bus Interface :
+ 
+Wishbone B3 compatible 32-bit instruction and data busses.
 
 ## Features :
 
-    Compatible with the ARMv4T architecture. Can execute 32-bit ARMv4 and 16 bit Thumb v1 code.
+    Can execute 32-bit ARMv4 and 16 bit Thumb v1 code.
     Wishbone B3 compatible I and D interfaces. Cache unit supports burst access.
     8-stage pipeline design : Fetch1, Fetch2, Decode, Issue, Shift, Execute, Memory, Writeback.
     Branch prediction is supported.
