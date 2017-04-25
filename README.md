@@ -1,7 +1,7 @@
-## ZAP : An open source ARM processor (ARMv4T ISA compatible)
+# ZAP : An open source ARM processor (ARMv4T ISA compatible)
 
-# Author        : Revanth Kamaraj (revanth91kamaraj@gmail.com)
-# License       : GPL v2
+### Author        : Revanth Kamaraj (revanth91kamaraj@gmail.com)
+### License       : GPL v2
 
 ## Description 
 ZAP is a pipelined ARM processor core that can execute the ARMv4T instruction
