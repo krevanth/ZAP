@@ -280,10 +280,10 @@ zap_core #(
 .i_fiq                  (i_fiq),
 .i_irq                  (i_irq),
 
-// These ports are irrelevant as no MMU, cache is present.
+// MMU/cache is present.
 .o_mem_translate        (cpu_mem_translate),
-.i_fsr                  (dc_fsr),
-.i_far                  ({24'd0,dc_far}),
+.i_fsr                  ({24'd0,dc_fsr}),
+.i_far                  (dc_far),
 .o_dac                  (cpu_dac_reg),
 .o_baddr                (cpu_baddr),
 .o_mmu_en               (cpu_mmu_en),
