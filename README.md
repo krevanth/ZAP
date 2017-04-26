@@ -1,21 +1,24 @@
-# ZAP : An open source ARM processor (ARMv4T ISA compatible)
+## *ZAP* : An open source ARMv4T processor
 
-### Author        : Revanth Kamaraj (revanth91kamaraj@gmail.com)
-### License       : GPL v2
+#### Author        : Revanth Kamaraj (revanth91kamaraj@gmail.com)
+#### License       : GPL v2
 
-## Description 
+### Description 
+
 ZAP is a pipelined ARM processor core that can execute the ARMv4T instruction
 set. It is equipped with ARMv4 compatible split writeback caches and memory 
 management capabilities. ARMv4 and Thumbv1 instruction sets are supported.
 The processor core uses an 8 stage pipeline.
 
-## Current Status : VERY EXPERIMENTAL, HIGHLY UNSTABLE
+### Current Status 
 
-## Bus Interface :
+Experimental
+
+### Bus Interface 
  
 Wishbone B3 compatible 32-bit instruction and data busses.
 
-## Features :
+### Features 
 
     Can execute 32-bit ARMv4 and 16 bit Thumb v1 code.
     Wishbone B3 compatible I and D interfaces. Cache unit supports burst access.
@@ -24,7 +27,7 @@ Wishbone B3 compatible 32-bit instruction and data busses.
     Split I and D writeback cache (Size can be configured using parameters).
     Split I and D MMUs (TLB size can be configured using parameters).
 
-## Pipeline Overview : 
+### Pipeline Overview :
 
 FETCH => PRE-DECODE => DECODE => ISSUE => SHIFTER => ALU => MEMORY => WRITEBACK
 
@@ -35,22 +38,21 @@ operations take 6 clock cycles while 32x32+64=64 takes 12 clock cycles.
 Multiplication and non trivial shifts require registers a cycle early else 
 the pipeline stalls for 1 cycle.
 
-## Project Documentation :
+### Project Documentation 
 
 Will include soon.
 
-## Feedback :
+### Feedback 
 
 Please provide your feedback on the google forum : https://groups.google.com/d/forum/zap-devel
 
-## To simulate using Icarus Verilog :
+### To simulate using Icarus Verilog 
 
-Please see hw/sim/sample\_command.csh and hw/sim/run\_sim.pl
-Enter hw/sim and run "csh sample\_command.csh" from the terminal. The command
+Enter *hw/sim* and run *csh sample\_command.csh* from the terminal. The command
 will run the factorial test case (see sw/factorial). Ensure that you have
 GTKWave installed at your site.
 
-## License :
+### License 
 
 Copyright (C) 2016, 2017 Revanth Kamaraj.
 
