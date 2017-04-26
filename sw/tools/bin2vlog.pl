@@ -4,6 +4,7 @@
 # Perl script to translate GCC generated binary files into Verilog memory
 # files.
 #
+#
 # Usage: perl bin2vlog.pl <Binary File> <Target Verilog File>
 ###############################################################################
 

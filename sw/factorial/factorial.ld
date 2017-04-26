@@ -1,3 +1,5 @@
+/* Linker Script */
+
 ENTRY(_Reset)                   /* _Reset is the entry point. This is the entry point in the bootstrap assembler */
 
 /* Define how sections of the program are organized. */

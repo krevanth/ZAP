@@ -1,3 +1,5 @@
+// Startup file for factorial.
+
 .global _Reset
 
 // Set up an interrupt vector table.

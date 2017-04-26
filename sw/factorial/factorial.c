@@ -1,3 +1,5 @@
+// Computes factorial.
+
 void main (void)
 {
         char *x = (char *)2000;

@@ -4,6 +4,7 @@
 # A Perl script to automate compilation of code. It accepts an assembly file
 # and a C file along with a linker script.
 #
+#
 # Usage perl casm2bin.pl <asm_file> <c_file> <linker_script> <target_bin>
 ###############################################################################
 
