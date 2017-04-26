@@ -48,7 +48,7 @@ i_wb_ack, i_wb_dat
 `include "zap_functions.vh"
 `include "zap_mmu_functions.vh"
 
-parameter CACHE_SIZE = 32768; // Bytes.
+parameter CACHE_SIZE = 1024; // Bytes.
 
 input   wire                            i_clk;
 input   wire                            i_reset;
@@ -95,8 +95,8 @@ localparam NUMBER_OF_DIRTY_BLOCKS = ((CACHE_SIZE/16)/16); // Keep cache size > 1
 
 reg [(CACHE_SIZE/16)-1:0]       dirty;
 reg [(CACHE_SIZE/16)-1:0]       valid; 
-reg [`CACHE_TAG_WDT-1:0]        tag_ram [(CACHE_SIZE/16)];
-reg [127:0]                     dat_ram [(CACHE_SIZE/16)];
+reg [`CACHE_TAG_WDT-1:0]        tag_ram [(CACHE_SIZE/16)-1:0];
+reg [127:0]                     dat_ram [(CACHE_SIZE/16)-1:0];
 
 // ----------------------------------------------------------------------------
 
@@ -159,7 +159,7 @@ begin
 
         if ( tag_ram_clean )
                 dirty [ tag_ram_wr_addr ]   <= 1'd0;
-        if ( tag_ram_wr_en )
+        else if ( tag_ram_wr_en )
                 dirty [ tag_ram_wr_addr ]   <= i_cache_tag_dirty;
 end
 
@@ -188,6 +188,7 @@ begin
                 o_wb_adr_ff <= 0;
                 adr_ctr_ff <= 0;
                 blk_ctr_ff <= 0;
+					 state_ff   <= IDLE;
         end
         else
         begin
@@ -200,6 +201,7 @@ begin
                 o_wb_adr_ff             <= o_wb_adr_nxt;
                 adr_ctr_ff              <= adr_ctr_nxt;
                 blk_ctr_ff              <= blk_ctr_nxt;
+					state_ff						  <= state_nxt;
         end
 end
 
@@ -217,23 +219,36 @@ begin
 
         // Defaults.
         state_nxt = state_ff;
-        tag_ram_rd_addr = i_address_nxt [`VA__CACHE_INDEX];
-        tag_ram_wr_addr = i_address     [`VA__CACHE_INDEX];
-        tag_ram_wr_en   = i_cache_tag_wr_en;
-        tag_ram_clear   = 0;
-        tag_ram_clean   = 0;
-        adr_ctr_nxt     = adr_ctr_ff;
-        blk_ctr_nxt     = blk_ctr_ff;
-        o_cache_clean_done = 0;
-        o_cache_inv_done   = 0;
+        tag_ram_rd_addr         = i_address_nxt [`VA__CACHE_INDEX];
+        tag_ram_wr_addr         = i_address     [`VA__CACHE_INDEX];
+        tag_ram_wr_en           = i_cache_tag_wr_en;
+        tag_ram_clear           = 0;
+        tag_ram_clean           = 0;
+        adr_ctr_nxt             = adr_ctr_ff;
+        blk_ctr_nxt             = blk_ctr_ff;
+        o_cache_clean_done      = 0;
+        o_cache_inv_done        = 0;
+
+        o_wb_cyc_nxt = o_wb_cyc_ff;
+        o_wb_stb_nxt = o_wb_stb_ff;
+        o_wb_adr_nxt = o_wb_adr_ff;
+        o_wb_dat_nxt = o_wb_dat_ff;
+        o_wb_sel_nxt = o_wb_sel_ff;
+        o_wb_wen_nxt = o_wb_wen_ff;
+        o_wb_cti_nxt = o_wb_cti_ff;
+
+		  tag_ram_wr_data = 0;
 
         case ( state_ff )
 
         IDLE:
         begin
+                kill_access;
+
                 tag_ram_rd_addr = i_address_nxt [`VA__CACHE_INDEX];
                 tag_ram_wr_addr = i_address     [`VA__CACHE_INDEX];
                 tag_ram_wr_en   = i_cache_tag_wr_en;
+					 tag_ram_wr_data = i_cache_tag;
 
                 if ( i_cache_clean_req )
                 begin

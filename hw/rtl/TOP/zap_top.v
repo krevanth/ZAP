@@ -26,7 +26,7 @@
 module zap_top #(
 
 // Enable cache and MMU.
-parameter [0:0]         CACHE_MMU_ENABLE        = 1'd0,
+parameter [0:0]         CACHE_MMU_ENABLE        = 1'd1,
 parameter               BP_ENTRIES              = 1024, // Predictor depth.
 parameter               FIFO_DEPTH              = 4,    // FIFO depth.
 
@@ -236,8 +236,6 @@ wire cpu_dc_we, cpu_dc_stb;
 wire [3:0] cpu_dc_sel;
 
 zap_core #(
-        .COPROCESSOR_INTERFACE_ENABLE(CACHE_MMU_ENABLE), 
-        .COMPRESSED_EN(COMPRESSED_EN),
         .BP_ENTRIES(BP_ENTRIES),
         .FIFO_DEPTH(FIFO_DEPTH)
 ) u_zap_core
@@ -285,7 +283,7 @@ zap_core #(
 // These ports are irrelevant as no MMU, cache is present.
 .o_mem_translate        (cpu_mem_translate),
 .i_fsr                  (dc_fsr),
-.i_far                  (dc_far),
+.i_far                  ({24'd0,dc_far}),
 .o_dac                  (cpu_dac_reg),
 .o_baddr                (cpu_baddr),
 .o_mmu_en               (cpu_mmu_en),
@@ -294,12 +292,12 @@ zap_core #(
 .o_icache_inv           (cpu_ic_inv),
 .o_dcache_clean         (cpu_dc_clean),
 .o_icache_clean         (cpu_ic_clean),
-.o_dtlb_inv             (),
-.o_itlb_inv             (),
-.i_dcache_inv_done      (),
-.i_icache_inv_done      (),
-.i_dcache_clean_done    (),
-.i_icache_clean_done    (),
+.o_dtlb_inv             (cpu_dtlb_inv),
+.o_itlb_inv             (cpu_itlb_inv),
+.i_dcache_inv_done      (dc_inv_done),
+.i_icache_inv_done      (ic_inv_done),
+.i_dcache_clean_done    (dc_clean_done),
+.i_icache_clean_done    (ic_clean_done),
 .o_dcache_en            (cpu_dc_en),
 .o_icache_en            (cpu_ic_en),
 
@@ -362,15 +360,15 @@ u_data_cache (
 .i_baddr        (cpu_baddr),
 .i_dac_reg      (cpu_dac_reg),
 .i_tlb_inv      (cpu_dtlb_inv),
-.o_wb_stb       (o_instr_wb_stb),
-.o_wb_cyc       (o_instr_wb_cyc),
-.o_wb_wen       (o_instr_wb_wen),
-.o_wb_sel       (o_instr_wb_sel),
-.o_wb_dat       (o_instr_wb_dat),
-.o_wb_adr       (o_instr_wb_adr),
-.o_wb_cti       (o_instr_wb_cti),
-.i_wb_dat       (i_instr_wb_dat),
-.i_wb_ack       (i_instr_wb_ack)
+.o_wb_stb       (o_data_wb_stb),
+.o_wb_cyc       (o_data_wb_cyc),
+.o_wb_wen       (o_data_wb_we),
+.o_wb_sel       (o_data_wb_sel),
+.o_wb_dat       (o_data_wb_dat),
+.o_wb_adr       (o_data_wb_adr),
+.o_wb_cti       (o_data_wb_cti),
+.i_wb_dat       (i_data_wb_dat),
+.i_wb_ack       (i_data_wb_ack)
 );
 
 zap_cache #(
@@ -384,7 +382,7 @@ u_code_cache (
 .i_address          (cpu_iaddr),
 .i_address_nxt      (cpu_iaddr_nxt),
 
-.i_rd(cpu_instr_stb),
+.i_rd              (cpu_instr_stb),
 .i_wr              (1'd0),
 .i_ben             (4'b1111),
 .i_dat             (32'd0),
@@ -405,15 +403,15 @@ u_code_cache (
 .i_baddr        (cpu_baddr),
 .i_dac_reg      (cpu_dac_reg),
 .i_tlb_inv      (cpu_itlb_inv),
-.o_wb_stb       (o_data_wb_stb),
-.o_wb_cyc       (o_data_wb_cyc),
-.o_wb_wen       (o_data_wb_wen),
-.o_wb_sel       (o_data_wb_sel),
-.o_wb_dat       (o_data_wb_dat),
-.o_wb_adr       (o_data_wb_adr),
-.o_wb_cti       (o_data_wb_cti),
-.i_wb_dat       (i_data_wb_dat),
-.i_wb_ack       (i_data_wb_ack)
+.o_wb_stb       (o_instr_wb_stb),
+.o_wb_cyc       (o_instr_wb_cyc),
+.o_wb_wen       (o_instr_wb_we),
+.o_wb_sel       (o_instr_wb_sel),
+.o_wb_dat       (),
+.o_wb_adr       (o_instr_wb_adr),
+.o_wb_cti       (o_instr_wb_cti),
+.i_wb_dat       (i_instr_wb_dat),
+.i_wb_ack       (i_instr_wb_ack)
 );
 
 end

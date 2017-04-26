@@ -293,7 +293,7 @@ begin
 
                                         CASE_FLUSH_ID_TLB:
                                         begin
-                                                o_itlb_inv <= 1'd1;
+                                                o_itlb_inv  <= 1'd1;
                                                 o_dtlb_inv  <= 1'd1;
                                         end
 
@@ -345,9 +345,16 @@ begin
                                                 state          <= CLEAN_D_CACHE;
                                         end
 
+                                        CASE_CLFLUSH_D_CACHE:
+                                        begin
+                                                o_dcache_clean <= 1'd1;
+                                                state          <= CLFLUSH_D_CACHE;
+                                        end
+
                                         CASE_CLFLUSH_ID_CACHE,CASE_CLFLUSH_D_CACHE:
                                         begin
                                                 o_dcache_clean <= 1'd1;
+                                                state          <= CLFLUSH_ID_CACHE;
                                         end
 
                                         default:
@@ -362,7 +369,6 @@ begin
 
                 // States.
                 CLEAN_D_CACHE, 
-                CLEAN_ID_CACHE, 
                 CLFLUSH_ID_CACHE, 
                 CLFLUSH_D_CACHE:
                 begin
@@ -380,7 +386,7 @@ begin
                                         o_dcache_inv    <= 1'd1;
                                         state           <= CLR_D_CACHE_AND;
                                 end
-                                else
+                                else // CLEAN_D_CACHE
                                 begin
                                         state <= DONE;
                                 end

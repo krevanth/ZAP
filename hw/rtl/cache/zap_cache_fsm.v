@@ -117,7 +117,8 @@ localparam NUMBER_OF_STATES     = 8;
 
 /* Flops */
 reg [$clog2(NUMBER_OF_STATES)-1:0] state_ff, state_nxt;
-reg [3:0] buf_ff[31:0], buf_nxt[31:0];
+reg [31:0] buf_ff [3:0];
+reg [31:0] buf_nxt[3:0];
 reg cache_clean_req_nxt, cache_clean_req_ff;
 reg cache_inv_req_nxt, cache_inv_req_ff;
 
@@ -141,6 +142,7 @@ begin
                 cache_clean_req_ff <= 0;
                 cache_inv_req_ff <= 0;
                 adr_ctr_ff <= 0;
+                state_ff   <= IDLE;
         end
         else
         begin
@@ -154,6 +156,11 @@ begin
                 cache_clean_req_ff      <= cache_clean_req_nxt;
                 cache_inv_req_ff        <= cache_inv_req_nxt;
                 adr_ctr_ff              <= adr_ctr_nxt;
+                state_ff                <= state_nxt;
+                buf_ff[0]               <= buf_nxt[0];
+                buf_ff[1]               <= buf_nxt[1];
+                buf_ff[2]               <= buf_nxt[2];
+					 buf_ff[3]					 <= buf_nxt[3];
         end
 end
 
@@ -172,10 +179,32 @@ begin
         cache_clean_req_nxt     = cache_clean_req_ff;
         cache_inv_req_nxt       = cache_clean_req_ff;
 
+		  o_fsr = 0;
+		  o_far = 0;
+
+        o_cache_tag = 0;
+        o_cache_inv_done = 0;
+        o_cache_clean_done = 0;
+        o_cache_tag_dirty = 0;
+        o_cache_tag_wr_en = 0;
+        o_cache_line = 0;
+        o_cache_line_ben = 0;
+
+		  o_dat = 0;
+		  o_ack = 0;
+		  o_err = 0;
+
+        buf_nxt[0] = buf_ff[0];
+        buf_nxt[1] = buf_ff[1];
+        buf_nxt[2] = buf_ff[2];       
+		  buf_nxt[3] = buf_ff[3];
+ 
         case(state_ff)
 
         IDLE:
         begin
+                kill_access;
+
                 if ( i_cache_inv )
                 begin
                         o_ack     = 1'd0;
@@ -191,6 +220,8 @@ begin
                         /* MMU access fault. */
                         o_err = 1'd1;
                         o_ack = 1'd1;
+								o_fsr = i_fsr;
+								o_far = i_far;
                 end
                 else if ( i_busy )
                 begin
@@ -230,7 +261,7 @@ begin
                                                 o_cache_tag_wr_en               = 1'd1;
                                                 o_cache_tag[`CACHE_TAG__TAG]    = i_address[`VA__CACHE_TAG]; 
                                                 o_cache_tag_dirty               = 1'd1;
-                                                o_cache_tag[`CACHE_TAG__PA]     = i_phy_addr;
+                                                o_cache_tag[`CACHE_TAG__PA]     = i_phy_addr >> 4;
                                         end
                                 end
 
@@ -311,7 +342,7 @@ begin
                 begin
                         /* Sync up with memory */
                         wb_prpr_write(i_cache_line >> (adr_ctr_nxt << 5), 
-                                      i_phy_addr + (adr_ctr_nxt << 2), 
+                                      {i_phy_addr[31:4], 4'd0} + (adr_ctr_nxt << 2), 
                                       adr_ctr_nxt != 3 ? CTI_BURST : CTI_EOB, 4'b1111);
                 end
                 else
@@ -324,7 +355,7 @@ begin
                         o_cache_tag_wr_en                      = 1'd1; // Implicitly sets valid (redundant).
                         o_cache_tag[`CACHE_TAG__TAG]           = i_address[`VA__CACHE_TAG];
                         o_cache_tag_dirty                      = 1'd0;
-                        o_cache_tag[`CACHE_TAG__PA]            = i_phy_addr;
+                        o_cache_tag[`CACHE_TAG__PA]            = i_phy_addr >> 4;
                 end 
         end
 
@@ -336,12 +367,12 @@ begin
                 adr_ctr_nxt = adr_ctr_ff + (o_wb_stb_ff && i_wb_ack);
 
                 /* Write to buffer */
-                buf_nxt[adr_ctr_ff] = i_wb_dat;
+                buf_nxt[adr_ctr_ff] = i_wb_ack ? i_wb_dat : buf_ff[adr_ctr_ff];
 
                 if ( adr_ctr_nxt <= 3 )
                 begin
                         /* Fetch line from memory */
-                        wb_prpr_read(i_phy_addr + (adr_ctr_nxt << 2), 
+                        wb_prpr_read({i_phy_addr[31:4], 4'd0} + (adr_ctr_nxt << 2), 
                                      adr_ctr_nxt != 3 ? CTI_BURST : CTI_EOB);
                 end
                 else
@@ -353,7 +384,7 @@ begin
                         /* Update tag. Remove dirty and set valid */
                         o_cache_tag_wr_en                       = 1'd1; // Implicitly sets valid.
                         o_cache_tag[`CACHE_TAG__TAG]            = i_address[`VA__CACHE_TAG];
-                        o_cache_tag[`CACHE_TAG__PA]             = i_phy_addr;
+                        o_cache_tag[`CACHE_TAG__PA]             = i_phy_addr >> 4;
                         o_cache_tag_dirty                       = 1'd0;
 
                         /* Move to wait state */

@@ -11,6 +11,7 @@ begin
         o_wb_sel_nxt = 4'b1111;
         o_wb_adr_nxt = i_address;
         o_wb_cti_nxt = i_cti;
+		  o_wb_dat_nxt = 0;
 end
 endtask
 
@@ -29,6 +30,7 @@ begin
         o_wb_sel_nxt = i_ben;
         o_wb_adr_nxt = i_address;
         o_wb_cti_nxt = i_cti;
+		  o_wb_dat_nxt = i_data;
 end
 endtask
 
@@ -40,6 +42,8 @@ begin
         o_wb_cyc_nxt = 0;
         o_wb_stb_nxt = 0;
         o_wb_wen_nxt = 0;
+        o_wb_adr_nxt = 0;
+        o_wb_dat_nxt = 0;
         o_wb_sel_nxt = 0;
         o_wb_cti_nxt = CTI_CLASSIC;
 end

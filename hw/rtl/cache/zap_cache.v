@@ -2,7 +2,7 @@
 
 module zap_cache #(
 
-parameter [31:0] CACHE_SIZE             = 32768, 
+parameter [31:0] CACHE_SIZE             = 1024, 
 parameter [31:0] SPAGE_TLB_ENTRIES      = 8,
 parameter [31:0] LPAGE_TLB_ENTRIES      = 8,
 parameter [31:0] SECTION_TLB_ENTRIES    = 8
@@ -102,6 +102,7 @@ u_zap_cache_fsm         (
 .o_ack                  (o_ack),
 .o_err                  (o_err),
 .o_fsr                  (o_fsr),
+.o_far                  (o_far),
 .i_cache_en             (i_cache_en),
 .i_cache_inv            (i_cache_inv_req),
 .i_cache_clean          (i_cache_clean_req),

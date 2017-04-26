@@ -183,9 +183,6 @@ u_zap_tlb_check (
 // ----------------------------------------------------------------------------
 
 zap_tlb_fsm #(
-.SPTLB_WDT              (`SPAGE_TLB_WDT),
-.LPTLB_WDT              (`LPAGE_TLB_WDT),
-.SETLB_WDT              (`SECTION_TLB_WDT),
 .LPAGE_TLB_ENTRIES      (LPAGE_TLB_ENTRIES),
 .SPAGE_TLB_ENTRIES      (SPAGE_TLB_ENTRIES),
 .SECTION_TLB_ENTRIES    (SECTION_TLB_ENTRIES)
@@ -220,11 +217,12 @@ zap_tlb_fsm #(
 .o_wb_cyc       (),
 .o_wb_stb       (),
 .o_wb_wen       (o_wb_wen_nxt),
-.o_wb_sel       (o_wb_sel_nxt),
+.o_wb_sel       (),
 .o_wb_adr       (),
 .i_wb_dat       (i_wb_dat),
 .i_wb_ack       (i_wb_ack),
 
+.o_wb_sel_nxt   (o_wb_sel_nxt),
 .o_wb_cyc_nxt   (o_wb_cyc_nxt),
 .o_wb_stb_nxt   (o_wb_stb_nxt),
 .o_wb_adr_nxt   (o_wb_adr_nxt)

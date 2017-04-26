@@ -20,12 +20,12 @@
 // ----------------------------------------------------------------------------
 
 `default_nettype none
+
+`include "zap_defines.vh"
+
 module zap_tlb_fsm #(
 
 // Pass from top.
-parameter SPTLB_WDT = 32,
-parameter LPTLB_WDT = 32,
-parameter SETLB_WDT = 32,
 parameter LPAGE_TLB_ENTRIES   = 8,
 parameter SPAGE_TLB_ENTRIES   = 8,
 parameter SECTION_TLB_ENTRIES = 8
@@ -59,11 +59,11 @@ output  reg                     o_cacheable,
 output  reg                     o_busy,
 
 /* To TLBs */
-output reg      [SETLB_WDT-1:0] o_setlb_wdata,
+output reg      [`SECTION_TLB_WDT-1:0] o_setlb_wdata,
 output reg                      o_setlb_wen,
-output reg      [SPTLB_WDT-1:0] o_sptlb_wdata,
+output reg      [`SPAGE_TLB_WDT-1:0] o_sptlb_wdata,
 output reg                      o_sptlb_wen,
-output  reg     [LPTLB_WDT-1:0] o_lptlb_wdata,
+output  reg     [`LPAGE_TLB_WDT-1:0] o_lptlb_wdata,
 output  reg                     o_lptlb_wen,
 
 /* Wishbone signals NXT */
@@ -75,10 +75,13 @@ output  wire    [31:0]          o_wb_adr_nxt,
 output wire                     o_wb_cyc,
 output wire                     o_wb_stb,
 output wire                     o_wb_wen,
-output wire [3:0]               o_wb_sel,
+output wire [3:0]               o_wb_sel, o_wb_sel_nxt,
 output wire [31:0]              o_wb_adr,
 input  wire [31:0]              i_wb_dat,
-input  wire                     i_wb_ack
+input  wire                     i_wb_ack,
+
+// Unused.
+output wire o_unused_ok
 
 );
 
@@ -98,7 +101,7 @@ localparam NUMBER_OF_STATES     = 4;
 
 // ----------------------------------------------------------------------------
 
-reg [31:0] dff_ff, dff_nxt;                             /* Scratchpad register */
+reg [3:0] dff_ff, dff_nxt;                              /* Scratchpad register */
 reg [$clog2(NUMBER_OF_STATES)-1:0] state_ff, state_nxt; /* State register */
 
 /* Wishbone related */
@@ -117,9 +120,14 @@ assign o_wb_cyc_nxt     = wb_cyc_nxt;
 assign o_wb_stb_nxt     = wb_stb_nxt;
 assign o_wb_adr_nxt     = wb_adr_nxt;
 
+reg [3:0] wb_sel_nxt, wb_sel_ff;
+
 /* Tied PORTS */
 assign o_wb_wen = 1'd0;
-assign o_wb_sel = 4'b1111;
+assign o_wb_sel = wb_sel_ff;
+assign o_wb_sel_nxt = wb_sel_nxt;
+
+assign o_unused_ok = 0 || i_baddr[13:0];
 
 /* Combinational logic */
 always @*
@@ -142,6 +150,7 @@ begin: blk1
         wb_stb_nxt      = 0;
         wb_cyc_nxt      = 0;
         wb_adr_nxt      = 0;
+	     wb_sel_nxt	   = 0;
 
         dff_nxt         = dff_ff;
         state_nxt       = state_ff;
@@ -296,13 +305,17 @@ begin
                 state_ff        <=      IDLE;
                 wb_stb_ff       <=      0;
                 wb_cyc_ff       <=      0;
+					 wb_adr_ff	     <=      0;	
+					 wb_sel_ff		  <=	    0;
         end
         else
         begin
                 state_ff        <=      state_nxt;
                 wb_stb_ff       <=      wb_stb_nxt;
                 wb_cyc_ff       <=      wb_cyc_nxt;
+					 wb_adr_ff		  <=	    wb_adr_nxt;
                 dff_ff          <=      dff_nxt;
+					 wb_sel_ff	     <=	    wb_sel_nxt;
         end
 end
 
@@ -313,6 +326,7 @@ begin
         wb_stb_nxt = wb_stb_ff;
         wb_cyc_nxt = wb_cyc_ff;
         wb_adr_nxt = wb_adr_ff;
+		  wb_sel_nxt = wb_sel_ff;
 end
 endtask
 
@@ -321,6 +335,7 @@ begin
         wb_stb_nxt = 1'd1;
         wb_cyc_nxt = 1'd1;
         wb_adr_nxt = adr;
+		  wb_sel_nxt[3:0] = 4'b1111;
 end
 endtask
 
