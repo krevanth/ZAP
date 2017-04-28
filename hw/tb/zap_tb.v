@@ -220,6 +220,7 @@ $display("parameter CODE_LPAGE_TLB_ENTRIES        = %d", CODE_LPAGE_TLB_ENTRIES 
 $display("parameter CODE_SPAGE_TLB_ENTRIES        = %d", CODE_SPAGE_TLB_ENTRIES      ) ;
 $display("parameter CODE_CACHE_SIZE               = %d", CODE_CACHE_SIZE             ) ;
 
+$display($time, "Type 'cont' to continue running the simulation...");
 $stop;
 end
 
