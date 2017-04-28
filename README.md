@@ -40,7 +40,7 @@ the pipeline stalls for 1 cycle.
 
 ### Project Documentation 
 
-Will include soon.
+Please see the docs folder.
 
 ### Feedback 
 
