@@ -136,28 +136,25 @@ module zap_test; // +nctop+zap_test
 
 // Bench related.
 
-parameter RAM_SIZE                      = 32768;
-
-parameter START                         = 1992;
-parameter COUNT                         = 120;
-
 `define STALL
 `define IRQ_EN
 `define MAX_CLOCK_CYCLES 100000
 
 // CPU config.
-
+parameter RAM_SIZE                      = 32768;
+parameter START                         = 1992;
+parameter COUNT                         = 120;
 parameter CACHE_MMU_ENABLE              = 0;
 parameter DATA_SECTION_TLB_ENTRIES      = 4;
 parameter DATA_LPAGE_TLB_ENTRIES        = 8;
 parameter DATA_SPAGE_TLB_ENTRIES        = 16;
 parameter DATA_CACHE_SIZE               = 1024;
-
 parameter CODE_SECTION_TLB_ENTRIES      = 4;
 parameter CODE_LPAGE_TLB_ENTRIES        = 8;
 parameter CODE_SPAGE_TLB_ENTRIES        = 16;
 parameter CODE_CACHE_SIZE               = 1024;
-
+parameter FIFO_DEPTH                    = 4;
+parameter BP_ENTRIES                    = 1024;
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -193,6 +190,7 @@ begin
 $display("parameter RAM_SIZE              %d", RAM_SIZE           ); 
 $display("parameter START                 %d", START              ); 
 $display("parameter COUNT                 %d", COUNT              ); 
+$display("parameter FIFO_DEPTH            %d", u_zap_top.FIFO_DEPTH);
 
 `ifdef STALL
         $display("STALL defined!");
@@ -222,6 +220,7 @@ $display("parameter CODE_LPAGE_TLB_ENTRIES        = %d", CODE_LPAGE_TLB_ENTRIES 
 $display("parameter CODE_SPAGE_TLB_ENTRIES        = %d", CODE_SPAGE_TLB_ENTRIES      ) ;
 $display("parameter CODE_CACHE_SIZE               = %d", CODE_CACHE_SIZE             ) ;
 
+$stop;
 end
 
 wire ird_en, drd_en;
@@ -298,6 +297,10 @@ zap_top #(
 
         // enable cache and mmu.
         .CACHE_MMU_ENABLE(CACHE_MMU_ENABLE),
+
+        // Configure FIFO depth and BP entries.
+        .FIFO_DEPTH(FIFO_DEPTH),
+        .BP_ENTRIES(BP_ENTRIES),
 
         // data config.
         .DATA_SECTION_TLB_ENTRIES(DATA_SECTION_TLB_ENTRIES),

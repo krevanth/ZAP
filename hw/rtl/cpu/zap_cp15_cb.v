@@ -200,7 +200,7 @@ begin
         if ( i_reset )
         begin
                 state          <= IDLE;
-                r[0]           <= 32'hFFFFFFFF; // ID register reads -1.
+                r[0]           <= 32'h1; // ID register reads -1.
                 o_dcache_inv   <= 1'd0;
                 o_icache_inv   <= 1'd0;
                 o_dcache_clean <= 1'd0;
@@ -221,7 +221,13 @@ begin
         end
         else
         begin
-                r[0]            <= 32'hFFFFFFFF;
+                r[0]            <= 32'h1;
+                r[1][1]         <= 1'd1;
+                r[1][3]         <= 1'd0;
+                r[1][7:4]       <= 4'b1111;
+                r[1][11]        <= 1'd1;                
+                r[1][13]        <= 1'd0;
+
                 o_itlb_inv       <= 1'd0;
                 o_dtlb_inv      <= 1'd0;
                 o_dcache_inv    <= 1'd0;
