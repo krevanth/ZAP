@@ -99,6 +99,10 @@ localparam COMPRESSED_EN = 1'd1;
 `include "zap_localparams.vh"
 `include "zap_functions.vh"
 
+wire rst_sync;
+
+zap_reset_sync U_RST_SYNC ( .i_clk(i_clk), .i_reset(i_reset), .o_reset(rst_sync) );
+
 generate
 begin
 if ( CACHE_MMU_ENABLE == 1'd0 ) begin:cmmu_dis // Raw processor core without cache+MMU.
@@ -116,7 +120,7 @@ zap_core #(
 (
 .i_clk                  (i_clk),
 .i_clk_multipump        (i_clk_multipump),
-.i_reset                (i_reset),
+.i_reset                (rst_sync),
 
 
 // Code related.
@@ -242,7 +246,7 @@ zap_core #(
 (
 .i_clk                  (i_clk),
 .i_clk_multipump        (i_clk_multipump),
-.i_reset                (i_reset),
+.i_reset                (rst_sync),
 
 
 // Code related.
@@ -335,7 +339,7 @@ zap_cache #(.CACHE_SIZE(DATA_CACHE_SIZE),
 .SECTION_TLB_ENTRIES(DATA_SECTION_TLB_ENTRIES)) 
 u_data_cache (
 .i_clk          (i_clk),
-.i_reset        (i_reset),
+.i_reset        (rst_sync),
 .i_address      (cpu_daddr),
 .i_address_nxt  (cpu_daddr_nxt),
 
@@ -378,7 +382,7 @@ zap_cache #(
 .SECTION_TLB_ENTRIES(CODE_SECTION_TLB_ENTRIES)) 
 u_code_cache (
 .i_clk              (i_clk),
-.i_reset            (i_reset),
+.i_reset            (rst_sync),
 .i_address          (cpu_iaddr),
 .i_address_nxt      (cpu_iaddr_nxt),
 

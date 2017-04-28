@@ -24,7 +24,6 @@
 module zap_reset_sync
 (
         input wire          i_clk,  // Clock.
-        input wire          i_stall,
         input wire          i_reset,// Dirty reset - Active High.
 
         output wire         o_reset // Clean reset - Active High.
@@ -55,7 +54,7 @@ begin:rst_sync
                 flop2 <= RESET_ON;
                 flop1 <= RESET_ON;
         end       
-        else if ( !i_stall )
+        else
         begin
                 // o_reset is turned off eventually.
                 flop2 <= flop1;

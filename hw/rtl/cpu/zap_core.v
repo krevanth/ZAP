@@ -376,24 +376,11 @@ assign o_instr_wb_sel = 4'b1111;
 
 // ----------------------------------------------------------------------------
 
-// ==========================
-// RESET SYNCHRONIZER 
-// ==========================
-zap_reset_sync
-U_RST_SYNC
-(
-        .i_clk  (i_clk),
-        .i_stall(!i_instr_wb_ack),
-        .i_reset(i_reset),
-        .o_reset(reset)                 // Clean reset.
-);
-
-//
-// NOTE: Removed dual rank synchronizer. Assume interrupt signals
-// are externally synchronized to the core clock.
-//
+assign reset    = i_reset; // Assume external synchronizer.
 assign irq_sync = i_irq; // Assume externally synchronized to core clock.
 assign fiq_sync = i_fiq; // Assume externally synchronized to core clock.
+
+// ----------------------------------------------------------------------------
 
 // =========================
 // FETCH STAGE 
