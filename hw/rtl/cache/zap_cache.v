@@ -89,6 +89,12 @@ wire [2:0]       wb_cti [2:0];
 
 assign wb_cti[2] = 0;
 
+wire [31:0] wb_dat0_cachefsm, wb_dat1_tagram, wb_dat2_tlb;
+wire [31:0] unused_dat = wb_dat0_cachefsm | wb_dat1_tagram | wb_dat2_tlb;
+assign wb_dat0_cachefsm = wb_dat[0];
+assign wb_dat1_tagram = wb_dat[1];
+assign wb_dat2_tlb = wb_dat[2];
+
 wire [31:0] tlb_phy_addr;
 wire [7:0] tlb_fsr;
 wire [31:0] tlb_far;
@@ -277,5 +283,16 @@ begin
                 o_wb_wen <= wb_wen[0] | wb_wen[1] | wb_wen[2];
         end
 end
+
+// synopsys translate_off
+always @*
+begin // Check if data delivered to processor is x.
+        if ( &o_wb_dat === 1'dx && o_wb_cyc === 1'd1 )
+        begin
+                $display($time, "FATAL :: %m :: o_wb_dat went to x when giving data to core...");
+                $stop;
+        end
+end
+// synopsys translate_on
 
 endmodule

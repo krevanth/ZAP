@@ -32,6 +32,7 @@ perl run_sim.pl
 +bp+<branch_predictor_entries>                                          -- Number of entries in branch predictor memory.
 +fifo+<fifo_depth>                                                      -- Depth of pre-fetch buffer in CPU.
 +post_process+<post_process_perl_script_path>                           -- Point this to post_process.pl or any other Perl script. Script runs after sim.
++tlb_debug                                                              -- Enable TLB debugging interactive.
 +nodump                                                                 -- Do not write VCD. 
 ###############################################################################
 ";
@@ -68,7 +69,7 @@ my $RTL_FILE_LIST               = "$ZAP_HOME/hw/vlog/rtl/rtl_files.list";
 my $BENCH_FILE_LIST             = "$ZAP_HOME/hw/vlog/tb/bench_files.list";
 my $NODUMP                      = 0;
 my $PPF                         = "null";
-my $STAX                        = 0;
+my $TLB_DEBUG                   = 0;
 
 sub rand {
         return int rand (0xffffffff);
@@ -99,7 +100,7 @@ foreach(@ARGV) {
         elsif (/^\+fifo\+(.*)/)                 { $FIFO = $1; }
         elsif (/^\+nodump/)                     { $NODUMP = 1; } 
         elsif (/^\+post_process\+(.*)/)         { $PPF = $1; }
-        elsif (/^\+stax/)                       { $STAX = 1; }
+        elsif (/^\+tlb_debug/)                  { $TLB_DEBUG = 1; }
         else                                    { die "Unrecognized $_  $HELP"; }
 }
 
@@ -154,6 +155,10 @@ if ( $MAX_CLOCK_CYCLES == 0 ) {
         die "*E: MAX_CLOCK_CYCLES set to 0. Ending script...";
 }
 
+if ( $TLB_DEBUG ) {
+        $IVL_OPTIONS .= "-DTLB_DEBUG ";
+}
+
 $IVL_OPTIONS .= "-DMAX_CLOCK_CYCLES=$MAX_CLOCK_CYCLES ";
 
 # Compilation.
@@ -168,12 +173,8 @@ print "*I: Rand is $SEED...\n";
 # Generate VVP.
 print "iverilog $IVL_OPTIONS\n";
 
-if ( !$STAX ) {
-        die "*E: Verilog Compilation Failed!\n" if system("iverilog $IVL_OPTIONS");
-} else {
-        die "*E: Failed syntax check!\n" if system("iverilog $IVL_OPTIONS");
-        exit;
-}
+# Simulate ARM.
+die "*E: Verilog Compilation Failed!\n" if system("iverilog $IVL_OPTIONS");
 
 # Run VVP.
 die "*E: VVP execution error!\n" if system("vvp $VVP_PATH | tee $LOG_FILE_PATH");

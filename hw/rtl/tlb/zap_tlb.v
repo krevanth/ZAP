@@ -71,6 +71,8 @@ input  wire             i_wb_ack
 
 // ----------------------------------------------------------------------------
 
+assign o_wb_dat_nxt = 32'd0;
+
 `include "zap_localparams.vh"
 `include "zap_defines.vh"
 `include "zap_functions.vh"

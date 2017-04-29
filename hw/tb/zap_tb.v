@@ -1,29 +1,32 @@
 `include "zap_defines.vh"
 
-module model_ram_dual_src #(parameter SIZE_IN_BYTES = 4096)  (
+module model_ram_dual #(parameter SIZE_IN_BYTES = 4096)  (
 
-input           i_clk,
+input                   i_clk,
 
-input           i_wb_cyc,
-input           i_wb_stb,
-input [31:0]    i_wb_adr,
-input [31:0]    i_wb_dat,
-input  [3:0]    i_wb_sel,
-input           i_wb_we,
+input                   i_wb_cyc,
+input                   i_wb_stb,
+input [31:0]            i_wb_adr,
+input [31:0]            i_wb_dat,
+input  [3:0]            i_wb_sel,
+input                   i_wb_we,
 
-input           i_cache_rd_en,
+input                   i_wb_cyc2,
+input                   i_wb_stb2,
+input   [31:0]          i_wb_adr2,
+input   [31:0]          i_wb_dat2,
+input   [3:0]           i_wb_sel2,
+input                   i_wb_we2,
 
-output reg [31:0] o_wb_dat_nocache,
-output reg [127:0] o_wb_dat_cache,
-output reg        o_data_src,
-output reg        o_wb_ack
+output reg [31:0]       o_wb_dat,
+output reg [31:0]       o_wb_dat2,
+
+output reg              o_wb_ack,
+output reg              o_wb_ack2
 
 );
 
-parameter FORCE_SRC_EN = 1'd0;
-parameter FORCE_SRC = 1'd0;
-parameter NOREG = 1'd0;
-
+integer seed = `SEED;
 reg [31:0] ram [SIZE_IN_BYTES/4 -1:0];
 
 initial
@@ -46,33 +49,8 @@ begin:blk1
                 end
 end
 
-integer seed = `SEED;
+initial o_wb_ack = 1'd0;
 
-initial
-begin
-        o_wb_ack = 1'd0;
-end
-
-wire [31:0] adr = ( i_wb_adr >> 4 ) << 4; // Mask lower 4 zeros.
-
-reg [127:0] o_wb_dat_cache_t;
-
-reg sel;
-
-generate
-if ( NOREG == 0 ) // REG is not in CPU but here.
-begin
-        always @ (posedge i_clk)
-        begin
-                if ( i_cache_rd_en )
-                        o_wb_dat_cache <= o_wb_dat_cache_t;
-        end
-end
-else // NOREG = 1; Reg is in CPU not here.
-begin
-        always @* o_wb_dat_cache = o_wb_dat_cache_t;
-end
-endgenerate
 
 // Wishbone RAM model.
 always @ (negedge i_clk)
@@ -81,36 +59,15 @@ begin:blk
 
         stall = $random(seed);
 
-        if ( !FORCE_SRC_EN )
-                sel   = $random(seed);
-        else
-                sel   = FORCE_SRC;
-
         if ( !i_wb_we && i_wb_cyc && i_wb_stb && !stall )
         begin
-                o_wb_ack <= 1'd1;
-
-                o_wb_dat_cache_t <= 'dx;
-                o_wb_dat_nocache <= 'dx;
-                o_data_src       <= sel;
-
-                if ( sel )
-                        o_wb_dat_cache_t <= {     
-                                                ram [((adr >> 2) + 30'h3) & 30'h3fffffff], 
-                                                ram [((adr >> 2) + 30'h2) & 30'h3fffffff], 
-                                                ram [((adr >> 2) + 30'h1) & 30'h3fffffff], 
-                                                ram [((adr >> 2) + 30'h0) & 30'h3fffffff]
-                        };  
-                else
-                        o_wb_dat_nocache <= ram [ i_wb_adr >> 2 ];
+                o_wb_ack         <= 1'd1;
+                o_wb_dat         <= ram [ i_wb_adr >> 2 ];
         end
         else if ( i_wb_we && i_wb_cyc && i_wb_stb && !stall )
         begin
-                o_wb_ack <= 1'd1;
-
-                o_wb_dat_cache_t <= 'dx;
-                o_wb_dat_nocache <= 'dx;
-                o_data_src       <= 'dx;
+                o_wb_ack         <= 1'd1;
+                o_wb_dat         <= 'dx;
 
                 if ( i_wb_sel[0] ) ram [ i_wb_adr >> 2 ][7:0]   <= i_wb_dat[7:0];
                 if ( i_wb_sel[1] ) ram [ i_wb_adr >> 2 ][15:8]  <= i_wb_dat[15:8];
@@ -120,10 +77,36 @@ begin:blk
         else
         begin
                 o_wb_ack    <= 1'd0;
+                o_wb_dat    <= 'dx;
+        end
+end
 
-                o_wb_dat_cache_t <= 'dx;
-                o_wb_dat_nocache <= 'dx;
-                o_data_src       <= 'dx;
+// Wishbone RAM model.
+always @ (negedge i_clk)
+begin:blk2
+        reg stall2;
+
+        stall2 = $random(seed);
+
+        if ( !i_wb_we2 && i_wb_cyc2 && i_wb_stb2 && !stall2 )
+        begin
+                o_wb_ack2         <= 1'd1;
+                o_wb_dat2         <= ram [ i_wb_adr2 >> 2 ];
+        end
+        else if ( i_wb_we2 && i_wb_cyc2 && i_wb_stb2 && !stall2 )
+        begin
+                o_wb_ack2         <= 1'd1;
+                o_wb_dat2         <= 'dx;
+
+                if ( i_wb_sel2[0] ) ram [ i_wb_adr2 >> 2 ][7:0]   <= i_wb_dat2[7:0];
+                if ( i_wb_sel2[1] ) ram [ i_wb_adr2 >> 2 ][15:8]  <= i_wb_dat2[15:8];
+                if ( i_wb_sel2[2] ) ram [ i_wb_adr2 >> 2 ][23:16] <= i_wb_dat2[23:16];
+                if ( i_wb_sel2[3] ) ram [ i_wb_adr2 >> 2 ][31:24] <= i_wb_dat2[31:24];
+        end
+        else
+        begin
+                o_wb_ack2    <= 1'd0;
+                o_wb_dat2    <= 'dx;
         end
 end
 
@@ -170,7 +153,6 @@ wire            instr_wb_stb;
 wire [3:0]      instr_wb_sel;
 wire            instr_wb_we;
 wire [127:0]     instr_wb_dat[1:0];
-wire            instr_src;
 wire [31:0]     instr_wb_adr;
 wire            instr_wb_ack;
 
@@ -182,7 +164,6 @@ wire [127:0]     data_wb_din [1:0];
 wire [31:0]     data_wb_dout; // dir w.r.t core.
 wire [31:0]     data_wb_adr;
 wire            data_wb_ack;
-wire            data_src;
 
 initial
 begin
@@ -206,6 +187,10 @@ $display("parameter FIFO_DEPTH            %d", u_zap_top.FIFO_DEPTH);
 
 `ifdef MAX_CLOCK_CYCLES
         $display("MAX_CLOCK_CYCLES defined!");
+`endif
+
+`ifdef TLB_DEBUG
+        $display("TLB_DEBUG defined!");
 `endif
 
 // CPU config.
@@ -349,58 +334,34 @@ u_zap_top
 
 );
 
-// ===========================
-// CODE RAM
-// ===========================
-model_ram_dual_src
-#(
-        .SIZE_IN_BYTES  (RAM_SIZE),
-        .FORCE_SRC_EN   (1'd1),
-        .FORCE_SRC      (1'd0),
-        .NOREG          (0) // Regd in CPU.
-)
-U_MODEL_RAM_CODE
-(
-        .i_clk(i_clk),
-
-        .i_cache_rd_en(1'd0),
-        .i_wb_cyc(instr_wb_cyc),
-        .i_wb_stb(instr_wb_stb),
-        .i_wb_adr(instr_wb_adr),
-        .i_wb_we(instr_wb_we),
-        .o_wb_dat_nocache(instr_wb_dat[0][31:0]),
-        .o_wb_dat_cache(instr_wb_dat[1]),
-        .o_data_src(instr_src),
-        .o_wb_ack(instr_wb_ack),
-        .i_wb_sel(instr_wb_sel),
-        .i_wb_dat(32'd0)
-);
-
 // ===============================
-// DATA RAM
+// RAM
 // ===============================
-model_ram_dual_src
+model_ram_dual
 #(
-        .SIZE_IN_BYTES  (RAM_SIZE),
-        .FORCE_SRC_EN   (1'd1),
-        .FORCE_SRC      (1'd0),
-        .NOREG          (0) // Regd in CPU.
+        .SIZE_IN_BYTES  (RAM_SIZE)
 )
 U_MODEL_RAM_DATA
 (
-        .i_cache_rd_en(1'd0),
         .i_clk(i_clk),
+
         .i_wb_cyc(data_wb_cyc),
         .i_wb_stb(data_wb_stb),
         .i_wb_adr(data_wb_adr),
         .i_wb_we(data_wb_we),
-        .o_wb_dat_nocache(data_wb_din[0][31:0]),
-        .o_wb_dat_cache(data_wb_din[1]),
-        .o_data_src(data_src),
+        .o_wb_dat(data_wb_din[0][31:0]),
         .i_wb_dat(data_wb_dout),
         .o_wb_ack(data_wb_ack),
-        .i_wb_sel(data_wb_sel)
+        .i_wb_sel(data_wb_sel),
 
+        .i_wb_cyc2(instr_wb_cyc),
+        .i_wb_stb2(instr_wb_stb),
+        .i_wb_adr2(instr_wb_adr),
+        .i_wb_we2(instr_wb_we),
+        .o_wb_dat2(instr_wb_dat[0][31:0]),
+        .o_wb_ack2(instr_wb_ack),
+        .i_wb_sel2(instr_wb_sel),
+        .i_wb_dat2(32'd0)
 );
 
 // ===========================

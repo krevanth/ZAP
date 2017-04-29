@@ -93,7 +93,7 @@ begin
         o_walk      = 0;        // Walk disabled.
         o_cacheable = 0;        // Uncacheable.
 
-        if ( i_mmu_en ) // MMU enabled.
+        if ( i_mmu_en && (i_rd|i_wr) ) // MMU enabled.
         begin
                 if ( (i_sptlb_rdata[`SPAGE_TLB__TAG] == i_va[`VA__SPAGE_TAG]) && i_sptlb_rdav )
                 begin

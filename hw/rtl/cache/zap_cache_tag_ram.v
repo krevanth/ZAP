@@ -113,6 +113,17 @@ reg [2:0] adr_ctr_ff, adr_ctr_nxt;
 
 // ----------------------------------------------------------------------------
 
+initial
+begin: blk1
+        integer i;
+
+        for(i=0;i<CACHE_SIZE/16;i=i+1)
+                dat_ram[i] = 0;                
+
+        for(i=0;i<CACHE_SIZE/16;i=i+1)
+                tag_ram[i] = 0;
+end
+
 always @ (posedge i_clk)
 begin
         o_cache_line    <=      dat_ram [ tag_ram_rd_addr ];
@@ -157,7 +168,9 @@ always @ (posedge i_clk)
 begin
         o_cache_tag_dirty                   <= dirty [ tag_ram_rd_addr ];
 
-        if ( tag_ram_clean )
+        if ( i_reset )
+                dirty <= 0;
+        else if ( tag_ram_clean )
                 dirty [ tag_ram_wr_addr ]   <= 1'd0;
         else if ( tag_ram_wr_en )
                 dirty [ tag_ram_wr_addr ]   <= i_cache_tag_dirty;

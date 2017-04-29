@@ -290,7 +290,7 @@ begin
                                                 o_ack = 1'd0;
 
                                                 /* Set up counter */
-                                                adr_ctr_nxt = 1;
+                                                adr_ctr_nxt = 0;
 
                                                 /* Fetch a single cache line */
                                                 state_nxt = FETCH_SINGLE;
@@ -304,6 +304,7 @@ begin
                                 o_wb_stb_nxt    = 1'd1;
                                 o_wb_cyc_nxt    = 1'd1;
                                 o_wb_adr_nxt    = i_phy_addr;
+                                o_wb_dat_nxt    = i_din;
                                 o_wb_wen_nxt    = i_wr;
                                 o_wb_sel_nxt    = i_wr ? i_ben : 4'b1111;
                                 o_wb_cti_nxt    = CTI_CLASSIC;
@@ -311,10 +312,11 @@ begin
                 end
         end
 
-        UNCACHEABLE: /* Uncacheable reads definitely go through this. */
+        UNCACHEABLE: /* Uncacheable reads and writes definitely go through this. */
         begin
                 if ( i_wb_ack )
                 begin
+                        o_dat           = i_wb_dat;
                         o_ack           = 1'd1;
                         state_nxt       = IDLE;
                         kill_access;
@@ -357,6 +359,8 @@ begin
 
         FETCH_SINGLE: /* Fetch a single cache line */
         begin
+                $display($time, "%m :: Cache in FETCH_SINGLE state...");
+
                 o_ack = 1'd0;
 
                 /* Generate address */
@@ -367,12 +371,16 @@ begin
 
                 if ( adr_ctr_nxt <= 3 )
                 begin
+                        $display($time, "%m :: Address generated = %x PHY_ADDR = %x, ADDR_CTR_NXT = %x", {i_phy_addr[31:4], 4'd0} + (adr_ctr_nxt << 2), i_phy_addr, adr_ctr_nxt);
+
                         /* Fetch line from memory */
                         wb_prpr_read({i_phy_addr[31:4], 4'd0} + (adr_ctr_nxt << 2), 
                                      adr_ctr_nxt != 3 ? CTI_BURST : CTI_EOB);
                 end
                 else
                 begin
+                        $display($time, "%m :: Updating cache...");
+
                         /* Update cache */
                         o_cache_line = {buf_ff[3], buf_ff[2], buf_ff[1], buf_ff[0]};
                         o_cache_line_ben  = 16'b1111111111111111;
