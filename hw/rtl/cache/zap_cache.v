@@ -1,4 +1,25 @@
-// Released under the GNU GPLv2 license.
+// ----------------------------------------------------------------------------
+//                            The ZAP Project
+//                     (C)2016-2017, Revanth Kamaraj.     
+// ----------------------------------------------------------------------------
+// Filename     : zap_cache.v
+// HDL          : Verilog-2001
+// Module       : zap_cache
+// Author       : Revanth Kamaraj
+// License      : GPL v2
+// ----------------------------------------------------------------------------
+//                               ABSTRACT
+//                               --------
+// This is the top level cache module that contains the MMU and cache. This
+// will be instantiated twice in the processor TOP, once for instruction and
+// the other for data.
+// ----------------------------------------------------------------------------
+//                              INFORMATION                                  
+//                              ------------
+// Reset method : Synchronous active high.
+// Clock        : Core clock.
+// Depends      : --
+// ----------------------------------------------------------------------------
 
 module zap_cache #(
 

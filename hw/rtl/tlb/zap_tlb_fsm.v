@@ -302,20 +302,20 @@ always @ (posedge i_clk)
 begin
         if ( i_reset )
         begin
-                state_ff        <=      IDLE;
-                wb_stb_ff       <=      0;
-                wb_cyc_ff       <=      0;
-					 wb_adr_ff	     <=      0;	
-					 wb_sel_ff		  <=	    0;
+                 state_ff        <=      IDLE;
+                 wb_stb_ff       <=      0;
+                 wb_cyc_ff       <=      0;
+		 wb_adr_ff	 <=      0;	
+		 wb_sel_ff	 <=	 0;
         end
         else
         begin
                 state_ff        <=      state_nxt;
                 wb_stb_ff       <=      wb_stb_nxt;
                 wb_cyc_ff       <=      wb_cyc_nxt;
-					 wb_adr_ff		  <=	    wb_adr_nxt;
+	        wb_adr_ff	<=	wb_adr_nxt;
                 dff_ff          <=      dff_nxt;
-					 wb_sel_ff	     <=	    wb_sel_nxt;
+	        wb_sel_ff	<=	wb_sel_nxt;
         end
 end
 
@@ -326,7 +326,7 @@ begin
         wb_stb_nxt = wb_stb_ff;
         wb_cyc_nxt = wb_cyc_ff;
         wb_adr_nxt = wb_adr_ff;
-		  wb_sel_nxt = wb_sel_ff;
+        wb_sel_nxt = wb_sel_ff;
 end
 endtask
 
@@ -335,7 +335,7 @@ begin
         wb_stb_nxt = 1'd1;
         wb_cyc_nxt = 1'd1;
         wb_adr_nxt = adr;
-		  wb_sel_nxt[3:0] = 4'b1111;
+	wb_sel_nxt[3:0] = 4'b1111;
 end
 endtask
 

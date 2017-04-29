@@ -188,7 +188,7 @@ begin
                 o_wb_adr_ff <= 0;
                 adr_ctr_ff <= 0;
                 blk_ctr_ff <= 0;
-					 state_ff   <= IDLE;
+                state_ff   <= IDLE;
         end
         else
         begin
@@ -201,7 +201,7 @@ begin
                 o_wb_adr_ff             <= o_wb_adr_nxt;
                 adr_ctr_ff              <= adr_ctr_nxt;
                 blk_ctr_ff              <= blk_ctr_nxt;
-					state_ff						  <= state_nxt;
+		state_ff		<= state_nxt;
         end
 end
 
@@ -237,7 +237,7 @@ begin
         o_wb_wen_nxt = o_wb_wen_ff;
         o_wb_cti_nxt = o_wb_cti_ff;
 
-		  tag_ram_wr_data = 0;
+        tag_ram_wr_data = 0;
 
         case ( state_ff )
 
@@ -248,7 +248,7 @@ begin
                 tag_ram_rd_addr = i_address_nxt [`VA__CACHE_INDEX];
                 tag_ram_wr_addr = i_address     [`VA__CACHE_INDEX];
                 tag_ram_wr_en   = i_cache_tag_wr_en;
-					 tag_ram_wr_data = i_cache_tag;
+                tag_ram_wr_data = i_cache_tag;
 
                 if ( i_cache_clean_req )
                 begin

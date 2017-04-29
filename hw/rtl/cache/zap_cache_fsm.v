@@ -160,7 +160,7 @@ begin
                 buf_ff[0]               <= buf_nxt[0];
                 buf_ff[1]               <= buf_nxt[1];
                 buf_ff[2]               <= buf_nxt[2];
-					 buf_ff[3]					 <= buf_nxt[3];
+	        buf_ff[3]		<= buf_nxt[3];
         end
 end
 
@@ -178,10 +178,8 @@ begin
         o_wb_sel_nxt            = o_wb_sel_ff;
         cache_clean_req_nxt     = cache_clean_req_ff;
         cache_inv_req_nxt       = cache_clean_req_ff;
-
-		  o_fsr = 0;
-		  o_far = 0;
-
+        o_fsr = 0;
+	o_far = 0;
         o_cache_tag = 0;
         o_cache_inv_done = 0;
         o_cache_clean_done = 0;
@@ -189,15 +187,13 @@ begin
         o_cache_tag_wr_en = 0;
         o_cache_line = 0;
         o_cache_line_ben = 0;
-
-		  o_dat = 0;
-		  o_ack = 0;
-		  o_err = 0;
-
+        o_dat = 0;
+        o_ack = 0;
+        o_err = 0;
         buf_nxt[0] = buf_ff[0];
         buf_nxt[1] = buf_ff[1];
         buf_nxt[2] = buf_ff[2];       
-		  buf_nxt[3] = buf_ff[3];
+        buf_nxt[3] = buf_ff[3];
  
         case(state_ff)
 
@@ -220,8 +216,8 @@ begin
                         /* MMU access fault. */
                         o_err = 1'd1;
                         o_ack = 1'd1;
-								o_fsr = i_fsr;
-								o_far = i_far;
+			o_fsr = i_fsr;
+			o_far = i_far;
                 end
                 else if ( i_busy )
                 begin
