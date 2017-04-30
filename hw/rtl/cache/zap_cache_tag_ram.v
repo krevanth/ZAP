@@ -265,6 +265,7 @@ begin
 
                 if ( i_cache_clean_req )
                 begin
+                        $display($time, "%m :: INFO :: Cache clean requested...");
                         state_nxt = CACHE_CLEAN_GET_ADDRESS;
                 end
                 else if ( i_cache_inv_req )
@@ -275,7 +276,7 @@ begin
 
         CACHE_CLEAN_GET_ADDRESS:
         begin
-                tag_ram_rd_addr = (blk_ctr_ff << 4) + pri_enc(dirty << (blk_ctr_ff << 4));
+                tag_ram_rd_addr = (blk_ctr_ff << 4) + pri_enc(dirty >> (blk_ctr_ff << 4));
 
                 if ( dirty >> (blk_ctr_ff << 4) == 0)
                 begin
