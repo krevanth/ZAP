@@ -119,9 +119,9 @@ module zap_test; // +nctop+zap_test
 
 // Bench related.
 
-`define STALL
-`define IRQ_EN
-`define MAX_CLOCK_CYCLES 100000
+//`define STALL
+//`define IRQ_EN
+//`define MAX_CLOCK_CYCLES 100000
 
 // CPU config.
 parameter RAM_SIZE                      = 32768;

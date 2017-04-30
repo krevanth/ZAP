@@ -106,7 +106,7 @@ wire cache_dirty = i_cache_tag_dirty;
 /* States */
 localparam IDLE                 = 0; /* Resting state. */
 localparam UNCACHEABLE          = 1; /* Uncacheable access. */
-localparam WRITE_HIT            = 2; /* Cache write hit state */
+localparam REFRESH_1            = 2; /* Cache write hit state. Unused. */
 localparam CLEAN_SINGLE         = 3; /* Ultimately cleans up cache line. Parent state */
 localparam FETCH_SINGLE         = 4; /* Ultimately validates cache line. Parent state */
 localparam REFRESH              = 5; /* Cache refresh parent state */
@@ -124,6 +124,8 @@ reg cache_inv_req_nxt, cache_inv_req_ff;
 
 /* Address Counter */
 reg [2:0] adr_ctr_ff, adr_ctr_nxt; // Needs to take on 0,1,2,3 AND 4(nxt).
+
+reg hit; // debug.
 
 always @* o_cache_clean_req = cache_clean_req_ff; // Tie req flop to output.
 always @* o_cache_inv_req = cache_inv_req_ff;
@@ -194,6 +196,7 @@ begin
         buf_nxt[1] = buf_ff[1];
         buf_nxt[2] = buf_ff[2];       
         buf_nxt[3] = buf_ff[3];
+        hit = 0;
  
         case(state_ff)
 
@@ -234,30 +237,37 @@ begin
                                         if ( i_rd ) /* Read request. */
                                         begin  
                                                 /* Accelerate performance */
-                                                o_dat   = adapt_cache_data
-                                                ( 
-                                                        i_address[3:2] , 
-                                                        i_cache_line 
-                                                );
+                                                o_dat   = adapt_cache_data_debug(i_address[3:2], i_cache_line); 
+
+                                                hit = 1'd1;
+
+                                                //adapt_cache_data
+                                                //( 
+                                                //        i_address[3:2] , 
+                                                //        i_cache_line 
+                                                //);
+
                                                 o_ack   = 1'd1;
                                         end
                                         else if ( i_wr ) /* Write request */
                                         begin
-                                                state_nxt    = WRITE_HIT;
+                                                state_nxt    = REFRESH_1;
                                                 o_ack        = 1'd0;
 
                                                 /* Accelerate performance */
                                                 o_cache_line = 
                                                 {i_din,i_din,i_din,i_din};
   
-                                                o_cache_line_ben  = 
-                                                i_ben << (i_address[3:2] << 2);
+                                                o_cache_line_ben  = ben_comp ( i_address[3:2], i_ben ); 
+//                                                i_ben << (i_address[3:2] << 2);
 
                                                 /* Write to tag and also write out physical address. */
                                                 o_cache_tag_wr_en               = 1'd1;
                                                 o_cache_tag[`CACHE_TAG__TAG]    = i_address[`VA__CACHE_TAG]; 
                                                 o_cache_tag_dirty               = 1'd1;
                                                 o_cache_tag[`CACHE_TAG__PA]     = i_phy_addr >> 4;
+                                                
+
                                         end
                                 end
 
@@ -323,10 +333,11 @@ begin
                 end
         end
 
-        WRITE_HIT: /* A single wait state is needed to handle B2B write-read */
+        REFRESH_1: /* A single wait state is needed to handle B2B write-read */
         begin
-                state_nxt = IDLE;
-                o_ack     = 1'd1;
+                kill_access;
+                state_nxt = REFRESH;
+                o_ack     = 1'd0;
         end
 
         CLEAN_SINGLE: /* Clean single cache line */
@@ -347,7 +358,7 @@ begin
                 begin
                         /* Move to wait state */
                         kill_access;
-                        state_nxt = REFRESH;                        
+                        state_nxt = REFRESH_1;                        
                         
                         /* Update tag. Remove dirty bit. */
                         o_cache_tag_wr_en                      = 1'd1; // Implicitly sets valid (redundant).
@@ -359,7 +370,7 @@ begin
 
         FETCH_SINGLE: /* Fetch a single cache line */
         begin
-                $display($time, "%m :: Cache in FETCH_SINGLE state...");
+                //$display($time, "%m :: Cache in FETCH_SINGLE state...");
 
                 o_ack = 1'd0;
 
@@ -369,9 +380,18 @@ begin
                 /* Write to buffer */
                 buf_nxt[adr_ctr_ff] = i_wb_ack ? i_wb_dat : buf_ff[adr_ctr_ff];
 
+                /* Manipulate buffer as needed */
+                if ( i_wr )
+                begin
+                        buf_nxt[i_address[3:2]][7:0]   = i_ben[0] ? i_din[7:0]   : buf_nxt[i_address[3:2]][7:0];
+                        buf_nxt[i_address[3:2]][15:8]  = i_ben[1] ? i_din[15:8]  : buf_nxt[i_address[3:2]][15:8];
+                        buf_nxt[i_address[3:2]][23:16] = i_ben[2] ? i_din[23:16] : buf_nxt[i_address[3:2]][23:16];
+                        buf_nxt[i_address[3:2]][31:24] = i_ben[3] ? i_din[31:24] : buf_nxt[i_address[3:2]][31:24];
+                end
+
                 if ( adr_ctr_nxt <= 3 )
                 begin
-                        $display($time, "%m :: Address generated = %x PHY_ADDR = %x, ADDR_CTR_NXT = %x", {i_phy_addr[31:4], 4'd0} + (adr_ctr_nxt << 2), i_phy_addr, adr_ctr_nxt);
+                        //$display($time, "%m :: Address generated = %x PHY_ADDR = %x, ADDR_CTR_NXT = %x", {i_phy_addr[31:4], 4'd0} + (adr_ctr_nxt << 2), i_phy_addr, adr_ctr_nxt);
 
                         /* Fetch line from memory */
                         wb_prpr_read({i_phy_addr[31:4], 4'd0} + (adr_ctr_nxt << 2), 
@@ -379,10 +399,10 @@ begin
                 end
                 else
                 begin
-                        $display($time, "%m :: Updating cache...");
+                        //$display($time, "%m :: Updating cache...");
 
                         /* Update cache */
-                        o_cache_line = {buf_ff[3], buf_ff[2], buf_ff[1], buf_ff[0]};
+                        o_cache_line = {buf_nxt[3], buf_ff[2], buf_ff[1], buf_ff[0]};
                         o_cache_line_ben  = 16'b1111111111111111;
 
                         /* Update tag. Remove dirty and set valid */
@@ -393,14 +413,14 @@ begin
 
                         /* Move to wait state */
                         kill_access;
-                        state_nxt = REFRESH;
+                        state_nxt = REFRESH_1;
                 end
         end
 
         REFRESH: /* One extra cycle for cache and tag to update. */
         begin
                 kill_access;
-                o_ack     = 1'd0;
+                o_ack     = i_wr;
                 state_nxt = IDLE;
         end
 
@@ -430,5 +450,40 @@ begin
 
         endcase
 end
+
+function [31:0] adapt_cache_data_debug 
+(input [1:0] shift, input [127:0] cd);
+begin: blk1
+        reg [31:0] shamt;
+        shamt = shift << 5;
+        adapt_cache_data_debug = cd >> shamt;
+end
+endfunction
+
+function [15:0] ben_comp ( input [1:0] shift, input [3:0] bv );
+begin:fblk2
+        reg [31:0] shamt;
+        shamt = shift << 2;
+        ben_comp = bv << shamt;
+end
+endfunction
+
+// synopsys translate_off
+wire [31:0] buf0_ff, buf1_ff, buf2_ff;
+assign buf0_ff = buf_ff[0];
+assign buf1_ff = buf_ff[1];
+assign buf2_ff = buf_ff[2];
+wire [31:0] buf3_ff = buf_ff[3];
+wire [31:0] buf0_nxt = buf_nxt[0];
+wire [31:0] buf1_nxt = buf_nxt[1];
+wire [31:0] buf2_nxt = buf_nxt[2];
+wire [31:0] buf3_nxt = buf_nxt[3];
+
+wire [31:0] dbg_addr_tag = i_address[`VA__CACHE_TAG];
+wire [31:0] dbg_addr_pa  = i_phy_addr >> 4;
+wire [31:0] dbg_ct_tag   = o_cache_tag[`CACHE_TAG__TAG];
+wire [31:0] dbg_ct_pa    = o_cache_tag[`CACHE_TAG__PA];
+
+// synopsys translate_on
 
 endmodule

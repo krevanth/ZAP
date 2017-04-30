@@ -111,7 +111,7 @@
 `define SPAGE_TLB__TAG 36+(32-$clog2(SPAGE_TLB_ENTRIES)-12)-1:36
 
 // Cache tag width. Tag consists of the tag and the physical address. valid and dirty are stored as flops.
-`define CACHE_TAG__TAG        (31 - 4 - $clog2(CACHE_SIZE/16) + 1) -1   : 0  
+`define CACHE_TAG__TAG             (31 - 4 - $clog2(CACHE_SIZE/16) + 1) -1   : 0  
 `define CACHE_TAG__PA         27 + (31 - 4 - $clog2(CACHE_SIZE/16) + 1) : 31 - 4 - $clog2(CACHE_SIZE/16) + 1 
 `define CACHE_TAG_WDT         27 + (31 - 4 - $clog2(CACHE_SIZE/16) + 1) + 1
 

@@ -285,11 +285,15 @@ begin
 end
 
 // synopsys translate_off
-always @*
+reg xerr;
+initial xerr = 0;
+
+always @ (posedge i_clk)
 begin // Check if data delivered to processor is x.
-        if ( &o_wb_dat === 1'dx && o_wb_cyc === 1'd1 )
+        if ( o_dat[0] === 1'dx && o_ack && i_rd )
         begin
-                $display($time, "FATAL :: %m :: o_wb_dat went to x when giving data to core...");
+                $display($time, "FATAL :: %m :: Data went to x when giving data to core...");
+                xerr = xerr + 1;
                 $stop;
         end
 end
