@@ -1,4 +1,4 @@
-## *ZAP* : An open source ARMv4T processor
+## *ZAP* : An open source ARMv4T processor with cache and MMU
 
 #### Author        : Revanth Kamaraj (revanth91kamaraj@gmail.com)
 #### License       : GPL v2
