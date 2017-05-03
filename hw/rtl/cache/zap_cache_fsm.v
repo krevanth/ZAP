@@ -409,7 +409,7 @@ begin
                         o_cache_tag_wr_en                       = 1'd1; // Implicitly sets valid.
                         o_cache_tag[`CACHE_TAG__TAG]            = i_address[`VA__CACHE_TAG];
                         o_cache_tag[`CACHE_TAG__PA]             = i_phy_addr >> 4;
-                        o_cache_tag_dirty                       = 1'd0;
+                        o_cache_tag_dirty                       = !i_wr ? 1'd0 : 1'd1; // BUG FIX.
 
                         /* Move to wait state */
                         kill_access;

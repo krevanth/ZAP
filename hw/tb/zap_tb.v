@@ -217,55 +217,18 @@ initial tick = 0;
 integer errm;
 integer perc = 32'hffffffff;
 
-`ifdef LINUX
-
-initial
-begin
-        // Write status bar out to STDERR.
-        errm = $fopen("/dev/stderr");
-end
-
 always @ (posedge i_clk)
 begin
-        //if ( perc != (tick * 100)/`MAX_CLOCK_CYCLES ) 
-        //begin
                 perc =  (tick * 100)/`MAX_CLOCK_CYCLES; 
                 draw_line(perc);
-        //end
-
-        tick=tick + 1;
+                tick=tick + 1;
 end
 
 task draw_line ( input [31:0] x ) ;
 begin: mt1
-        integer j;
-
-        $fwrite(errm, "[");
-
-        for(j=0;j<x;j=j+1)
-        begin
-                $fwrite(errm, "▇");
-        end
-
-
-        while(j<100)
-        begin 
-                $fwrite(errm, " ");
-                j=j+1;
-        end
-
-
-        $fwrite(errm, "] %d percent", x);
-        $fwrite(errm,"\015");
-
-        if ( x == 100 )
-        begin
-                $fwrite(errm, "\n");
-        end
+        $display("COMPLETED :: %d percent", x);
 end        
 endtask
-
-`endif
 
 always @*
 begin

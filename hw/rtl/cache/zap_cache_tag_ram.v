@@ -104,7 +104,7 @@ reg [`CACHE_TAG_WDT-1:0]        tag_ram_wr_data;
 reg                             tag_ram_wr_en;
 reg [$clog2(CACHE_SIZE/16)-1:0] tag_ram_wr_addr, tag_ram_rd_addr;
 reg                             tag_ram_clear;
-reg [NUMBER_OF_DIRTY_BLOCKS-1:0] tag_ram_clean;
+reg                             tag_ram_clean;
 
 // ----------------------------------------------------------------------------
 
@@ -166,65 +166,6 @@ end
 
 //integer i;
 
-reg [(CACHE_SIZE/16)-1:0] dirty_nxt;
-
-always @*
-begin: blk1232
-        reg [31:0] shamt;
-        reg [31:0] sanity, sanity1; // sanity1 for debug only.
-        reg [(CACHE_SIZE/16)-1:0] clr;
-        integer i;
-
-        if ( tag_ram_clean == 0 )
-                sanity = 1'd0;
-        else
-                sanity = 1'd1;
-
-        if ( sanity )
-        begin
-                shamt = 0;
-
-                for(i=0;i<NUMBER_OF_DIRTY_BLOCKS;i=i+1)
-                begin
-        //                $display($time, "i is now %d", i);
-                        sanity1 = 2;
-
-                        if ( tag_ram_clean[i] ) 
-                        begin
-                                sanity1 = 1;
-                                shamt = i << 4;        
-          //                      $display($time, "i=%d => shamt = %d", i, shamt);
-            //                    $stop;
-                        end
-                        else
-                        begin
-              //                  $display($time, "tag_ram_clean %b %d not matched!", tag_ram_clean, i);
-                //                $stop;
-                        end
-
-                  //      $display("Incrementing i... DIRTY BLOCKS = %d", NUMBER_OF_DIRTY_BLOCKS);
-                    //    $stop;
-                end
-
-                if ( sanity1 == 2 )
-                begin
-                      //  $display($time, "tag_ram_clean = %b", tag_ram_clean);
-                      //  $stop;
-                end
-
-                clr   = 32'hffff << shamt;
-                dirty_nxt = dirty & ~clr;
-        end
-        else
-        begin
-                sanity1         = 0;
-                shamt           = 'dx;
-                clr             = 0;
-                dirty_nxt       = 0;
-                
-        end
-end
-
 always @ (posedge i_clk)
 begin
         o_cache_tag_dirty                   <= dirty [ tag_ram_rd_addr ];
@@ -234,7 +175,7 @@ begin
         else if ( tag_ram_wr_en )
                 dirty [ tag_ram_wr_addr ]   <= i_cache_tag_dirty;
         else if ( tag_ram_clean )
-                dirty <= dirty_nxt;
+                dirty[tag_ram_rd_addr] <= 1'd0;// BUG FIX dirty_nxt;
 end
 
 always @ (posedge i_clk)
@@ -393,8 +334,8 @@ begin
 
                 if ( adr_ctr_nxt > 3 )
                 begin
-                        // Remove dirty marking.
-                        dirty[tag_ram_rd_addr] = 0;
+                        // Remove dirty marking. BUG FIX.
+                        tag_ram_clean = 1;
 
                         // Kill access.
                         kill_access;
@@ -403,11 +344,18 @@ begin
                         state_nxt = CACHE_CLEAN_GET_ADDRESS;
                 end
                 else
-                begin
+                begin: blk1111
+                        reg [31:0] shamt;
+                        reg [31:0] data;
+                        reg [31:0] pa;
+
+                        shamt = adr_ctr_nxt << 5;
+                        data  = o_cache_line >> shamt;
+                        pa = {o_cache_tag[`CACHE_TAG__PA], 4'd0};
+
                         // Perform a Wishbone write using Physical Address.
-                        wb_prpr_write(  o_cache_line >> ( adr_ctr_nxt << 5), 
-                                        o_cache_tag[`CACHE_TAG__PA] + (adr_ctr_nxt << 2),
-                                        adr_ctr_nxt != 3 ? CTI_BURST : CTI_EOB, 4'b1111 );
+                        wb_prpr_write(  data, pa + (adr_ctr_nxt << 2), adr_ctr_nxt != 3 ? CTI_BURST : CTI_EOB, 4'b1111 
+                        );
                 end
         end
 
