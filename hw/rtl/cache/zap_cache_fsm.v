@@ -349,9 +349,9 @@ begin
 
                 if ( adr_ctr_nxt <= 3 )
                 begin
-                        /* Sync up with memory */
-                        wb_prpr_write(i_cache_line >> (adr_ctr_nxt << 5), 
-                                      {i_phy_addr[31:4], 4'd0} + (adr_ctr_nxt << 2), 
+                        /* Sync up with memory. Use PA in cache tag itself. */
+                        wb_prpr_write( clean_single_d (i_cache_line, adr_ctr_nxt), 
+                                      {i_cache_tag[`CACHE_TAG__PA], 4'd0} + (adr_ctr_nxt << 2), 
                                       adr_ctr_nxt != 3 ? CTI_BURST : CTI_EOB, 4'b1111);
                 end
                 else
@@ -362,9 +362,9 @@ begin
                         
                         /* Update tag. Remove dirty bit. */
                         o_cache_tag_wr_en                      = 1'd1; // Implicitly sets valid (redundant).
-                        o_cache_tag[`CACHE_TAG__TAG]           = i_address[`VA__CACHE_TAG];
+                        o_cache_tag[`CACHE_TAG__TAG]           = i_cache_tag[`VA__CACHE_TAG]; // Preserve.
                         o_cache_tag_dirty                      = 1'd0;
-                        o_cache_tag[`CACHE_TAG__PA]            = i_phy_addr >> 4;
+                        o_cache_tag[`CACHE_TAG__PA]            = i_cache_tag[`CACHE_TAG__PA]; // Preserve.
                 end 
         end
 
@@ -420,13 +420,14 @@ begin
         REFRESH: /* One extra cycle for cache and tag to update. */
         begin
                 kill_access;
-                o_ack     = i_wr;
+                o_ack     = i_wr && cache_cmp;
                 state_nxt = IDLE;
         end
 
         INVALIDATE: /* Invalidate the cache - Almost Single Cycle */
         begin
                 cache_inv_req_nxt = 1'd1;
+                cache_clean_req_nxt = 1'd0;
 
                 if ( i_cache_inv_done )
                 begin
@@ -439,6 +440,7 @@ begin
         CLEAN:  /* Force cache to clean itself */
         begin
                 cache_clean_req_nxt = 1'd1;
+                cache_inv_req_nxt   = 1'd0;
 
                 if ( i_cache_clean_done )
                 begin
@@ -465,6 +467,14 @@ begin:fblk2
         reg [31:0] shamt;
         shamt = shift << 2;
         ben_comp = bv << shamt;
+end
+endfunction
+
+function [31:0] clean_single_d ( input [127:0] cl, input [31:0] sh );
+reg [31:0] shamt;
+begin
+        shamt = sh << 5;
+        clean_single_d = cl >> shamt; // Select specific 32-bit.
 end
 endfunction
 

@@ -24,7 +24,7 @@
 //
 
 // Priority encoder.
-function [3:0] pri_enc ( input [15:0] in );
+function  [3:0] pri_enc ( input [15:0] in );
 begin: priEncFn
                 casez ( in )
                 16'b????_????_????_???1: pri_enc = 4'd0;
@@ -53,7 +53,7 @@ endfunction
 //
 // Function to generate clog2. Unused. $clog2 used instead.
 //
-function [31:0] zap_clog2 ( input [31:0] x );
+function  [31:0] zap_clog2 ( input [31:0] x );
 for(zap_clog2 = 0 ; 2**zap_clog2 < x ; zap_clog2 = zap_clog2 + 1);
 endfunction
 
@@ -64,7 +64,7 @@ endfunction
 // execution. Returns 1 if satisfied, 0 if not.
 //
 
-function is_cc_satisfied 
+function  is_cc_satisfied 
 ( 
         input [3:0] cc,         // 31:28 of the instruction. 
         input [3:0] fl          // CPSR flags.
@@ -101,7 +101,7 @@ endfunction
 // Counts the number of ones and multiplies that by 4 to get final
 // address offset.
 //
-function [11:0] ones_counter (
+function  [11:0] ones_counter (
         input [15:0]    i_word    // Register list.
 );
 begin: blk1
@@ -132,7 +132,7 @@ endfunction
 // of registers. Based on mode, we select some of those to implement banking.
 //
 
-function [5:0] translate (
+function  [5:0] translate (
  
         input [5:0] index,      // Requested instruction index.
         input [4:0] cpu_mode    // Current CPU mode.
@@ -234,7 +234,7 @@ endfunction
 
 // ----------------------------------------------------------------------------
 
-function [31:0] adapt_cache_data ( input [1:0] shift, input [127:0] cd);
+function  [31:0] adapt_cache_data ( input [1:0] shift, input [127:0] cd);
 begin: blk1
         reg [31:0] shamt;
         shamt = shift << 5;

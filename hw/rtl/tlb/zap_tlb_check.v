@@ -164,7 +164,9 @@ begin
         end // Else MMU disabled.
 end
 
-function [7:0] get_fsr ( // Return 0 means OK to access else is a valid FSR.
+// ----------------------------------------------------------------------------
+
+function  [7:0] get_fsr ( // Return 0 means OK to access else is a valid FSR.
 input                   section, spage, lpage,  // Select one.
 input   [1:0]           ap_sel,                 // AP sel bits. dont care for sections.
 input                   user, rd, wr,           // Access properties.
@@ -224,7 +226,7 @@ endfunction
 localparam APSR_BAD = 1'd0;
 localparam APSR_OK  = 1'd1;
 
-function is_apsr_ok ( input user, input rd, input wr, input [3:0] apsr);
+function  is_apsr_ok ( input user, input rd, input wr, input [3:0] apsr);
 reg x;
 begin
         x = APSR_BAD; // Assume fail.

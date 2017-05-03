@@ -126,6 +126,10 @@ module zap_cp15_cb #(
 reg [31:0] r [6:0]; // Coprocessor registers. R7 is write-only.
 reg [3:0]    state; // State variable.
 
+`ifdef SIM
+integer ops;
+initial ops = 0;
+`endif
 
 //
 // This block ties the registers to the
@@ -218,9 +222,17 @@ begin
                 r[4]           <= 32'd0;
                 r[5]           <= 32'd0;
                 r[6]           <= 32'd0;
+
+`ifdef SIM
+                ops             <= 0;
+`endif
         end
         else
         begin
+`ifdef SIM
+                ops             <= 0;
+`endif
+
                 r[0]            <= 32'h1;
                 r[1][1]         <= 1'd1;
                 r[1][3]         <= 1'd0;
@@ -299,17 +311,26 @@ begin
 
                                         CASE_FLUSH_ID_TLB:
                                         begin
+`ifdef SIM
+                                                ops <= 1;
+`endif
                                                 o_itlb_inv  <= 1'd1;
                                                 o_dtlb_inv  <= 1'd1;
                                         end
 
                                         CASE_FLUSH_I_TLB:
                                         begin
+`ifdef SIM
+                                                ops <= 2;
+`endif
                                                 o_itlb_inv <= 1'd1;
                                         end
 
                                         CASE_FLUSH_D_TLB:  
                                         begin
+`ifdef SIM
+                                                ops <= 3;
+`endif
                                                 o_dtlb_inv <= 1'd1;
                                         end                                                        
 
@@ -326,6 +347,9 @@ begin
                                 case({i_cp_word[`opcode_2], i_cp_word[`crm]})
                                         CASE_FLUSH_ID_CACHE:
                                         begin
+`ifdef SIM
+                                                ops <= 4;
+`endif
                                                 // Invalidate caches.
                                                 o_dcache_inv    <= 1'd1;
                                                 state           <= CLR_D_CACHE_AND;
@@ -333,6 +357,10 @@ begin
 
                                         CASE_FLUSH_D_CACHE:
                                         begin
+`ifdef SIM
+                                                ops <= 5;
+`endif
+
                                                 // Invalidate data cache.
                                                 o_dcache_inv    <= 1'd1;
                                                 state           <= CLR_D_CACHE;
@@ -340,6 +368,10 @@ begin
 
                                         CASE_FLUSH_I_CACHE:
                                         begin
+`ifdef SIM
+                                                ops <= 6;
+`endif
+
                                                 // Invalidate instruction cache.
                                                 o_icache_inv    <= 1'd1;
                                                 state           <= CLR_I_CACHE;
@@ -347,18 +379,30 @@ begin
 
                                         CASE_CLEAN_ID_CACHE, CASE_CLEAN_D_CACHE:
                                         begin
+`ifdef SIM
+                                                ops <= 7;
+`endif
+
                                                 o_dcache_clean <= 1'd1;
                                                 state          <= CLEAN_D_CACHE;
                                         end
 
                                         CASE_CLFLUSH_D_CACHE:
                                         begin
+`ifdef SIM
+                                                ops <= 8;
+`endif
+
                                                 o_dcache_clean <= 1'd1;
                                                 state          <= CLFLUSH_D_CACHE;
                                         end
 
                                         CASE_CLFLUSH_ID_CACHE,CASE_CLFLUSH_D_CACHE:
                                         begin
+`ifdef SIM
+                                                ops <= 9;
+`endif
+
                                                 o_dcache_clean <= 1'd1;
                                                 state          <= CLFLUSH_ID_CACHE;
                                         end
@@ -382,6 +426,8 @@ begin
 
                         if ( i_dcache_clean_done )
                         begin
+                                o_dcache_clean <= 1'd0;        
+
                                 if ( state == CLFLUSH_D_CACHE )
                                 begin
                                         o_dcache_inv    <= 1'd1;
@@ -405,9 +451,16 @@ begin
 
                         // Wait for cache invalidation to complete.
                         if ( i_dcache_inv_done && state == CLR_D_CACHE )
+                        begin
+                                o_dcache_inv <= 1'd0;
                                 state <= DONE;
+                        end
                         else if ( state == CLR_D_CACHE_AND && i_dcache_inv_done ) 
+                        begin
+                                o_dcache_inv <= 1'd0;
+                                o_icache_inv <= 1'd1;
                                 state <= CLR_I_CACHE;
+                        end
                 end       
 
                 CLR_I_CACHE: // Clear instruction cache.
@@ -415,7 +468,10 @@ begin
                         o_icache_inv <= 1'd1;
 
                         if ( i_icache_inv_done )
+                        begin
+                                o_icache_inv <= 1'd0;
                                 state <= DONE;                                                
+                        end
                 end
 
                 ACTIVE: // Access processor registers.

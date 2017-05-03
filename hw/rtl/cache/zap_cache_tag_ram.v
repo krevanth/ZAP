@@ -45,7 +45,7 @@ i_wb_ack, i_wb_dat
 
 `include "zap_localparams.vh"
 `include "zap_defines.vh"
-`include "zap_functions.vh"
+//`include "zap_functions.vh"
 `include "zap_mmu_functions.vh"
 
 parameter CACHE_SIZE = 1024; // Bytes.
@@ -104,7 +104,7 @@ reg [`CACHE_TAG_WDT-1:0]        tag_ram_wr_data;
 reg                             tag_ram_wr_en;
 reg [$clog2(CACHE_SIZE/16)-1:0] tag_ram_wr_addr, tag_ram_rd_addr;
 reg                             tag_ram_clear;
-reg                             tag_ram_clean;
+reg [NUMBER_OF_DIRTY_BLOCKS-1:0] tag_ram_clean;
 
 // ----------------------------------------------------------------------------
 
@@ -164,16 +164,77 @@ end
 
 // ----------------------------------------------------------------------------
 
+//integer i;
+
+reg [(CACHE_SIZE/16)-1:0] dirty_nxt;
+
+always @*
+begin: blk1232
+        reg [31:0] shamt;
+        reg [31:0] sanity, sanity1; // sanity1 for debug only.
+        reg [(CACHE_SIZE/16)-1:0] clr;
+        integer i;
+
+        if ( tag_ram_clean == 0 )
+                sanity = 1'd0;
+        else
+                sanity = 1'd1;
+
+        if ( sanity )
+        begin
+                shamt = 0;
+
+                for(i=0;i<NUMBER_OF_DIRTY_BLOCKS;i=i+1)
+                begin
+        //                $display($time, "i is now %d", i);
+                        sanity1 = 2;
+
+                        if ( tag_ram_clean[i] ) 
+                        begin
+                                sanity1 = 1;
+                                shamt = i << 4;        
+          //                      $display($time, "i=%d => shamt = %d", i, shamt);
+            //                    $stop;
+                        end
+                        else
+                        begin
+              //                  $display($time, "tag_ram_clean %b %d not matched!", tag_ram_clean, i);
+                //                $stop;
+                        end
+
+                  //      $display("Incrementing i... DIRTY BLOCKS = %d", NUMBER_OF_DIRTY_BLOCKS);
+                    //    $stop;
+                end
+
+                if ( sanity1 == 2 )
+                begin
+                      //  $display($time, "tag_ram_clean = %b", tag_ram_clean);
+                      //  $stop;
+                end
+
+                clr   = 32'hffff << shamt;
+                dirty_nxt = dirty & ~clr;
+        end
+        else
+        begin
+                sanity1         = 0;
+                shamt           = 'dx;
+                clr             = 0;
+                dirty_nxt       = 0;
+                
+        end
+end
+
 always @ (posedge i_clk)
 begin
         o_cache_tag_dirty                   <= dirty [ tag_ram_rd_addr ];
 
         if ( i_reset )
                 dirty <= 0;
-        else if ( tag_ram_clean )
-                dirty [ tag_ram_wr_addr ]   <= 1'd0;
         else if ( tag_ram_wr_en )
                 dirty [ tag_ram_wr_addr ]   <= i_cache_tag_dirty;
+        else if ( tag_ram_clean )
+                dirty <= dirty_nxt;
 end
 
 always @ (posedge i_clk)
@@ -227,14 +288,23 @@ localparam CACHE_INV                    = 3;
 
 reg [1:0] state_ff, state_nxt;
 
+function [4:0] baggage ( input [CACHE_SIZE/16-1:0] dirty, input [31:0] blk_ctr_ff );
+reg [31:0] shamt;
+integer i;
+begin
+        shamt = blk_ctr_ff << 4;
+        baggage = pri_enc1(dirty >> shamt);
+end
+endfunction
+
 always @*
 begin
 
         // Defaults.
         state_nxt = state_ff;
-        tag_ram_rd_addr         = i_address_nxt [`VA__CACHE_INDEX];
+        tag_ram_rd_addr         = 0;//i_address_nxt [`VA__CACHE_INDEX];
         tag_ram_wr_addr         = i_address     [`VA__CACHE_INDEX];
-        tag_ram_wr_en           = i_cache_tag_wr_en;
+        tag_ram_wr_en           = 0; //i_cache_tag_wr_en;
         tag_ram_clear           = 0;
         tag_ram_clean           = 0;
         adr_ctr_nxt             = adr_ctr_ff;
@@ -255,7 +325,9 @@ begin
         case ( state_ff )
 
         IDLE:
-        begin
+        begin: blp9
+                integer i;
+
                 kill_access;
 
                 tag_ram_rd_addr = i_address_nxt [`VA__CACHE_INDEX];
@@ -265,20 +337,35 @@ begin
 
                 if ( i_cache_clean_req )
                 begin
+                        tag_ram_wr_en = 0;
+                        blk_ctr_nxt = 0;
+
+                `ifdef SIM
                         $display($time, "%m :: INFO :: Cache clean requested...");
+
+                        for(i=0;i<CACHE_SIZE/16;i=i+1)
+                        begin
+                                $display("Line %d : %x %d", i, dat_ram[i], dirty[i]);
+                        end
+
+                        $stop;
+                `endif
+
+
                         state_nxt = CACHE_CLEAN_GET_ADDRESS;
                 end
                 else if ( i_cache_inv_req )
                 begin
+                        tag_ram_wr_en = 0;
                         state_nxt = CACHE_INV;
                 end
         end        
 
         CACHE_CLEAN_GET_ADDRESS:
         begin
-                tag_ram_rd_addr = (blk_ctr_ff << 4) + pri_enc(dirty >> (blk_ctr_ff << 4));
+                tag_ram_rd_addr = get_tag_ram_rd_addr (blk_ctr_ff , dirty);
 
-                if ( dirty >> (blk_ctr_ff << 4) == 0)
+                if ( baggage(dirty, blk_ctr_ff) == 5'b11111)
                 begin
                         // Move to next block.
                         blk_ctr_nxt = blk_ctr_ff + 1;
@@ -291,6 +378,7 @@ begin
                 end
                 else
                 begin
+
                         // Go to state.
                         state_nxt = CACHE_CLEAN_WRITE;
                 end
@@ -300,13 +388,13 @@ begin
 
         CACHE_CLEAN_WRITE:
         begin
+                tag_ram_rd_addr = get_tag_ram_rd_addr (blk_ctr_ff , dirty);
                 adr_ctr_nxt = adr_ctr_ff + (i_wb_ack && o_wb_stb_ff);
 
                 if ( adr_ctr_nxt > 3 )
                 begin
                         // Remove dirty marking.
-                        tag_ram_rd_addr = (blk_ctr_ff << 4) + pri_enc(dirty << (blk_ctr_ff << 4));
-                        tag_ram_clean   = 1'd1;
+                        dirty[tag_ram_rd_addr] = 0;
 
                         // Kill access.
                         kill_access;
@@ -317,7 +405,7 @@ begin
                 else
                 begin
                         // Perform a Wishbone write using Physical Address.
-                        wb_prpr_write(  i_cache_line >> ( adr_ctr_nxt << 5), 
+                        wb_prpr_write(  o_cache_line >> ( adr_ctr_nxt << 5), 
                                         o_cache_tag[`CACHE_TAG__PA] + (adr_ctr_nxt << 2),
                                         adr_ctr_nxt != 3 ? CTI_BURST : CTI_EOB, 4'b1111 );
                 end
@@ -332,5 +420,45 @@ begin
         
         endcase                
 end
+
+// Priority encoder.
+function  [4:0] pri_enc1 ( input [15:0] in );
+begin: priEncFn
+                casez ( in )
+                16'b0000_0000_0000_0001: pri_enc1 = 4'd0;
+                16'b0000_0000_0000_001?: pri_enc1 = 4'd1;
+                16'b0000_0000_0000_01??: pri_enc1 = 4'd2;
+                16'b0000_0000_0000_1???: pri_enc1 = 4'd3;
+                16'b0000_0000_0001_????: pri_enc1 = 4'd4;
+                16'b0000_0000_001?_????: pri_enc1 = 4'd5;
+                16'b0000_0000_01??_????: pri_enc1 = 4'd6;
+                16'b0000_0000_1???_????: pri_enc1 = 4'd7;
+                16'b0000_0001_????_????: pri_enc1 = 4'd8;
+                16'b0000_001?_????_????: pri_enc1 = 4'd9;
+                16'b0000_01??_????_????: pri_enc1 = 4'hA;
+                16'b0000_1???_????_????: pri_enc1 = 4'hB;
+                16'b0001_????_????_????: pri_enc1 = 4'hC;
+                16'b001?_????_????_????: pri_enc1 = 4'hD;
+                16'b01??_????_????_????: pri_enc1 = 4'hE;
+                16'b1???_????_????_????: pri_enc1 = 4'hF;
+                default:                 pri_enc1 = 5'b11111;
+                endcase
+end
+endfunction
+
+function [31:0] get_tag_ram_rd_addr (
+input [31:0] blk_ctr,
+input [CACHE_SIZE/16-1:0] dirty
+);
+reg [CACHE_SIZE/16-1:0] dirty_new;
+reg [3:0] enc;
+reg [31:0] shamt;
+begin
+        shamt = blk_ctr_ff << 4;
+        dirty_new = dirty >> shamt;
+        enc = pri_enc1(dirty_new);        
+        get_tag_ram_rd_addr = shamt + enc;
+end
+endfunction
 
 endmodule // zap_cache_tag_ram.v

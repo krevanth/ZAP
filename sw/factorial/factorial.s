@@ -77,6 +77,9 @@ stmfd sp!, {r0-r12, r14}
 mrs r1, spsr
 orr r1, r1, #0x80
 msr spsr_c, r1
+mov r4, #0
+mcr p15, 0, r4, c7, c15, 0
+mov r4, #-1
 ldmfd sp!, {r0-r12, pc}^
 
 there:

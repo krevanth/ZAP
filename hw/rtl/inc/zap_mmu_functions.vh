@@ -1,7 +1,7 @@
 // ----------------------------------------------------------------------------
 
 /* Function to generate Wishbone read signals. */
-task wb_prpr_read;
+task  wb_prpr_read;
 input [31:0] i_address;
 input [2:0]  i_cti;
 begin
@@ -20,7 +20,7 @@ endtask
 // ----------------------------------------------------------------------------
 
 /* Function to generate Wishbone write signals */
-task wb_prpr_write;
+task  wb_prpr_write;
 input   [31:0]  i_data;
 input   [31:0]  i_address;
 input   [2:0]   i_cti;
@@ -39,7 +39,7 @@ endtask
 // ----------------------------------------------------------------------------
 
 /* Disables Wishbone */
-task kill_access;
+task  kill_access;
 begin
         o_wb_cyc_nxt = 0;
         o_wb_stb_nxt = 0;
