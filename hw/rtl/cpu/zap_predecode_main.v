@@ -86,6 +86,7 @@ module zap_predecode_main #(
         input   wire                            i_cpu_mode_t, // T mode.
                                                 i_cpu_mode_i, // I mask.
                                                 i_cpu_mode_f, // F mask.
+        input   wire [4:0]                      i_cpu_mode_mode, // CPU mode.
 
         // Instruction input.
         input     wire  [31:0]                  i_instruction,    
@@ -256,6 +257,7 @@ u_zap_decode_coproc
         .i_instruction(i_instruction_valid ? i_instruction : 32'd0),
         .i_valid(i_instruction_valid),
         .i_cpsr_ff_t(i_cpu_mode_t),
+        .i_cpsr_ff_mode(i_cpu_mode_mode),
 
         // Clear and stall signals.
         .i_code_stall(1'd0),

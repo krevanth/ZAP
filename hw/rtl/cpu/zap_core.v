@@ -503,6 +503,7 @@ u_zap_predecode (
         .i_cpu_mode_t                   (alu_flags_ff[T]),
         .i_cpu_mode_f                   (alu_flags_ff[F]),
         .i_cpu_mode_i                   (alu_flags_ff[I]),
+        .i_cpu_mode_mode                (alu_flags_ff[`CPSR_MODE]),
 
         .i_instruction                  (fifo_instruction),
         .i_instruction_valid            (fifo_valid),

@@ -37,6 +37,7 @@ module zap_predecode_coproc #(
 
         // CPSR Thumb Bit.
         input wire              i_cpsr_ff_t,
+        input wire [4:0]        i_cpsr_ff_mode,
 
         // Interrupts.
         input wire              i_irq,
@@ -123,7 +124,7 @@ begin
         case ( state_ff )
         IDLE:
                 // Activate only if no thumb.
-                casez ( (!i_cpsr_ff_t) ? i_instruction : 32'd0 )
+                casez ( (!i_cpsr_ff_t && (i_cpsr_ff_mode != USR)) ? i_instruction : 32'd0 )
                 MRC, MCR, LDC, STC, CDP:
                 begin
                         // Send ANDNV R0, R0, R0 instruction.
