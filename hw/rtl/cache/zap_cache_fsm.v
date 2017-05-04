@@ -97,7 +97,6 @@ input   wire    [31:0]  i_wb_dat
 `include "zap_localparams.vh"
 `include "zap_defines.vh"
 `include "zap_functions.vh"
-`include "zap_mmu_functions.vh"
 
 /* Signal aliases */
 wire cache_cmp   = (i_cache_tag[`CACHE_TAG__TAG] == i_address[`VA__CACHE_TAG]);
@@ -477,6 +476,61 @@ begin
         clean_single_d = cl >> shamt; // Select specific 32-bit.
 end
 endfunction
+
+// ----------------------------------------------------------------------------
+
+/* Function to generate Wishbone read signals. */
+task  wb_prpr_read;
+input [31:0] i_address;
+input [2:0]  i_cti;
+begin
+        $display($time, "%m :: Reading from address %x", i_address);
+
+        o_wb_cyc_nxt = 1'd1;
+        o_wb_stb_nxt = 1'd1;
+        o_wb_wen_nxt = 1'd0;
+        o_wb_sel_nxt = 4'b1111;
+        o_wb_adr_nxt = i_address;
+        o_wb_cti_nxt = i_cti;
+	o_wb_dat_nxt = 0;
+end
+endtask
+
+// ----------------------------------------------------------------------------
+
+/* Function to generate Wishbone write signals */
+task  wb_prpr_write;
+input   [31:0]  i_data;
+input   [31:0]  i_address;
+input   [2:0]   i_cti;
+input   [3:0]   i_ben;
+begin
+        o_wb_cyc_nxt = 1'd1;
+        o_wb_stb_nxt = 1'd1;
+        o_wb_wen_nxt = 1'd1;
+        o_wb_sel_nxt = i_ben;
+        o_wb_adr_nxt = i_address;
+        o_wb_cti_nxt = i_cti;
+        o_wb_dat_nxt = i_data;
+end
+endtask
+
+// ----------------------------------------------------------------------------
+
+/* Disables Wishbone */
+task  kill_access;
+begin
+        o_wb_cyc_nxt = 0;
+        o_wb_stb_nxt = 0;
+        o_wb_wen_nxt = 0;
+        o_wb_adr_nxt = 0;
+        o_wb_dat_nxt = 0;
+        o_wb_sel_nxt = 0;
+        o_wb_cti_nxt = CTI_CLASSIC;
+end
+endtask
+
+// ----------------------------------------------------------------------------
 
 // synopsys translate_off
 wire [31:0] buf0_ff, buf1_ff, buf2_ff;

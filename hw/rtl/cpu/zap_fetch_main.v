@@ -156,7 +156,8 @@ begin
 end
 
 // Instruction wire.
-assign w_instr = src_ff ? adapt_cache_data(o_pc_ff[3:2], i_instruction_cache) : instr_ff;
+assign w_instr = instr_ff; 
+// src_ff ? adapt_cache_data(o_pc_ff[3:2], i_instruction_cache) : instr_ff;
 
 //
 // NOTE: If an instruction is invalid, only then can it be tagged with any

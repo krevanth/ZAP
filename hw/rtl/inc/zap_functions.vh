@@ -19,39 +19,12 @@
 // Depends      : --        
 // ----------------------------------------------------------------------------
 
-//
-// Function to model a 16-bit priority encoder.
-//
 
-// Priority encoder.
-function  [3:0] pri_enc ( input [15:0] in );
-begin: priEncFn
-                casez ( in )
-                16'b????_????_????_???1: pri_enc = 4'd0;
-                16'b????_????_????_??10: pri_enc = 4'd1;
-                16'b????_????_????_?100: pri_enc = 4'd2;
-                16'b????_????_????_1000: pri_enc = 4'd3;
-                16'b????_????_???1_0000: pri_enc = 4'd4;
-                16'b????_????_??10_0000: pri_enc = 4'd5;
-                16'b????_????_?100_0000: pri_enc = 4'd6;
-                16'b????_????_1000_0000: pri_enc = 4'd7;
-                16'b????_???1_0000_0000: pri_enc = 4'd8;
-                16'b????_??10_0000_0000: pri_enc = 4'd9;
-                16'b????_?100_0000_0000: pri_enc = 4'hA;
-                16'b????_1000_0000_0000: pri_enc = 4'hB;
-                16'b???1_0000_0000_0000: pri_enc = 4'hC;
-                16'b??10_0000_0000_0000: pri_enc = 4'hD;
-                16'b?100_0000_0000_0000: pri_enc = 4'hE;
-                16'b1000_0000_0000_0000: pri_enc = 4'hF;
-                default:                 pri_enc = 4'h0;
-                endcase
-end
-endfunction
 
 // ----------------------------------------------------------------------------
 
 //
-// Function to generate clog2. Unused. $clog2 used instead.
+// Function to generate clog2. $clog2 used instead in most places.
 //
 function  [31:0] zap_clog2 ( input [31:0] x );
 for(zap_clog2 = 0 ; 2**zap_clog2 < x ; zap_clog2 = zap_clog2 + 1);
@@ -98,29 +71,6 @@ endfunction
 
 // ----------------------------------------------------------------------------
 
-// Counts the number of ones and multiplies that by 4 to get final
-// address offset.
-//
-function  [11:0] ones_counter (
-        input [15:0]    i_word    // Register list.
-);
-begin: blk1
-        integer i;
-        reg [11:0] offset;
-
-        offset = 0;
-
-        // Counter number of ones.
-        for(i=0;i<16;i=i+1)
-                offset = offset + i_word[i];
-
-        // Since LDM and STM occur only on 4 byte regions, compute the
-        // net offset.
-        offset = (offset << 2); // Multiply by 4.
-
-        ones_counter = offset;
-end
-endfunction
 
 // ----------------------------------------------------------------------------
 
@@ -234,12 +184,12 @@ endfunction
 
 // ----------------------------------------------------------------------------
 
-function  [31:0] adapt_cache_data ( input [1:0] shift, input [127:0] cd);
-begin: blk1
-        reg [31:0] shamt;
-        shamt = shift << 5;
-        adapt_cache_data = cd >> shamt;
-end
-endfunction
+//function  [31:0] adapt_cache_data ( input [1:0] shift, input [127:0] cd);
+//begin: blk1
+//        reg [31:0] shamt;
+//        shamt = shift << 5;
+//        adapt_cache_data = cd >> shamt;
+//end
+//endfunction
 
 

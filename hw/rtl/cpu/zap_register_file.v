@@ -116,7 +116,6 @@ module zap_register_file #(
 
 ///////////////////////////////////////////////////////////////////////////////
 
-assign o_shelve = shelve_ff;
 
 `ifdef SIM
 
@@ -139,6 +138,9 @@ reg                            wen;
 
 reg [31:0] pc_shelve_ff, pc_shelve_nxt;
 reg shelve_ff, shelve_nxt;
+
+
+assign o_shelve = shelve_ff;
 
 `ifdef SIM
 integer irq_addr = 0;
@@ -165,8 +167,8 @@ localparam FIQ_VECTOR   = 32'h0000001C;
 ///////////////////////////////////////////////////////////////////////////////
 
 `include "zap_defines.vh"
-`include "zap_functions.vh"
 `include "zap_localparams.vh"
+`include "zap_functions.vh"
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -478,7 +480,7 @@ begin: blk1
                         o_clear_from_writeback  = 1'd1;
         end
 
-        pc_nxt = pc_nxt & 32'h_ffff_fffe;
+        pc_nxt = pc_nxt & 32'hffff_fffe;
 
         if ( i_reset )
                 pc_nxt = 32'd0;

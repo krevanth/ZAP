@@ -130,6 +130,9 @@ module zap_alu_main #(
 wire [31:0] mem_srcdest_value_nxt;
 wire [3:0] ben_nxt;
 
+// Address about to be output. Used to potentially drive tag RAMs etc.
+reg [31:0]                      mem_address_nxt;
+
 assign ben_nxt = i_mem_store_ff ? generate_ben (
                                                  i_mem_unsigned_byte_enable_ff, 
                                                  i_mem_signed_byte_enable_ff, 
@@ -169,8 +172,7 @@ reg [31:0]                      rm, rn; // RM = shifted source value Rn for
                                         // non shifted source value. These are
                                         // values and not indices.
 
-// Address about to be output. Used to potentially drive tag RAMs etc.
-reg [31:0]                      mem_address_nxt;
+
 
 // Destination index about to be output.
 reg [zap_clog2(PHY_REGS)-1:0]      o_destination_index_nxt;

@@ -190,7 +190,8 @@ begin
 end
 
 // Select source based on MUX.
-always @* mem_rd_data = src_ff ? adapt_cache_data(i_mem_address_ff2[3:2], i_mem_rd_data_cache) : mem_rd_data_ff; 
+always @* mem_rd_data = mem_rd_data_ff ;
+//src_ff ? adapt_cache_data(i_mem_address_ff2[3:2], i_mem_rd_data_cache) : mem_rd_data_ff; 
                                                 // 0 - Uncache.
                                                 // 1 - Cache.
 
