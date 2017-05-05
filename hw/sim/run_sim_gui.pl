@@ -8,6 +8,18 @@ die "*E: GTKWave does not exist! Please install gtkwave" if system("which gtkwav
 die "*E: Dialog does not exist! Please install dialog" if system("which dialog");
 die "*E: XTerm does not exist! Please install xterm" if system("which xterm");
 
+my $ivl_version = `iverilog -v`;
+
+$ivl_version =~ m/([0-9]+)\.([0-9]+)/;
+$ivl_version = $1;
+my $ivl_subversion = $2;
+
+if ( $1 >= 10 ) {
+        print "*I: Icarus Verilog version check passed! Detected version $ivl_version.$ivl_subversion";
+} else {
+        die "*E: Older version of Icarus Verilog is being used. Please upgrade to 10.0 or higher...";
+} 
+
 my $system = 'dialog --backtitle "ZAP Simulation Options" --title "ZAP Simulation Options" --form "ZAP simulation options" 25 100 16\
         "ZAP Root (ZAP_HOME)"                                                                   1  1 "../.." 1  25 25 30\
         "Seed"                                                                                  2  1 "0 " 2  25 25 30\
