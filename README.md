@@ -48,9 +48,7 @@ Please provide your feedback on the google forum : https://groups.google.com/d/f
 
 ### To simulate using Icarus Verilog 
 
-Enter *hw/sim* and run *csh sample\_command.csh* from the terminal. The command
-will run the factorial test case (see sw/factorial). Ensure that you have
-GTKWave installed at your site.
+Enter *hw/sim* and run *run_sim_gui.pl*
 
 ### License 
 
