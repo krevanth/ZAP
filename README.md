@@ -1,4 +1,4 @@
-## *ZAP* : An open source ARMv4T processor with cache and MMU
+## *ZAP* : ARM compatible core with cache and MMU (ARMv4T ISA compatible)
 
 #### Author        : Revanth Kamaraj (revanth91kamaraj@gmail.com)
 #### License       : GPL v2
@@ -8,7 +8,7 @@
 ZAP is a pipelined ARM processor core that can execute the ARMv4T instruction
 set. It is equipped with ARMv4 compatible split writeback caches and memory 
 management capabilities. ARMv4 and Thumbv1 instruction sets are supported.
-The processor core uses an 8 stage pipeline.
+The processor core uses a 9 stage pipeline.
 
 ### Current Status 
 
@@ -29,7 +29,7 @@ Wishbone B3 compatible 32-bit instruction and data busses.
 
 ### Pipeline Overview :
 
-FETCH => PRE-DECODE => DECODE => ISSUE => SHIFTER => ALU => MEMORY => WRITEBACK
+FETCH => FIFO => PRE-DECODE => DECODE => ISSUE => SHIFTER => ALU => MEMORY => WRITEBACK
 
 The pipeline is fully bypassed to allow most dependent instructions to execute 
 without stalls. The pipeline stalls for 3 cycles if there is an attempt to 
