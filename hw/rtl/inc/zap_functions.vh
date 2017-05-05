@@ -27,7 +27,10 @@
 // Function to generate clog2. $clog2 used instead in most places.
 //
 function  [31:0] zap_clog2 ( input [31:0] x );
-for(zap_clog2 = 0 ; 2**zap_clog2 < x ; zap_clog2 = zap_clog2 + 1);
+        for(zap_clog2 = 0 ; 2**zap_clog2 < x ; zap_clog2 = zap_clog2 + 1)
+        begin
+                // Some compilers do not support empty loops.
+        end
 endfunction
 
 // ----------------------------------------------------------------------------
