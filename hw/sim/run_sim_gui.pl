@@ -124,6 +124,6 @@ if ( $fiq =~ m/Y/ )      { $command .= " +fiq_en "; }
 if ( $tlbdebug =~ m/Y/ ) { $command .= " +tlbdebug "; }
 if ( $genvcd   !~ m/Y/ ) { $command .= " +nodump "; }
 
-$command .= ";cat";
+$command .= ";echo Press Ctrl+C/D to exit;cat";
 print "$command\n";
 exec "xterm -e '$command'";
