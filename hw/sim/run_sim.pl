@@ -32,8 +32,8 @@ perl run_sim.pl
 +bp+<branch_predictor_entries>                                          -- Number of entries in branch predictor memory.
 +fifo+<fifo_depth>                                                      -- Depth of pre-fetch buffer in CPU.
 +post_process+<post_process_perl_script_path>                           -- Point this to post_process.pl or any other Perl script. Script runs after sim.
-+tlb_debug                                                              -- Enable TLB debugging interactive.
-+nodump                                                                 -- Do not write VCD. 
+[+tlb_debug]                                                            -- Enable TLB debugging interactive.
+[+nodump]                                                               -- Do not write VCD. 
 ###############################################################################
 ";
 
