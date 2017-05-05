@@ -3,6 +3,11 @@
 use strict;
 use warnings;
 
+die "*E: Icarus Verilog does not exist! Please install iverilog" if system("which iverilog");
+die "*E: GTKWave does not exist! Please install gtkwave" if system("which gtkwave");
+die "*E: Dialog does not exist! Please install dialog" if system("which dialog");
+die "*E: XTerm does not exist! Please install xterm" if system("which xterm");
+
 my $system = 'dialog --backtitle "ZAP Simulation Options" --title "ZAP Simulation Options" --form "ZAP simulation options" 25 100 16\
         "ZAP Root (ZAP_HOME)"                                                                   1  1 "../.." 1  25 25 30\
         "Seed"                                                                                  2  1 "0 " 2  25 25 30\
