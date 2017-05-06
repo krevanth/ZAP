@@ -21,7 +21,7 @@ Wishbone B3 compatible 32-bit instruction and data busses.
 ### Features 
 
     Can execute 32-bit ARMv4 and 16 bit Thumb v1 code.
-    Wishbone B3 compatible I and D interfaces. Cache unit supports burst access.
+    Wishbone B3 compatible interface. Cache unit supports burst access.
     9-stage pipeline design.
     Branch prediction is supported.
     Split I and D writeback cache (Size can be configured using parameters).
