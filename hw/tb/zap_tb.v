@@ -11,6 +11,7 @@ input [31:0]            i_wb_dat,
 input  [3:0]            i_wb_sel,
 input                   i_wb_we,
 
+// unused.
 input                   i_wb_cyc2,
 input                   i_wb_stb2,
 input   [31:0]          i_wb_adr2,
@@ -19,10 +20,10 @@ input   [3:0]           i_wb_sel2,
 input                   i_wb_we2,
 
 output reg [31:0]       o_wb_dat,
-output reg [31:0]       o_wb_dat2,
+output reg [31:0]       o_wb_dat2, // unused.
 
 output reg              o_wb_ack,
-output reg              o_wb_ack2
+output reg              o_wb_ack2 // unused.
 
 );
 
@@ -127,7 +128,6 @@ module zap_test; // +nctop+zap_test
 parameter RAM_SIZE                      = 32768;
 parameter START                         = 1992;
 parameter COUNT                         = 120;
-parameter CACHE_MMU_ENABLE              = 0;
 parameter DATA_SECTION_TLB_ENTRIES      = 4;
 parameter DATA_LPAGE_TLB_ENTRIES        = 8;
 parameter DATA_SPAGE_TLB_ENTRIES        = 16;
@@ -195,7 +195,6 @@ $display("parameter FIFO_DEPTH            %d", u_zap_top.FIFO_DEPTH);
 
 // CPU config.
 
-$display("parameter CACHE_MMU_ENABLE              = %d", CACHE_MMU_ENABLE            ) ;
 $display("parameter DATA_SECTION_TLB_ENTRIES      = %d", DATA_SECTION_TLB_ENTRIES    ) ;
 $display("parameter DATA_LPAGE_TLB_ENTRIES        = %d", DATA_LPAGE_TLB_ENTRIES      ) ;
 $display("parameter DATA_SPAGE_TLB_ENTRIES        = %d", DATA_SPAGE_TLB_ENTRIES      ) ;
@@ -230,22 +229,10 @@ begin: mt1
 end        
 endtask
 
-always @*
-begin
-        if ( instr_wb_dat[0] === 1'dx )
-        begin
-                $display("*E: Wishbone reporting x...! Terminating simulation...");        
-                $finish;
-        end
-end
-
 // =========================
 // Processor core.
 // =========================
 zap_top #(
-
-        // enable cache and mmu.
-        .CACHE_MMU_ENABLE(CACHE_MMU_ENABLE),
 
         // Configure FIFO depth and BP entries.
         .FIFO_DEPTH(FIFO_DEPTH),
@@ -271,29 +258,15 @@ u_zap_top
         .i_irq(i_irq),
         .i_fiq(i_fiq),
 
-        .o_instr_wb_cyc(instr_wb_cyc),
-        .o_instr_wb_stb(instr_wb_stb),
-        .o_instr_wb_adr(instr_wb_adr),
-        .o_instr_wb_we(instr_wb_we),
-        .i_instr_wb_err(1'd0),
-        .i_instr_wb_dat(instr_wb_dat[0][31:0]),
-
-
-        .i_instr_wb_ack(instr_wb_ack),
-        .o_instr_wb_sel(instr_wb_sel),
-        .o_data_wb_cyc(data_wb_cyc),
-        .o_data_wb_stb(data_wb_stb),
-        .o_data_wb_adr(data_wb_adr),
-        .o_data_wb_we(data_wb_we),
-        .i_data_wb_err(1'd0),
-        .i_data_wb_dat(data_wb_din[0][31:0]),
-
-
-
-
-        .o_data_wb_dat(data_wb_dout),
-        .i_data_wb_ack(data_wb_ack),
-        .o_data_wb_sel(data_wb_sel)
+        .o_wb_cyc(data_wb_cyc),
+        .o_wb_stb(data_wb_stb),
+        .o_wb_adr(data_wb_adr),
+        .o_wb_we(data_wb_we),
+        //.i_wb_err(1'd0),
+        .i_wb_dat(data_wb_din[0][31:0]),
+        .o_wb_dat(data_wb_dout),
+        .i_wb_ack(data_wb_ack),
+        .o_wb_sel(data_wb_sel)
 
 );
 
@@ -317,14 +290,14 @@ U_MODEL_RAM_DATA
         .o_wb_ack(data_wb_ack),
         .i_wb_sel(data_wb_sel),
 
-        .i_wb_cyc2(instr_wb_cyc),
-        .i_wb_stb2(instr_wb_stb),
-        .i_wb_adr2(instr_wb_adr),
-        .i_wb_we2(instr_wb_we),
-        .o_wb_dat2(instr_wb_dat[0][31:0]),
-        .o_wb_ack2(instr_wb_ack),
-        .i_wb_sel2(instr_wb_sel),
-        .i_wb_dat2(32'd0)
+        .i_wb_cyc2(0),
+        .i_wb_stb2(0),
+        .i_wb_adr2(0),
+        .i_wb_we2 (0),
+        .o_wb_dat2(),
+        .o_wb_ack2(),
+        .i_wb_sel2(0),
+        .i_wb_dat2(0)
 );
 
 // ===========================

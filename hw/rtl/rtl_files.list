@@ -25,6 +25,7 @@ ${ZAP_HOME}/hw/rtl/tlb/zap_tlb.v
 ${ZAP_HOME}/hw/rtl/cache/zap_cache_fsm.v
 ${ZAP_HOME}/hw/rtl/cache/zap_cache_tag_ram.v
 ${ZAP_HOME}/hw/rtl/cache/zap_cache.v
+${ZAP_HOME}/hw/rtl/wb/zap_wb_merger.v
 
 +libdir+${ZAP_HOME}/hw/rtl/lib/
 +incdir+${ZAP_HOME}/hw/rtl/inc

@@ -63,13 +63,13 @@ input   wire [31:0]     i_dac_reg,
 input  wire             i_tlb_inv,
 
 // Wishbone. Signals from all 4 modules are ORed.
-output reg              o_wb_stb, 
-output reg              o_wb_cyc,
-output reg              o_wb_wen, 
-output reg  [3:0]       o_wb_sel,
-output reg  [31:0]      o_wb_dat,
-output reg  [31:0]      o_wb_adr,
-output reg  [2:0]       o_wb_cti,
+output reg              o_wb_stb, o_wb_stb_nxt, 
+output reg              o_wb_cyc, o_wb_cyc_nxt,
+output reg              o_wb_wen, o_wb_wen_nxt,
+output reg  [3:0]       o_wb_sel, o_wb_sel_nxt,
+output reg  [31:0]      o_wb_dat, o_wb_dat_nxt,
+output reg  [31:0]      o_wb_adr, o_wb_adr_nxt,
+output reg  [2:0]       o_wb_cti, o_wb_cti_nxt,
 input  wire [31:0]      i_wb_dat,
 input  wire             i_wb_ack
 
@@ -282,6 +282,18 @@ begin
                 o_wb_dat <= wb_dat[0] | wb_dat[1] | wb_dat[2];
                 o_wb_wen <= wb_wen[0] | wb_wen[1] | wb_wen[2];
         end
+end
+
+// Combo signals for external MUXing.
+always @*
+begin
+                o_wb_stb_nxt = wb_stb[0] | wb_stb[1] | wb_stb[2];
+                o_wb_cyc_nxt = wb_cyc[0] | wb_cyc[1] | wb_cyc[2];
+                o_wb_adr_nxt = wb_adr[0] | wb_adr[1] | wb_adr[2];
+                o_wb_cti_nxt = wb_cti[0] | wb_cti[1] | wb_cti[2];
+                o_wb_sel_nxt = wb_sel[0] | wb_sel[1] | wb_sel[2];
+                o_wb_dat_nxt = wb_dat[0] | wb_dat[1] | wb_dat[2];
+                o_wb_wen_nxt = wb_wen[0] | wb_wen[1] | wb_wen[2];
 end
 
 // synopsys translate_off

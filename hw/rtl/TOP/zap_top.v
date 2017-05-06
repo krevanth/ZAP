@@ -26,7 +26,6 @@
 module zap_top #(
 
 // Enable cache and MMU.
-parameter [0:0]         CACHE_MMU_ENABLE        = 1'd1,
 parameter               BP_ENTRIES              = 1024, // Predictor depth.
 parameter               FIFO_DEPTH              = 4,    // FIFO depth.
 
@@ -65,32 +64,17 @@ parameter [31:0] CODE_CACHE_SIZE          =  32'd1024  // Cache size in bytes.
         input   wire            i_fiq,
 
         // ---------------------
-        // Code interface.
+        // Wishbone interface.
         // ---------------------
-        output  wire            o_instr_wb_cyc,
-        output  wire            o_instr_wb_stb,
-        output  wire [31:0]     o_instr_wb_adr,
-        output  wire            o_instr_wb_we,
-        input   wire            i_instr_wb_err,
-        input   wire [31:0]     i_instr_wb_dat, // Wishbone data port.
-        input   wire            i_instr_wb_ack,
-        output  wire [3:0]      o_instr_wb_sel,
-        output  wire [2:0]      o_instr_wb_cti,
-
-        // ---------------------
-        // Data interface.
-        // ---------------------
-        output  wire            o_data_wb_cyc,
-        output  wire            o_data_wb_stb,
-        output  wire [31:0]     o_data_wb_adr,
-        output  wire            o_data_wb_we,
-        input   wire            i_data_wb_err,
-        input   wire [31:0]     i_data_wb_dat, // Wishbone instr port.
-        output wire  [31:0]     o_data_wb_dat,
-        input   wire            i_data_wb_ack,
-        output  wire [3:0]      o_data_wb_sel,
-        output wire [2:0]       o_data_wb_cti
-
+        output  wire            o_wb_cyc,
+        output  wire            o_wb_stb,
+        output  wire [31:0]     o_wb_adr,
+        output  wire            o_wb_we,
+        output wire  [31:0]     o_wb_dat,
+        output  wire [3:0]      o_wb_sel,
+        output wire [2:0]       o_wb_cti,
+        input   wire            i_wb_ack,
+        input   wire [31:0]     i_wb_dat
 );
 
 localparam COMPRESSED_EN = 1'd1;
@@ -102,113 +86,6 @@ localparam COMPRESSED_EN = 1'd1;
 wire rst_sync;
 
 zap_reset_sync U_RST_SYNC ( .i_clk(i_clk), .i_reset(i_reset), .o_reset(rst_sync) );
-
-generate
-begin
-if ( CACHE_MMU_ENABLE == 1'd0 ) begin:cmmu_dis // Raw processor core without cache+MMU.
-
-assign o_data_wb_cti = 0;
-assign o_instr_wb_cti = 0;
-
-// -------------------
-// Processor core.
-// -------------------
-zap_core #(
-        .BP_ENTRIES(BP_ENTRIES),
-        .FIFO_DEPTH(FIFO_DEPTH)
-) u_zap_core
-(
-.i_clk                  (i_clk),
-.i_clk_multipump        (i_clk_multipump),
-.i_reset                (rst_sync),
-
-
-// Code related.
-.o_instr_wb_adr         (o_instr_wb_adr),
-.o_instr_wb_cyc         (o_instr_wb_cyc),
-.o_instr_wb_stb         (o_instr_wb_stb),
-.o_instr_wb_we          (o_instr_wb_we),
-.o_instr_wb_sel         (o_instr_wb_sel),
-
-// Code related.
-.i_instr_wb_dat_cache   (128'd0),
-.i_instr_wb_dat_nocache (i_instr_wb_dat),
-.i_instr_src            (1'd0),
-
-.i_instr_wb_ack         (i_instr_wb_ack),
-.i_instr_wb_err         (i_instr_wb_err),
-
-// Data related.
-.o_data_wb_we           (o_data_wb_we),
-.o_data_wb_adr          (o_data_wb_adr),
-.o_data_wb_sel          (o_data_wb_sel),
-.o_data_wb_dat          (o_data_wb_dat),
-.o_data_wb_cyc          (o_data_wb_cyc),
-.o_data_wb_stb          (o_data_wb_stb),
-
-// Data related.
-.i_data_wb_ack          (i_data_wb_ack),
-.i_data_wb_err          (i_data_wb_err),
-.i_data_wb_dat_cache    (128'd0),
-.i_data_wb_dat_uncache  (i_data_wb_dat),
-.i_data_src             (1'd0),
-
-// Interrupts.
-.i_fiq                  (i_fiq),
-.i_irq                  (i_irq),
-
-// These ports are irrelevant as no MMU, cache is present.
-.o_mem_translate        (),
-.i_fsr                  (32'd0),
-.i_far                  (32'd0),
-.o_dac                  (),
-.o_baddr                (),
-.o_mmu_en               (),
-.o_sr                   (),
-.o_dcache_inv           (),
-.o_icache_inv           (),
-.o_dcache_clean         (),
-.o_icache_clean         (),
-.o_dtlb_inv             (),
-.o_itlb_inv             (),
-.i_dcache_inv_done      (1'd1),
-.i_icache_inv_done      (1'd1),
-.i_dcache_clean_done    (1'd1),
-.i_icache_clean_done    (1'd1),
-.o_dcache_en            (),
-.o_icache_en            (),
-
-// Cache read enables.
-.o_instr_cache_rd_en    (),
-.o_data_cache_rd_en     (),
-
-// Combo Outputs - UNUSED.
-.o_clear_from_alu       (),
-.o_stall_from_shifter   (),
-.o_stall_from_issue     (),
-.o_stall_from_decode    (),
-.o_clear_from_decode    (),
-.o_clear_from_writeback (),
-
-// Data IF nxt.
-.o_address_nxt          (), // Data addr nxt. Used to drive address of data tag RAM.
-.o_data_wb_we_nxt       (),
-.o_data_wb_cyc_nxt      (),
-.o_data_wb_stb_nxt      (), 
-.o_data_wb_dat_nxt      (),
-.o_data_wb_sel_nxt      (),
-
-// Code access prpr.
-.o_pc_nxt               (), // PC addr nxt. Drives read address of code tag RAM.
-.o_instr_wb_stb_nxt     (),
-
-.o_cpsr                 ()  
-
-);
-
-end
-else // Cache and MMU enabled.
-begin: cmmu_en
 
 wire cpu_mmu_en;
 wire [31:0] cpu_cpsr;
@@ -238,6 +115,24 @@ wire [31:0] ic_data, dc_data, cpu_dc_dat;
 wire cpu_instr_stb;
 wire cpu_dc_we, cpu_dc_stb;
 wire [3:0] cpu_dc_sel;
+
+wire            c_wb_stb;
+wire            c_wb_cyc;
+wire            c_wb_wen;
+wire [3:0]      c_wb_sel;
+wire [31:0]     c_wb_dat;
+wire [31:0]     c_wb_adr;
+wire [2:0]      c_wb_cti;
+wire            c_wb_ack;
+
+wire            d_wb_stb;
+wire            d_wb_cyc;
+wire            d_wb_wen;
+wire [3:0]      d_wb_sel;
+wire [31:0]     d_wb_dat;
+wire [31:0]     d_wb_adr;
+wire [2:0]      d_wb_cti;
+wire            d_wb_ack;
 
 zap_core #(
         .BP_ENTRIES(BP_ENTRIES),
@@ -364,15 +259,25 @@ u_data_cache (
 .i_baddr        (cpu_baddr),
 .i_dac_reg      (cpu_dac_reg),
 .i_tlb_inv      (cpu_dtlb_inv),
-.o_wb_stb       (o_data_wb_stb),
-.o_wb_cyc       (o_data_wb_cyc),
-.o_wb_wen       (o_data_wb_we),
-.o_wb_sel       (o_data_wb_sel),
-.o_wb_dat       (o_data_wb_dat),
-.o_wb_adr       (o_data_wb_adr),
-.o_wb_cti       (o_data_wb_cti),
-.i_wb_dat       (i_data_wb_dat),
-.i_wb_ack       (i_data_wb_ack)
+
+.o_wb_stb       (),
+.o_wb_cyc       (),
+.o_wb_wen       (),
+.o_wb_sel       (),
+.o_wb_dat       (),
+.o_wb_adr       (),
+.o_wb_cti       (),
+
+.i_wb_dat       (i_wb_dat),
+.i_wb_ack       (d_wb_ack),
+
+.o_wb_stb_nxt   (d_wb_stb),
+.o_wb_cyc_nxt   (d_wb_cyc),
+.o_wb_wen_nxt   (d_wb_wen),
+.o_wb_sel_nxt   (d_wb_sel),
+.o_wb_dat_nxt   (d_wb_dat),
+.o_wb_adr_nxt   (d_wb_adr),
+.o_wb_cti_nxt   (d_wb_cti)
 );
 
 zap_cache #(
@@ -407,19 +312,60 @@ u_code_cache (
 .i_baddr        (cpu_baddr),
 .i_dac_reg      (cpu_dac_reg),
 .i_tlb_inv      (cpu_itlb_inv),
-.o_wb_stb       (o_instr_wb_stb),
-.o_wb_cyc       (o_instr_wb_cyc),
-.o_wb_wen       (o_instr_wb_we),
-.o_wb_sel       (o_instr_wb_sel),
+
+.o_wb_stb       (),
+.o_wb_cyc       (),
+.o_wb_wen       (),
+.o_wb_sel       (),
 .o_wb_dat       (),
-.o_wb_adr       (o_instr_wb_adr),
-.o_wb_cti       (o_instr_wb_cti),
-.i_wb_dat       (i_instr_wb_dat),
-.i_wb_ack       (i_instr_wb_ack)
+.o_wb_adr       (),
+.o_wb_cti       (),
+
+.i_wb_dat       (i_wb_dat),
+.i_wb_ack       (c_wb_ack),
+
+.o_wb_stb_nxt   (c_wb_stb),
+.o_wb_cyc_nxt   (c_wb_cyc),
+.o_wb_wen_nxt   (c_wb_wen),
+.o_wb_sel_nxt   (c_wb_sel),
+.o_wb_dat_nxt   (c_wb_dat),
+.o_wb_adr_nxt   (c_wb_adr),
+.o_wb_cti_nxt   (c_wb_cti)
 );
 
-end
-end
-endgenerate
+zap_wb_merger u_zap_wb_merger (
 
-endmodule // zap_top.v
+.i_clk(i_clk),
+.i_reset(i_reset),
+
+.i_c_wb_stb(c_wb_stb),
+.i_c_wb_cyc(c_wb_cyc),
+.i_c_wb_wen(c_wb_wen),
+.i_c_wb_sel(c_wb_sel),
+.i_c_wb_dat(c_wb_dat),
+.i_c_wb_adr(c_wb_adr),
+.i_c_wb_cti(c_wb_cti),
+.o_c_wb_ack(c_wb_ack),
+
+.i_d_wb_stb(d_wb_stb),
+.i_d_wb_cyc(d_wb_cyc),
+.i_d_wb_wen(d_wb_wen),
+.i_d_wb_sel(d_wb_sel),
+.i_d_wb_dat(d_wb_dat),
+.i_d_wb_adr(d_wb_adr),
+.i_d_wb_cti(d_wb_cti),
+.o_d_wb_ack(d_wb_ack),
+
+.o_wb_cyc(o_wb_cyc),
+.o_wb_stb(o_wb_stb),
+.o_wb_wen(o_wb_we),
+.o_wb_sel(o_wb_sel),
+.o_wb_dat(o_wb_dat),
+.o_wb_adr(o_wb_adr),
+.o_wb_cti(o_wb_cti),
+//.i_wb_dat(i_wb_dat),
+.i_wb_ack(i_wb_ack)
+
+);
+
+endmodule // zap_top_single_if.v

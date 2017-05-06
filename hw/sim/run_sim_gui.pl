@@ -25,7 +25,7 @@ my $system = 'dialog --backtitle "ZAP Simulation Options" --title "ZAP Simulatio
         "Seed"                                                                                  2  1 "0 " 2  25 25 30\
         "Define SIM(Y/N)?"                                                                      3  1 "Y " 3  25 25 30\
         "Testcase"                                                                              4  1 "factorial " 4  25 25 30\
-        "Cache/MMU Enable(Y/N)?"                                                                5  1 "Y " 5  25 25 30\
+        "<UNUSED>"                                                                              5  1 "Y " 5  25 25 30\
         "External RAM size(bytes)"                                                              6  1 "32768 " 6  25 25 30\
         "dump start addr+words"                                                                 7  1 "1992+100 " 7  25 25 30\
         "DTLB(sect+small+large)"                                                                8  1 "8+8+8 " 8  25 25 30\
@@ -54,7 +54,6 @@ my $zap_home    ;
 my $seed        ;
 my $sim         ;
 my $testcase    ;
-my $cmmu        ;
 my $ram_size    ;
 my $memdumpstart;
 my $dtlb        ;
@@ -80,7 +79,6 @@ if ( $system =~ m#^(.*?)!(.*?)!(.*?)!(.*?)!(.*?)!(.*?)!(.*?)!(.*?)!(.*?)!(.*?)!(
         $seed         = $2;
         $sim          = $3;
         $testcase     = $4;
-        $cmmu         = $5;
         $ram_size     = $6;
         $memdumpstart = $7;        
         $dtlb         = $8;
@@ -103,7 +101,6 @@ print "
         seed         = $seed       
         sim          = $sim        
         testcase     = $testcase   
-        cmmu         = $cmmu       
         ram_size     = $ram_size   
         memdumpstart = $memdumpstart
         dtlb         = $dtlb       
@@ -127,15 +124,15 @@ print "
         print "Zenity ERROR. Form not entered correctly!";
 }
 
-if ( $cmmu =~ m/Y/ )                    { $command .= " +cmmu_en "; }
 if ( $seed =~ m/^\s*[0-9]+\s*$/ )       { $command .= " +seed+$seed"; }
 if ( $sim  =~ m/Y/ )                    { $command .= " +sim "; }
-if ( $cmmu =~ m/Y/ )                    { 
-        $command .= " +cmmu_en "; 
+
+if ( 1 )  { 
         $command .= " +cache_size+$csize ";
         $command .= " +dtlb+$dtlb ";
         $command .= " +itlb+$itlb ";
 }
+
 if ( $irq =~ m/Y/ )      { $command .= " +irq_en "; }
 if ( $fiq =~ m/Y/ )      { $command .= " +fiq_en "; }
 if ( $tlbdebug =~ m/Y/ ) { $command .= " +tlbdebug "; }

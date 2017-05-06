@@ -184,7 +184,7 @@ wire [31:0]                     not_rn = ~rn;
 // Wires to emulate an adder.
 reg [31:0]      op1, op2;
 reg             cin;
-wire [32:0]     sum = {1'd0, op1} + {1'd0, op2} + {31'd0, cin};
+wire [32:0]     sum = {1'd0, op1} + {1'd0, op2} + {32'd0, cin};
 
 reg [31:0] tmp_flags, tmp_sum;
 

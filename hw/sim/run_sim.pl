@@ -17,7 +17,6 @@ perl run_sim.pl
 [+seed+<seed_value>]                                                    -- Force a specific seed for simulation.
 [+sim]                                                                  -- Force register file debug and some extra error messages.
 +test+<test_case>                                                       -- Run a specific test case. only +test+factorial is available, you may add new tests (see sw folder).
-[+cmmu_en]                                                              -- Enable cache and MMU (highly unstable)
 +ram_size+<ram_size>                                                    -- Set size of RAM in bench.
 +dump_start+<start_addr_of_dump>+<number_of_words_in_dump>              -- Starting memory address to start logging and number of words to log.
 [+cache_size+<data_cache_size>+<code_cache_size>]                       -- Specify data and I-cache size in bytes.
@@ -45,7 +44,6 @@ my $FH;
 my $ZAP_HOME                    = "";
 my $SEED                        = int rand (0xffffffff);
 my $SIM                         = 0;
-my $CACHE_MMU_ENABLE            = 0;
 my $RAM_SIZE                    = 32768;
 my $DUMP_START                  = 2000;
 my $DUMP_SIZE                   = 200;
@@ -83,7 +81,6 @@ foreach(@ARGV) {
         elsif   (/^\+seed\+(.*)/)               { $SEED     = $1; } 
         elsif   (/^\+sim/)                      { $SIM      = 1;  }
         elsif   (/^\+test\+(.*)/)               { $TEST     = $1; }
-        elsif   (/^\+cmmu_en/)                  { $CACHE_MMU_ENABLE = 1; }
         elsif   (/^\+ram_size\+(.*)/)           { $RAM_SIZE = $1; }
         elsif   (/^\+dump_start\+(.*)\+(.*)/)   { $DUMP_START = $1; $DUMP_SIZE = $2; }
         elsif (/^\+cache_size\+(.*)\+(.*)/)      {
@@ -130,7 +127,7 @@ if ( !$NODUMP ) {
         $IVL_OPTIONS .= "-DVCD_FILE_PATH=\\\"/dev/null\\\" ";
 }
 
-$IVL_OPTIONS .= "-Pzap_test.CACHE_MMU_ENABLE=$CACHE_MMU_ENABLE -Pzap_test.RAM_SIZE=$RAM_SIZE -Pzap_test.START=$DUMP_START -Pzap_test.COUNT=$DUMP_SIZE -DLINUX ";
+$IVL_OPTIONS .= "-Pzap_test.RAM_SIZE=$RAM_SIZE -Pzap_test.START=$DUMP_START -Pzap_test.COUNT=$DUMP_SIZE -DLINUX ";
 $IVL_OPTIONS .= "-Pzap_test.BP_ENTRIES=$BP -Pzap_test.FIFO_DEPTH=$FIFO ";
 $IVL_OPTIONS .= "-Pzap_test.DATA_SECTION_TLB_ENTRIES=$DATA_SECTION_TLB_ENTRIES -Pzap_test.DATA_LPAGE_TLB_ENTRIES=$DATA_LPAGE_TLB_ENTRIES -Pzap_test.DATA_SPAGE_TLB_ENTRIES=$DATA_SPAGE_TLB_ENTRIES -Pzap_test.DATA_CACHE_SIZE=$DATA_CACHE_SIZE ";
 $IVL_OPTIONS .= "-Pzap_test.CODE_SECTION_TLB_ENTRIES=$CODE_SECTION_TLB_ENTRIES -Pzap_test.CODE_LPAGE_TLB_ENTRIES=$CODE_LPAGE_TLB_ENTRIES -Pzap_test.CODE_SPAGE_TLB_ENTRIES=$CODE_SPAGE_TLB_ENTRIES -Pzap_test.CODE_CACHE_SIZE=$CODE_CACHE_SIZE ";
