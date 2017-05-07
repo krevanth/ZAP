@@ -123,8 +123,8 @@ begin
 
         case ( state_ff )
         IDLE:
-                // Activate only if no thumb.
-                casez ( (!i_cpsr_ff_t && (i_cpsr_ff_mode != USR)) ? i_instruction : 32'd0 )
+                // Activate only if no thumb, not in USER mode and CP15 access is requested.
+                casez ( (!i_cpsr_ff_t && (i_cpsr_ff_mode != USR) & (i_instruction[11:8] == 4'b1111)) ? i_instruction : 32'd0 )
                 MRC, MCR, LDC, STC, CDP:
                 begin
                         // Send ANDNV R0, R0, R0 instruction.
