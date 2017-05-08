@@ -32,7 +32,7 @@ module zap_predecode_coproc #(
         input wire              i_reset,
 
         // Instruction and valid qualifier.
-        input wire [31:0]       i_instruction,
+        input wire [34:0]       i_instruction,
         input wire              i_valid,
 
         // CPSR Thumb Bit.
@@ -63,7 +63,7 @@ module zap_predecode_coproc #(
         output reg              o_fiq,
 
         // Instruction and valid qualifier.
-        output reg [31:0]       o_instruction,
+        output reg [34:0]       o_instruction,
         output reg              o_valid,
 
         // We can generate stall if coprocessor is slow. We also have
@@ -108,6 +108,12 @@ end
 
 ///////////////////////////////////////////////////////////////////////////////
 
+wire c1 = !i_cpsr_ff_t;
+wire c2 = i_cpsr_ff_mode != USR;
+wire c3 = i_instruction[11:8] == 4'b1111;
+wire c4 = i_instruction[34:32] == 3'd0;
+wire c5 = c1 & c2 & c3 & c4;
+
 // Next state logic.
 always @*
 begin
@@ -124,7 +130,7 @@ begin
         case ( state_ff )
         IDLE:
                 // Activate only if no thumb, not in USER mode and CP15 access is requested.
-                casez ( (!i_cpsr_ff_t && (i_cpsr_ff_mode != USR) & (i_instruction[11:8] == 4'b1111)) ? i_instruction : 32'd0 )
+                casez ( (!i_cpsr_ff_t && (i_cpsr_ff_mode != USR) & (i_instruction[11:8] == 4'b1111) & (i_instruction[34:32] == 3'd0)) ? i_instruction[31:0] : 35'd0 )
                 MRC, MCR, LDC, STC, CDP:
                 begin
                         // Send ANDNV R0, R0, R0 instruction.

@@ -96,8 +96,9 @@ localparam IDLE                 = 0; /* Idle State */
 localparam FETCH_L1_DESC        = 1; /* Fetch L1 descriptor */
 localparam FETCH_L2_DESC        = 2; /* Fetch L2 descriptor */
 localparam REFRESH_CYCLE        = 3; /* Refresh TLBs and cache */
-
-localparam NUMBER_OF_STATES     = 4; 
+localparam FETCH_L1_DESC_0      = 4;
+localparam FETCH_L2_DESC_0      = 5;
+localparam NUMBER_OF_STATES     = 6; 
 
 // ----------------------------------------------------------------------------
 
@@ -129,6 +130,8 @@ assign o_wb_sel_nxt = wb_sel_nxt;
 
 assign o_unused_ok = 0 || i_baddr[13:0];
 
+reg [31:0] dff, dnxt;
+
 /* Combinational logic */
 always @*
 begin: blk1
@@ -155,6 +158,8 @@ begin: blk1
         dff_nxt         = dff_ff;
         state_nxt       = state_ff;
 
+		   dnxt = dff;
+
         case ( state_ff )
         IDLE:
         begin
@@ -179,7 +184,7 @@ begin: blk1
                                 tsk_prpr_wb_rd({i_baddr[`VA__TRANSLATION_BASE], 
                                            i_address[`VA__TABLE_INDEX], 2'd0});
 
-                                state_nxt = FETCH_L1_DESC;
+                                state_nxt = FETCH_L1_DESC_0;
                         end
                         else if ( i_fsr[3:0] != 4'b0000 ) /* Access Violation. */
                         begin
@@ -203,6 +208,17 @@ begin: blk1
                 end
         end
 
+		FETCH_L1_DESC_0:
+		begin
+			o_busy = 1;
+			if ( i_wb_ack )
+			begin
+				dnxt = i_wb_dat;
+				state_nxt = FETCH_L1_DESC;
+			end
+                        else tsk_hold_wb_access;
+		end
+
         FETCH_L1_DESC:
         begin
                 /*
@@ -214,13 +230,13 @@ begin: blk1
 
                 o_busy = 1'd1;
 
-                if ( i_wb_ack ) /* Wait for ACK. */
+                if ( 1 ) 
                 begin
                         $display($time, "%m :: ACK received. Read data is %x", i_wb_dat);
 `ifdef TLB_DEBUG
                         $stop;
 `endif
-                        case ( i_wb_dat[`ID] )
+                        case ( dff[`ID] )
 
                         SECTION_ID:
                         begin
@@ -231,7 +247,7 @@ begin: blk1
                                  */  
                                 o_setlb_wen       = 1'd1;
                                 o_setlb_wdata     = {i_address[`VA__SECTION_TAG], 
-                                                     i_wb_dat};
+                                                     dff};
                                 state_nxt       = REFRESH_CYCLE; 
 
                                 $display($time, "%m :: It is a section ID. Writing to section TLB as %x. Moving to refresh cycle...", o_setlb_wdata);
@@ -248,10 +264,10 @@ begin: blk1
                                  * reload the TLB, it would be useful. Anyway,
                                  * we need to initiate another access.
                                  */      
-                                dff_nxt         = i_wb_dat[`L1_PAGE__DAC_SEL];       
-                                state_nxt       = FETCH_L2_DESC;
+                                dff_nxt         = dff[`L1_PAGE__DAC_SEL];       
+                                state_nxt       = FETCH_L2_DESC_0;
 
-                                tsk_prpr_wb_rd({i_wb_dat[`L1_PAGE__PTBR], 
+                                tsk_prpr_wb_rd({dff[`L1_PAGE__PTBR], 
                                                   i_address[`VA__L2_TABLE_INDEX], 2'd0});
 
                                 $display($time, "%m :: Page ID.");
@@ -263,7 +279,7 @@ begin: blk1
                         default: /* Generate section translation fault. Fault Class II */
                         begin
                                 o_fsr        = FSR_SECTION_TRANSLATION_FAULT;
-                                o_fsr        = {i_wb_dat[`L1_SECTION__DAC_SEL], o_fsr[3:0]};
+                                o_fsr        = {dff[`L1_SECTION__DAC_SEL], o_fsr[3:0]};
                                 o_far        = i_address;
                                 o_fault      = 1'd1;
                                 o_busy       = 1'd0;
@@ -280,21 +296,31 @@ begin: blk1
                 else tsk_hold_wb_access;
         end
 
+		  FETCH_L2_DESC_0:
+		  begin
+				o_busy = 1;
+				if ( i_wb_ack )
+				begin
+					dnxt = i_wb_dat;
+					state_nxt = FETCH_L2_DESC;
+				end else tsk_hold_wb_access;
+		  end
+
         FETCH_L2_DESC:
         begin
                 o_busy = 1'd1;
 
-                if ( i_wb_ack )
+                if ( 1 ) //i_wb_ack )
                 begin
-                        case ( i_wb_dat[`ID] )
+                        case ( dff[`ID] )
                         SPAGE_ID:
                         begin
                                 /* Update TLB */
                                 o_sptlb_wen   = 1'd1;
 
-                                o_sptlb_wdata = { i_wb_dat[`VA__SPAGE_TAG],
+                                o_sptlb_wdata = { dff[`VA__SPAGE_TAG],
                                                   dff_ff[3:0],  /* DAC Selector from L1 */
-                                                  i_wb_dat };    
+                                                  dff };    
 
                                 state_nxt   = REFRESH_CYCLE;
                         end
@@ -305,8 +331,8 @@ begin: blk1
                                 o_lptlb_wen   = 1'd1;
 
                                 /* DAC is inserted in between to save bits */
-                                o_lptlb_wdata = {i_wb_dat[`VA__LPAGE_TAG],
-                                               i_wb_dat};
+                                o_lptlb_wdata = {dff[`VA__LPAGE_TAG],
+                                               dff};
                                 o_lptlb_wdata[`LPAGE_TLB__DAC_SEL] = dff_ff[3:0];
 
                                 state_nxt   = REFRESH_CYCLE;
@@ -317,7 +343,7 @@ begin: blk1
                                 o_busy    = 1'd0;
                                 o_fault   = 1'd1;
                                 o_fsr     = FSR_PAGE_TRANSLATION_FAULT;
-                                o_fsr     = {i_wb_dat[`L1_PAGE__DAC_SEL], o_fsr[3:0]};
+                                o_fsr     = {dff[`L1_PAGE__DAC_SEL], o_fsr[3:0]};
                                 o_far     = i_address;
                                 state_nxt = IDLE;
                         end
@@ -361,6 +387,7 @@ begin
 	        wb_adr_ff	<=	wb_adr_nxt;
                 dff_ff          <=      dff_nxt;
 	        wb_sel_ff	<=	wb_sel_nxt;
+			  dff <= dnxt;
         end
 end
 

@@ -469,6 +469,58 @@ zap_fifo
         .o_wb_cyc(o_instr_wb_cyc)
 );
 
+wire thumb_irq;
+wire thumb_fiq;
+wire thumb_iabort;
+wire [34:0] thumb_instruction;
+wire thumb_valid;
+wire thumb_und;
+wire thumb_force32;
+wire [1:0] thumb_bp_state;
+wire [31:0] thumb_pc_ff;
+wire [31:0] thumb_pc_plus_8_ff;
+
+// =========================
+// COMPRESSED DECODER STAGE
+// =========================
+zap_thumb_decoder u_zap_thumb_decoder (
+.i_clk          (i_clk),
+.i_reset        (i_reset),
+.i_code_stall   (1'd0),
+.i_clear_from_writeback(clear_from_writeback),
+.i_data_stall   (
+                                        o_data_wb_stb && 
+                                        o_data_wb_cyc && 
+                                        !i_data_wb_ack
+),
+.i_clear_from_alu(clear_from_alu),
+.i_stall_from_shifter(stall_from_shifter),
+.i_stall_from_issue(stall_from_issue),
+.i_stall_from_decode(stall_from_decode),
+.i_clear_from_decode(clear_from_decode),
+
+.i_taken        (fifo_bp_state),
+.i_instruction  (fifo_instruction),
+.i_instruction_valid(fifo_valid),
+.i_irq          (fifo_valid ? irq_sync && !alu_flags_ff[I] : 1'd0), // Pass interrupt only if mask = 0 and instruction exists.
+.i_fiq          (fifo_valid ? fiq_sync && !alu_flags_ff[F] : 1'd0), // Pass interrupt only if mask = 0 and instruction exists.
+.i_iabort       (fifo_instr_abort),
+.o_iabort       (thumb_iabort),
+.i_cpsr_ff_t    (alu_flags_ff[T]),
+.i_pc_ff        (fifo_pc_plus_8 - 32'd8),
+.i_pc_plus_8_ff (fifo_pc_plus_8),
+
+.o_instruction  (thumb_instruction),
+.o_instruction_valid (thumb_valid),
+.o_und          (thumb_und),
+.o_force32_align(thumb_force32),
+.o_pc_ff        (thumb_pc_ff),
+.o_pc_plus_8_ff (thumb_pc_plus_8_ff),
+.o_irq          (thumb_irq),
+.o_fiq          (thumb_fiq),
+.o_taken_ff     (thumb_bp_state)
+);
+
 // =========================
 // PREDECODE STAGE 
 // =========================
@@ -493,21 +545,25 @@ u_zap_predecode (
         .i_clear_from_alu               (clear_from_alu),
         .i_stall_from_shifter           (stall_from_shifter),
         .i_stall_from_issue             (stall_from_issue),
-        .i_irq                          (irq_sync),
-        .i_fiq                          (fiq_sync),
 
-        .i_abt                          (fifo_instr_abort),
-        .i_pc_plus_8_ff                 (fifo_pc_plus_8),
-        .i_pc_ff                        (fifo_pc_plus_8 - 32'd8),
+        .i_irq                          (thumb_irq),
+        .i_fiq                          (thumb_fiq),
+
+        .i_abt                          (thumb_iabort),
+        .i_pc_plus_8_ff                 (thumb_pc_plus_8_ff),
+        .i_pc_ff                        (thumb_pc_plus_8_ff - 32'd8),
 
         .i_cpu_mode_t                   (alu_flags_ff[T]),
-        .i_cpu_mode_f                   (alu_flags_ff[F]),
-        .i_cpu_mode_i                   (alu_flags_ff[I]),
+ //       .i_cpu_mode_f                   (alu_flags_ff[F]),
+ //       .i_cpu_mode_i                   (alu_flags_ff[I]),
         .i_cpu_mode_mode                (alu_flags_ff[`CPSR_MODE]),
 
-        .i_instruction                  (fifo_instruction),
-        .i_instruction_valid            (fifo_valid),
-        .i_taken                        (fifo_bp_state),
+        .i_instruction                  (thumb_instruction),
+        .i_instruction_valid            (thumb_valid),
+        .i_taken                        (thumb_bp_state),
+
+        .i_force32                      (thumb_force32),
+        .i_und                          (thumb_und),
 
         .i_copro_done                   (copro_done),
         .i_pipeline_dav                 (

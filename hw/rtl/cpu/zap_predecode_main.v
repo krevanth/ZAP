@@ -58,6 +58,8 @@ module zap_predecode_main #(
 
         // Branch state.
         input   wire     [1:0]                  i_taken,
+        input   wire                            i_force32,
+        input   wire                            i_und,
 
         // Clear and stall signals. From high to low priority.
         input wire                              i_code_stall,
@@ -84,12 +86,10 @@ module zap_predecode_main #(
 
         // CPU mode. Taken from CPSR in the ALU.
         input   wire                            i_cpu_mode_t, // T mode.
-                                                i_cpu_mode_i, // I mask.
-                                                i_cpu_mode_f, // F mask.
         input   wire [4:0]                      i_cpu_mode_mode, // CPU mode.
 
         // Instruction input.
-        input     wire  [31:0]                  i_instruction,    
+        input     wire  [34:0]                  i_instruction,    
         input     wire                          i_instruction_valid,
 
         // Instruction output      
@@ -139,11 +139,6 @@ localparam      ST      =       3; // Strongly Taken.
 
 ///////////////////////////////////////////////////////////////////////////////
 
-wire                            o_comp_und_nxt;
-wire    [3:0]                   o_condition_code_nxt;
-wire                            o_irq_nxt;
-wire                            o_fiq_nxt;
-wire                            o_abt_nxt;
 wire [35:0]                     o_instruction_nxt;
 wire                            o_instruction_valid_nxt;
 
@@ -154,20 +149,17 @@ wire arm_fiq;
 
 wire [34:0] arm_instruction;
 wire arm_instruction_valid;
-wire o_force32align_nxt;
 
 wire cp_stall;
-wire [31:0] cp_instruction;
+wire [34:0] cp_instruction;
 wire cp_instruction_valid;
 wire cp_irq;
 wire cp_fiq;
 
+wire o_irq_nxt;
+wire o_fiq_nxt;
+
 reg [1:0] taken_nxt;
-
-///////////////////////////////////////////////////////////////////////////////
-
-// Abort
-assign  o_abt_nxt = i_abt;
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -206,13 +198,13 @@ begin
         else
         begin
                 // Do not pass IRQ and FIQ if mask is 1.
-                o_irq_ff               <= o_irq_nxt & !i_cpu_mode_i; 
-                o_fiq_ff               <= o_fiq_nxt & !i_cpu_mode_f; 
-                o_abt_ff               <= o_abt_nxt;                    
-                o_und_ff               <= o_comp_und_nxt && i_instruction_valid;
+                o_irq_ff               <= i_irq; 
+                o_fiq_ff               <= i_fiq; 
+                o_abt_ff               <= i_abt;                    
+                o_und_ff               <= i_und && i_instruction_valid;
                 o_pc_plus_8_ff         <= i_pc_plus_8_ff;
                 o_pc_ff                <= i_pc_ff;
-                o_force32align_ff      <= o_force32align_nxt;
+                o_force32align_ff      <= i_force32;
                 o_taken_ff             <= taken_nxt;
                 o_instruction_ff       <= o_instruction_nxt;
                 o_instruction_valid_ff <= o_instruction_valid_nxt;
@@ -238,10 +230,6 @@ end
 
 ///////////////////////////////////////////////////////////////////////////////
 
-generate
-begin: gblk1
-if ( COPROCESSOR_INTERFACE_ENABLE ) begin: cm_en
-
 // This unit handles coprocessor stuff.
 zap_predecode_coproc 
 #(
@@ -252,8 +240,8 @@ u_zap_decode_coproc
         // Inputs from outside world.
         .i_clk(i_clk),
         .i_reset(i_reset),
-        .i_irq(i_instruction_valid ? i_irq : 1'd0),
-        .i_fiq(i_instruction_valid ? i_fiq : 1'd0),
+        .i_irq(i_irq),
+        .i_fiq(i_fiq),
         .i_instruction(i_instruction_valid ? i_instruction : 32'd0),
         .i_valid(i_instruction_valid),
         .i_cpsr_ff_t(i_cpu_mode_t),
@@ -287,66 +275,14 @@ u_zap_decode_coproc
         .o_copro_word_ff(o_copro_word_ff)
 );
 
-end
-else // Else generate block.
-begin: cm_dis
 
-assign cp_instruction           = i_instruction_valid ? i_instruction : 32'd0;
-assign cp_instruction_valid     = i_instruction_valid;
-assign cp_irq                   = i_instruction_valid ? i_irq : 1'd0;
-assign cp_fiq                   = i_instruction_valid ? i_fiq : 1'd0;
-assign cp_stall                 = 1'd0;
-assign o_copro_dav_ff           = 1'd0;
-assign o_copro_word_ff          = 32'd0;
-
-end
-
-end
-endgenerate
 
 ///////////////////////////////////////////////////////////////////////////////
 
-generate 
-begin: gblk2 
-        if ( COMPRESSED_EN ) 
-        begin: cmp_en
-
-                // Implements a custom 16-bit compressed instruction set.
-                zap_predecode_compress
-                u_zap_predecode_compress
-                (
-                        .i_clk(i_clk),
-                        .i_reset(i_reset),
-                        .i_irq(cp_irq),
-                        .i_fiq(cp_fiq),
-                        .i_instruction(cp_instruction),
-                        .i_instruction_valid(cp_instruction_valid),
-                        .i_cpsr_ff_t(i_cpu_mode_t),
-
-                        .i_code_stall(i_code_stall),               
- 
-                        .o_instruction(arm_instruction),
-                        .o_instruction_valid(arm_instruction_valid),
-                        .o_irq(arm_irq),
-                        .o_fiq(arm_fiq),
-                        .o_force32_align(o_force32align_nxt),
-                        .o_und(o_comp_und_nxt)
-                );
-
-        end 
-        else 
-        begin: cmp_dis
-
-                assign arm_instruction = cp_instruction;
-                assign arm_instruction_valid = cp_instruction_valid;
-                assign arm_irq = cp_irq;
-                assign arm_fiq = cp_fiq;
-                assign o_force32align_nxt = 1'd0;
-                assign o_comp_und_nxt = 1'd0;
-
-        end
-end
-endgenerate
+                assign arm_instruction          = cp_instruction;
+                assign arm_instruction_valid    = cp_instruction_valid;
+                assign arm_irq                  = cp_irq;
+                assign arm_fiq                  = cp_fiq;
 
 ///////////////////////////////////////////////////////////////////////////////
 
