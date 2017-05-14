@@ -35,8 +35,8 @@ my $system = 'dialog --backtitle "ZAP Simulation Options" --title "ZAP Simulatio
         "FIQ from bench(Y/N)?"                                                                  12 1 "N" 12 25 25 30\
         "Scratch path"                                                                          13 1 "/tmp" 13 25 25 30\
         "Max clock cycles"                                                                      14 1 "100000" 14 25 25 30\
-        "RTL file list"                                                                         15 1 "../rtl/rtl_files.list" 15 25 25 30\
-        "Bench file list"                                                                       16 1 "../tb/bench_files.list" 16 25 25 30\
+        "RTL file list"                                                                         15 1 "../rtl/zap/zap_rtl_files.list" 15 25 25 30\
+        "Bench file list"                                                                       16 1 "../tb/zap/zap_tb_files.list" 16 25 25 30\
         "Branch predictor entries"                                                              17 1 "1024" 17 25 25 30\
         "FIFO depth"                                                                            18 1 "4" 18 25 25 30\
         "Post processing script"                                                                19 1 "post_process.pl" 19 25 25 30\
@@ -121,7 +121,7 @@ print "
 
         $command = " perl run_sim.pl +zap_root+$zap_home +test+$testcase +ram_size+$ram_size +dump_start+$memdumpstart +scratch+$scratch_path +max_clock_cycles+$maxclockcycles +rtl_file_list+$rtlfilelist +tb_file_list+$tbfilelist +bp+$bp +fifo+$fifo +post_process+$pps "; 
 } else {
-        print "Zenity ERROR. Form not entered correctly!";
+        die "*E: ERROR. Form not entered correctly!";
 }
 
 if ( $seed =~ m/^\s*[0-9]+\s*$/ )       { $command .= " +seed+$seed"; }

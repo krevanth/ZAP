@@ -114,9 +114,9 @@ my $VCD_PATH        = "$SCRATCH/zap.vcd";
 my $PROG_PATH       = "$SCRATCH/zap_mem.v";
 my $TARGET_BIN_PATH = "$SCRATCH/zap.bin";
 my $POST_PROCESS    = "perl $PPF $LOG_FILE_PATH"; 
-my $ASM_PATH        = "$ZAP_HOME/sw/$TEST/$TEST.s"; 
-my $C_PATH          = "$ZAP_HOME/sw/$TEST/$TEST.c"; 
-my $LINKER_PATH     = "$ZAP_HOME/sw/$TEST/$TEST.ld";
+my $ASM_PATH        = "$ZAP_HOME/sw/tests/$TEST/$TEST.s"; 
+my $C_PATH          = "$ZAP_HOME/sw/tests/$TEST/$TEST.c"; 
+my $LINKER_PATH     = "$ZAP_HOME/sw/tests/$TEST/$TEST.ld";
 
 # Generate IVL options.
 my $IVL_OPTIONS .= "-v -f $RTL_FILE_LIST -f $BENCH_FILE_LIST -o $VVP_PATH -gstrict-ca-eval -Wall -g2001 -Winfloop -DSEED=$SEED -DMEMORY_IMAGE=\\\"$PROG_PATH\\\" ";
