@@ -3,8 +3,10 @@
 void main (void)
 {
         char *x = (char *)2000;
+        float *y = (float*) 2004;
         x[0] = 5;
-        x[1] = fact(x[0]);               
+        x[1] = fact(x[0]);    
+        *y = 3.14;           
 }
 
 int fact (int x)
