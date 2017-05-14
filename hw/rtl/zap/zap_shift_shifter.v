@@ -60,8 +60,14 @@ begin
                 // arithmetic shift right.
                 LSL:    {o_carry, o_result} = {i_carry, i_source} << i_amount;
                 LSR:    {o_result, o_carry} = {i_source, i_carry} >> i_amount;
-                ASR:    {o_result, o_carry} = 
-                        ($signed(($signed(i_source) << 1)|i_carry)) >> i_amount;
+                ASR:    
+                begin:blk1111
+                        reg signed [32:0] res, res1;
+                        res = {i_source, i_carry};
+                        res1 = $signed(res) >>> i_amount;
+                        {o_result, o_carry} = res1;
+                end
+//                        ($signed(($signed(i_source) << 1)|i_carry)) >> i_amount;
 
                 ROR: // Rotate right.
                 begin
