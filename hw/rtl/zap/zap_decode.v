@@ -580,8 +580,10 @@ begin
         // Select SPSR or CPSR.
         o_alu_operation  = i_instruction[22] ? MMOV : FMOV;
 
-        o_alu_source     = i_instruction[25] ? (i_instruction[19:16] & 4'b1000) 
-                           : (i_instruction[19:16] & 4'b1001);
+        o_alu_source     = i_instruction[19:16]; 
+        // TBD
+        //!i_instruction[22] ? ( i_instruction[25] ? (i_instruction[19:16] & 4'b1000) 
+        //                   : (i_instruction[19:16] & 4'b1001) ) : ( i_instruction[19:16] & 4'b1001 ) ;
         o_alu_source[32] = IMMED_EN;
 
         // Part of the instruction will silently fail when changing mode bits
