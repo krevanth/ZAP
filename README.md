@@ -27,6 +27,7 @@ Wishbone B3 compatible 32-bit instruction and data busses.
     Branch prediction supported.
     Split I and D writeback cache (Size can be configured using parameters).
     Split I and D MMUs (TLB size can be configured using parameters).
+    Base restored abort model to simplify data abort handling.
 
 ### Pipeline Overview :
 
