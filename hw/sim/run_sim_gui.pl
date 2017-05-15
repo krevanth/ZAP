@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 die "*E: Icarus Verilog does not exist! Please install iverilog" if system("which iverilog");
+die "*E: GCC ARM developement tools not found. Please install." if system("which arm-none-eabi-gcc");
 die "*E: GTKWave does not exist! Please install gtkwave" if system("which gtkwave");
 die "*E: Dialog does not exist! Please install dialog" if system("which dialog");
 die "*E: XTerm does not exist! Please install xterm" if system("which xterm");
