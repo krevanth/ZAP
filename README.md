@@ -16,12 +16,12 @@ Alpha. Thumb v1 support is experimental.
 
 ### Bus Interface 
  
-Wishbone B3 compatible 32-bit instruction and data busses.
+Wishbone B3 compatible 32-bit bus.
 
 ### Features 
 
     Fully synthesizable Verilog-2001 core.    
-    Can execute 32-bit ARMv4 and 16 bit Thumb v1 code (Experimental).
+    Can execute 32-bit ARMv4 and 16 bit Thumb v1 code(Experimental).
     Wishbone B3 compatible interface. Cache unit supports burst access.
     10-stage pipeline design. Pipeline has bypass network to resolve dependencies.
     2 write ports for the register file to allow LDR/STR with writeback to execute as a single instruction.

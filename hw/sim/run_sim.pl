@@ -178,7 +178,8 @@ die "*E: Verilog Compilation Failed!\n" if system("iverilog $IVL_OPTIONS");
 die "*E: VVP execution error!\n" if system("vvp $VVP_PATH | tee $LOG_FILE_PATH");
 
 # Check for success or failure.
-die "*E: Bad config.vh for synthesis or some other fatal error! Please check!\n" unless system("grep \\*E $LOG_FILE_PATH");
+die "*E: An error occurred! Please check ERRORS!\n" unless system("grep \\*E $LOG_FILE_PATH");
+die "*E: An error occurred! Please check WARNINGS!\n" unless system("grep \\*W $LOG_FILE_PATH");
 
 # A custom perl script to analyze the output log.
 die "*E: Could not post-process the log file!\n" if system("$POST_PROCESS");
