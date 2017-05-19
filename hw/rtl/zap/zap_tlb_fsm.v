@@ -343,7 +343,7 @@ begin: blk1
                                 o_busy    = 1'd0;
                                 o_fault   = 1'd1;
                                 o_fsr     = FSR_PAGE_TRANSLATION_FAULT;
-                                o_fsr     = {dff[`L1_PAGE__DAC_SEL], o_fsr[3:0]};
+                                o_fsr     = {1'd0, dac_ff, o_fsr[3:0]};
                                 o_far     = i_address;
                                 state_nxt = IDLE;
                         end
