@@ -102,7 +102,7 @@ localparam NUMBER_OF_STATES     = 6;
 
 // ----------------------------------------------------------------------------
 
-reg [3:0] dff_ff, dff_nxt;                              /* Scratchpad register */
+reg [3:0] dac_ff, dac_nxt;                              /* Scratchpad register */
 reg [$clog2(NUMBER_OF_STATES)-1:0] state_ff, state_nxt; /* State register */
 
 /* Wishbone related */
@@ -130,7 +130,7 @@ assign o_wb_sel_nxt = wb_sel_nxt;
 
 assign o_unused_ok = 0 || i_baddr[13:0];
 
-reg [31:0] dff, dnxt;
+reg [31:0] dff, dnxt; /* Wishbone memory buffer. */
 
 /* Combinational logic */
 always @*
@@ -155,7 +155,7 @@ begin: blk1
         wb_adr_nxt      = 0;
 	wb_sel_nxt	= 0;
 
-        dff_nxt         = dff_ff;
+        dac_nxt         = dac_ff;
         state_nxt       = state_ff;
 
 		   dnxt = dff;
@@ -223,7 +223,7 @@ begin: blk1
         begin
                 /*
                  * What we would have fetched is the L1 descriptor.
-                 * Examine it.
+                 * Examine it. dff holds the L1 descriptor.
                  */
 
                 $display($time, "%m :: In FETCH_L1_DESC state...");
@@ -264,7 +264,7 @@ begin: blk1
                                  * reload the TLB, it would be useful. Anyway,
                                  * we need to initiate another access.
                                  */      
-                                dff_nxt         = dff[`L1_PAGE__DAC_SEL];       
+                                dac_nxt         = dff[`L1_PAGE__DAC_SEL];  // dac register holds the dac sel for future use.
                                 state_nxt       = FETCH_L2_DESC_0;
 
                                 tsk_prpr_wb_rd({dff[`L1_PAGE__PTBR], 
@@ -310,17 +310,19 @@ begin: blk1
         begin
                 o_busy = 1'd1;
 
-                if ( 1 ) //i_wb_ack )
+                if ( 1 )
                 begin
-                        case ( dff[`ID] )
+                        case ( dff[`ID] ) // dff holds L2 descriptor. dac_ff holds L1 descriptor DAC.
                         SPAGE_ID:
                         begin
                                 /* Update TLB */
                                 o_sptlb_wen   = 1'd1;
 
-                                o_sptlb_wdata = { dff[`VA__SPAGE_TAG],
-                                                  dff_ff[3:0],  /* DAC Selector from L1 */
-                                                  dff };    
+                                o_sptlb_wdata[`SPAGE_TLB__TAG]     = i_address[`VA__SPAGE_TAG];
+                                o_sptlb_wdata[`SPAGE_TLB__DAC_SEL] = dac_ff; /* DAC selector from L1. */
+                                o_sptlb_wdata[`SPAGE_TLB__AP]      = dff[`L2_SPAGE__AP];
+                                o_sptlb_wdata[`SPAGE_TLB__CB]      = dff[`L2_SPAGE__CB];
+                                o_sptlb_wdata[`SPAGE_TLB__BASE]    = dff[`L2_SPAGE__BASE];
 
                                 state_nxt   = REFRESH_CYCLE;
                         end
@@ -331,9 +333,7 @@ begin: blk1
                                 o_lptlb_wen   = 1'd1;
 
                                 /* DAC is inserted in between to save bits */
-                                o_lptlb_wdata = {dff[`VA__LPAGE_TAG],
-                                               dff};
-                                o_lptlb_wdata[`LPAGE_TLB__DAC_SEL] = dff_ff[3:0];
+                                o_lptlb_wdata = {i_address[`VA__LPAGE_TAG], dac_ff, dff};
 
                                 state_nxt   = REFRESH_CYCLE;
                         end
@@ -385,7 +385,7 @@ begin
                 wb_stb_ff       <=      wb_stb_nxt;
                 wb_cyc_ff       <=      wb_cyc_nxt;
 	        wb_adr_ff	<=	wb_adr_nxt;
-                dff_ff          <=      dff_nxt;
+                dac_ff          <=      dac_nxt;
 	        wb_sel_ff	<=	wb_sel_nxt;
 			  dff <= dnxt;
         end
