@@ -83,6 +83,14 @@ localparam COMPRESSED_EN = 1'd1;
 `include "zap_localparams.vh"
 `include "zap_functions.vh"
 
+wire wb_cyc, wb_stb, wb_we;
+wire [3:0] wb_sel;
+wire [31:0] wb_dat, wb_idat;
+wire [31:0] wb_adr;
+wire [2:0] wb_cti;
+wire wb_ack;
+
+
 wire rst_sync;
 
 zap_reset_sync U_RST_SYNC ( .i_clk(i_clk), .i_reset(i_reset), .o_reset(rst_sync) );
@@ -268,7 +276,7 @@ u_data_cache (
 .o_wb_adr       (),
 .o_wb_cti       (),
 
-.i_wb_dat       (i_wb_dat),
+.i_wb_dat       (wb_dat),
 .i_wb_ack       (d_wb_ack),
 
 .o_wb_stb_nxt   (d_wb_stb),
@@ -321,7 +329,7 @@ u_code_cache (
 .o_wb_adr       (),
 .o_wb_cti       (),
 
-.i_wb_dat       (i_wb_dat),
+.i_wb_dat       (wb_dat),
 .i_wb_ack       (c_wb_ack),
 
 .o_wb_stb_nxt   (c_wb_stb),
@@ -356,16 +364,40 @@ zap_wb_merger u_zap_wb_merger (
 .i_d_wb_cti(d_wb_cti),
 .o_d_wb_ack(d_wb_ack),
 
+.o_wb_cyc(wb_cyc),
+.o_wb_stb(wb_stb),
+.o_wb_wen(wb_we),
+.o_wb_sel(wb_sel),
+.o_wb_dat(wb_idat),
+.o_wb_adr(wb_adr),
+.o_wb_cti(wb_cti),
+.i_wb_ack(wb_ack)
+
+);
+
+zap_wb_adapter u_zap_wb_adapter (
+.i_clk(i_clk),
+.i_reset(i_reset),
+
+.I_WB_CYC(wb_cyc),
+.I_WB_STB(wb_stb),
+.I_WB_WE(wb_we),
+.I_WB_DAT(wb_idat),
+.I_WB_SEL(wb_sel),
+.I_WB_CTI(wb_cti),
+.O_WB_ACK(wb_ack),
+.O_WB_DAT(wb_dat),
+.I_WB_ADR(wb_adr),
+
 .o_wb_cyc(o_wb_cyc),
 .o_wb_stb(o_wb_stb),
-.o_wb_wen(o_wb_we),
+.o_wb_we(o_wb_we),
 .o_wb_sel(o_wb_sel),
 .o_wb_dat(o_wb_dat),
 .o_wb_adr(o_wb_adr),
 .o_wb_cti(o_wb_cti),
-//.i_wb_dat(i_wb_dat),
+.i_wb_dat(i_wb_dat),
 .i_wb_ack(i_wb_ack)
-
 );
 
-endmodule // zap_top_single_if.v
+endmodule // zap_top.v

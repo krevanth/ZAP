@@ -21,6 +21,7 @@ Wishbone B3 compatible 32-bit bus.
 ### Features 
 
     Fully synthesizable Verilog-2001 core.    
+    Store buffer for improved performance.    
     Can execute 32-bit ARMv4 and 16 bit Thumb v1 code(Experimental).
     Wishbone B3 compatible interface. Cache unit supports burst access.
     10-stage pipeline design. Pipeline has bypass network to resolve dependencies.

@@ -174,7 +174,7 @@ u_zap_cache_fsm         (
 .o_wb_cti_ff            (),
 .o_wb_cti_nxt           (wb_cti[0]),
 .i_wb_dat               (i_wb_dat),
-.i_wb_ack               (i_wb_ack)
+.i_wb_ack               (wb_ack[0])
 );
 
 zap_cache_tag_ram #(.CACHE_SIZE(CACHE_SIZE))    
@@ -221,7 +221,7 @@ u_zap_cache_tag_ram     (
 .o_wb_cti_ff            (),
 .o_wb_cti_nxt           (wb_cti[1]),
 .i_wb_dat               (i_wb_dat),
-.i_wb_ack               (i_wb_ack)
+.i_wb_ack               (wb_ack[1])
 );
 
 zap_tlb #(
@@ -256,13 +256,21 @@ u_zap_tlb (
 .o_wb_sel_nxt   (wb_sel[2]),
 .o_wb_dat_nxt   (wb_dat[2]),
 .i_wb_dat       (i_wb_dat),
-.i_wb_ack       (i_wb_ack)
+.i_wb_ack       (wb_ack[2])
 );
+
+localparam S0=0;
+localparam S1=1;
+localparam S2=2;
+
+reg [2:0] wb_ack;
+reg [1:0] state_ff, state_nxt;
 
 always @ (posedge i_clk)
 begin
         if ( i_reset )
         begin
+                state_ff <= S0;
                 o_wb_stb <= 1'd0;
                 o_wb_cyc <= 1'd0; 
                 o_wb_adr <= 32'd0;
@@ -273,27 +281,48 @@ begin
         end
         else
         begin
-                // Simple OR from 3 sources.
-                o_wb_stb <= wb_stb[0] | wb_stb[1] | wb_stb[2];
-                o_wb_cyc <= wb_cyc[0] | wb_cyc[1] | wb_cyc[2];
-                o_wb_adr <= wb_adr[0] | wb_adr[1] | wb_adr[2];
-                o_wb_cti <= wb_cti[0] | wb_cti[1] | wb_cti[2];
-                o_wb_sel <= wb_sel[0] | wb_sel[1] | wb_sel[2];
-                o_wb_dat <= wb_dat[0] | wb_dat[1] | wb_dat[2];
-                o_wb_wen <= wb_wen[0] | wb_wen[1] | wb_wen[2];
+                state_ff <= state_nxt;
+                o_wb_stb <= o_wb_stb_nxt; 
+                o_wb_cyc <= o_wb_cyc_nxt; 
+                o_wb_adr <= o_wb_adr_nxt; 
+                o_wb_cti <= o_wb_cti_nxt; 
+                o_wb_sel <= o_wb_sel_nxt; 
+                o_wb_dat <= o_wb_dat_nxt; 
+                o_wb_wen <= o_wb_wen_nxt; 
         end
+end
+
+always @*
+begin
+                casez({wb_cyc[2],wb_cyc[1],wb_cyc[0]})
+                3'b1?? : state_nxt = S2; // TLB.
+                3'b01? : state_nxt = S1; // Tag.
+                3'b001 : state_nxt = S0; // Cache.
+                default: state_nxt = state_ff;                                       
+                endcase
+end
+
+always @*
+begin
+        wb_ack = 0;
+
+        case(state_ff)
+        S0: wb_ack[0] = i_wb_ack;
+        S1: wb_ack[1] = i_wb_ack;
+        S2: wb_ack[2] = i_wb_ack;
+        endcase
 end
 
 // Combo signals for external MUXing.
 always @*
 begin
-                o_wb_stb_nxt = wb_stb[0] | wb_stb[1] | wb_stb[2];
-                o_wb_cyc_nxt = wb_cyc[0] | wb_cyc[1] | wb_cyc[2];
-                o_wb_adr_nxt = wb_adr[0] | wb_adr[1] | wb_adr[2];
-                o_wb_cti_nxt = wb_cti[0] | wb_cti[1] | wb_cti[2];
-                o_wb_sel_nxt = wb_sel[0] | wb_sel[1] | wb_sel[2];
-                o_wb_dat_nxt = wb_dat[0] | wb_dat[1] | wb_dat[2];
-                o_wb_wen_nxt = wb_wen[0] | wb_wen[1] | wb_wen[2];
+        o_wb_stb_nxt = wb_stb[state_nxt];
+        o_wb_cyc_nxt = wb_cyc[state_nxt];
+        o_wb_adr_nxt = wb_adr[state_nxt];
+        o_wb_dat_nxt = wb_dat[state_nxt];
+        o_wb_cti_nxt = wb_cti[state_nxt];
+        o_wb_sel_nxt = wb_sel[state_nxt];
+        o_wb_wen_nxt = wb_wen[state_nxt];
 end
 
 // synopsys translate_off

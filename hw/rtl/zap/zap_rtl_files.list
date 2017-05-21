@@ -26,6 +26,7 @@ ${ZAP_HOME}/hw/rtl/zap/zap_cache_tag_ram.v
 ${ZAP_HOME}/hw/rtl/zap/zap_cache.v
 ${ZAP_HOME}/hw/rtl/zap/zap_wb_merger.v
 ${ZAP_HOME}/hw/rtl/zap/zap_thumb_decoder.v
+${ZAP_HOME}/hw/rtl/zap/zap_wb_adapter.v
 +libdir+${ZAP_HOME}/hw/rtl/zap/
 +incdir+${ZAP_HOME}/hw/rtl/zap/
 
