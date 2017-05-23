@@ -41,7 +41,6 @@ module zap_core #(
 
 // Clock and reset.
 input wire                              i_clk,                  // ZAP clock.        
-input wire                              i_clk_multipump,        // 2x ZAP clock for register file.
 input wire                              i_reset,                // Active high synchronous reset.
 
 // Wishbone memory access for data.
@@ -1117,7 +1116,6 @@ u_zap_regf
 
         .i_clk                  (i_clk), // ZAP clock.
 
-        .i_clk_multipump       (i_clk_multipump),  // 2xZAP clock.
 
         .i_reset                (reset),           // ZAP reset.
         .i_valid                (memory_dav_ff),

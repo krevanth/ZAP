@@ -32,7 +32,6 @@ module zap_register_file #(
         // Clock and reset.
         input wire                           i_clk, 
 
-        input wire                           i_clk_multipump,    // ZAP clock and 2x clock.
 
         input wire                           i_reset,   // ZAP reset.
 
@@ -184,8 +183,7 @@ end
 
 zap_regf_bram_wrapper u_bram_wrapper
 (
- .i_clk_multipump(       i_clk_multipump ),
-
+.i_clk(i_clk),
  .i_reset        (       i_reset         ),       
 
  .i_wr_addr_a    (       wa1             ),

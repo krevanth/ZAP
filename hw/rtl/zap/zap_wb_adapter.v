@@ -24,8 +24,8 @@ output reg [31:0]       O_WB_DAT,
 output reg              O_WB_ACK,     
 
 // Wishbone interface.
-output wire                  o_wb_cyc,
-output wire                  o_wb_stb,
+output reg                   o_wb_cyc,
+output reg                   o_wb_stb,
 output wire     [31:0]       o_wb_dat,
 output wire     [31:0]       o_wb_adr,
 output wire     [3:0]        o_wb_sel,
@@ -45,23 +45,25 @@ wire w_eob;
 wire w_full;
 
 assign    o_wb_cti = {w_eob, 1'd1, w_eob};
-assign    o_wb_cyc = o_wb_stb;
+
+wire w_emp;
 
 // {SEL, DATA, ADDR, EOB, WEN} = 4 + 64 + 1 + 1 = 70 bit.
-zap_sync_fifo #(.WIDTH(70), .DEPTH(16), .FWFT(1'd1)) U_STORE_FIFO (
+zap_sync_fifo #(.WIDTH(70), .DEPTH(32), .FWFT(1'd0)) U_STORE_FIFO (
 .i_clk          (i_clk),
 .i_reset        (i_reset),
-.i_ack          (i_wb_ack),
+.i_ack          ((i_wb_ack && o_wb_stb) || emp_ff),
 .i_wr_en        (fsm_write_en),
 .i_data         (fsm_write_data),
 .o_data         ({o_wb_sel, o_wb_dat, o_wb_adr, w_eob, o_wb_we}),
-.o_empty        (),
+.o_empty        (w_emp),
 .o_full         (w_full),
-.o_empty_n      (o_wb_stb),
+.o_empty_n      (),
 .o_full_n       (),
 .o_full_n_nxt   ()
 );
 
+reg emp_ff;
 reg [31:0] ctr_nxt, ctr_ff;
 reg [31:0] dff, dnxt;
 reg ack;        // ACK write channel.
@@ -76,6 +78,23 @@ localparam WAIT2 = 6;
 localparam NUMBER_OF_STATES = 7;
 
 reg [$clog2(NUMBER_OF_STATES)-1:0] state_ff, state_nxt;
+
+// FIFO pipeline register.
+always @ (posedge i_clk)
+begin
+        if ( i_reset )
+        begin
+                emp_ff   <= 1'd1;
+                o_wb_stb <= 1'd0;
+                o_wb_cyc <= 1'd0;
+        end
+        else if ( emp_ff || (i_wb_ack && o_wb_stb) )
+        begin
+                emp_ff   <= w_emp;
+                o_wb_stb <= !w_emp;
+                o_wb_cyc <= !w_emp;
+        end
+end
 
 // Flip flop clocking block.
 always @ (posedge i_clk)

@@ -9,7 +9,6 @@ ${ZAP_HOME}/hw/rtl/zap/zap_predecode_compress.v
 ${ZAP_HOME}/hw/rtl/zap/zap_predecode_coproc.v
 ${ZAP_HOME}/hw/rtl/zap/zap_predecode_main.v
 ${ZAP_HOME}/hw/rtl/zap/zap_predecode_mem_fsm.v
-${ZAP_HOME}/hw/rtl/zap/zap_regf_block_ram.v
 ${ZAP_HOME}/hw/rtl/zap/zap_regf_bram_wrapper.v
 ${ZAP_HOME}/hw/rtl/zap/zap_register_file.v
 ${ZAP_HOME}/hw/rtl/zap/zap_shifter_main.v

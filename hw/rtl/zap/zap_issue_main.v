@@ -367,7 +367,7 @@ begin
                                 i_rd_data_0, 
                                 i_rd_data_1, 
                                 i_rd_data_2, 
-                                i_rd_data_3 
+                                i_rd_data_3, i_memory_mem_srcdest_value_ff, i_cpu_mode, i_pc_plus_8_ff 
         );
         
         
@@ -387,7 +387,7 @@ begin
                                 i_rd_data_0, 
                                 i_rd_data_1, 
                                 i_rd_data_2, 
-                                i_rd_data_3 
+                                i_rd_data_3, i_memory_mem_srcdest_value_ff, i_cpu_mode, i_pc_plus_8_ff 
         );
         
         o_shift_length_value_nxt= 
@@ -406,7 +406,7 @@ begin
                                 i_rd_data_0, 
                                 i_rd_data_1, 
                                 i_rd_data_2, 
-                                i_rd_data_3 
+                                i_rd_data_3, i_memory_mem_srcdest_value_ff, i_cpu_mode, i_pc_plus_8_ff 
         );
         
         // Value of a register index, never an immediate.
@@ -426,7 +426,7 @@ begin
                                 i_rd_data_0, 
                                 i_rd_data_1, 
                                 i_rd_data_2, 
-                                i_rd_data_3    
+                                i_rd_data_3, i_memory_mem_srcdest_value_ff, i_cpu_mode, i_pc_plus_8_ff    
         ); 
 
 end
@@ -487,7 +487,8 @@ function [31:0] get_register_value (
         input                           i_memory_mem_load_ff,               
 
         // Data read from register file.
-        input [31:0]                    i_rd_data_0, i_rd_data_1, i_rd_data_2, i_rd_data_3 
+        input [31:0]                    i_rd_data_0, i_rd_data_1, i_rd_data_2, i_rd_data_3, 
+                                        i_memory_mem_srcdest_value_ff, i_cpu_mode, i_pc_plus_8_ff
 );
 
 reg [31:0] get;

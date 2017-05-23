@@ -25,6 +25,9 @@
 
 module zap_top #(
 
+// Enable internal reset synchronizer.
+parameter               INTERNAL_RESET_SYNC     = 1'd0,
+
 // Enable cache and MMU.
 parameter               BP_ENTRIES              = 1024, // Predictor depth.
 parameter               FIFO_DEPTH              = 4,    // FIFO depth.
@@ -50,7 +53,6 @@ parameter [31:0] CODE_CACHE_SIZE          =  32'd1024  // Cache size in bytes.
         input   wire            i_clk,
 
         // Multipump clock for the multi-ported register file.
-        input   wire            i_clk_multipump,
 
         // Reset. 
         // This reset is passed through a reset
@@ -93,7 +95,18 @@ wire wb_ack;
 
 wire rst_sync;
 
-zap_reset_sync U_RST_SYNC ( .i_clk(i_clk), .i_reset(i_reset), .o_reset(rst_sync) );
+generate
+begin: grstblk
+        if ( INTERNAL_RESET_SYNC )
+        begin:a1
+                zap_reset_sync U_RST_SYNC ( .i_clk(i_clk), .i_reset(i_reset), .o_reset(rst_sync) );
+        end
+        else
+        begin:a55
+                assign rst_sync = i_reset;        
+        end
+end
+endgenerate
 
 wire cpu_mmu_en;
 wire [31:0] cpu_cpsr;
@@ -148,7 +161,6 @@ zap_core #(
 ) u_zap_core
 (
 .i_clk                  (i_clk),
-.i_clk_multipump        (i_clk_multipump),
 .i_reset                (rst_sync),
 
 

@@ -142,7 +142,6 @@ parameter BP_ENTRIES                    = 1024;
 ///////////////////////////////////////////////////////////////////////////////
 
 reg             i_clk;
-reg             i_clk_multipump;
 reg             i_reset;
 
 reg             i_irq;
@@ -233,6 +232,8 @@ endtask
 // Processor core.
 // =========================
 zap_top #(
+        // Assume reset sync is placed outside.
+        .INTERNAL_RESET_SYNC(1'd0),
 
         // Configure FIFO depth and BP entries.
         .FIFO_DEPTH(FIFO_DEPTH),
@@ -253,7 +254,6 @@ zap_top #(
 u_zap_top 
 (
         .i_clk(i_clk),
-        .i_clk_multipump(i_clk_multipump),
         .i_reset(i_reset),
         .i_irq(i_irq),
         .i_fiq(i_fiq),
@@ -310,14 +310,6 @@ integer i;
 // ===========================
 initial i_clk    = 0;
 always #10 i_clk = !i_clk;
-
-initial
-begin
-        i_clk_multipump = 0;
-
-        #5;
-        forever #5 i_clk_multipump = !i_clk_multipump;        
-end
 
 integer seed = `SEED;
 

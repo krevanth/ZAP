@@ -235,8 +235,8 @@ begin
 
                 r[0]            <= 32'h1;
                 r[1][1]         <= 1'd1;
-                r[1][3]         <= 1'd0;
-                r[1][7:4]       <= 4'b1111;
+                r[1][3]         <= 1'd1; // Write buffer always enabled.
+                r[1][7:4]       <= 4'b0011; // 0 = Little Endian, 0 = 0, 1 = 32-bit address range, 1 = 32-bit handlers enabled.
                 r[1][11]        <= 1'd1;                
                 r[1][13]        <= 1'd0;
 
