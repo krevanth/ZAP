@@ -204,7 +204,6 @@ begin
         if ( i_reset )
         begin
                 state          <= IDLE;
-                r[0]           <= 32'h1; // ID register reads -1.
                 o_dcache_inv   <= 1'd0;
                 o_icache_inv   <= 1'd0;
                 o_dcache_clean <= 1'd0;
@@ -216,6 +215,8 @@ begin
                 o_reg_wr_data  <= 0;
                 o_reg_wr_index <= 0;
                 o_reg_rd_index <= 0;
+
+                r[0]           <= 32'h0; 
                 r[1]           <= 32'd0;
                 r[2]           <= 32'd0;
                 r[3]           <= 32'd0;
@@ -223,9 +224,13 @@ begin
                 r[5]           <= 32'd0;
                 r[6]           <= 32'd0;
 
-`ifdef SIM
-                ops             <= 0;
-`endif
+                // Default values.
+                r[0][23:16]     <= 32'h1;
+                r[1][1]         <= 1'd1;
+                r[1][3]         <= 1'd1; // Write buffer always enabled.
+                r[1][7:4]       <= 4'b0011; // 0 = Little Endian, 0 = 0, 1 = 32-bit address range, 1 = 32-bit handlers enabled.
+                r[1][11]        <= 1'd1;                
+                r[1][13]        <= 1'd0;
         end
         else
         begin
@@ -233,7 +238,7 @@ begin
                 ops             <= 0;
 `endif
 
-                r[0]            <= 32'h1;
+                r[0][23:16]     <= 32'h1;
                 r[1][1]         <= 1'd1;
                 r[1][3]         <= 1'd1; // Write buffer always enabled.
                 r[1][7:4]       <= 4'b0011; // 0 = Little Endian, 0 = 0, 1 = 32-bit address range, 1 = 32-bit handlers enabled.
