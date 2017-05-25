@@ -159,8 +159,8 @@ wire reset; // From reset synchronizer.
 wire shelve;
 
 // Interrupt synchronizer.
-wire fiq_sync;
-wire irq_sync;
+wire fiq;
+wire irq;
 
 // Clear and stall signals.
 wire stall_from_decode;
@@ -376,8 +376,8 @@ assign o_instr_wb_sel = 4'b1111;
 // ----------------------------------------------------------------------------
 
 assign reset    = i_reset; // Assume external synchronizer.
-assign irq_sync = i_irq; // Assume externally synchronized to core clock.
-assign fiq_sync = i_fiq; // Assume externally synchronized to core clock.
+assign irq      = i_irq; // Assume externally synchronized to core clock.
+assign fiq      = i_fiq; // Assume externally synchronized to core clock.
 
 // ----------------------------------------------------------------------------
 
@@ -501,8 +501,8 @@ zap_thumb_decoder u_zap_thumb_decoder (
 .i_taken        (fifo_bp_state),
 .i_instruction  (fifo_instruction),
 .i_instruction_valid(fifo_valid),
-.i_irq          (fifo_valid ? irq_sync && !alu_flags_ff[I] : 1'd0), // Pass interrupt only if mask = 0 and instruction exists.
-.i_fiq          (fifo_valid ? fiq_sync && !alu_flags_ff[F] : 1'd0), // Pass interrupt only if mask = 0 and instruction exists.
+.i_irq          (fifo_valid ? irq && !alu_flags_ff[I] : 1'd0), // Pass interrupt only if mask = 0 and instruction exists.
+.i_fiq          (fifo_valid ? fiq && !alu_flags_ff[F] : 1'd0), // Pass interrupt only if mask = 0 and instruction exists.
 .i_iabort       (fifo_instr_abort),
 .o_iabort       (thumb_iabort),
 .i_cpsr_ff_t    (alu_flags_ff[T]),

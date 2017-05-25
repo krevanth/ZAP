@@ -85,7 +85,7 @@ wire [31:0] wb_adr;
 wire [2:0] wb_cti;
 wire wb_ack;
 
-reg rst_sync;       // Drives global reset throughout the CPU.
+reg reset;       // Drives global reset throughout the CPU.
 
 //
 // Reset synchrnonizer is assumed to be external to the CPU.
@@ -93,7 +93,7 @@ reg rst_sync;       // Drives global reset throughout the CPU.
 //
 always @ (posedge i_clk)
 begin
-        rst_sync    <= i_reset;
+        reset    <= i_reset;
 end
 
 wire cpu_mmu_en;
@@ -149,7 +149,7 @@ zap_core #(
 ) u_zap_core
 (
 .i_clk                  (i_clk),
-.i_reset                (rst_sync),
+.i_reset                (reset),
 
 
 // Code related.
@@ -242,7 +242,7 @@ zap_cache #(.CACHE_SIZE(DATA_CACHE_SIZE),
 .SECTION_TLB_ENTRIES(DATA_SECTION_TLB_ENTRIES)) 
 u_data_cache (
 .i_clk          (i_clk),
-.i_reset        (rst_sync),
+.i_reset        (reset),
 .i_address      (cpu_daddr),
 .i_address_nxt  (cpu_daddr_nxt),
 
@@ -295,7 +295,7 @@ zap_cache #(
 .SECTION_TLB_ENTRIES(CODE_SECTION_TLB_ENTRIES)) 
 u_code_cache (
 .i_clk              (i_clk),
-.i_reset            (rst_sync),
+.i_reset            (reset),
 .i_address          (cpu_iaddr),
 .i_address_nxt      (cpu_iaddr_nxt),
 
