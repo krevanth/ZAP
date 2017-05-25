@@ -23,9 +23,9 @@
 //                zap_issue_main
 //                zap_shifter_main
 //                zap_alu_main,    
+//                zap_thumb_decoder
 //                zap_memory_main,
-//                zap_register_file
-//                zap_reset_sync
+//                zap_writeback
 // ----------------------------------------------------------------------------
 
 `default_nettype none
@@ -1107,10 +1107,10 @@ u_zap_memory_main
 // WRITEBACK 
 // ==================
 
-zap_register_file #(
+zap_writeback #(
         .PHY_REGS(PHY_REGS)
 )
-u_zap_regf
+u_zap_writeback
 (
         .o_shelve               (shelve),
 

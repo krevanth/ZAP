@@ -5,7 +5,7 @@
 
 `default_nettype none
 
-module zap_wb_adapter (
+module zap_wb_adapter #(parameter DEPTH = 32) (
 
 // Clock.
 input wire                   i_clk,
@@ -49,7 +49,7 @@ assign    o_wb_cti = {w_eob, 1'd1, w_eob};
 wire w_emp;
 
 // {SEL, DATA, ADDR, EOB, WEN} = 4 + 64 + 1 + 1 = 70 bit.
-zap_sync_fifo #(.WIDTH(70), .DEPTH(32), .FWFT(1'd0)) U_STORE_FIFO (
+zap_sync_fifo #(.WIDTH(70), .DEPTH(DEPTH), .FWFT(1'd0)) U_STORE_FIFO (
 .i_clk          (i_clk),
 .i_reset        (i_reset),
 .i_ack          ((i_wb_ack && o_wb_stb) || emp_ff),

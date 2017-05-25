@@ -16,7 +16,7 @@
 // ----------------------------------------------------------------------------
 //                              INFORMATION                                  
 //                              ------------
-// Reset method : Asynchronous active low reset
+// Reset method : Synchronous active high reset.
 // Clock        : Core clock
 // Depends      : --
 // ----------------------------------------------------------------------------
@@ -25,12 +25,10 @@
 
 module zap_top #(
 
-// Enable internal reset synchronizer.
-parameter               INTERNAL_RESET_SYNC     = 1'd0,
-
 // Enable cache and MMU.
 parameter               BP_ENTRIES              = 1024, // Predictor depth.
 parameter               FIFO_DEPTH              = 4,    // FIFO depth.
+parameter               STORE_BUFFER_DEPTH      = 16,   // Depth of the store buffer.
 
 // ----------------------------------
 // Data MMU/Cache configuration.
@@ -49,15 +47,10 @@ parameter [31:0] CODE_SPAGE_TLB_ENTRIES   =  32'd16,   // Small page TLB entries
 parameter [31:0] CODE_CACHE_SIZE          =  32'd1024  // Cache size in bytes.
 
 )(
-        // Clock.
+        // Clock. CPU uses posedge synchronous design.
         input   wire            i_clk,
 
-        // Multipump clock for the multi-ported register file.
-
-        // Reset. 
-        // This reset is passed through a reset
-        // synchronizer so it need not be clean.
-        // Active high and synchronous.
+        // Active high and synchronous. Must be clean and synchronous.
         input   wire            i_reset,
 
         // Interrupts. 
@@ -92,21 +85,16 @@ wire [31:0] wb_adr;
 wire [2:0] wb_cti;
 wire wb_ack;
 
+reg rst_sync;       // Drives global reset throughout the CPU.
 
-wire rst_sync;
-
-generate
-begin: grstblk
-        if ( INTERNAL_RESET_SYNC )
-        begin:a1
-                zap_reset_sync U_RST_SYNC ( .i_clk(i_clk), .i_reset(i_reset), .o_reset(rst_sync) );
-        end
-        else
-        begin:a55
-                assign rst_sync = i_reset;        
-        end
+//
+// Reset synchrnonizer is assumed to be external to the CPU.
+// * EXTERNAL RESET MUST BE CLEAN AND SYNCHRONOUS *
+//
+always @ (posedge i_clk)
+begin
+        rst_sync    <= i_reset;
 end
-endgenerate
 
 wire cpu_mmu_en;
 wire [31:0] cpu_cpsr;
@@ -387,7 +375,7 @@ zap_wb_merger u_zap_wb_merger (
 
 );
 
-zap_wb_adapter u_zap_wb_adapter (
+zap_wb_adapter #(.DEPTH(STORE_BUFFER_DEPTH)) u_zap_wb_adapter (
 .i_clk(i_clk),
 .i_reset(i_reset),
 

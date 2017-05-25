@@ -276,7 +276,6 @@ begin
         o_abt_ff                          <= 0;         
         o_swi_ff                          <= 0;
         o_und_ff                          <= 0;
-        o_destination_index_ff[4]         <= 1;
 end
 endtask
 

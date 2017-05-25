@@ -684,7 +684,6 @@ endfunction
 task clear ( input [31:0] flags );
 begin
                 o_dav_ff                         <= 0;
-                o_destination_index_ff[4]        <= 1;
                 flags_ff                         <= flags;
                 o_abt_ff                         <= 0;
                 o_irq_ff                         <= 0;

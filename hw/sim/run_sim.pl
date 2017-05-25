@@ -19,8 +19,8 @@ perl run_sim.pl
 +test+<test_case>                                                       -- Run a specific test case. only +test+factorial is available, you may add new tests (see sw folder).
 +ram_size+<ram_size>                                                    -- Set size of RAM in bench.
 +dump_start+<start_addr_of_dump>+<number_of_words_in_dump>              -- Starting memory address to start logging and number of words to log.
-[+cache_size+<data_cache_size>+<code_cache_size>]                       -- Specify data and I-cache size in bytes.
-[+dtlb+<section_dtlb_entries>+<small_page_entries>+<large_page_entries> -- Specify data TLB entries for section, small and large page TLBs.
+[+cache_size+<data_cache_size>+<code_cache_size>]                       -- Specify data and I-cache size in bytes. Must be powers of 2.
+[+dtlb+<section_dtlb_entries>+<small_page_entries>+<large_page_entries> -- Specify data TLB entries for section, small and large page TLBs. Must be powers of 2.
 [+itlb+<section_itlb_entries>+<small_page_entries>+<large_page_entries> -- Specify I-TLB entries similarly as above.
 [+irq_en]                                                               -- Trigger IRQ interrupts from bench.                                        
 [+fiq_en]                                                               -- Trigger FIQ interrupts from bench.
@@ -28,11 +28,12 @@ perl run_sim.pl
 +max_clock_cycles+<max_clock_cycles>                                    -- Set maximum clock cycles for which the simulation should run. 
 +rtl_file_list+<rtl_file_list>                                          -- Specify RTL file list. See hw/rtl folder.
 +tb_file_list+<tb_file_list>                                            -- Specify testbench file list. See hw/tb folder.
-+bp+<branch_predictor_entries>                                          -- Number of entries in branch predictor memory.
-+fifo+<fifo_depth>                                                      -- Depth of pre-fetch buffer in CPU.
++bp+<branch_predictor_entries>                                          -- Number of entries in branch predictor memory. Must be a power of 2.
++fifo+<fifo_depth>                                                      -- Depth of pre-fetch buffer in CPU. Must be a power of 2.
 +post_process+<post_process_perl_script_path>                           -- Point this to post_process.pl or any other Perl script. Script runs after sim.
 [+tlb_debug]                                                            -- Enable TLB debugging interactive.
 [+nodump]                                                               -- Do not write VCD. 
++store_buffer_depth+<depth>                                             -- Depth of the store FIFO. Keep this at least 16 and a power of 2.
 ###############################################################################
 ";
 
@@ -68,6 +69,7 @@ my $BENCH_FILE_LIST             = "$ZAP_HOME/hw/vlog/tb/bench_files.list";
 my $NODUMP                      = 0;
 my $PPF                         = "null";
 my $TLB_DEBUG                   = 0;
+my $SBUF_DEPTH                  = 16;
 
 sub rand {
         return int rand (0xffffffff);
@@ -98,6 +100,7 @@ foreach(@ARGV) {
         elsif (/^\+nodump/)                     { $NODUMP = 1; } 
         elsif (/^\+post_process\+(.*)/)         { $PPF = $1; }
         elsif (/^\+tlb_debug/)                  { $TLB_DEBUG = 1; }
+        elsif (/^\+store_buffer_depth\+(.*)/)   { $SBUF_DEPTH = $1; }
         else                                    { die "Unrecognized $_  $HELP"; }
 }
 
@@ -127,7 +130,7 @@ if ( !$NODUMP ) {
         $IVL_OPTIONS .= "-DVCD_FILE_PATH=\\\"/dev/null\\\" ";
 }
 
-$IVL_OPTIONS .= "-Pzap_test.RAM_SIZE=$RAM_SIZE -Pzap_test.START=$DUMP_START -Pzap_test.COUNT=$DUMP_SIZE -DLINUX ";
+$IVL_OPTIONS .= "-Pzap_test.RAM_SIZE=$RAM_SIZE -Pzap_test.START=$DUMP_START -Pzap_test.COUNT=$DUMP_SIZE -DLINUX -Pzap_test.STORE_BUFFER_DEPTH=$SBUF_DEPTH ";
 $IVL_OPTIONS .= "-Pzap_test.BP_ENTRIES=$BP -Pzap_test.FIFO_DEPTH=$FIFO ";
 $IVL_OPTIONS .= "-Pzap_test.DATA_SECTION_TLB_ENTRIES=$DATA_SECTION_TLB_ENTRIES -Pzap_test.DATA_LPAGE_TLB_ENTRIES=$DATA_LPAGE_TLB_ENTRIES -Pzap_test.DATA_SPAGE_TLB_ENTRIES=$DATA_SPAGE_TLB_ENTRIES -Pzap_test.DATA_CACHE_SIZE=$DATA_CACHE_SIZE ";
 $IVL_OPTIONS .= "-Pzap_test.CODE_SECTION_TLB_ENTRIES=$CODE_SECTION_TLB_ENTRIES -Pzap_test.CODE_LPAGE_TLB_ENTRIES=$CODE_LPAGE_TLB_ENTRIES -Pzap_test.CODE_SPAGE_TLB_ENTRIES=$CODE_SPAGE_TLB_ENTRIES -Pzap_test.CODE_CACHE_SIZE=$CODE_CACHE_SIZE ";

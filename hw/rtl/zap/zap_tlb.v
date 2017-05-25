@@ -90,7 +90,7 @@ wire [31:0]                     phy_addr;
 
 // ----------------------------------------------------------------------------
 
-mem_inv_block #(.WIDTH(`SECTION_TLB_WDT), .DEPTH(SECTION_TLB_ENTRIES)) 
+zap_mem_inv_block #(.WIDTH(`SECTION_TLB_WDT), .DEPTH(SECTION_TLB_ENTRIES)) 
 u_section_tlb (
 .i_clk          (i_clk),
 .i_reset        (i_reset),
@@ -110,7 +110,7 @@ u_section_tlb (
 
 // ----------------------------------------------------------------------------
 
-mem_inv_block #(.WIDTH(`LPAGE_TLB_WDT), .DEPTH(LPAGE_TLB_ENTRIES)) 
+zap_mem_inv_block #(.WIDTH(`LPAGE_TLB_WDT), .DEPTH(LPAGE_TLB_ENTRIES)) 
 u_lpage_tlb   (
 .i_clk          (i_clk),
 .i_reset        (i_reset),
@@ -130,7 +130,7 @@ u_lpage_tlb   (
 
 // ----------------------------------------------------------------------------
 
-mem_inv_block #(.WIDTH(`SPAGE_TLB_WDT), .DEPTH(SPAGE_TLB_ENTRIES)) 
+zap_mem_inv_block #(.WIDTH(`SPAGE_TLB_WDT), .DEPTH(SPAGE_TLB_ENTRIES)) 
 u_spage_tlb   (
 .i_clk          (i_clk),
 .i_reset        (i_reset),

@@ -28,7 +28,6 @@
 module zap_predecode_compress (
         // Clock and reset.
         input wire              i_clk,
-        input wire              i_reset,
 
         // Code stall.
         input wire              i_code_stall,

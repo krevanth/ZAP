@@ -40,9 +40,10 @@ my $system = 'dialog --backtitle "ZAP Simulation Options" --title "ZAP Simulatio
         "Bench file list"                                                                       16 1 "../tb/zap/zap_tb_files.list" 16 25 25 30\
         "Branch predictor entries"                                                              17 1 "1024" 17 25 25 30\
         "FIFO depth"                                                                            18 1 "4" 18 25 25 30\
-        "Post processing script"                                                                19 1 "post_process.pl" 19 25 25 30\
-        "TLB dbg msg enable(Y/N)?"                                                              20 1 "N" 20 25 25 30\
-        "Generate VCD(Y/N)?"                                                                    21 1 "Y" 21 25 25 30 --stdout';
+        "Store buffer depth"                                                                    19 1 "16" 19 25 25 30 \
+        "Post processing script"                                                                20 1 "post_process.pl" 20 25 25 30\
+        "TLB dbg msg enable(Y/N)?"                                                              21 1 "N" 21 25 25 30\
+        "Generate VCD(Y/N)?"                                                                    22 1 "Y" 22 25 25 30 --stdout';
 
 $system = `$system`;
 
@@ -71,10 +72,11 @@ my $fifo        ;
 my $pps         ;
 my $tlbdebug    ;
 my $genvcd      ;
+my $sbuf_depth  ;
 
 my $command;
 
-if ( $system =~ m#^(.*?)!(.*?)!(.*?)!(.*?)!(.*?)!(.*?)!(.*?)!(.*?)!(.*?)!(.*?)!(.*?)!(.*?)!(.*?)!(.*?)!(.*?)!(.*?)!(.*?)!(.*?)!(.*?)!(.*?)!(.*?)!$# ) {
+if ( $system =~ m#^(.*?)!(.*?)!(.*?)!(.*?)!(.*?)!(.*?)!(.*?)!(.*?)!(.*?)!(.*?)!(.*?)!(.*?)!(.*?)!(.*?)!(.*?)!(.*?)!(.*?)!(.*?)!(.*?)!(.*?)!(.*?)!(.*?)!$# ) {
 
         $zap_home     = $1;
         $seed         = $2;
@@ -93,9 +95,10 @@ if ( $system =~ m#^(.*?)!(.*?)!(.*?)!(.*?)!(.*?)!(.*?)!(.*?)!(.*?)!(.*?)!(.*?)!(
         $tbfilelist  = $16;
         $bp          = $17;
         $fifo        = $18;
-        $pps         = $19;
-        $tlbdebug    = $20;
-        $genvcd      = $21;
+        $sbuf_depth  = $19;
+        $pps         = $20;
+        $tlbdebug    = $21;
+        $genvcd      = $22;
 
 print "
         zap_home     = $zap_home   
@@ -114,13 +117,14 @@ print "
         rtlfilelist =  $rtlfilelist
         tbfilelist  =  $tbfilelist 
         bp          =  $bp         
-        fifo        =  $fifo       
+        fifo        =  $fifo 
+        sbuf depth  =  $sbuf_depth      
         pps         =  $pps        
         tlbdebug    =  $tlbdebug   
         genvcd      =  $genvcd     
 ";
 
-        $command = " perl run_sim.pl +zap_root+$zap_home +test+$testcase +ram_size+$ram_size +dump_start+$memdumpstart +scratch+$scratch_path +max_clock_cycles+$maxclockcycles +rtl_file_list+$rtlfilelist +tb_file_list+$tbfilelist +bp+$bp +fifo+$fifo +post_process+$pps "; 
+        $command = " perl run_sim.pl +zap_root+$zap_home +test+$testcase +ram_size+$ram_size +dump_start+$memdumpstart +scratch+$scratch_path +max_clock_cycles+$maxclockcycles +rtl_file_list+$rtlfilelist +tb_file_list+$tbfilelist +bp+$bp +fifo+$fifo +post_process+$pps +store_buffer_depth+$sbuf_depth"; 
 } else {
         die "*E: ERROR. Form not entered correctly!";
 }
@@ -136,7 +140,7 @@ if ( 1 )  {
 
 if ( $irq =~ m/Y/ )      { $command .= " +irq_en "; }
 if ( $fiq =~ m/Y/ )      { $command .= " +fiq_en "; }
-if ( $tlbdebug =~ m/Y/ ) { $command .= " +tlbdebug "; }
+if ( $tlbdebug =~ m/Y/ ) { $command .= " +tlb_debug "; }
 if ( $genvcd   !~ m/Y/ ) { $command .= " +nodump "; }
 
 $command .= ";echo Press Ctrl+C/D to exit;cat";

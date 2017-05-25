@@ -131,33 +131,27 @@ integer ops;
 initial ops = 0;
 `endif
 
-//
-// This block ties the registers to the
-// output ports.
-//
-always @*
+// Ties registers to output ports via a register.
+always @ (posedge i_clk)
 begin
-        o_dcache_en = r[1][2];                  // Data cache enable.
-        o_icache_en = r[1][12];                 // Instruction cache enable.
-        o_mmu_en    = r[1][0];                  // MMU enable.
-        o_dac       = r[3];                     // DAC register.
-        o_baddr    = r[2];                      // Base address.               
-        o_sr       = {r[1][8],r[1][9]};         // SR register.        
-
-        // Debug only.
-        `ifdef SIM
-                `ifdef FORCE_DCACHE_EN
-                        o_dcache_en = 1'd1;
-                `endif
-
-                `ifdef FORCE_ICACHE_EN
-                        o_icache_en = 1'd1;
-                `endif
-
-                `ifdef FORCE_MMU_EN
-                        o_mmu_en = 1'd1;
-                `endif
-        `endif
+        if ( i_reset )
+        begin
+                o_dcache_en <= 0;
+                o_icache_en <= 0;
+                o_mmu_en    <= 0;
+                o_dac       <= 'dx;
+                o_baddr     <= 'dx;
+                o_sr        <= 'dx;
+        end
+        else
+        begin
+        o_dcache_en <= r[1][2];                  // Data cache enable.
+        o_icache_en <= r[1][12];                 // Instruction cache enable.
+        o_mmu_en    <= r[1][0];                  // MMU enable.
+        o_dac       <= r[3];                     // DAC register.
+        o_baddr     <= r[2];                      // Base address.               
+        o_sr        <= {r[1][8],r[1][9]};         // SR register. 
+        end
 end
 
 // States.
@@ -238,14 +232,8 @@ begin
                 ops             <= 0;
 `endif
 
-                r[0][23:16]     <= 32'h1;
-                r[1][1]         <= 1'd1;
-                r[1][3]         <= 1'd1; // Write buffer always enabled.
-                r[1][7:4]       <= 4'b0011; // 0 = Little Endian, 0 = 0, 1 = 32-bit address range, 1 = 32-bit handlers enabled.
-                r[1][11]        <= 1'd1;                
-                r[1][13]        <= 1'd0;
-
-                o_itlb_inv       <= 1'd0;
+                // Default assignments.
+                o_itlb_inv      <= 1'd0;
                 o_dtlb_inv      <= 1'd0;
                 o_dcache_inv    <= 1'd0;
                 o_icache_inv    <= 1'd0;
@@ -506,6 +494,14 @@ begin
                         end
                 end
                 endcase
+
+                // Default assignments. These bits are UNCHANGEABLE.
+                r[0][23:16]     <= 32'h1;
+                r[1][1]         <= 1'd1;
+                r[1][3]         <= 1'd1; // Write buffer always enabled.
+                r[1][7:4]       <= 4'b0011; // 0 = Little Endian, 0 = 0, 1 = 32-bit address range, 1 = 32-bit handlers enabled.
+                r[1][11]        <= 1'd1;                
+                r[1][13]        <= 1'd0;
         end
 end
 

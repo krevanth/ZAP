@@ -219,7 +219,6 @@ begin
                 o_und_ff                                <= 0;
                 o_taken_ff                              <= 0;
                 o_instruction_valid_ff                  <= 0;
-                o_instruction_ff[27]                    <= 0;
 end
 endtask
 

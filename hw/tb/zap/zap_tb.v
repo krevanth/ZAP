@@ -138,6 +138,7 @@ parameter CODE_SPAGE_TLB_ENTRIES        = 16;
 parameter CODE_CACHE_SIZE               = 1024;
 parameter FIFO_DEPTH                    = 4;
 parameter BP_ENTRIES                    = 1024;
+parameter STORE_BUFFER_DEPTH            = 32;
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -202,7 +203,7 @@ $display("parameter CODE_SECTION_TLB_ENTRIES      = %d", CODE_SECTION_TLB_ENTRIE
 $display("parameter CODE_LPAGE_TLB_ENTRIES        = %d", CODE_LPAGE_TLB_ENTRIES      ) ;
 $display("parameter CODE_SPAGE_TLB_ENTRIES        = %d", CODE_SPAGE_TLB_ENTRIES      ) ;
 $display("parameter CODE_CACHE_SIZE               = %d", CODE_CACHE_SIZE             ) ;
-
+$display("parameter STORE_BUFFER_DEPTH            = %d", STORE_BUFFER_DEPTH          ) ;
 $display($time, "Type 'cont' to continue running the simulation...");
 $stop;
 end
@@ -232,12 +233,10 @@ endtask
 // Processor core.
 // =========================
 zap_top #(
-        // Assume reset sync is placed outside.
-        .INTERNAL_RESET_SYNC(1'd0),
-
         // Configure FIFO depth and BP entries.
         .FIFO_DEPTH(FIFO_DEPTH),
         .BP_ENTRIES(BP_ENTRIES),
+        .STORE_BUFFER_DEPTH(STORE_BUFFER_DEPTH),
 
         // data config.
         .DATA_SECTION_TLB_ENTRIES(DATA_SECTION_TLB_ENTRIES),
@@ -322,6 +321,8 @@ end
 
 `endif
 
+initial i_reset = 1'd0;
+
 initial
 begin
         i_irq = 0;
@@ -337,9 +338,10 @@ begin
 
         $display("Started!");
 
-        i_reset = 1;
-        @(negedge i_clk);
-        i_reset = 0;
+        @(posedge i_clk);
+        i_reset <= 1;
+        @(posedge i_clk);
+        i_reset <= 0;
 
         repeat(`MAX_CLOCK_CYCLES) @(negedge i_clk);
 

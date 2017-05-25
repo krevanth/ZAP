@@ -100,7 +100,6 @@ reg  [1:0] taken_nxt;
 
 zap_predecode_compress u_zap_predecode_compress (
         .i_clk(i_clk),
-        .i_reset(i_reset),
         .i_code_stall(i_code_stall),
         .i_instruction(i_instruction),
         .i_instruction_valid(i_instruction_valid),

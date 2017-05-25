@@ -19,7 +19,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
 // Filename --
-// mem_inv_block.v
+// zap_mem_inv_block.v
 //
 // Summary --
 // Tag RAMs with single cycle clear. Finds the greatest use in TLBs.
@@ -29,7 +29,7 @@
 `default_nettype none
 
 
-module mem_inv_block #(
+module zap_mem_inv_block #(
         parameter DEPTH = 32,
         parameter WIDTH = 32   // Not including valid bit.
 )(  
