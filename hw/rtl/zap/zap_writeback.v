@@ -252,57 +252,26 @@ begin: blk1
         pc_nxt = pc_ff;
         cpsr_nxt = cpsr_ff;
 
-        `ifdef RF_DEBUG
-                $display($time, "PC_nxt before = %d", pc_nxt);
-        `endif
 
         // PC control sequence.
-        //if ( i_data_stall )
-        //begin
-        //        pc_nxt = pc_ff;                        
-        //end
+
 
         if ( i_clear_from_alu )
         begin
                 pc_shelve(i_pc_from_alu);
         end
-        //else if ( i_stall_from_issue )
-        //begin
-        //        pc_nxt = pc_ff;
-        //end
-        //else if ( i_stall_from_shifter )
-        //begin
-        //        pc_nxt = pc_ff;
-        //end
+
         else if ( i_clear_from_decode )
         begin
                 pc_shelve(i_pc_from_decode);
         end
-        //else if ( i_stall_from_decode )
-        //begin
-        //        pc_nxt = pc_ff;
-        //end
+
         else if ( i_code_stall )
         begin
                 pc_nxt = pc_ff;
         end
         else if ( shelve_ff )
         begin
-                `ifdef SIM
-                        if ( temp_set == 1 )
-                        begin
-                                `ifdef RF_DEBUG
-                                $display($time, "PAIR -> SHELVE_RET :: Returning to %d", pc_shelve_ff);
-                                `endif
-
-                                if ( pc_shelve_ff != 24 )
-                                begin
-                                        error = 1;
-                                end
-
-                                temp_set = 0;
-                        end
-                `endif
 
                 pc_nxt     = pc_shelve_ff;
                 shelve_nxt = 1'd0;
@@ -312,9 +281,6 @@ begin: blk1
                 pc_nxt = pc_ff + ((cpsr_ff[T]) ? 32'd2 : 32'd4);
         end
 
-        `ifdef RF_DEBUG
-        $display($time, "PC_nxt after = %d", pc_nxt);
-        `endif
 
         // The stuff below has more priority than the above. This means even in
         // a global stall, interrupts can overtake execution. Further, writes to 
@@ -390,14 +356,6 @@ begin: blk1
 
                 `ifdef SIM
                 irq_ack = 1'd1;
-                if ( i_code_stall )
-                begin
-                        `ifdef RF_DEBUG
-                        $display($time, "PAIR -> IRQ :: Entered IRQ with link register = %d", wdata1);
-                        `endif
-                        temp_set = 1;
-                end
-                else temp_set = 0;
                 `endif
         end
         else if ( i_instr_abt )
