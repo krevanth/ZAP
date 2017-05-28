@@ -53,15 +53,11 @@ input wire [31:0] i_pc_ff,         // Program counter.
 input wire        i_cpsr_ff_t,     // CPSR T bit.
 
 // From I-cache.
-input wire [31:0] i_instruction_nocache,   // A 32-bit ZAP instruction.
-input wire [127:0]i_instruction_cache,     // A 32-bit ZAP instruction. From flop.
-input wire        i_instr_src,             // 0 - Uncache 1 - Cache.
+input wire [31:0] i_instruction,   // A 32-bit ZAP instruction.
 
 input wire        i_valid,         // Instruction valid indicator.
 input wire        i_instr_abort,   // Instruction abort fault.
 
-// To I-cache.
-output wire       o_cache_rd_en,   // Cache read enable.
 
 // To decode.
 output reg [31:0]  o_instruction,  // The 32-bit instruction.
@@ -88,16 +84,6 @@ wire _unused_ok_;
 // If an instruction abort occurs, this unit sleeps until it is woken up.
 reg sleep_ff;
 
-// Instruction buffer.
-reg [31:0] instr_ff;
-reg src_ff;
-
-// Register read enable.
-reg [1:0] rd_en ; // 0 -Uncache 1- Cache.
-
-// Instruction MUX output.
-wire [31:0] w_instr;
-
 // ----------------------------------------------------------------------------
 
 //
@@ -112,52 +98,6 @@ localparam  [1:0]    SNT     =       2'b00; // Strongly Not Taken.
 localparam  [1:0]    WNT     =       2'b01; // Weakly Not Taken.
 localparam  [1:0]    WT      =       2'b10; // Weakly Taken.
 localparam  [1:0]    ST      =       2'b11; // Strongly Taken.
-
-always @*
-begin
-        rd_en = 0;
-
-        if      ( i_code_stall )                rd_en = 0;
-        else if ( i_clear_from_writeback )      rd_en = 0;
-        else if ( i_data_stall )                rd_en = 0;  
-        else if ( i_clear_from_alu )            rd_en = 0;
-        else if ( i_stall_from_shifter )        rd_en = 0;
-        else if ( i_stall_from_issue )          rd_en = 0;
-        else if ( i_stall_from_decode )         rd_en = 0;
-        else if ( i_clear_from_decode )         rd_en = 0;
-        else if ( sleep_ff )                    rd_en = 0;
-        else if ( i_valid )
-        begin
-               // Turn on appropriate read enable.
-               rd_en[0] = !i_instr_src;
-               rd_en[1] = i_instr_src; 
-        end
-end
-
-// Cache read enable.
-assign o_cache_rd_en = rd_en[1];
-
-always @ (posedge i_clk)
-begin
-        if ( rd_en[0] )
-                instr_ff <= i_instruction_nocache;
-end
-
-always @ (posedge i_clk)
-begin
-        if ( i_reset )
-        begin
-                src_ff <= 0;
-        end
-        else if ( rd_en[0] | rd_en[1] )
-        begin
-                src_ff <= i_instr_src;
-        end
-end
-
-// Instruction wire.
-assign w_instr = instr_ff; 
-// src_ff ? adapt_cache_data(o_pc_ff[3:2], i_instruction_cache) : instr_ff;
 
 //
 // NOTE: If an instruction is invalid, only then can it be tagged with any
@@ -183,7 +123,6 @@ begin
                 // Wake unit up.
                 sleep_ff        <= 1'd0;
         end
-//        else if ( i_code_stall )                 begin end  // Save state.
         else if ( i_clear_from_writeback )       clear_unit;
         else if ( i_data_stall)                  begin end // Save state.
         else if ( i_clear_from_alu )             clear_unit;
@@ -226,6 +165,9 @@ begin
 
                 // PC is pumped down the pipeline.
                 o_pc_ff <= i_pc_ff;
+
+                // Instruction.
+                o_instruction <= i_instruction;
         end
         else
         begin
@@ -233,8 +175,6 @@ begin
                 o_valid        <= 1'd0;
         end
 end
-
-always @* o_instruction = w_instr;
 
 // ----------------------------------------------------------------------------
 

@@ -48,13 +48,7 @@ module zap_memory_main
         input   wire [31:0]                  i_mem_address_ff, // Access Address.
 
         // Data read from memory.
-        input   wire [31:0]                 i_mem_rd_data_uncache,
-        input   wire [127:0]                i_mem_rd_data_cache, // External flop.
-        input   wire                        i_mem_rd_data_src, // 0 - Uncache
-                                                               // 1 - Cache.
-
-        // To D-Cache.
-        output  wire                        o_cache_rd_en, // Cache read enable.
+        input   wire [31:0]                 i_mem_rd_data,
 
         // Memory fault transfer. i_mem_fault comes from the cache unit.
         input   wire                        i_mem_fault,      // Fault in.
@@ -128,10 +122,7 @@ reg                             i_sbyte_ff2             ;
 reg                             i_ubyte_ff2             ;
 reg                             i_shalf_ff2             ;
 reg                             i_uhalf_ff2             ;
-reg [31:0]                      mem_rd_data_ff          ;
 reg [31:0]                      mem_rd_data             ;
-reg                             rd_en[1:0]              ;
-reg                             src_ff                  ;
 
 // Invalidates the outptus of this stage.
 task clear;
@@ -185,54 +176,7 @@ begin
         o_mem_load_ff         <= i_mem_load_ff; 
         o_und_ff              <= i_und_ff;
         o_mem_fault           <= i_mem_fault;
-        src_ff                <= (rd_en[0] | rd_en[1]) ? i_mem_rd_data_src : 
-                                 src_ff;
-end
-
-// Select source based on MUX.
-always @* mem_rd_data = mem_rd_data_ff ;
-//src_ff ? adapt_cache_data(i_mem_address_ff2[3:2], i_mem_rd_data_cache) : mem_rd_data_ff; 
-                                                // 0 - Uncache.
-                                                // 1 - Cache.
-
-// Memory register read enable.
-always @*
-begin
-        if ( i_code_stall )
-                rd_en[0] = 1'd0;
-        else if ( i_clear_from_writeback )
-                rd_en[0] = 1'd0;
-        else if ( i_data_stall )
-                rd_en[0] = 1'd0;
-        else if ( i_mem_load_ff & !i_mem_rd_data_src ) 
-                rd_en[0] = 1'd1;
-        else
-                rd_en[0] = 1'd0;
-end
-
-// Uncache register.
-always @ (posedge i_clk)
-begin
-        if ( rd_en[0] )
-                mem_rd_data_ff <= i_mem_rd_data_uncache;
-end
-
-// Cache read enable.
-assign o_cache_rd_en = rd_en[1];
-
-// Memory register read enable.
-always @*
-begin
-        if ( i_code_stall )
-                rd_en[1] = 1'd0;
-        else if ( i_clear_from_writeback )
-                rd_en[1] = 1'd0;
-        else if ( i_data_stall )
-                rd_en[1] = 1'd0;
-        else if ( i_mem_load_ff && i_mem_rd_data_src ) 
-                rd_en[1] = 1'd1;
-        else
-                rd_en[1] = 1'd0;
+        mem_rd_data           <= i_mem_rd_data;
 end
 
 // Manual Pipeline Retiming.

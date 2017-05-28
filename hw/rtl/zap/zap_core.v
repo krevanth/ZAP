@@ -50,9 +50,7 @@ output wire                             o_data_wb_stb,
 output wire[31:0]                       o_data_wb_adr,              
 input wire                              i_data_wb_ack,
 input wire                              i_data_wb_err,
-input wire  [31:0]                      i_data_wb_dat_uncache,
-input wire  [127:0]                     i_data_wb_dat_cache,
-input wire                              i_data_src, // 0 - Uncache 1-Cache.
+input wire  [31:0]                      i_data_wb_dat,
 output wire [31:0]                      o_data_wb_dat,
 output wire  [3:0]                      o_data_wb_sel,                  
 
@@ -62,6 +60,7 @@ output wire                             o_data_wb_cyc_nxt,
 output wire                             o_data_wb_stb_nxt,
 output wire [31:0]                      o_data_wb_dat_nxt,
 output wire  [3:0]                      o_data_wb_sel_nxt,    
+output wire [31:0]                      o_data_wb_adr_nxt,
 
 // Force user view.
 output wire                             o_mem_translate,
@@ -75,28 +74,17 @@ output wire     [31:0]                  o_instr_wb_adr, // Code address.
 output wire                             o_instr_wb_cyc, // Always 1.
 output wire                             o_instr_wb_stb, // Always 1.
 output wire                             o_instr_wb_we,  // Always 0.
-input wire [31:0]                       i_instr_wb_dat_nocache, // A 32-bit ZAP instruction.
-input wire [127:0]                      i_instr_wb_dat_cache,
-input wire                              i_instr_src, // 0 -Uncache 1- Cache
+input wire [31:0]                       i_instr_wb_dat, // A 32-bit ZAP instruction.
 input wire                              i_instr_wb_ack, // Instruction available.
 input wire                              i_instr_wb_err, // Instruction abort fault. Given with ack = 1.
 output wire [3:0]                       o_instr_wb_sel, // wishbone byte select.
 
-// Address wishbone nxt.
+// Instruction wishbone nxt ports.
+output wire     [31:0]                  o_instr_wb_adr_nxt,               
 output wire                             o_instr_wb_stb_nxt,
 
 // Determines user or supervisory mode. Cache must use this for VM.
 output wire      [31:0]                 o_cpsr,                 
-
-// Upcoming address for D-Cache.
-output wire     [31:0]                  o_address_nxt,     
-
-// Upcoming address for I-cache.
-output wire     [31:0]                  o_pc_nxt,               
-
-// Cache read enables.
-output wire                             o_instr_cache_rd_en,
-output wire                             o_data_cache_rd_en,
 
 // For MMU/cache connectivity.
 input wire      [31:0]                  i_fsr,
@@ -324,6 +312,7 @@ wire                            alu_ubyte_ff;
 wire                            alu_shalf_ff;
 wire                            alu_uhalf_ff;
 wire [31:0]                     alu_address_ff;
+wire [31:0]                     alu_address_nxt;
 
 // Memory
 wire [31:0]                     memory_alu_result_ff;
@@ -366,8 +355,10 @@ assign o_stall_from_issue   = stall_from_issue;
 assign o_stall_from_decode  = stall_from_decode;
 assign o_clear_from_decode  = clear_from_decode;
 
+
 // Data wishbone signals (defaults).
 assign o_data_wb_adr = {alu_address_ff[31:2], 2'd0};
+assign o_data_wb_adr_nxt = {alu_address_nxt[31:2], 2'd0};
 
 // Default Wishbone values (Code). 
 assign o_instr_wb_we  = 1'd0;
@@ -400,20 +391,14 @@ u_zap_fetch_main (
 
         .i_data_stall                   (1'd0), 
 
-                                         //(o_data_wb_stb && 
-                                         //o_data_wb_cyc && 
-                                         //!i_data_wb_ack),
-
         .i_clear_from_alu               (clear_from_alu),
 
-        .i_stall_from_shifter           (1'd0), //(stall_from_shifter),
-        .i_stall_from_issue             (1'd0), //(stall_from_issue),
-        .i_stall_from_decode            (1'd0), //(stall_from_decode),
+        .i_stall_from_shifter           (1'd0), 
+        .i_stall_from_issue             (1'd0), 
+        .i_stall_from_decode            (1'd0), 
 
         .i_pc_ff                        (o_instr_wb_adr),
-        .i_instruction_nocache          (i_instr_wb_dat_nocache),
-        .i_instruction_cache            (i_instr_wb_dat_cache),
-        .i_instr_src                    (i_instr_src),
+        .i_instruction                  (i_instr_wb_dat),
         .i_valid                        (o_instr_wb_stb && o_instr_wb_cyc && i_instr_wb_ack & !shelve),
         .i_instr_abort                  (i_instr_wb_err),
 
@@ -426,7 +411,6 @@ u_zap_fetch_main (
         .o_pc_plus_8_ff                 (fetch_pc_plus_8_ff),
         .o_pc_ff                        (fetch_pc_ff),
 
-        .o_cache_rd_en                  (o_instr_cache_rd_en),
 
         .i_confirm_from_alu             (confirm_from_alu),
         .i_pc_from_alu                  (shifter_pc_ff),
@@ -553,8 +537,6 @@ u_zap_predecode (
         .i_pc_ff                        (thumb_pc_plus_8_ff - 32'd8),
 
         .i_cpu_mode_t                   (alu_flags_ff[T]),
- //       .i_cpu_mode_f                   (alu_flags_ff[F]),
- //       .i_cpu_mode_i                   (alu_flags_ff[I]),
         .i_cpu_mode_mode                (alu_flags_ff[`CPSR_MODE]),
 
         .i_instruction                  (thumb_instruction),
@@ -610,9 +592,9 @@ zap_decode_main #(
 )
 u_zap_decode_main (
         // Input.
-        .i_clk                          (i_clk),// & i_instr_wb_ack),
+        .i_clk                          (i_clk),
         .i_reset                        (reset),
-        .i_code_stall                   (1'd0), //(!i_instr_wb_ack),
+        .i_code_stall                   (1'd0), 
 
         .i_clear_from_writeback         (clear_from_writeback),
         .i_data_stall                   (o_data_wb_cyc && 
@@ -627,7 +609,6 @@ u_zap_decode_main (
         .i_abt                          (predecode_abt),
         .i_pc_plus_8_ff                 (predecode_pc_plus_8),
         .i_pc_ff                        (predecode_pc),
-       // .i_cpu_mode                     (alu_flags_ff),
        
         .i_cpsr_ff_mode                 (alu_flags_ff[`CPSR_MODE]),
         .i_cpsr_ff_i                    (alu_flags_ff[I]),
@@ -686,14 +667,14 @@ u_zap_issue_main
         .i_taken_ff(decode_taken_ff),
         .o_taken_ff(issue_taken_ff),
 
-        .i_code_stall                   (1'd0), //(!i_instr_wb_ack),
+        .i_code_stall                   (1'd0), 
 
 
         .i_pc_ff(decode_pc_ff),
         .o_pc_ff(issue_pc_ff),
 
         // Inputs
-        .i_clk                          (i_clk), // & i_instr_wb_ack),
+        .i_clk                          (i_clk), 
         .i_reset                        (reset),
         .i_clear_from_writeback         (clear_from_writeback),
         .i_stall_from_shifter           (stall_from_shifter),
@@ -804,7 +785,7 @@ zap_shifter_main #(
 )
 u_zap_shifter_main
 (
-        .i_code_stall                   (1'd0), //(!i_instr_wb_ack),
+        .i_code_stall                   (1'd0), 
 
 
         .i_pc_ff(issue_pc_ff),
@@ -819,7 +800,7 @@ u_zap_shifter_main
         .o_nozero_ff(shifter_nozero_ff),
 
         // Inputs.
-        .i_clk                          (i_clk), // & i_instr_wb_ack),
+        .i_clk                          (i_clk), 
         .i_reset                        (reset),
         .i_clear_from_writeback         (clear_from_writeback),
         .i_data_stall                   (o_data_wb_cyc && 
@@ -994,12 +975,12 @@ u_zap_alu_main
          .o_flags_ff                    (alu_flags_ff),       // Output flags.
          .o_flags_nxt                   (alu_cpsr_nxt),
 
-         .o_mem_srcdest_value_ff           (), //(o_data_wb_dat),        
+         .o_mem_srcdest_value_ff           (), 
          .o_mem_srcdest_index_ff           (alu_mem_srcdest_index_ff),     
          .o_mem_load_ff                    (alu_mem_load_ff),                     
          .o_mem_store_ff                   (), 
 
-         .o_ben_ff                         (), //(o_data_wb_sel),         
+         .o_ben_ff                         (), 
  
          .o_mem_unsigned_byte_enable_ff    (alu_ubyte_ff),     
          .o_mem_signed_byte_enable_ff      (alu_sbyte_ff),       
@@ -1007,7 +988,7 @@ u_zap_alu_main
          .o_mem_unsigned_halfword_enable_ff(alu_uhalf_ff),      
          .o_mem_translate_ff               (o_mem_translate),
         
-        .o_address_nxt ( o_address_nxt ),
+        .o_address_nxt ( alu_address_nxt ),
 
         .o_data_wb_we_nxt  (o_data_wb_we_nxt),
         .o_data_wb_cyc_nxt (o_data_wb_cyc_nxt),
@@ -1057,15 +1038,12 @@ u_zap_memory_main
         
         .i_mem_load_ff                  (alu_mem_load_ff),
 
-        .i_mem_rd_data_uncache          (i_data_wb_dat_uncache),// From memory.
-        .i_mem_rd_data_cache            (i_data_wb_dat_cache),  // From cache.
-        .i_mem_rd_data_src              (i_data_src), // 0 - No cache 1- Cache.
+        .i_mem_rd_data                 (i_data_wb_dat),// From memory.
 
         .i_mem_fault                    (i_data_wb_err),      // From cache.
 
         .o_mem_fault                    (memory_data_abt_ff),         
 
-        .o_cache_rd_en                  (o_data_cache_rd_en),
 
         .i_dav_ff                       (alu_dav_ff),
         .i_pc_plus_8_ff                 (alu_pc_plus_8_ff),
@@ -1168,7 +1146,7 @@ u_zap_writeback
         .o_rd_data_3            (rd_data_3),
 
         .o_pc                   (o_instr_wb_adr),
-        .o_pc_nxt               (o_pc_nxt),
+        .o_pc_nxt               (o_instr_wb_adr_nxt),
         .o_cpsr_nxt             (cpsr_nxt),
         .o_clear_from_writeback (clear_from_writeback),
 

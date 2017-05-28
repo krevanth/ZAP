@@ -229,6 +229,8 @@ begin: mt1
 end        
 endtask
 
+wire [2:0] data_wb_cti; // Cycle Type Indicator.
+
 // =========================
 // Processor core.
 // =========================
@@ -261,7 +263,7 @@ u_zap_top
         .o_wb_stb(data_wb_stb),
         .o_wb_adr(data_wb_adr),
         .o_wb_we(data_wb_we),
-        //.i_wb_err(1'd0),
+        .o_wb_cti(data_wb_cti),
         .i_wb_dat(data_wb_din[0][31:0]),
         .o_wb_dat(data_wb_dout),
         .i_wb_ack(data_wb_ack),

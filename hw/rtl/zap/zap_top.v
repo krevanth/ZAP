@@ -148,9 +148,9 @@ zap_core #(
         .FIFO_DEPTH(FIFO_DEPTH)
 ) u_zap_core
 (
+// Clock and reset.
 .i_clk                  (i_clk),
 .i_reset                (reset),
-
 
 // Code related.
 .o_instr_wb_adr         (cpu_iaddr),
@@ -160,9 +160,7 @@ zap_core #(
 .o_instr_wb_sel         (),
 
 // Code related.
-.i_instr_wb_dat_cache   (128'd0),
-.i_instr_wb_dat_nocache (ic_data),
-.i_instr_src            (1'd0),
+.i_instr_wb_dat         (ic_data),
 
 .i_instr_wb_ack         (instr_ack),
 .i_instr_wb_err         (instr_err),
@@ -178,10 +176,7 @@ zap_core #(
 // Data related.
 .i_data_wb_ack          (data_ack),
 .i_data_wb_err          (data_err),
-
-.i_data_wb_dat_cache    (128'd0),
-.i_data_wb_dat_uncache  (dc_data),
-.i_data_src             (1'd0),
+.i_data_wb_dat          (dc_data),
 
 // Interrupts.
 .i_fiq                  (i_fiq),
@@ -208,10 +203,6 @@ zap_core #(
 .o_dcache_en            (cpu_dc_en),
 .o_icache_en            (cpu_ic_en),
 
-// Cache read enables.
-.o_instr_cache_rd_en    (),
-.o_data_cache_rd_en     (),
-
 // Combo Outputs - UNUSED.
 .o_clear_from_alu       (),
 .o_stall_from_shifter   (),
@@ -221,7 +212,7 @@ zap_core #(
 .o_clear_from_writeback (),
 
 // Data IF nxt.
-.o_address_nxt          (cpu_daddr_nxt), // Data addr nxt. Used to drive address of data tag RAM.
+.o_data_wb_adr_nxt     (cpu_daddr_nxt), // Data addr nxt. Used to drive address of data tag RAM.
 .o_data_wb_we_nxt       (),
 .o_data_wb_cyc_nxt      (),
 .o_data_wb_stb_nxt      (), 
@@ -229,7 +220,7 @@ zap_core #(
 .o_data_wb_sel_nxt      (),
 
 // Code access prpr.
-.o_pc_nxt               (cpu_iaddr_nxt), // PC addr nxt. Drives read address of code tag RAM.
+.o_instr_wb_adr_nxt     (cpu_iaddr_nxt), // PC addr nxt. Drives read address of code tag RAM.
 .o_instr_wb_stb_nxt     (),
 
 .o_cpsr                 (cpu_cpsr)  

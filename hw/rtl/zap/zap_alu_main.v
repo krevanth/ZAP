@@ -286,7 +286,7 @@ begin
                 o_data_wb_we_ff                 <= o_data_wb_we_nxt;
                 o_data_wb_dat_ff                <= o_data_wb_dat_nxt;
                 o_data_wb_sel_ff                <= o_data_wb_sel_nxt;
-                o_mem_address_ff                <= o_address_nxt; //mem_address_nxt;
+                o_mem_address_ff                <= o_address_nxt; 
 end
 
 always @* // Wishbone next state logic.
