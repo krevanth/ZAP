@@ -1,7 +1,14 @@
+// ============================================================================
+// The ZAP Project.
+// (C)2016, 2017 Revanth Kamaraj.
+// ----------------------------------------------------------------------------
+// Detail --
+// Implements store FIFO. Serves as a bridge between the processor core and 
+// the memory interface.
 //
-// Implements store FIFO.
+// License --
 // Released under GPL v2.
-//
+// ============================================================================
 
 `default_nettype none
 

@@ -13,7 +13,7 @@
 // Implements a simple coprocessor interface for the ZAP core. The interface
 // is low bandwidth and thus is suited only for coprocessor that do not
 // perform large data exchanges. Note that the translate function must be
-// present in the coprocessor.
+// present in the coprocessor to account for CPU modes.
 // ----------------------------------------------------------------------------
 //                              INFORMATION                                  
 //                              ------------

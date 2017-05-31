@@ -13,7 +13,9 @@
 // The ZAP shift unit. Apart from shift, it does value restoration and
 // multiplication. Value restoration is needed since the ALU (Shift+Op) is
 // pipelined and we want back to back instructions to execute correctly without
-// losing throughput.
+// losing throughput. Note that there are 3 execution pathways in this unit
+// but a given time, only one pathway may be active. The 3 execution pathways
+// are: shifter, multiplier, value feedback network.
 // ----------------------------------------------------------------------------
 //                              INFORMATION                                  
 //                              ------------

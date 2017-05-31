@@ -1,5 +1,9 @@
-// Merges two Wishbone busses onto a single bus. Released under GPL V2.
-// (C)2017 Revanth Kamaraj.
+// ============================================================================
+// The ZAP Project.
+// Merges two Wishbone busses onto a single bus. 
+// Released under GPL V2.
+// (C)2016, 2017 Revanth Kamaraj.
+// ============================================================================
 
 `default_nettype none
 

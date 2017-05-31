@@ -11,6 +11,7 @@
 //                               ABSTRACT
 //                               --------
 // This RTL describes a synchronous FIFO built around synchronous block RAM.
+// You choose First Word Fall Through (FWFT) using the FWFT parameter.
 // ----------------------------------------------------------------------------
 //                              INFORMATION                                  
 //                              ------------

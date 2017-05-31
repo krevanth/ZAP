@@ -11,9 +11,9 @@
 //                               ABSTRACT
 //                               --------
 // This stage merely acts as a buffer in between the ALU stage and the register 
-// file (i.e., writeback stage). Features two data read ports, one to receive
-// from cache and the other directly from Wishbone memory. 128-bit of data
-// clocked out from cache is rotated appropriately here.
+// file (i.e., writeback stage). 32-bit data received from the cache is 
+// is rotated appropriately here in case of byte reads or halfword reads. Otherwise,
+// this stage is simply a buffer.
 // 
 // ----------------------------------------------------------------------------
 //                              INFORMATION                                  

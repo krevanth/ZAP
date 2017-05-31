@@ -1,6 +1,20 @@
+/******************************************************************************
+The ZAP Project
+(C) 2016-2017 Revanth Kamaraj.
+
+LICENSE: GNU GPL v2.
+
+Description --
+This is the tag RAM and data RAM unit. The tag RAM holds both the virtual tag
+and the physical address. The physical address is used to avoid translation
+during clean operations. The cache data RAM is also present in this unit.
+This unit has a dedicated memory interface because it can perform global clean
+and flush by itself without depending on the cache controller.
+******************************************************************************/
+
 `default_nettype none
 
-module zap_cache_tag_ram (
+module zap_cache_tag_ram ( // Verilog 1995 syntax. Need to convert to 2001.
 
 i_clk,
 i_reset,
@@ -45,8 +59,6 @@ i_wb_ack, i_wb_dat
 
 `include "zap_localparams.vh"
 `include "zap_defines.vh"
-//`include "zap_functions.vh"
-//`include "zap_mmu_functions.vh"
 
 parameter CACHE_SIZE = 1024; // Bytes.
 
