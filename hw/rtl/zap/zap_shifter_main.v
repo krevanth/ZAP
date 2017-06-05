@@ -52,8 +52,8 @@ module zap_shifter_main
         input wire i_data_stall,           // |
         input wire i_clear_from_alu,       // V Low Priority.
 
-        // Next CPSR.
-        input wire [31:0] i_cpsr_nxt, 
+        // Next CPSR and FF CPSR.
+        input wire [31:0] i_cpsr_nxt, i_cpsr_ff, 
 
         //
         // Things from Issue. Please see issue stage for signal details.
@@ -296,7 +296,7 @@ U_SHIFT
         .i_source       ( i_shift_source_value_ff ),
         .i_amount       ( i_shift_length_value_ff[7:0] ),
         .i_shift_type   ( i_shift_operation_ff ),
-        .i_carry        ( i_cpsr_nxt[29] ),
+        .i_carry        ( i_cpsr_ff[29] ),
         .o_result       ( shout ),
         .o_carry        ( shcarry )
 );
@@ -326,7 +326,7 @@ begin
                 rm              = mult_out;
 
                 // Carry is set to a MEANINGLESS value.
-                shift_carry_nxt = i_cpsr_nxt[29];
+                shift_carry_nxt = 1'dx; 
         end        
         else if( shifter_enabled ) // Shifter enabled if valid shift is asked for.
         begin
@@ -342,7 +342,7 @@ begin
                 rm = resolve_conflict ( i_shift_source_ff, i_shift_source_value_ff,
                                         o_destination_index_ff, i_alu_value_nxt, i_alu_dav_nxt );
 
-                // Do not touch the carry.
+                // Do not touch the carry. Get from _nxt for back2back execution.
                 shift_carry_nxt = i_cpsr_nxt[29];
         end
 end

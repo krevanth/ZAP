@@ -33,10 +33,14 @@ module zap_alu_main #(
 )
 (
         input wire                         i_code_stall,                // Code stall from I-cache.
+
+        // ------------- Hijack Interface --------------- //
         input wire                         i_hijack,                    // Enable hijack.
         input wire      [31:0]             i_hijack_op1,                // Hijack operand 1.
         input wire      [31:0]             i_hijack_op2,                // Hijack operand 2.
         input wire                         i_hijack_cin,                // Hijack carry in.
+        output wire     [31:0]             o_hijack_sum,                // Hijack sum out.
+
         input wire                         i_clk,                       // Clock.
         input wire                         i_reset,                     // sync active high reset.
         input wire  [31:0]                 i_cpsr_nxt,                  // From passive CPSR.
@@ -75,7 +79,6 @@ module zap_alu_main #(
         input wire                         i_und_ff,                    // Flagged undefined instructions.
         input wire                         i_data_mem_fault,            // Flagged Data abort.
 
-        output wire     [31:0]             o_hijack_sum,                // Hijack sum out.
         output reg [31:0]                   o_alu_result_nxt,           // For feedback. ALU result _nxt version.
         output reg [31:0]                   o_alu_result_ff,            // ALU result flopped version.
 
@@ -241,7 +244,6 @@ begin
                 o_alu_result_ff                  <= o_alu_result_nxt;
                 o_dav_ff                         <= o_dav_nxt;                
                 o_pc_plus_8_ff                   <= i_pc_plus_8_ff;
-                //o_mem_address_ff                 <= mem_address_nxt;
                 o_destination_index_ff           <= o_destination_index_nxt;
                 flags_ff                         <= flags_nxt;
                 o_abt_ff                         <= i_abt_ff;
@@ -473,8 +475,6 @@ begin: flags_bp_feedback
         // Check if condition is satisfied.
        o_dav_nxt = is_cc_satisfied ( i_condition_code_ff, flags_ff[31:28] );
 
-        // The code below has more priority than the code above...
-
         if ( i_irq_ff || i_fiq_ff || i_abt_ff || i_swi_ff || i_und_ff ) 
         begin
                 //
@@ -486,8 +486,8 @@ begin: flags_bp_feedback
         end
         else if ( (opcode == FMOV) && o_dav_nxt ) // Writes to CPSR...
         begin
-                o_clear_from_alu        = 1'd1;
-                o_pc_from_alu           = sum;
+                o_clear_from_alu        = 1'd1; // Need to flush everything because we might end up fetching stuff in KERNEL instead of USER mode.
+                o_pc_from_alu           = sum;  // NOT tmp_sum, that would be loaded into CPSR. 
 
                 // USR cannot change mode. Will silently fail.
                 flags_nxt[`CPSR_MODE]   = (flags_nxt[`CPSR_MODE] == USR) ? USR : flags_nxt[`CPSR_MODE]; // Security.
@@ -495,17 +495,14 @@ begin: flags_bp_feedback
         else if ( i_destination_index_ff == ARCH_PC && (i_condition_code_ff != NV))
         begin
                 if ( i_flag_update_ff && o_dav_nxt ) 
-                //
-                // Unit sleeps since this is handled in WB. 
                 // PC update with S bit.
-                // Will restore CPU mode from SPSR.
-                //
+                // Will restore CPU mode from SPSR. USR no change.
                 begin
-                        sleep_nxt = 1'd1;
-                        //
-                        // No need to tell the predictor anything. We will
-                        // pass on destination as PC along with other information.
-                        //
+                        o_destination_index_nxt = PHY_RAZ_REGISTER;
+                        o_clear_from_alu        = 1'd1;
+                        o_pc_from_alu           = tmp_sum;
+                        flags_nxt               = i_mem_srcdest_value_ff;                                       // Restore CPSR from SPSR.
+                        flags_nxt[`CPSR_MODE]   = (flags_nxt[`CPSR_MODE] == USR) ? USR : flags_nxt[`CPSR_MODE]; // Security.
                 end
                 else if ( o_dav_nxt ) // Branch taken and no flag update.
                 begin
@@ -764,5 +761,16 @@ begin
         generate_ben = x;
 end
 endfunction
+
+`ifdef SIM
+
+always @*
+if ( flags_nxt[`CPSR_MODE] != USR && flags_ff[`CPSR_MODE] == USR )
+begin
+        $display($time, "FUNC_ERROR :: %m CPU is changing out of USR mode without an exception...");
+        $stop;
+end
+
+`endif
 
 endmodule // zap_alu_main.v

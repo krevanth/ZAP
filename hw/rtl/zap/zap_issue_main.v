@@ -276,6 +276,7 @@ begin
         o_abt_ff                          <= 0;         
         o_swi_ff                          <= 0;
         o_und_ff                          <= 0;
+        o_flag_update_ff                  <= 0;      
 end
 endtask
 
@@ -676,8 +677,19 @@ begin
                                         shifter_lock_check ( i_alu_source_ff  , o_destination_index_ff, o_condition_code_ff ) ||
                                         shifter_lock_check ( i_mem_srcdest_index_ff, o_destination_index_ff, o_condition_code_ff )  
                                 )
-                        ); // If it is multiply (MAC). 
+                        ) // If it is multiply (MAC). 
 
+                        ||
+                        (       // If the instruction is not LSL #0 and previous instruction has flag
+                                // updates, we stall.
+
+                               !o_shifter_disable_nxt && 
+                                o_flag_update_ff
+                        );
+end
+
+always @*
+begin
         // Shifter disable.
         o_shifter_disable_nxt = (       
                                         i_shift_operation_ff    == LSL && 

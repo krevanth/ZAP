@@ -35,7 +35,6 @@ input   wire                      i_reset,
 
 /* From/to processor */
 input   wire    [31:0]            i_address,      
-input   wire    [31:0]            i_address_nxt,
 input   wire                      i_rd,
 input   wire                      i_wr,
 input   wire    [31:0]            i_din,

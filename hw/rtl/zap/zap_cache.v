@@ -120,7 +120,6 @@ u_zap_cache_fsm         (
 .i_clk                  (i_clk),
 .i_reset                (i_reset),
 .i_address              (i_address),
-.i_address_nxt          (i_address_nxt),
 .i_rd                   (i_rd),
 .i_wr                   (i_wr),
 .i_din                  (i_dat),

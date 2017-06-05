@@ -413,27 +413,25 @@ begin: blk1
         else if ( i_valid )
         begin
                 // Only then execute the instruction at hand...
-                cpsr_nxt                = (i_wr_index == ARCH_PC) ? i_wr_data_1 : 
-                                          ( i_wr_index == PHY_CPSR ? i_wr_data : 
-                                            ((i_wr_index_1 == PHY_CPSR && i_mem_load_ff) ? i_wr_data_1 : i_flags)
-                                          );                 
+                cpsr_nxt                =   i_flags;
 
                 // Dual write port.
                 wen    = 1;
+
+                // Port from arithmetic side
                 wa1    = i_wr_index;
-                wa2    = i_mem_load_ff ? i_wr_index_1 : PHY_RAZ_REGISTER;
                 wdata1 = i_wr_data;
-                wdata2 = i_mem_load_ff ? i_wr_data_1 : 32'd0;
 
-                // Update PC if needed.
-                if ( i_wr_index == ARCH_PC )
-                        pc_shelve (i_wr_data);
-                else if ( i_mem_load_ff && i_wr_index_1 == ARCH_PC)
+                // Port from memory side.
+                wa2    = i_mem_load_ff ? i_wr_index_1 : PHY_RAZ_REGISTER;
+                wdata2 = i_wr_data_1;
+
+                // Load to PC will trigger from writeback.
+                if ( i_mem_load_ff && i_wr_index_1 == ARCH_PC)
+                begin
                         pc_shelve (i_wr_data_1);
-
-                // A write to PC will trigger a clear from writeback.
-                if ( i_wr_index == ARCH_PC || ( i_wr_index_1 == ARCH_PC && i_mem_load_ff) )
                         o_clear_from_writeback  = 1'd1;
+                end
         end
 
         pc_nxt = pc_nxt & 32'hffff_fffe;
@@ -480,5 +478,30 @@ begin
         end
 end
 endtask
+
+`ifdef SIM
+
+always @*
+if ( cpsr_nxt[`CPSR_MODE] != USR && cpsr_ff[`CPSR_MODE] == USR )
+begin
+        if ( 
+                i_data_abt      || 
+                i_fiq           || 
+                i_irq           || 
+                i_instr_abt     || 
+                i_swi           ||
+                i_und
+         )
+        begin
+                // OKAY...
+        end
+        else
+        begin
+                $display($time, "FUNC_ERROR :: CPU is changing out of USR mode without an exception...");
+                $stop;
+        end
+end
+
+`endif
 
 endmodule // zap_register_file.v
