@@ -7,12 +7,11 @@
 
 ZAP is a pipelined ARM processor core that can execute the ARMv4T instruction
 set. It is equipped with ARMv4 compatible split writeback caches and memory 
-management capabilities. ARMv4 and Thumbv1 instruction sets are supported.
-The processor core uses a 10 stage pipeline.
+management capabilities. The processor core uses a 10 stage pipeline.
 
 ### Current Status 
 
-Alpha. Thumb v1 support is experimental.
+Alpha. 16-bit instruction support is experimental.
 
 ### Bus Interface 
  
@@ -22,7 +21,7 @@ Wishbone B3 compatible 32-bit bus.
 
     Fully synthesizable Verilog-2001 core.    
     Store buffer for improved performance.    
-    Can execute 32-bit ARMv4 and 16 bit Thumb v1 code(Experimental).
+    Can execute ARMv4T code. Note that compressed instruction support is EXPERIMENTAL.
     Wishbone B3 compatible interface. Cache unit supports burst access.
     10-stage pipeline design. Pipeline has bypass network to resolve dependencies.
     2 write ports for the register file to allow LDR/STR with writeback to execute as a single instruction.
