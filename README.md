@@ -13,6 +13,11 @@ management capabilities. The processor core uses a 10 stage pipeline.
 
 Alpha. 16-bit instruction support is experimental.
 
+## Bugs and Known Issues
+
+SWAP instruction does not cross the cache unit.
+Issues with the Thumb ISA.
+
 ### Bus Interface 
  
 Wishbone B3 compatible 32-bit bus.
