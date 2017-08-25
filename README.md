@@ -15,9 +15,8 @@ Alpha. 16-bit instruction support is experimental.
 
 ### Bugs and Known Issues
 
-SWAP instruction does not cross the cache unit.
-
-Issues with the Thumb ISA.
+SWAP instruction does not cross the cache unit.  
+Issues with the Thumb ISA.  
 
 ### Bus Interface 
  
