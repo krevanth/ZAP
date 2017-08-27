@@ -1,4 +1,4 @@
-// TODO: Make SWAP non-cacheable and non-bufferable.
+// TODO: Fix SWAP instruction. Need to add flops to every stage.
 
 // ----------------------------------------------------------------------------
 //                            The ZAP Project
