@@ -114,6 +114,7 @@ localparam SWAP1        = 3;
 localparam SWAP2        = 4;
 localparam LMULT_BUSY   = 5;
 localparam BL_S1        = 6;
+localparam SWAP3        = 7;
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -293,22 +294,24 @@ begin
                         state_nxt               = IDLE;
                 end
 
-                SWAP1:
+                SWAP1, SWAP3:
                 begin
                         // STR Rm, [Rn, #0]
 
                         o_irq = 0;
                         o_fiq = 0;
 
-                        o_stall_from_decode = 1'd1;
+                        // If in SWAP3, end the sequence so get next operation
+                        // in when we move to IDLE.
+                        o_stall_from_decode = state_ff == SWAP3 ? 1'd0 : 1'd1;
 
                         o_instruction_valid = 1;
                         o_instruction = {cc, 3'b010, 1'd1, 1'd0, 
                                         i_instruction[22], 1'd0, 1'd0, 
                                         i_instruction[19:16], 
-                                        i_instruction[3:0]};
+                                        i_instruction[3:0], 12'd0}; // BUG FIX
 
-                        state_nxt = SWAP2;
+                        state_nxt = state_ff == SWAP3 ? IDLE : SWAP2;
                 end
 
                 SWAP2:
@@ -319,9 +322,9 @@ begin
 
                         rd = i_instruction[15:12];
 
-                        // Let decoding get next instruction in on the upcoming
-                        // cycle.
-                        o_stall_from_decode = 1'd0; 
+                        // Keep waiting. Next we initiate a read to ensure
+                        // write buffer gets flushed.
+                        o_stall_from_decode = 1'd1; 
                         o_instruction_valid = 1'd1;
 
                         o_irq = 0;
@@ -333,7 +336,7 @@ begin
                         {o_instruction[`DP_RB_EXTEND], o_instruction[`DP_RB]} 
                                         = ARCH_DUMMY_REG0;
 
-                        state_nxt = IDLE;
+                        state_nxt = SWAP3;
                 end
 
                 MEMOP:
