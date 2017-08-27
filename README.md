@@ -16,6 +16,7 @@ Alpha. DESIGN IS IN AN EXPERIMENTAL STATE.
 ### Bugs and Known Issues
 
 Issues with the Thumb ISA.  
+SWAP does not keep CYC signal asserted
 
 ### Bus Interface 
  
