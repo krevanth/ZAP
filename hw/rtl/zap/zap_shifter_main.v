@@ -325,8 +325,8 @@ begin
                 // Get result from multiplier.
                 rm              = mult_out;
 
-                // Carry is set to a MEANINGLESS value.
-                shift_carry_nxt = 1'dx; 
+                // Carry is set to a MEANINGLESS value. Zero in this case.
+                shift_carry_nxt = 1'd0; 
         end        
         else if( shifter_enabled ) // Shifter enabled if valid shift is asked for.
         begin

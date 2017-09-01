@@ -490,7 +490,7 @@ zap_thumb_decoder u_zap_thumb_decoder (
 .i_iabort       (fifo_instr_abort),
 .o_iabort       (thumb_iabort),
 .i_cpsr_ff_t    (alu_flags_ff[T]),
-.i_pc_ff        (fifo_pc_plus_8 - 32'd8),
+.i_pc_ff        (alu_flags_ff[T] ? fifo_pc_plus_8 - 32'd4 : fifo_pc_plus_8 - 32'd8),
 .i_pc_plus_8_ff (fifo_pc_plus_8),
 
 .o_instruction  (thumb_instruction),

@@ -356,6 +356,34 @@ end
 
 // ----------------------------------------------------------------------------
 
+`ifdef SIM
+
+reg [64*8-1:0] OPCODE;
+
+always @*
+case(opcode)
+AND:begin       OPCODE = "AND";    end              
+EOR:begin       OPCODE = "EOR";    end    
+MOV:begin       OPCODE = "MOV";    end
+MVN:begin       OPCODE = "MVN";    end
+BIC:begin       OPCODE = "BIC";    end
+ORR:begin       OPCODE = "ORR";    end
+TST:begin       OPCODE = "TST";    end
+TEQ:begin       OPCODE = "TEQ";    end
+CLZ:begin       OPCODE = "CLZ";    end
+FMOV:begin      OPCODE = "FMOV";   end
+ADD:begin       OPCODE = "ADD";    end   
+ADC:begin       OPCODE = "ADC";    end 
+SUB:begin       OPCODE = "SUB";    end 
+RSB:begin       OPCODE = "RSB";    end 
+SBC:begin       OPCODE = "SBC";    end 
+RSC:begin       OPCODE = "RSC";    end 
+CMP:begin       OPCODE = "CMP";    end
+CMN:begin       OPCODE = "CMN";    end
+endcase
+
+`endif
+
 always @*
 begin: alu_result
 
