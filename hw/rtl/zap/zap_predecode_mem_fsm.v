@@ -52,7 +52,6 @@ module zap_predecode_mem_fsm
         input wire              i_cpsr_t,
 
         // Pipeline control signals.
-        input wire              i_code_stall,
         input wire              i_clear_from_writeback,
         input wire              i_data_stall,
         input wire              i_clear_from_alu,
@@ -524,7 +523,6 @@ endfunction
 always @ (posedge i_clk)
 begin
         if      ( i_reset )                             clear;
-        else if ( i_code_stall )                        begin end
         else if ( i_clear_from_writeback)               clear;
         else if ( i_data_stall )                        begin end // Stall CPU.
         else if ( i_clear_from_alu )                    clear;

@@ -32,9 +32,7 @@ module zap_alu_main #(
         parameter [31:0] FLAG_WDT  = 32'd32  // Width of active CPSR.
 )
 (
-        input wire                         i_code_stall,                // Code stall from I-cache.
 
-        // ------------- Hijack Interface --------------- //
         input wire                         i_hijack,                    // Enable hijack.
         input wire      [31:0]             i_hijack_op1,                // Hijack operand 1.
         input wire      [31:0]             i_hijack_op2,                // Hijack operand 2.
@@ -61,23 +59,23 @@ module zap_alu_main #(
         input wire                         i_fiq_ff,                    // FIQ flagged.
         input wire                         i_swi_ff,                    // SWI flagged.
 
-        input wire  [zap_clog2(PHY_REGS)-1:0] i_mem_srcdest_index_ff,   // LD/ST Memory data register index.    
-        input wire                         i_mem_load_ff,               // LD/ST Memory load.
-        input wire                         i_mem_store_ff,              // LD/ST Memory store.                    
-        input wire                         i_mem_pre_index_ff,          // LD/ST Pre/Post index.
-        input wire                         i_mem_unsigned_byte_enable_ff,       // LD/ST uint8_t  data type.
-        input wire                         i_mem_signed_byte_enable_ff,         // LD/ST int8_t   data type.
-        input wire                         i_mem_signed_halfword_enable_ff,     // LD/ST int16_t data type.
-        input wire                         i_mem_unsigned_halfword_enable_ff,   // LD/ST uint16_t  data type.
-        input wire                         i_mem_translate_ff,          // LD/ST Force user view of memory.
+        input wire  [zap_clog2(PHY_REGS)-1:0] i_mem_srcdest_index_ff,           // LD/ST Memory data register index.    
+        input wire                            i_mem_load_ff,                    // LD/ST Memory load.
+        input wire                            i_mem_store_ff,                   // LD/ST Memory store.                    
+        input wire                            i_mem_pre_index_ff,               // LD/ST Pre/Post index.
+        input wire                            i_mem_unsigned_byte_enable_ff,    // LD/ST uint8_t  data type.
+        input wire                            i_mem_signed_byte_enable_ff,      // LD/ST int8_t   data type.
+        input wire                            i_mem_signed_halfword_enable_ff,  // LD/ST int16_t data type.
+        input wire                            i_mem_unsigned_halfword_enable_ff,// LD/ST uint16_t  data type.
+        input wire                            i_mem_translate_ff,               // LD/ST Force user view of memory.
 
-        input wire  [3:0]                  i_condition_code_ff,         // CC associated with instr.
-        input wire  [zap_clog2(PHY_REGS)-1:0] i_destination_index_ff,   // Target register index.
-        input wire  [zap_clog2(ALU_OPS)-1:0]  i_alu_operation_ff,       // Operation to perform.
-        input wire                         i_flag_update_ff,            // Update flags if 1.
-        input wire                         i_force32align_ff,           // Force address alignment to 32-bit.
-        input wire                         i_und_ff,                    // Flagged undefined instructions.
-        input wire                         i_data_mem_fault,            // Flagged Data abort.
+        input wire  [3:0]                       i_condition_code_ff,            // CC associated with instr.
+        input wire  [zap_clog2(PHY_REGS)-1:0]   i_destination_index_ff,         // Target register index.
+        input wire  [zap_clog2(ALU_OPS)-1:0]    i_alu_operation_ff,             // Operation to perform.
+        input wire                              i_flag_update_ff,               // Update flags if 1.
+        input wire                              i_force32align_ff,              // Force address alignment to 32-bit.
+        input wire                              i_und_ff,                       // Flagged undefined instructions.
+        input wire                              i_data_mem_fault,               // Flagged Data abort.
 
         output reg [31:0]                   o_alu_result_nxt,           // For feedback. ALU result _nxt version.
         output reg [31:0]                   o_alu_result_ff,            // ALU result flopped version.
@@ -218,10 +216,6 @@ begin
                 //
                 clear ( {1'd1,1'd1,1'd0,SVC} );
         end
-        else if ( i_code_stall ) 
-        begin
-                // Preserve values.
-        end
         else if ( i_clear_from_writeback ) 
         begin
                 // Clear but take CPSR from writeback.
@@ -306,7 +300,6 @@ begin
                 o_data_wb_cyc_nxt = 1'd0;
                 o_data_wb_stb_nxt = 1'd0;
         end 
-        else if ( i_code_stall ) begin end
         else if ( i_clear_from_writeback ) 
         begin 
                 o_data_wb_cyc_nxt = 0;

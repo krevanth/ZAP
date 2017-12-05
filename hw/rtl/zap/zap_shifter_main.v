@@ -47,7 +47,6 @@ module zap_shifter_main
         output reg   [1:0]                       o_taken_ff,
 
         // Stall and clear. Hi to low priority.
-        input wire i_code_stall,
         input wire i_clear_from_writeback, // | High Priority.
         input wire i_data_stall,           // |
         input wire i_clear_from_alu,       // V Low Priority.
@@ -189,7 +188,6 @@ u_zap_multiply
         .i_clk(i_clk),
         .i_reset(i_reset),
 
-        .i_code_stall(i_code_stall),
         .i_data_stall(i_data_stall),
         .i_clear_from_writeback(i_clear_from_writeback),
         .i_clear_from_alu(i_clear_from_alu),
@@ -230,10 +228,6 @@ begin
         if ( i_reset )
         begin
                 clear;
-        end
-        else if ( i_code_stall )
-        begin
-
         end
         else if ( i_clear_from_writeback )
         begin

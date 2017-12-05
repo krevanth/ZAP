@@ -29,9 +29,6 @@ module zap_predecode_compress (
         // Clock and reset.
         input wire              i_clk,
 
-        // Code stall.
-        input wire              i_code_stall,
-
         // Input from I-cache.
         // Instruction and valid qualifier.
         input wire [31:0]       i_instruction,
@@ -75,7 +72,7 @@ reg [11:0] offset_ff, offset_nxt;  // Remember offset.
 // Keep buferring offset since a long offset is constructed using consecutive
 // valid compressed instructions.
 always @ (posedge i_clk) 
-        if ( i_instruction_valid && !i_code_stall )
+        if ( i_instruction_valid )
                 offset_ff <= offset_nxt;
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -62,7 +62,6 @@ module zap_predecode_main #(
         input   wire                            i_und,
 
         // Clear and stall signals. From high to low priority.
-        input wire                              i_code_stall,
         input wire                              i_clear_from_writeback, // |Pri 
         input wire                              i_data_stall,           // |
         input wire                              i_clear_from_alu,       // |
@@ -170,10 +169,6 @@ begin
         begin
                 clear;
         end
-        else if ( i_code_stall )
-        begin
-
-        end
         else if ( i_clear_from_writeback )
         begin
                 clear;
@@ -247,7 +242,6 @@ u_zap_decode_coproc
         .i_cpsr_ff_mode(i_cpu_mode_mode),
 
         // Clear and stall signals.
-        .i_code_stall(1'd0),
         .i_clear_from_writeback(i_clear_from_writeback),
         .i_data_stall(i_data_stall),          
         .i_clear_from_alu(i_clear_from_alu),      
@@ -340,7 +334,6 @@ zap_predecode_mem_fsm u_zap_mem_fsm (
         .i_irq(arm_irq),
         .i_cpsr_t(i_cpu_mode_t),
 
-        .i_code_stall(i_code_stall),
 
         .i_clear_from_writeback(i_clear_from_writeback),
         .i_data_stall(i_data_stall),          

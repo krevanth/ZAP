@@ -58,7 +58,6 @@ module zap_issue_main
         input wire       [31:0]                 i_cpu_mode,
 
         // Clear and stall signals.
-        input wire                              i_code_stall,
         input wire                              i_clear_from_writeback,
         input wire                              i_data_stall,          
         input wire                              i_clear_from_alu,
@@ -285,10 +284,6 @@ begin
 if ( i_reset )
 begin
         clear;
-end
-else if ( i_code_stall )
-begin
-
 end
 else if ( i_clear_from_writeback )
 begin

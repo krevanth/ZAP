@@ -469,7 +469,6 @@ wire [31:0] thumb_pc_plus_8_ff;
 zap_thumb_decoder u_zap_thumb_decoder (
 .i_clk          (i_clk),
 .i_reset        (i_reset),
-.i_code_stall   (1'd0),
 .i_clear_from_writeback(clear_from_writeback),
 .i_data_stall   (
                                         o_data_wb_stb && 
@@ -517,10 +516,9 @@ zap_predecode_main #(
 )
 u_zap_predecode (
         // Input.
-        .i_clk                          (i_clk), // & i_instr_wb_ack),
-        .i_code_stall                   (1'd0), //(!i_instr_wb_ack),
-
+        .i_clk                          (i_clk),
         .i_reset                        (reset),
+
         .i_clear_from_writeback         (clear_from_writeback),
         .i_data_stall                   (o_data_wb_stb && 
                                          o_data_wb_cyc && 
@@ -594,7 +592,6 @@ u_zap_decode_main (
         // Input.
         .i_clk                          (i_clk),
         .i_reset                        (reset),
-        .i_code_stall                   (1'd0), 
 
         .i_clear_from_writeback         (clear_from_writeback),
         .i_data_stall                   (o_data_wb_cyc && 
@@ -666,9 +663,6 @@ u_zap_issue_main
 
         .i_taken_ff(decode_taken_ff),
         .o_taken_ff(issue_taken_ff),
-
-        .i_code_stall                   (1'd0), 
-
 
         .i_pc_ff(decode_pc_ff),
         .o_pc_ff(issue_pc_ff),
@@ -785,9 +779,6 @@ zap_shifter_main #(
 )
 u_zap_shifter_main
 (
-        .i_code_stall                   (1'd0), 
-
-
         .i_pc_ff(issue_pc_ff),
         .o_pc_ff(shifter_pc_ff),
 
@@ -895,8 +886,6 @@ zap_alu_main #(
 )
 u_zap_alu_main
 (
-        .i_code_stall                   (1'd0), //(!i_instr_wb_ack),
-
 
         .i_hijack     (wb_hijack      ),
         .i_hijack_op1 ( wb_hijack_op1 ),
@@ -1014,9 +1003,6 @@ zap_memory_main #(
 )
 u_zap_memory_main
 (
-        .i_code_stall                   (1'd0), //(!i_instr_wb_ack),
-
-
         .i_und_ff (alu_und_ff),
         .o_und_ff (memory_und_ff),
 

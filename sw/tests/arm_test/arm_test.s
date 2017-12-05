@@ -115,7 +115,21 @@ fail13:
 
 	bl test_rti
 passed:
-        mov r12, #1000
+        mvn  r0, #0
+        mvn  r1, #0
+        mvn  r2, #0
+        mvn  r3, #0
+        mvn  r4, #0
+        mvn  r5, #0
+        mvn  r6, #0
+        mvn  r7, #0
+        mvn  r8, #0
+        mvn  r9, #0
+        mvn r10, #0
+        mvn r11, #0
+        mvn r12, #0
+        mvn r13, #0
+        mvn r14, #0
 	b passed
 
 	@test N and Z flags conditional execution
@@ -1271,12 +1285,9 @@ test_rti:
 	ldmib r8, {r9-r11, r15}^	@ This should return to user mode and restore CPSR to NZCV = {1000}
 
 .rtilabel2:
-        mov r12, #8000
-
 	bpl .rtifail
 	beq .rtifail
-
-	mov r0, #0
+        b passed
 
 .rtifail:
 	msr cpsr, #0x10

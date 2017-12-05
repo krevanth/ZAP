@@ -44,9 +44,6 @@ module zap_decode_main #(
         input   wire                            i_clk,
         input   wire                            i_reset,
 
-        // Code stall.
-        input   wire                            i_code_stall,
-
         // Branch state.
         input   wire     [1:0]                  i_taken,
 
@@ -262,10 +259,6 @@ begin
         if ( i_reset )
         begin
                 clear;
-        end
-        else if ( i_code_stall )
-        begin
-
         end
         else if ( i_clear_from_writeback )
         begin

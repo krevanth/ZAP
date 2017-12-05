@@ -34,7 +34,6 @@ module zap_shifter_multiply
         input wire                              i_reset,
 
         // Clear and stall signals.
-        input wire                              i_code_stall,
         input wire                              i_clear_from_writeback,
         input wire                              i_data_stall,
         input wire                              i_clear_from_alu,
@@ -190,9 +189,6 @@ begin
                 x_ff     <= 63'd0;
                 state_ff <= IDLE;
                 buffer_ff<= 32'd0;
-        end
-        else if ( i_code_stall )
-        begin
         end
         else if ( i_clear_from_writeback )
         begin

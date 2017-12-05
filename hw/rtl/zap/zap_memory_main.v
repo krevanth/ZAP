@@ -39,7 +39,6 @@ module zap_memory_main
         input wire                          i_reset,
 
         // Pipeline control signals.
-        input wire                          i_code_stall,
         input wire                          i_clear_from_writeback,
         input wire                          i_data_stall,
 
@@ -147,10 +146,6 @@ if ( i_reset )
 begin
         clear;
 end
-else if ( i_code_stall )
-begin
-
-end
 else if ( i_clear_from_writeback )
 begin
         clear;
@@ -182,10 +177,7 @@ end
 // Manual Pipeline Retiming.
 always @ (posedge i_clk)
 begin
-        if ( i_code_stall )
-        begin
-        end
-        else if ( !i_data_stall )
+        if ( !i_data_stall )
         begin
                 i_mem_load_ff2          <= i_mem_load_ff;
                 i_mem_srcdest_value_ff2 <= i_mem_srcdest_value_ff;

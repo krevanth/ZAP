@@ -31,7 +31,6 @@ module zap_thumb_decoder (
         input wire              i_reset,
 
         // Code stall.
-        input wire              i_code_stall,
         input wire              i_clear_from_writeback,
         input wire              i_data_stall,
         input wire              i_clear_from_alu,
@@ -100,7 +99,6 @@ reg  [1:0] taken_nxt;
 
 zap_predecode_compress u_zap_predecode_compress (
         .i_clk(i_clk),
-        .i_code_stall(i_code_stall),
         .i_instruction(i_instruction),
         .i_instruction_valid(i_instruction_valid),
         .i_irq(i_irq),
