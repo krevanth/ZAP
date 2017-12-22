@@ -64,6 +64,7 @@ module zap_writeback #(
         input   wire [$clog2(PHY_REGS)-1:0] i_wr_index,
         input   wire [31:0]                 i_wr_data,
         input   wire [FLAG_WDT-1:0]         i_flags,
+        input   wire                        i_thumb,
         input   wire [$clog2(PHY_REGS)-1:0] i_wr_index_1,
         input   wire [31:0]                 i_wr_data_1,
 
@@ -278,7 +279,7 @@ begin: blk1
         end
         else
         begin
-                pc_nxt = pc_ff + ((cpsr_ff[T]) ? 32'd2 : 32'd4);
+                pc_nxt = pc_ff + (i_thumb ? 32'd2 : 32'd4);
         end
 
 

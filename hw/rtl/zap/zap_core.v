@@ -1092,6 +1092,8 @@ u_zap_writeback
         .i_stall_from_issue     (stall_from_issue),
         .i_stall_from_shifter   (stall_from_shifter),
 
+        .i_thumb                (alu_flags_ff[T]), // To indicate thumb state.
+
         .i_clear_from_decode    (clear_from_decode),
         .i_pc_from_decode       (pc_from_decode),
 
