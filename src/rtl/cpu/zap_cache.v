@@ -293,12 +293,18 @@ end
 
 always @*
 begin
+        state_nxt = state_ff;
+
+        // Change state only if strobe is inactive or strobe has just completed.
+        if ( !o_wb_stb || (o_wb_stb && i_wb_ack) ) 
+        begin
                 casez({wb_cyc[2],wb_cyc[1],wb_cyc[0]})
                 3'b1?? : state_nxt = S2; // TLB.
                 3'b01? : state_nxt = S1; // Tag.
                 3'b001 : state_nxt = S0; // Cache.
                 default: state_nxt = state_ff;                                       
                 endcase
+        end
 end
 
 always @*

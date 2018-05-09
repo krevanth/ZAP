@@ -204,8 +204,6 @@ $display("parameter CODE_LPAGE_TLB_ENTRIES        = %d", CODE_LPAGE_TLB_ENTRIES 
 $display("parameter CODE_SPAGE_TLB_ENTRIES        = %d", CODE_SPAGE_TLB_ENTRIES      ) ;
 $display("parameter CODE_CACHE_SIZE               = %d", CODE_CACHE_SIZE             ) ;
 $display("parameter STORE_BUFFER_DEPTH            = %d", STORE_BUFFER_DEPTH          ) ;
-$display($time, "Type 'cont' to continue running the simulation...");
-$stop;
 end
 
 wire ird_en, drd_en;
@@ -218,14 +216,18 @@ integer perc = 32'hffffffff;
 
 always @ (posedge i_clk)
 begin
+	`ifdef DISP_PERC
                 perc =  (tick * 100)/`MAX_CLOCK_CYCLES; 
                 draw_line(perc);
                 tick=tick + 1;
+	`endif
 end
 
 task draw_line ( input [31:0] x ) ;
 begin: mt1
-        $display("COMPLETED :: %d percent", x);
+	`ifdef DISP_PERC
+        	$display("COMPLETED :: %d percent", x);
+	`endif
 end        
 endtask
 

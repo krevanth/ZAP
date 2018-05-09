@@ -367,8 +367,8 @@ assign o_instr_wb_sel = 4'b1111;
 // ----------------------------------------------------------------------------
 
 assign reset    = i_reset; // Assume external synchronizer.
-assign irq      = i_irq; // Assume externally synchronized to core clock.
-assign fiq      = i_fiq; // Assume externally synchronized to core clock.
+assign irq      = i_irq;   // Assume externally synchronized to core clock.
+assign fiq      = i_fiq;   // Assume externally synchronized to core clock.
 
 // ----------------------------------------------------------------------------
 

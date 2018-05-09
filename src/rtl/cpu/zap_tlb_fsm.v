@@ -200,7 +200,9 @@ begin: blk1
                         end
                         else
                         begin
-                                $display($time, "TLB Hit for address = %x MMU enable = %x!", i_address, i_mmu_en);
+                                `ifdef DISP_TLB_SUCCESS
+                                        $display($time, "TLB Hit for address = %x MMU enable = %x!", i_address, i_mmu_en);
+                                `endif
 `ifdef TLB_DEBUG
                                 $stop;
 `endif

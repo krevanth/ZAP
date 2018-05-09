@@ -303,7 +303,9 @@ begin
                                 $display("Line %d : %x %d", i, dat_ram[i], dirty[i]);
                         end
 
-                        $stop;
+                        `ifdef CACHE_DEBUG
+                                $stop;
+                        `endif
                 `endif
 
 
