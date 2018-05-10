@@ -49,7 +49,7 @@ $(OBJ_DIR)/$(TC).bin: $(OBJ_DIR)/$(TC).elf
 $(OBJ_DIR)/zap_mem.v: $(OBJ_DIR)/$(TC).bin 
 	perl $(SCRIPT_PATH)/bin2vlog.pl $< $@
 
-all: $(CC) $(AS) $(LD) $(OB) $(OBJ_DIR)/zap_mem.v 
+all: dirs $(CC) $(AS) $(LD) $(OB) $(OBJ_DIR)/zap_mem.v 
 	perl $(SCRIPT_PATH)/run_sim.pl +test+$(TC) 
 
 $(AS): 
@@ -63,6 +63,7 @@ $(CC): $(GCC_SRC)
 
 dirs:
 	mkdir -p $(OBJ_DIR)
+	touch $(OBJ_DIR)
 
 clean: 
 	rm -fv  $(OBJ_DIR)/* 
