@@ -24,6 +24,7 @@ GCC_PATH     := ../../../obj/gcc-arm-none-eabi-*/bin/
 SCRIPT_PATH  := ../../scripts/
 C_FILES      := $(wildcard *.c)
 S_FILES      := $(wildcard *.s)
+LD_FILE      := $(wildcard *.ld)
 GCC_SRC      := ../../../sw/gcc-arm-none-eabi-*-linux.tar.*
 CFLAGS       := -c -msoft-float -mfloat-abi=soft -mcpu=arm7tdmi -g
 SFLAGS       := -mcpu=arm7tdmi -g
@@ -40,7 +41,7 @@ $(OBJ_DIR)/asm_file.o: $(S_FILES)
 $(OBJ_DIR)/c_file.o: $(C_FILES)
 	$(CC) $(CFLAGS) $^ -o $@
 
-$(OBJ_DIR)/$(TC).elf: $(TC).ld $(OBJ_DIR)/asm_file.o $(OBJ_DIR)/c_file.o $(TC).ld
+$(OBJ_DIR)/$(TC).elf: $(LD_FILE) $(OBJ_DIR)/asm_file.o $(OBJ_DIR)/c_file.o $(TC).ld
 	$(LD) $(LFLAGS) $< $^ -o $@
 
 $(OBJ_DIR)/$(TC).bin: $(OBJ_DIR)/$(TC).elf
