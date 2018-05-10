@@ -16,6 +16,7 @@
 .PHONY: clean
 .PHONY: c2asm
 .PHONY: compiler
+.PHONY: dirs
 
 TC           := $(shell basename `pwd`)
 OBJ_DIR      := ../../../obj/ts/$(TC)/
@@ -51,14 +52,17 @@ $(OBJ_DIR)/zap_mem.v: $(OBJ_DIR)/$(TC).bin
 all: $(CC) $(AS) $(LD) $(OB) $(OBJ_DIR)/zap_mem.v 
 	perl $(SCRIPT_PATH)/run_sim.pl +test+$(TC) 
 
-$(AS): ; 
-$(LD): ;
-$(OB): ;
+$(AS): 
+$(LD):
+$(OB):
 
 $(CC): $(GCC_SRC)
 	mkdir -p $(OBJ_DIR)
 	tar -xvf $(GCC_SRC) -C ../../../obj/ 
 	touch $@
+
+dirs:
+	mkdir -p $(OBJ_DIR)
 
 clean: 
 	rm -fv  $(OBJ_DIR)/* 
