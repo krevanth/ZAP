@@ -9,6 +9,9 @@ ZAP is a pipelined ARM processor core that can execute the ARMv4T instruction
 set. It is equipped with ARMv4 compatible split writeback caches and memory 
 management capabilities. The processor core uses a 10 stage pipeline.
 
+Note that ARM GCC is included in the repository in the *sw* directory. The
+makefile will extract the GCC compiler into the object folder.
+
 ### Current Status 
 
 Experimental.
