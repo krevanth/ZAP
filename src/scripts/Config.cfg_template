@@ -22,7 +22,10 @@
         FIQ_EN                      => 0,       # Make this 1 to enable FIQ signal from TB.
         MAX_CLOCK_CYCLES            => 100000,  # Clock cycles to run the simulation for.
         ALLOW_STALLS                => 1,       # Make this 1 to allow external RAM to signal a stall.
-        WRITE_VCD                   => 1,       # Make this 1 to allow VCD logs to be written.
-        DEFINE_TLB_DEBUG            => 0        # Make this 1 to define TLB_DEBUG. Useful for debugging the TLB.
+        DEFINE_TLB_DEBUG            => 0,       # Make this 1 to define TLB_DEBUG. Useful for debugging the TLB.
+        REG_CHECK                   => {"r1" => "32'h4", 
+                                        "r2" => "32'd3"},      # Make this an anonymous has with entries like "r10" => "32'h0" etc.
+        FINAL_CHECK                 => {"32'h100" => "32'd4", 
+                                        "32'h66" => "32'h4"}       # Make this an anonymous hash with entries like verilog_address => verilog_value etc.
 );
 

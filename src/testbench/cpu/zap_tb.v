@@ -347,14 +347,23 @@ begin
         @(posedge i_clk);
         i_reset <= 0;
 
-        repeat(`MAX_CLOCK_CYCLES) @(negedge i_clk);
+        $display($time, " - Running for %d clock cycles...", `MAX_CLOCK_CYCLES);
+
+        repeat(`MAX_CLOCK_CYCLES) 
+                @(negedge i_clk);
+
+        $display($time, " - Clock cycles elapsed. Generating memory data.");
+
+        $display(">>>>>>>>>>>>>>>>>>>>>>> MEMORY DUMP START <<<<<<<<<<<<<<<<<<<<<<<");
 
         for(i=START;i<START+COUNT;i=i+4)
         begin
                 $display("DATA mem[%d] = %x", i, {U_MODEL_RAM_DATA.ram[(i/4)]});
         end
 
-        $finish;
+        $display("<<<<<<<<<<<<<<<<<<<<<<< MEMORY DUMP END >>>>>>>>>>>>>>>>>>>>>>>>>>");
+
+        `include "zap_check.vh"                
 end
 
 endmodule

@@ -17,7 +17,6 @@ perl run_sim.pl
 [+fiq_en]                                                               -- Trigger FIQ interrupts from bench.
 +max_clock_cycles+<max_clock_cycles>                                    -- Set maximum clock cycles for which the simulation should run. 
 [+tlb_debug]                                                            -- Enable TLB debugging interactive.
-[+nodump]                                                               -- Do not write VCD. 
 ###############################################################################
 ";
 
@@ -39,7 +38,6 @@ my $FIQ_EN                      = $Config{'FIQ_EN'};
 my $MAX_CLOCK_CYCLES            = $Config{'MAX_CLOCK_CYCLES'};
 my $TLB_DEBUG                   = $Config{'DEFINE_TLB_DEBUG'};
 my $STALL                       = $Config{'ALLOW_STALLS'};
-my $NODUMP                      = $Config{'WRITE_VCD'};
 
 # System configuration.
 my $DATA_CACHE_SIZE             = $Config{'DATA_CACHE_SIZE'};
@@ -77,7 +75,6 @@ foreach(@ARGV) {
         elsif (/^\+fiq_en/)                     { $FIQ_EN = 1; }
         elsif (/^\+max_clock_cycles\+(.*)/)     { $MAX_CLOCK_CYCLES = $1; }  
         elsif (/help/)                          { print "$HELP"; exit 0  }
-        elsif (/^\+nodump/)                     { $NODUMP = 1; } 
         elsif (/^\+tlb_debug/)                  { $TLB_DEBUG = 1; }
         elsif (/^\+store_buffer_depth\+(.*)/)   { $SBUF_DEPTH = $1; }
         else                                    { die "Unrecognized $_  $HELP"; }
@@ -95,14 +92,10 @@ my $PROG_PATH       = "$SCRATCH/zap_mem.v";
 my $TARGET_BIN_PATH = "$SCRATCH/zap.bin";
 
 # Generate IVL options.
-my $IVL_OPTIONS .= "-v -I$ZAP_HOME/src/rtl/cpu $ZAP_HOME/src/rtl/*/*.v $ZAP_HOME/src/testbench/*/*.v -o $VVP_PATH -gstrict-ca-eval -Wall -g2001 -Winfloop -DSEED=$SEED -DMEMORY_IMAGE=\\\"$PROG_PATH\\\" ";
+my $IVL_OPTIONS .= " -v -I$ZAP_HOME/src/rtl/cpu -I$ZAP_HOME/obj/ts/$TEST ";
+   $IVL_OPTIONS .= " $ZAP_HOME/src/rtl/*/*.v $ZAP_HOME/src/testbench/*/*.v -o $VVP_PATH -gstrict-ca-eval -Wall -g2001 -Winfloop -DSEED=$SEED -DMEMORY_IMAGE=\\\"$PROG_PATH\\\" ";
 
-if ( !$NODUMP ) {
-        $IVL_OPTIONS .= "-DVCD_FILE_PATH=\\\"$VCD_PATH\\\" "; 
-} else {
-        $IVL_OPTIONS .= "-DVCD_FILE_PATH=\\\"/dev/null\\\" ";
-}
-
+$IVL_OPTIONS .= " -DVCD_FILE_PATH=\\\"$VCD_PATH\\\" "; 
 $IVL_OPTIONS .= " -Pzap_test.RAM_SIZE=$RAM_SIZE -Pzap_test.START=$DUMP_START -Pzap_test.COUNT=$DUMP_SIZE -DLINUX -Pzap_test.STORE_BUFFER_DEPTH=$SBUF_DEPTH ";
 $IVL_OPTIONS .= " -Pzap_test.BP_ENTRIES=$BP -Pzap_test.FIFO_DEPTH=$FIFO ";
 $IVL_OPTIONS .= " -Pzap_test.DATA_SECTION_TLB_ENTRIES=$DATA_SECTION_TLB_ENTRIES ";
@@ -118,6 +111,28 @@ if ( $SIM )    {        $IVL_OPTIONS .= "-DSIM ";   }
 
 if ( $MAX_CLOCK_CYCLES == 0 )   {  die "*E: MAX_CLOCK_CYCLES set to 0. Ending script...";  }
 if ( $TLB_DEBUG )               {  print "Warning: TLB_DEBUG defined. Do not use for unattended systems!"; $IVL_OPTIONS .= "-DTLB_DEBUG ";}
+
+open(HH, ">$ZAP_HOME/obj/ts/$TEST/zap_check.vh") or die "Could not write to ../../../obj/ts/$TEST/zap_check.vh";
+
+my $X = $Config{'FINAL_CHECK'}; 
+
+foreach(keys (%$X)) {
+        my $string = "$_, $$X{$_}, U_MODEL_RAM_DATA.ram[$_]";
+        print    "if ( U_MODEL_RAM_DATA.ram[$_/4] != ", $$X{"$_"}, ') begin $display("Error: Memory values not matched. PTR = %d EXP = %x REC = %x", ', $string , ' ); $finish; end else $display("RAM check passed!");',"\n";
+        print HH "if ( U_MODEL_RAM_DATA.ram[$_/4] != ", $$X{"$_"}, ') begin $display("Error: Memory values not matched. PTR = %d EXP = %x REC = %x", ', $string , ' ); $finish; end else $display("RAM check passed!");',"\n";
+}
+
+$X = $Config{'REG_CHECK'};
+
+my $REG_HIER = "u_zap_top.u_zap_core.u_zap_writeback.u_zap_register_file";
+
+foreach(keys (%$X)) {
+        my $string = "\"$_\", $$X{$_}, $REG_HIER.$_";
+        print    "if ( $REG_HIER.$_ != ", $$X{"$_"}, ') begin $display("Error: Register values not matched. PTR = %s EXP = %x REC = %x", ', $string , ' ); $finish; end else $display("Reg check passed!");',"\n";
+        print HH "if ( $REG_HIER.$_ != ", $$X{"$_"}, ') begin $display("Error: Register values not matched. PTR = %s EXP = %x REC = %x", ', $string , ' ); $finish; end else $display("Reg check passed!");',"\n";
+}
+
+print HH '$display("Simulation Complete. All checks (if any) passed.");$finish;';
 
 print "*I: Rand is $SEED...\n";
 print "iverilog $IVL_OPTIONS\n";
