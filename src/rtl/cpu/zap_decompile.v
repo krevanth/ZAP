@@ -1,17 +1,24 @@
 // ------------------------------------------------------------------------
 //
+// ONLY FOR SIMULATION USE. NOT FOR SYNTHESIS.
+//
 // This module will decompile binary ARM instructions to assembly.
 // This code is non synthesizable and must be used only in the TB.
 // This module is used in the `ifdef SIM blocks of RTL but is ignored
 // for synthesis.
+//
+// Currently long multiplication and 16-bit mem ops are not fully
+// decompiled.
 //
 // ------------------------------------------------------------------------
 
 module zap_decompile #(parameter INS_WDT = 36) ( 
                 input           [36-1:0]        i_instruction,  // 36-bit instruction.
                 input                           i_dav,          // Instruction valid.
-                output reg      [64*8-1:0]    o_decompile     // 1024 bytes max of assembler string.
+                output reg      [64*8-1:0]      o_decompile     // 1024 bytes max of assembler string.
         );
+
+`ifndef SYNTHESIS // if simulating...
 
 `include "zap_defines.vh"
 `include "zap_localparams.vh"
@@ -431,5 +438,12 @@ begin: blk49329483
         cond_code = ok;
 end
 endfunction
+
+`else // if SYNTHESIS
+
+always @*
+        o_decompile = 0;
+
+`endif
 
 endmodule // zap_decompile.v
