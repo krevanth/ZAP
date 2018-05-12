@@ -118,7 +118,7 @@ localparam [1:0] SIGNED_BYTE            = 2'd0;
 localparam [1:0] UNSIGNED_HALF_WORD     = 2'd1;
 localparam [1:0] SIGNED_HALF_WORD       = 2'd2;
 
-`ifdef SIM
+`ifndef SYNTHESIS
 
 // Debug only.
 reg bx, dp, br, mrs, msr, ls, mult, halfword_ls, swi, dp1, dp2, dp3, lmult;
@@ -163,6 +163,13 @@ begin
         SOFTWARE_INTERRUPT:               swi             = 1;         
         endcase
 end
+
+zap_decompile u_zap_decompile (
+        .i_instruction ( i_instruction ),
+        .i_dav         ( i_instruction_valid ),
+        .o_decompile   ()
+);
+
 `endif
 
 // ----------------------------------------------------------------------------
@@ -661,7 +668,7 @@ endtask
 //
 task process_immediate ( input [34:0] instruction );
 begin
-        `ifdef SIM
+        `ifndef SYNTHESIS
                 dp1 = 1;
         `endif
 
@@ -681,7 +688,7 @@ endtask
 //
 task process_instruction_specified_shift ( input [34:0] instruction );
 begin
-        `ifdef SIM
+        `ifndef SYNTHESIS
                 dp2 = 1;
         `endif
 
@@ -720,7 +727,7 @@ begin
         $display("%m Process register specified shift...");
 `endif
 
-        `ifdef SIM
+        `ifndef SYNTHESIS
                 dp3 = 1;
         `endif
 

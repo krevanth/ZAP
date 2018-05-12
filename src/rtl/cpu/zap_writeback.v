@@ -117,7 +117,7 @@ module zap_writeback #(
 ///////////////////////////////////////////////////////////////////////////////
 
 
-`ifdef SIM
+`ifndef SYNTHESIS
 
 reg fiq_ack;
 reg irq_ack;
@@ -142,7 +142,7 @@ reg shelve_ff, shelve_nxt;
 
 assign o_shelve = shelve_ff;
 
-`ifdef SIM
+`ifndef SYNTHESIS
 integer irq_addr = 0;
 `endif
 
@@ -210,7 +210,7 @@ zap_register_file u_zap_register_file
 
 `define ARM_MODE (cpsr_ff[T] == 1'd0)
 
-`ifdef SIM
+`ifndef SYNTHESIS
 reg temp_set;
 reg error;
 initial error = 0;
@@ -228,7 +228,7 @@ begin: blk1
 
 
 
-        `ifdef SIM
+        `ifndef SYNTHESIS
                 fiq_ack = 0;
                 irq_ack = 0;
                 und_ack = 0;
@@ -317,7 +317,7 @@ begin: blk1
                 wdata2 = cpsr_ff;
                 cpsr_nxt[`CPSR_MODE]  = ABT;
 
-                `ifdef SIM
+                `ifndef SYNTHESIS
                         dabt_ack = 1'd1;
                 `endif
 
@@ -334,7 +334,7 @@ begin: blk1
                 cpsr_nxt[`CPSR_MODE]  = FIQ;
                 cpsr_nxt[F] = 1'd1;
 
-                `ifdef SIM
+                `ifndef SYNTHESIS
                         fiq_ack = 1'd1;
                 `endif
         end
@@ -345,7 +345,7 @@ begin: blk1
                 wen    = 1;
                 wdata1 = `ARM_MODE ? i_wr_data : i_pc_buf_ff ;
 
-                `ifdef SIM
+                `ifndef SYNTHESIS
                 irq_addr = wdata1;
                 `endif
 
@@ -355,7 +355,7 @@ begin: blk1
                 cpsr_nxt[`CPSR_MODE]  = IRQ;
                 // Returns do LR - 4 to get back to the same instruction.
 
-                `ifdef SIM
+                `ifndef SYNTHESIS
                 irq_ack = 1'd1;
                 `endif
         end
@@ -370,7 +370,7 @@ begin: blk1
                 wdata2 = cpsr_ff;
                 cpsr_nxt[`CPSR_MODE]  = ABT;
 
-                `ifdef SIM
+                `ifndef SYNTHESIS
                         iabt_ack = 1'd1;
                 `endif
         end
@@ -385,7 +385,7 @@ begin: blk1
                 wdata2 = cpsr_ff;
                 cpsr_nxt[`CPSR_MODE]  = SVC;
 
-                `ifdef SIM
+                `ifndef SYNTHESIS
                         swi_ack = 1'd1;
                 `endif
         end
@@ -400,7 +400,7 @@ begin: blk1
                 wdata2 = cpsr_ff;
                 cpsr_nxt[`CPSR_MODE]  = UND;
 
-                `ifdef SIM
+                `ifndef SYNTHESIS
                         und_ack = 1'd1;
                 `endif
         end
@@ -480,7 +480,7 @@ begin
 end
 endtask
 
-`ifdef SIM
+`ifndef SYNTHESIS
 
 always @*
 if ( cpsr_nxt[`CPSR_MODE] != USR && cpsr_ff[`CPSR_MODE] == USR )

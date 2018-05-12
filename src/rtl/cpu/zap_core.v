@@ -1184,7 +1184,7 @@ zap_cp15_cb u_zap_cp15_cb (
         .i_icache_clean_done    (i_icache_clean_done)
 );
 
-`ifdef SIM
+`ifndef SYNTHESIS
 
 reg [(8*8)-1:0] CPU_MODE; // Max 8 characters i.e. 64-bit string.
 

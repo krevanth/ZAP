@@ -126,7 +126,7 @@ module zap_cp15_cb #(
 reg [31:0] r [6:0]; // Coprocessor registers. R7 is write-only.
 reg [3:0]    state; // State variable.
 
-`ifdef SIM
+`ifndef SYNTHESIS
 integer ops;
 initial ops = 0;
 `endif
@@ -228,7 +228,7 @@ begin
         end
         else
         begin
-`ifdef SIM
+`ifndef SYNTHESIS
                 ops             <= 0;
 `endif
 
@@ -304,7 +304,7 @@ begin
 
                                         CASE_FLUSH_ID_TLB:
                                         begin
-`ifdef SIM
+`ifndef SYNTHESIS
                                                 ops <= 1;
 `endif
                                                 o_itlb_inv  <= 1'd1;
@@ -313,7 +313,7 @@ begin
 
                                         CASE_FLUSH_I_TLB:
                                         begin
-`ifdef SIM
+`ifndef SYNTHESIS
                                                 ops <= 2;
 `endif
                                                 o_itlb_inv <= 1'd1;
@@ -321,7 +321,7 @@ begin
 
                                         CASE_FLUSH_D_TLB:  
                                         begin
-`ifdef SIM
+`ifndef SYNTHESIS
                                                 ops <= 3;
 `endif
                                                 o_dtlb_inv <= 1'd1;
@@ -340,7 +340,7 @@ begin
                                 case({i_cp_word[`opcode_2], i_cp_word[`crm]})
                                         CASE_FLUSH_ID_CACHE:
                                         begin
-`ifdef SIM
+`ifndef SYNTHESIS
                                                 ops <= 4;
 `endif
                                                 // Invalidate caches.
@@ -350,7 +350,7 @@ begin
 
                                         CASE_FLUSH_D_CACHE:
                                         begin
-`ifdef SIM
+`ifndef SYNTHESIS
                                                 ops <= 5;
 `endif
 
@@ -361,7 +361,7 @@ begin
 
                                         CASE_FLUSH_I_CACHE:
                                         begin
-`ifdef SIM
+`ifndef SYNTHESIS
                                                 ops <= 6;
 `endif
 
@@ -372,7 +372,7 @@ begin
 
                                         CASE_CLEAN_ID_CACHE, CASE_CLEAN_D_CACHE:
                                         begin
-`ifdef SIM
+`ifndef SYNTHESIS
                                                 ops <= 7;
 `endif
 
@@ -382,7 +382,7 @@ begin
 
                                         CASE_CLFLUSH_D_CACHE:
                                         begin
-`ifdef SIM
+`ifndef SYNTHESIS
                                                 ops <= 8;
 `endif
 
@@ -392,7 +392,7 @@ begin
 
                                         CASE_CLFLUSH_ID_CACHE,CASE_CLFLUSH_D_CACHE:
                                         begin
-`ifdef SIM
+`ifndef SYNTHESIS
                                                 ops <= 9;
 `endif
 
@@ -505,7 +505,7 @@ begin
         end
 end
 
-`ifdef SIM
+`ifndef SYNTHESIS
 // Debug only.
 wire [31:0] r0 = r[0];
 wire [31:0] r1 = r[1];

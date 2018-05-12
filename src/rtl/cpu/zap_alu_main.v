@@ -349,7 +349,7 @@ end
 
 // ----------------------------------------------------------------------------
 
-`ifdef SIM
+`ifndef SYNTHESIS
 
 reg [64*8-1:0] OPCODE;
 
@@ -783,7 +783,7 @@ begin
 end
 endfunction
 
-`ifdef SIM
+`ifndef SYNTHESIS
 
 always @*
 if ( flags_nxt[`CPSR_MODE] != USR && flags_ff[`CPSR_MODE] == USR )

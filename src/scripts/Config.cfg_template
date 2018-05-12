@@ -15,7 +15,7 @@
         # Testbench configuration.
         EXT_RAM_SIZE                => 32768,   # External RAM size.
         SEED                        => -1,      # Seed. Use -1 to use random seed.
-        SIM                         => 1,       # Making this 1 defines SIM, 0 does not.
+        SYNTHESIS                   => 1,       # Make this to 1 to simulate compile from a synthesis perspective.
         DUMP_START                  => 2000,    # Starting memory address from which to dump.
         DUMP_SIZE                   => 200,     # Length of dump in bytes.
         IRQ_EN                      => 1,       # Make this 1 to enable IRQ signal from TB.

@@ -30,7 +30,7 @@ my %Config = do "./Config.cfg";
 # Env setup.
 my $RAM_SIZE                    = $Config{'EXT_RAM_SIZE'}; 
 my $SEED                        = $Config{'SEED'};      
-my $SIM                         = $Config{'SIM'};
+my $SYNTHESIS                   = $Config{'SYNTHESIS'};
 my $DUMP_START                  = $Config{'DUMP_START'};
 my $DUMP_SIZE                   = $Config{'DUMP_SIZE'};
 my $IRQ_EN                      = $Config{'IRQ_EN'};
@@ -66,18 +66,18 @@ sub randSeed {
 }
 
 foreach(@ARGV) {
-           if (/^\+seed\+(.*)/)                 { $SEED     = $1; } 
-        elsif (/^\+sim/)                        { $SIM      = 1;  }
-        elsif (/^\+test\+(.*)/)                 { $SCRATCH     = "$ZAP_HOME/obj/ts/$1"; $TEST = $1; }
-        elsif (/^\+ram_size\+(.*)/)             { $RAM_SIZE = $1; }
-        elsif (/^\+dump_start\+(.*)\+(.*)/)     { $DUMP_START = $1; $DUMP_SIZE = $2; }
-        elsif (/^\+irq_en/)                     { $IRQ_EN = 1; }
-        elsif (/^\+fiq_en/)                     { $FIQ_EN = 1; }
-        elsif (/^\+max_clock_cycles\+(.*)/)     { $MAX_CLOCK_CYCLES = $1; }  
-        elsif (/help/)                          { print "$HELP"; exit 0  }
-        elsif (/^\+tlb_debug/)                  { $TLB_DEBUG = 1; }
-        elsif (/^\+store_buffer_depth\+(.*)/)   { $SBUF_DEPTH = $1; }
-        else                                    { die "Unrecognized $_  $HELP"; }
+        if (/^\+test\+(.*)/)                 
+        { 
+                $SCRATCH = "$ZAP_HOME/obj/ts/$1"; $TEST = $1; 
+        }
+        elsif (/help/)                          
+        { 
+                print "$HELP"; exit 0  
+        }
+        else                                    
+        { 
+                die "Unrecognized $_  $HELP"; 
+        }
 }
 
 if ( $TEST eq "null" ) {
@@ -92,7 +92,7 @@ my $PROG_PATH       = "$SCRATCH/zap_mem.v";
 my $TARGET_BIN_PATH = "$SCRATCH/zap.bin";
 
 # Generate IVL options.
-my $IVL_OPTIONS .= " -v -I$ZAP_HOME/src/rtl/cpu -I$ZAP_HOME/obj/ts/$TEST ";
+my $IVL_OPTIONS .= " -I$ZAP_HOME/src/rtl/cpu -I$ZAP_HOME/obj/ts/$TEST ";
    $IVL_OPTIONS .= " $ZAP_HOME/src/rtl/*/*.v $ZAP_HOME/src/testbench/*/*.v -o $VVP_PATH -gstrict-ca-eval -Wall -g2001 -Winfloop -DSEED=$SEED -DMEMORY_IMAGE=\\\"$PROG_PATH\\\" ";
 
 $IVL_OPTIONS .= " -DVCD_FILE_PATH=\\\"$VCD_PATH\\\" "; 
@@ -104,10 +104,10 @@ $IVL_OPTIONS .= " -Pzap_test.CODE_SECTION_TLB_ENTRIES=$CODE_SECTION_TLB_ENTRIES 
 $IVL_OPTIONS .= " -Pzap_test.CODE_CACHE_SIZE=$CODE_CACHE_SIZE ";
 $IVL_OPTIONS .= "-DMAX_CLOCK_CYCLES=$MAX_CLOCK_CYCLES ";
 
-if ( $IRQ_EN ) {        $IVL_OPTIONS .= "-DIRQ_EN ";}
-if ( $FIQ_EN ) {        $IVL_OPTIONS .= "=DFIQ_EN ";}
-if ( $STALL )  {        $IVL_OPTIONS .= "-DSTALL "; }
-if ( $SIM )    {        $IVL_OPTIONS .= "-DSIM ";   }
+if ( $IRQ_EN )          {        $IVL_OPTIONS .= "-DIRQ_EN ";   }
+if ( $FIQ_EN )          {        $IVL_OPTIONS .= "=DFIQ_EN ";   }
+if ( $STALL )           {        $IVL_OPTIONS .= "-DSTALL ";    }
+if ( $SYNTHESIS )       {        $IVL_OPTIONS .= "-DSYNTHESIS ";}
 
 if ( $MAX_CLOCK_CYCLES == 0 )   {  die "*E: MAX_CLOCK_CYCLES set to 0. Ending script...";  }
 if ( $TLB_DEBUG )               {  print "Warning: TLB_DEBUG defined. Do not use for unattended systems!"; $IVL_OPTIONS .= "-DTLB_DEBUG ";}

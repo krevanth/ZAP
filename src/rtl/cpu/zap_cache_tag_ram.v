@@ -295,7 +295,7 @@ begin
                         tag_ram_wr_en = 0;
                         blk_ctr_nxt = 0;
 
-                `ifdef SIM
+                `ifndef SYNTHESIS
                         $display($time, "%m :: INFO :: Cache clean requested...");
 
                         for(i=0;i<CACHE_SIZE/16;i=i+1)

@@ -63,7 +63,7 @@ end
 
 reg [39:0] sel;
 
-`ifdef SIM
+`ifndef SYNTHESIS
         wire [31:0] r0;  assign r0 =  sel[0]  ? MEM[0] : mem[0]; 
         wire [31:0] r1;  assign r1 =  sel[1]  ? MEM[1] : mem[1];
         wire [31:0] r2;  assign r2 =  sel[2]  ? MEM[2] : mem[2];
