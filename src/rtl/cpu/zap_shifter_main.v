@@ -34,6 +34,10 @@ module zap_shifter_main
         parameter SHIFT_OPS = 5
 )
 (
+        // For debug
+        input   wire    [64*8-1:0]              i_decompile,
+        output  reg     [64*8-1:0]              o_decompile,
+
         // Clock and reset.
         input wire                               i_clk,
         input wire                               i_reset,
@@ -276,6 +280,9 @@ begin
            o_taken_ff                        <= i_taken_ff;
            o_pc_ff                           <= i_pc_ff;
            o_nozero_ff                       <= nozero_nxt;
+
+           // For debug
+           o_decompile                       <= i_decompile;
    end
 end
 

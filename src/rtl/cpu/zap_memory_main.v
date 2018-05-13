@@ -34,6 +34,10 @@ module zap_memory_main
         parameter PHY_REGS = 46
 )
 (
+        // Debug
+        input   wire    [64*8-1:0]          i_decompile,
+        output  reg     [64*8-1:0]          o_decompile,
+
         // Clock and reset.
         input wire                          i_clk,
         input wire                          i_reset,
@@ -172,6 +176,9 @@ begin
         o_und_ff              <= i_und_ff;
         o_mem_fault           <= i_mem_fault;
         mem_rd_data           <= i_mem_rd_data;
+
+        // Debug.
+        o_decompile           <= i_decompile;
 end
 
 // Manual Pipeline Retiming.

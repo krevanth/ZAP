@@ -12,9 +12,11 @@
 //
 // ------------------------------------------------------------------------
 
+`default_nettype none
+
 module zap_decompile #(parameter INS_WDT = 36) ( 
-                input           [36-1:0]        i_instruction,  // 36-bit instruction.
-                input                           i_dav,          // Instruction valid.
+                input wire      [36-1:0]        i_instruction,  // 36-bit instruction.
+                input wire                      i_dav,          // Instruction valid.
                 output reg      [64*8-1:0]      o_decompile     // 1024 bytes max of assembler string.
         );
 
@@ -43,8 +45,8 @@ begin
                 LS_INSTRUCTION_SPECIFIED_SHIFT:                 decode_ls_iss      ( i_instruction ); //
                 LS_IMMEDIATE:                                   decode_ls          ( i_instruction ); //
                 MULT_INST:                                      decode_mult        ( i_instruction ); //
-                LMULT_INST:                                     decode_lmult       ( i_instruction ); // Not fully decompiled. Rare.
-                HALFWORD_LS:                                    decode_halfword_ls ( i_instruction ); // Not fully decompiled. Rare.
+                LMULT_INST:                                     decode_lmult       ( i_instruction ); //
+                HALFWORD_LS:                                    decode_halfword_ls ( i_instruction ); // 
                 SOFTWARE_INTERRUPT:                             decode_swi         ( i_instruction ); //
 
                 default:
@@ -304,10 +306,24 @@ begin
 end
 endtask
 
+`ifndef XUMULL
+
+        `define XUMULL 3'b100
+        `define XUMLAL 3'b101
+        `define XSMULL 3'b110
+        `define XSMLAL 3'b111
+
+`endif
+
 // Long Mult. UMULL, UMLAL, SMULL, SMLAL
 task decode_lmult ( input [INS_WDT-1:0] i_instruction );
 begin
-      o_decompile = "***LONG MULT***"; 
+      case(i_instruction[23:21])
+        `XUMULL: $sformat(o_decompile, "UMULL %s:%s=%s*%s" ,i_instruction[19:16], i_instruction[15:12], i_instruction[3:0], i_instruction[11:8] );  
+        `XUMLAL: $sformat(o_decompile, "UMLAL %s:%s+=%s*%s",i_instruction[19:16], i_instruction[15:12], i_instruction[3:0], i_instruction[11:8] );
+        `XSMULL: $sformat(o_decompile, "SMULL %s:%s=%s*%s" ,i_instruction[19:16], i_instruction[15:12], i_instruction[3:0], i_instruction[11:8] );
+        `XSMLAL: $sformat(o_decompile, "SMLAL %s:%s+=%s*%s",i_instruction[19:16], i_instruction[15:12], i_instruction[3:0], i_instruction[11:8] );
+      endcase 
 end
 endtask
 
@@ -447,3 +463,5 @@ always @*
 `endif
 
 endmodule // zap_decompile.v
+
+`default_nettype wire

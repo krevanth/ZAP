@@ -32,6 +32,8 @@ module zap_alu_main #(
         parameter [31:0] FLAG_WDT  = 32'd32  // Width of active CPSR.
 )
 (
+        input wire      [64*8-1:0]         i_decompile,
+        output reg      [64*8-1:0]         o_decompile,
 
         input wire                         i_hijack,                    // Enable hijack.
         input wire      [31:0]             i_hijack_op1,                // Hijack operand 1.
@@ -269,6 +271,9 @@ begin
 
                 // Generating byte enables based on the data type and address.
                 o_ben_ff                         <= ben_nxt;
+
+                // For debug
+                o_decompile                     <= i_decompile;
         end
 end
 

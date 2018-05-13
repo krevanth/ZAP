@@ -36,6 +36,8 @@ module zap_decode_main #(
         parameter PHY_REGS = 46
 )
 (
+        output reg  [64*8-1:0]                  o_decompile, // For debug purposes.
+
         // -------------------
         // Inputs.      
         // -------------------
@@ -253,6 +255,8 @@ always @*
 
 // ----------------------------------------------------------------------------
 
+wire [64*8-1:0] decompile_tmp;
+
 // Flop the outputs to break the pipeline at this point.
 always @ (posedge i_clk)
 begin
@@ -310,6 +314,9 @@ begin
                 o_switch_ff                             <= o_switch_nxt;
                 o_force32align_ff                       <= i_force32align;
                 o_taken_ff                              <= i_taken;
+
+                // For debug
+                o_decompile                             <= decompile_tmp;
         end
 end
 
@@ -363,5 +370,23 @@ u_zap_decode (
         .o_und(o_und_nxt),
         .o_switch(o_switch_nxt)
 );      
+
+// -------------------------------------------------------------------------------
+
+// Decompile
+
+`ifndef SYNTHESIS
+
+zap_decompile u_zap_decompile (
+        .i_instruction  (i_instruction),     
+        .i_dav          (i_instruction_valid),
+        .o_decompile    (decompile_tmp)
+);
+
+`else
+
+assign  decompile_tmp = 0;
+
+`endif
 
 endmodule // zap_decode_main.v

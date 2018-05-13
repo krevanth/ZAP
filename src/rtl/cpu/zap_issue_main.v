@@ -42,6 +42,10 @@ module zap_issue_main
         parameter SHIFT_OPS = 5
 )
 (
+        // Decompile path
+        input   wire    [64*8-1:0]              i_decompile,
+        output  reg     [64*8-1:0]              o_decompile,
+
         // PC in
         input wire [31:0]                       i_pc_ff,
         output reg [31:0]                       o_pc_ff,
@@ -281,64 +285,67 @@ endtask
 
 always @ (posedge i_clk)
 begin
-if ( i_reset )
-begin
-        clear;
-end
-else if ( i_clear_from_writeback )
-begin
-        clear;
-end
-else if ( i_data_stall )
-begin
-        // Preserve values.
-end
-else if ( i_clear_from_alu )
-begin
-        clear;
-end
-else if ( i_stall_from_shifter )
-begin
-        // Preserve values.
-end
-else if ( lock )
-begin
-        clear;
-end
-else
-begin
-        o_condition_code_ff               <= i_condition_code_ff;
-        o_destination_index_ff            <= i_destination_index_ff;
-        o_alu_operation_ff                <= i_alu_operation_ff;
-        o_shift_operation_ff              <= i_shift_operation_ff;
-        o_flag_update_ff                  <= i_flag_update_ff;
-        o_mem_srcdest_index_ff            <= i_mem_srcdest_index_ff;           
-        o_mem_load_ff                     <= i_mem_load_ff;                    
-        o_mem_store_ff                    <= i_mem_store_ff;                   
-        o_mem_pre_index_ff                <= i_mem_pre_index_ff;               
-        o_mem_unsigned_byte_enable_ff     <= i_mem_unsigned_byte_enable_ff;    
-        o_mem_signed_byte_enable_ff       <= i_mem_signed_byte_enable_ff;      
-        o_mem_signed_halfword_enable_ff   <= i_mem_signed_halfword_enable_ff;  
-        o_mem_unsigned_halfword_enable_ff <= i_mem_unsigned_halfword_enable_ff;
-        o_mem_translate_ff                <= i_mem_translate_ff;               
-        o_irq_ff                          <= i_irq_ff;                         
-        o_fiq_ff                          <= i_fiq_ff;                         
-        o_abt_ff                          <= i_abt_ff;                         
-        o_swi_ff                          <= i_swi_ff;   
-        o_pc_plus_8_ff                    <= i_pc_plus_8_ff;
-        o_shifter_disable_ff              <= o_shifter_disable_nxt;
-        o_alu_source_ff                   <= i_alu_source_ff;
-        o_shift_source_ff                 <= i_shift_source_ff;
-        o_alu_source_value_ff             <= o_alu_source_value_nxt;
-        o_shift_source_value_ff           <= o_shift_source_value_nxt;
-        o_shift_length_value_ff           <= o_shift_length_value_nxt;
-        o_mem_srcdest_value_ff            <= o_mem_srcdest_value_nxt;
-        o_switch_ff                       <= i_switch_ff;
-        o_force32align_ff                 <= i_force32align_ff;
-        o_und_ff                          <= i_und_ff;
-        o_taken_ff                        <= i_taken_ff;
-        o_pc_ff                           <= i_pc_ff;
-end
+        if ( i_reset )
+        begin
+                clear;
+        end
+        else if ( i_clear_from_writeback )
+        begin
+                clear;
+        end
+        else if ( i_data_stall )
+        begin
+                // Preserve values.
+        end
+        else if ( i_clear_from_alu )
+        begin
+                clear;
+        end
+        else if ( i_stall_from_shifter )
+        begin
+                // Preserve values.
+        end
+        else if ( lock )
+        begin
+                clear;
+        end
+        else
+        begin
+                o_condition_code_ff               <= i_condition_code_ff;
+                o_destination_index_ff            <= i_destination_index_ff;
+                o_alu_operation_ff                <= i_alu_operation_ff;
+                o_shift_operation_ff              <= i_shift_operation_ff;
+                o_flag_update_ff                  <= i_flag_update_ff;
+                o_mem_srcdest_index_ff            <= i_mem_srcdest_index_ff;           
+                o_mem_load_ff                     <= i_mem_load_ff;                    
+                o_mem_store_ff                    <= i_mem_store_ff;                   
+                o_mem_pre_index_ff                <= i_mem_pre_index_ff;               
+                o_mem_unsigned_byte_enable_ff     <= i_mem_unsigned_byte_enable_ff;    
+                o_mem_signed_byte_enable_ff       <= i_mem_signed_byte_enable_ff;      
+                o_mem_signed_halfword_enable_ff   <= i_mem_signed_halfword_enable_ff;  
+                o_mem_unsigned_halfword_enable_ff <= i_mem_unsigned_halfword_enable_ff;
+                o_mem_translate_ff                <= i_mem_translate_ff;               
+                o_irq_ff                          <= i_irq_ff;                         
+                o_fiq_ff                          <= i_fiq_ff;                         
+                o_abt_ff                          <= i_abt_ff;                         
+                o_swi_ff                          <= i_swi_ff;   
+                o_pc_plus_8_ff                    <= i_pc_plus_8_ff;
+                o_shifter_disable_ff              <= o_shifter_disable_nxt;
+                o_alu_source_ff                   <= i_alu_source_ff;
+                o_shift_source_ff                 <= i_shift_source_ff;
+                o_alu_source_value_ff             <= o_alu_source_value_nxt;
+                o_shift_source_value_ff           <= o_shift_source_value_nxt;
+                o_shift_length_value_ff           <= o_shift_length_value_nxt;
+                o_mem_srcdest_value_ff            <= o_mem_srcdest_value_nxt;
+                o_switch_ff                       <= i_switch_ff;
+                o_force32align_ff                 <= i_force32align_ff;
+                o_und_ff                          <= i_und_ff;
+                o_taken_ff                        <= i_taken_ff;
+                o_pc_ff                           <= i_pc_ff;
+                
+                // For debug
+                o_decompile                       <= i_decompile;
+        end
 end
 
 // Get values from the feedback network.

@@ -578,6 +578,8 @@ u_zap_predecode (
         .o_taken_ff                     (predecode_taken)
 );
 
+wire [64*8-1:0] decode_decompile;
+
 // =====================
 // DECODE STAGE 
 // =====================
@@ -589,6 +591,8 @@ zap_decode_main #(
         .ALU_OPS(ALU_OPS)
 )
 u_zap_decode_main (
+        .o_decompile                    (decode_decompile),
+
         // Input.
         .i_clk                          (i_clk),
         .i_reset                        (reset),
@@ -650,6 +654,8 @@ u_zap_decode_main (
 // ISSUE 
 // ==================
 
+wire [64*8-1:0] issue_decompile;
+
 zap_issue_main #(
         .PHY_REGS(PHY_REGS),
         .SHIFT_OPS(SHIFT_OPS),
@@ -658,6 +664,9 @@ zap_issue_main #(
 )
 u_zap_issue_main
 (
+        .i_decompile(decode_decompile),
+        .o_decompile(issue_decompile),
+
         .i_und_ff(decode_und_ff),
         .o_und_ff(issue_und_ff),
 
@@ -772,6 +781,8 @@ u_zap_issue_main
 // SHIFTER STAGE 
 // =======================
 
+wire [64*8-1:0] shifter_decompile;
+
 zap_shifter_main #(
         .PHY_REGS(PHY_REGS),
         .ALU_OPS(ALU_OPS),
@@ -779,6 +790,9 @@ zap_shifter_main #(
 )
 u_zap_shifter_main
 (
+        .i_decompile(issue_decompile),
+        .o_decompile(shifter_decompile),
+
         .i_pc_ff(issue_pc_ff),
         .o_pc_ff(shifter_pc_ff),
 
@@ -879,6 +893,8 @@ u_zap_shifter_main
 // ALU STAGE 
 // ===============
 
+wire [64*8-1:0] alu_decompile;
+
 zap_alu_main #(
         .PHY_REGS(PHY_REGS),
         .SHIFT_OPS(SHIFT_OPS),
@@ -886,6 +902,8 @@ zap_alu_main #(
 )
 u_zap_alu_main
 (
+        .i_decompile    (shifter_decompile),
+        .o_decompile    (alu_decompile),
 
         .i_hijack     (wb_hijack      ),
         .i_hijack_op1 ( wb_hijack_op1 ),
@@ -998,11 +1016,16 @@ u_zap_alu_main
 // MEMORY 
 // ====================
 
+wire [64*8-1:0] memory_decompile; // For debug.
+
 zap_memory_main #(
        .PHY_REGS(PHY_REGS) 
 )
 u_zap_memory_main
 (
+        .i_decompile(alu_decompile),
+        .o_decompile(memory_decompile),
+
         .i_und_ff (alu_und_ff),
         .o_und_ff (memory_und_ff),
 
@@ -1077,6 +1100,7 @@ zap_writeback #(
 )
 u_zap_writeback
 (
+
         .o_shelve               (shelve),
 
         .i_clk                  (i_clk), // ZAP clock.

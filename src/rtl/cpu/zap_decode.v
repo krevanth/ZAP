@@ -164,12 +164,6 @@ begin
         endcase
 end
 
-zap_decompile u_zap_decompile (
-        .i_instruction ( i_instruction ),
-        .i_dav         ( i_instruction_valid ),
-        .o_decompile   ()
-);
-
 `endif
 
 // ----------------------------------------------------------------------------
