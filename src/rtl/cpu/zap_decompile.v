@@ -1,14 +1,15 @@
 // ------------------------------------------------------------------------
+// (C) 2016-2018 Revanth Kamaraj.
+// Released under the GNU GPL v2.
 //
-// ONLY FOR SIMULATION USE. NOT FOR SYNTHESIS.
-//
+// When running in simulation mode,
 // This module will decompile binary ARM instructions to assembly.
 // This code is non synthesizable and must be used only in the TB.
 // This module is used in the `ifdef SIM blocks of RTL but is ignored
 // for synthesis.
 //
-// Currently long multiplication and 16-bit mem ops are not fully
-// decompiled.
+// When running in synthesis mode, the output of this module is tied
+// to a constant since this module really finds use only in debugging.
 //
 // ------------------------------------------------------------------------
 
@@ -25,36 +26,6 @@ module zap_decompile #(parameter INS_WDT = 36) (
 `include "zap_defines.vh"
 `include "zap_localparams.vh"
 `include "zap_functions.vh"
-
-always @*
-begin
-                if ( !i_dav ) 
-                begin
-                        o_decompile = "IGNORE";                                                        
-                end
-                else
-                casez ( i_instruction[31:0] )
-                BX_INST:                                        decode_bx          ( i_instruction ); //
-                MRS:                                            decode_mrs         ( i_instruction ); //  
-                MSR:                                            decode_msr         ( i_instruction ); //
-                MSR_IMMEDIATE:                                  decode_msr_immed   ( i_instruction ); //
-                DATA_PROCESSING_IMMEDIATE:                      decode_dp_immed    ( i_instruction ); //
-                DATA_PROCESSING_REGISTER_SPECIFIED_SHIFT:       decode_dp_rss      ( i_instruction ); //
-                DATA_PROCESSING_INSTRUCTION_SPECIFIED_SHIFT:    decode_dp_iss      ( i_instruction ); //
-                BRANCH_INSTRUCTION:                             decode_branch      ( i_instruction ); //   
-                LS_INSTRUCTION_SPECIFIED_SHIFT:                 decode_ls_iss      ( i_instruction ); //
-                LS_IMMEDIATE:                                   decode_ls          ( i_instruction ); //
-                MULT_INST:                                      decode_mult        ( i_instruction ); //
-                LMULT_INST:                                     decode_lmult       ( i_instruction ); //
-                HALFWORD_LS:                                    decode_halfword_ls ( i_instruction ); // 
-                SOFTWARE_INTERRUPT:                             decode_swi         ( i_instruction ); //
-
-                default:
-                begin
-                        o_decompile = "UNRECOGNIZED INSTRUCTION!";                                
-                end
-                endcase
-end
 
 `ifndef CCC
         `define CCC cond_code(i_instruction[31:28])
@@ -98,6 +69,51 @@ end
         `define CRM arch_reg_num({i_instruction[`DP_RB_EXTEND], i_instruction[`DP_RB]});
 `endif
 
+
+always @*
+begin
+                if ( !i_dav ) 
+                begin
+                        o_decompile = "IGNORE";                                                        
+                end
+                else if ( i_instruction[27:24] == 4'b1110 && i_instruction[4] ) 
+                begin
+                        if ( i_instruction[20] )  // R <- CPSR
+                                $sformat(o_decompile, "MRC%s", `CCC);
+                        else
+                                $sformat(o_decompile, "MCR%s", `CCC);
+                end
+                else if ( i_instruction[27:25] == 3'b100 ) // LDMSTM
+                begin
+                        if ( i_instruction[20] ) // Load
+                                $sformat(o_decompile, "LDM%s %b %s %b", `CCC, i_instruction[24:20], i_instruction[19:16], i_instruction[15:0]); 
+                        else
+                                $sformat(o_decompile, "LDM%s %b %s %b", `CCC, i_instruction[24:20], i_instruction[19:16], i_instruction[15:0]); 
+                end
+                else 
+                casez ( i_instruction[31:0] )
+                BX_INST:                                        decode_bx          ( i_instruction ); //
+                MRS:                                            decode_mrs         ( i_instruction ); //  
+                MSR_IMMEDIATE:                                  decode_msr_immed   ( i_instruction ); //
+                MSR:                                            decode_msr         ( i_instruction ); //
+                DATA_PROCESSING_IMMEDIATE:                      decode_dp_immed    ( i_instruction ); //
+                DATA_PROCESSING_REGISTER_SPECIFIED_SHIFT:       decode_dp_rss      ( i_instruction ); //
+                DATA_PROCESSING_INSTRUCTION_SPECIFIED_SHIFT:    decode_dp_iss      ( i_instruction ); //
+                BRANCH_INSTRUCTION:                             decode_branch      ( i_instruction ); //   
+                LS_INSTRUCTION_SPECIFIED_SHIFT:                 decode_ls_iss      ( i_instruction ); //
+                LS_IMMEDIATE:                                   decode_ls          ( i_instruction ); //
+                MULT_INST:                                      decode_mult        ( i_instruction ); //
+                LMULT_INST:                                     decode_lmult       ( i_instruction ); //
+                HALFWORD_LS:                                    decode_halfword_ls ( i_instruction ); // 
+                SOFTWARE_INTERRUPT:                             decode_swi         ( i_instruction ); //
+
+                default:
+                begin
+                        o_decompile = "UNRECOGNIZED INSTRUCTION!";                                
+                end
+                endcase
+end
+
 task decode_swi ( input [INS_WDT-1:0] i_instruction );
 begin
         $sformat(o_decompile, "SWIAL %0d", $unsigned(i_instruction[24:0])); 
@@ -106,7 +122,10 @@ endtask
 
 task decode_branch ( input [INS_WDT-1:0] i_instruction );
 begin
-        $sformat(o_decompile, "B%s %0d", `CCC, $signed(i_instruction[23:0]));
+        if ( !i_instruction[24] )
+                $sformat(o_decompile, "B%s %0d", `CCC, $signed(i_instruction[23:0]));
+        else
+                $sformat(o_decompile, "BL%s %0d", `CCC, $signed(i_instruction[23:0]));
 end
 endtask
 
@@ -184,7 +203,7 @@ begin
         if ( i_instruction[22] ) // SPSR
                 $sformat(o_decompile, "MSR%s SPSR,%s",`CCC, `CRB); 
         else
-                $sformat(o_decompile, "MSR%s CPSR,%s", `CCC, `CRD);
+                $sformat(o_decompile, "MSR%s CPSR,%s", `CCC, `CRB);
 end
 endtask
 
@@ -458,7 +477,7 @@ endfunction
 `else // if SYNTHESIS
 
 always @*
-        o_decompile = 0;
+        o_decompile = "NOT AVAILABLE IN SYNTHESIS MODE";
 
 `endif
 
