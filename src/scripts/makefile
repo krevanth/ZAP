@@ -63,6 +63,7 @@ $(CC): $(GCC_SRC)
 	touch $@
 
 dirs:
+	bash ../../scripts/check_arc.sh
 	mkdir -p $(OBJ_DIR)
 	touch $(OBJ_DIR)
 
