@@ -26,6 +26,10 @@ module zap_writeback #(
         parameter PHY_REGS = 46  // Number of physical registers.
 )
 (
+        // Decompile.
+        input   wire    [64*8-1:0]      i_decompile,
+        output  reg     [64*8-1:0]      o_decompile,
+
         // Shelve output.
         output wire                          o_shelve,
 
@@ -459,6 +463,7 @@ begin
                 pc_shelve_ff <= pc_shelve_nxt;
                 pc_ff        <= pc_nxt;
                 cpsr_ff      <= cpsr_nxt;
+                o_decompile  <= i_decompile;
         end
 end
 

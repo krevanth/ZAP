@@ -1016,7 +1016,7 @@ u_zap_alu_main
 // MEMORY 
 // ====================
 
-wire [64*8-1:0] memory_decompile; // For debug.
+wire [64*8-1:0] memory_decompile; // For debug. Goes to RB DC ip.
 
 zap_memory_main #(
        .PHY_REGS(PHY_REGS) 
@@ -1091,6 +1091,8 @@ u_zap_memory_main
         .o_mem_rd_data                 (memory_mem_rd_data)
 );
 
+wire [64*8-1:0] rb_decompile;
+
 // ==================
 // WRITEBACK 
 // ==================
@@ -1100,6 +1102,8 @@ zap_writeback #(
 )
 u_zap_writeback
 (
+        .i_decompile            (memory_decompile),
+        .o_decompile            (rb_decompile),
 
         .o_shelve               (shelve),
 
