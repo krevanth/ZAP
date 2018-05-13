@@ -67,7 +67,6 @@ begin
                         res1 = $signed(res) >>> i_amount;
                         {o_result, o_carry} = res1;
                 end
-//                        ($signed(($signed(i_source) << 1)|i_carry)) >> i_amount;
 
                 ROR: // Rotate right.
                 begin

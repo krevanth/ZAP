@@ -139,9 +139,9 @@ begin
                 o_dcache_en <= 0;
                 o_icache_en <= 0;
                 o_mmu_en    <= 0;
-                o_dac       <= 'dx;
-                o_baddr     <= 'dx;
-                o_sr        <= 'dx;
+                o_dac       <= 32'dx;
+                o_baddr     <= 32'dx;
+                o_sr        <= 2'dx;
         end
         else
         begin

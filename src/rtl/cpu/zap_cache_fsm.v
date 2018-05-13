@@ -235,15 +235,10 @@ begin
                                         if ( i_rd ) /* Read request. */
                                         begin  
                                                 /* Accelerate performance */
-                                                o_dat   = adapt_cache_data_debug(i_address[3:2], i_cache_line); 
+                                                o_dat   = adapt_cache_data(i_address[3:2], i_cache_line); 
 
                                                 hit = 1'd1;
 
-                                                //adapt_cache_data
-                                                //( 
-                                                //        i_address[3:2] , 
-                                                //        i_cache_line 
-                                                //);
 
                                                 o_ack   = 1'd1;
                                         end
@@ -451,12 +446,12 @@ begin
         endcase
 end
 
-function [31:0] adapt_cache_data_debug 
+function [31:0] adapt_cache_data 
 (input [1:0] shift, input [127:0] cd);
 begin: blk1
         reg [31:0] shamt;
         shamt = shift << 5;
-        adapt_cache_data_debug = cd >> shamt;
+        adapt_cache_data = cd >> shamt;
 end
 endfunction
 
