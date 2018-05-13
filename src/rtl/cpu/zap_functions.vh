@@ -181,6 +181,10 @@ begin
                     ARCH_CURR_SPSR:     translate = PHY_SVC_SPSR;
                         endcase
                 end
+
+                default: // To avoid lint warnings.
+                begin
+                end
         endcase
 end
 endfunction

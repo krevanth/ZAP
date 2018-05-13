@@ -711,6 +711,9 @@ begin
                                 o_shift_operation    = ROR_1; 
                                 // Differs in carry generation behavior.
                 end
+                default: // For lint.
+                begin
+                end
         endcase
 
         // Reinforce the fact.

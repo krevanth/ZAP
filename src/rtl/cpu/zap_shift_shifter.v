@@ -87,6 +87,10 @@ begin
 
                 // ROR #0 becomes this.
                 RRC:    {o_result, o_carry}        = {i_carry, i_source}; 
+
+                default: // For lint.
+                begin
+                end
         endcase
 end
 

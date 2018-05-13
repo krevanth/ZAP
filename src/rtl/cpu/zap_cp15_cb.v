@@ -390,7 +390,7 @@ begin
                                                 state          <= CLFLUSH_D_CACHE;
                                         end
 
-                                        CASE_CLFLUSH_ID_CACHE,CASE_CLFLUSH_D_CACHE:
+                                        CASE_CLFLUSH_ID_CACHE:
                                         begin
 `ifndef SYNTHESIS
                                                 ops <= 9;

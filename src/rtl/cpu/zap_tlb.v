@@ -189,6 +189,7 @@ zap_tlb_fsm #(
 .SPAGE_TLB_ENTRIES      (SPAGE_TLB_ENTRIES),
 .SECTION_TLB_ENTRIES    (SECTION_TLB_ENTRIES)
 ) u_zap_tlb_fsm (
+.o_unused_ok    (),             // UNCONNECTED. For lint.
 .i_clk          (i_clk),
 .i_reset        (i_reset),
 .i_mmu_en       (i_mmu_en),
