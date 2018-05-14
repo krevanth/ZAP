@@ -1,17 +1,32 @@
-// ------------------------------------------------------------------------
-// (C) 2016-2018 Revanth Kamaraj.
-// Released under the GNU GPL v2.
-//
-// When running in simulation mode,
-// This module will decompile binary ARM instructions to assembly.
-// This code is non synthesizable and must be used only in the TB.
-// This module is used in the `ifdef SIM blocks of RTL but is ignored
-// for synthesis.
-//
-// When running in synthesis mode, the output of this module is tied
-// to a constant since this module really finds use only in debugging.
-//
-// ------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// --                                                                       --
+// --                   (C) 2016-2018 Revanth Kamaraj.                      --
+// --                                                                       -- 
+// -- ------------------------------------------------------------------------
+// --                                                                       --
+// -- This program is free software; you can redistribute it and/or         --
+// -- modify it under the terms of the GNU General Public License           --
+// -- as published by the Free Software Foundation; either version 2        --
+// -- of the License, or (at your option) any later version.                --
+// --                                                                       --
+// -- This program is distributed in the hope that it will be useful,       --
+// -- but WITHOUT ANY WARRANTY; without even the implied warranty of        --
+// -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         --
+// -- GNU General Public License for more details.                          --
+// --                                                                       --
+// -- You should have received a copy of the GNU General Public License     --
+// -- along with this program; if not, write to the Free Software           --
+// -- Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA         --
+// -- 02110-1301, USA.                                                      --
+// --                                                                       --
+// ---------------------------------------------------------------------------
+// --                                                                       --       
+// -- When running in simulation mode, this module will decompile binary    --
+// -- ARM instructions to assembler instructions for debug purposes.        --
+// -- When running in synthesis mode, the output of this module is tied     --       
+// -- to a constant since this module really finds use only in debug.       --       
+// --                                                                       --
+// ---------------------------------------------------------------------------
 
 `default_nettype none
 
@@ -26,6 +41,10 @@ module zap_decompile #(parameter INS_WDT = 36) (
 `include "zap_defines.vh"
 `include "zap_localparams.vh"
 `include "zap_functions.vh"
+
+
+// These defines can be wrapped around a single `ifndef instead of several of
+// them as shown.
 
 `ifndef CCC
         `define CCC cond_code(i_instruction[31:28])
@@ -51,8 +70,6 @@ module zap_decompile #(parameter INS_WDT = 36) (
         `define CRN1 arch_reg_num({i_instruction[`BASE_EXTEND], i_instruction[`BASE]})
 `endif
 
-
-
 `ifndef COPCODE
         `define COPCODE get_opcode({i_instruction[`OPCODE_EXTEND], i_instruction[24:21]})
 `endif
@@ -69,7 +86,7 @@ module zap_decompile #(parameter INS_WDT = 36) (
         `define CRM arch_reg_num({i_instruction[`DP_RB_EXTEND], i_instruction[`DP_RB]});
 `endif
 
-
+// Decompile block. Makes task calls.
 always @*
 begin
                 if ( !i_dav ) 
@@ -474,10 +491,11 @@ begin: blk49329483
 end
 endfunction
 
-`else // if SYNTHESIS
+`else 
 
+// `ifdef SYNTHESIS
 always @*
-        o_decompile = "NOT AVAILABLE IN SYNTHESIS MODE";
+        o_decompile = 0; // In synthesis mode.
 
 `endif
 
