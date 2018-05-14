@@ -447,3 +447,4 @@ begin
 end
 
 endmodule // zap_tlb_fsm.v
+`default_nettype wire

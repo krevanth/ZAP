@@ -604,3 +604,4 @@ end
 endfunction
 
 endmodule // zap_predecode_mem_fsm.v
+`default_nettype wire

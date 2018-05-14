@@ -806,3 +806,4 @@ end
 `endif
 
 endmodule // zap_alu_main.v
+`default_nettype wire

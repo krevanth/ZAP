@@ -102,3 +102,4 @@ end
 
 
 endmodule // mem_inv_block.v
+`default_nettype wire

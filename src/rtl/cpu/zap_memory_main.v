@@ -286,3 +286,4 @@ end
 endfunction
 
 endmodule
+`default_nettype wire

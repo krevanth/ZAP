@@ -1228,3 +1228,4 @@ endcase
 `endif
 
 endmodule // zap_core.v
+`default_nettype wire

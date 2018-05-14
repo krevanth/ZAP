@@ -513,3 +513,4 @@ end
 `endif
 
 endmodule // zap_register_file.v
+`default_nettype wire

@@ -396,3 +396,4 @@ assign  decompile_tmp = 0;
 `endif
 
 endmodule // zap_decode_main.v
+`default_nettype wire

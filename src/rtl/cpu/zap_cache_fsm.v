@@ -551,3 +551,4 @@ wire [31:0] dbg_ct_pa    = o_cache_tag[`CACHE_TAG__PA];
 // synopsys translate_on
 
 endmodule
+`default_nettype wire

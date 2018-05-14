@@ -522,3 +522,4 @@ wire [31:0] r6 = r[6];
 `endif
 
 endmodule
+`default_nettype wire

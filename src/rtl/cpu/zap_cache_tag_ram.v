@@ -499,3 +499,4 @@ endtask
 // ----------------------------------------------------------------------------
 
 endmodule // zap_cache_tag_ram.v
+`default_nettype wire

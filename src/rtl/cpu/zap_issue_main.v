@@ -765,3 +765,4 @@ end
 endfunction
 
 endmodule // zap_issue_main.v
+`default_nettype wire

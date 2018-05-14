@@ -292,3 +292,4 @@ zap_decompile u_zap_decompile (
 `endif
 
 endmodule // zap_fetch_main.v
+`default_nettype wire

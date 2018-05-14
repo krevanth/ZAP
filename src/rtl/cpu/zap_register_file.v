@@ -144,3 +144,4 @@ begin
 end
 
 endmodule // bram_wrapper.v
+`default_nettype wire

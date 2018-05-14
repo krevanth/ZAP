@@ -75,3 +75,4 @@ begin
 end
 
 endmodule // ram_simple.v
+`default_nettype wire

@@ -743,3 +743,4 @@ end
 endtask
 
 endmodule // zap_decode.v
+`default_nettype wire

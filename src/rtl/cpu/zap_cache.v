@@ -27,6 +27,8 @@
 // --                                                                         --
 // -----------------------------------------------------------------------------
 
+`default_nettype none
+
 module zap_cache #(
 
 parameter [31:0] CACHE_SIZE             = 1024, 
@@ -352,3 +354,4 @@ end
 // synopsys translate_on
 
 endmodule
+`default_nettype wire

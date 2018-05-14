@@ -254,3 +254,4 @@ endfunction
 
 
 endmodule // zap_tlb_check.v
+`default_nettype wire

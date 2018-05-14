@@ -398,3 +398,4 @@ zap_wb_adapter #(.DEPTH(STORE_BUFFER_DEPTH)) u_zap_wb_adapter (
 );
 
 endmodule // zap_top.v
+`default_nettype wire
