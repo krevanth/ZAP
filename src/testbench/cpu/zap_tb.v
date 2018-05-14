@@ -1,7 +1,8 @@
 `include "zap_defines.vh"
 
-///////////////////////////////////////////////////////////////////////////////
-
+//
+// Top level testbench. Ties the CPU together with RAM and some assertions.
+//
 
 module zap_test; // +nctop+zap_test
 

@@ -1,6 +1,9 @@
 `include "zap_defines.vh"
 
-//////////////////////////////////////////////////////////////////////
+//
+// This is a testbench model of a wishbone RAM. Note that port 2 is
+// unused.
+//
 
 module model_ram_dual #(parameter SIZE_IN_BYTES = 4096)  (
 

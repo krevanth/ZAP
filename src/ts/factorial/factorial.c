@@ -1,4 +1,4 @@
-// Computes factorial.
+/* Computes factorial and stores 3.14 in 2004 memory location. */
 
 void main (void)
 {

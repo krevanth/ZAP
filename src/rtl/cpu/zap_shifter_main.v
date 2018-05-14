@@ -1,28 +1,33 @@
-// ----------------------------------------------------------------------------
-//                            The ZAP Project
-//                     (C)2016-2017, Revanth Kamaraj.     
-// ----------------------------------------------------------------------------
-// Filename     : zap_register_file.v
-// HDL          : Verilog-2001
-// Module       : zap_register_file
-// Author       : Revanth Kamaraj
-// License      : GPL v2
-// ----------------------------------------------------------------------------
-//                               ABSTRACT
-//                               --------
-// The ZAP shift unit. Apart from shift, it does value restoration and
-// multiplication. Value restoration is needed since the ALU (Shift+Op) is
-// pipelined and we want back to back instructions to execute correctly without
-// losing throughput. Note that there are 3 execution pathways in this unit
-// but a given time, only one pathway may be active. The 3 execution pathways
-// are: shifter, multiplier, value feedback network.
-// ----------------------------------------------------------------------------
-//                              INFORMATION                                  
-//                              ------------
-// Reset method : Synchronous active high reset
-// Clock        : Core clock
-// Depends      : zap_shifter_multiply
-//                zap_shift_shifter
+// -----------------------------------------------------------------------------
+// --                                                                         --
+// --                   (C) 2016-2018 Revanth Kamaraj.                        --
+// --                                                                         -- 
+// -- --------------------------------------------------------------------------
+// --                                                                         --
+// -- This program is free software; you can redistribute it and/or           --
+// -- modify it under the terms of the GNU General Public License             --
+// -- as published by the Free Software Foundation; either version 2          --
+// -- of the License, or (at your option) any later version.                  --
+// --                                                                         --
+// -- This program is distributed in the hope that it will be useful,         --
+// -- but WITHOUT ANY WARRANTY; without even the implied warranty of          --
+// -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           --
+// -- GNU General Public License for more details.                            --
+// --                                                                         --
+// -- You should have received a copy of the GNU General Public License       --
+// -- along with this program; if not, write to the Free Software             --
+// -- Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA           --
+// -- 02110-1301, USA.                                                        --
+// --                                                                         --
+// -----------------------------------------------------------------------------
+// --  
+// --  The ZAP shift unit. Apart from shift, it does value restoration and
+// --  multiplication. Value restoration is needed since the ALU (Shift+Op) is
+// --  pipelined and we want back to back instructions to execute correctly without
+// --  losing throughput. Note that there are 3 execution pathways in this unit
+// --  but a given time, only one pathway may be active. The 3 execution pathways
+// --  are: shifter, multiplier, value feedback network.
+// -- 
 // ----------------------------------------------------------------------------
 
 

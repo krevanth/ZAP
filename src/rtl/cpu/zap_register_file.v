@@ -1,23 +1,30 @@
-// ----------------------------------------------------------------------------
-//                            The ZAP Project
-//                     (C)2016-2017, Revanth Kamaraj.     
-// ----------------------------------------------------------------------------
-// Filename     : zap_regf_bram_wrapper.v
-// HDL          : Verilog-2001
-// Module       : zap_regf_bram_wrapper       
-// Author       : Revanth Kamaraj
-// License      : GPL v2
-// ----------------------------------------------------------------------------
-//                               ABSTRACT
-//                               --------
-// ZAP register file implemented using flip-flops which makes sense for an
-// FPGA implementation where flip-flops are plentiful.
-// ----------------------------------------------------------------------------
-//                              INFORMATION                                  
-//                              ------------
-// Reset method : Synchronous active high reset
-// Clock        : Core clock
-// ----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// --                                                                         --
+// --                   (C) 2016-2018 Revanth Kamaraj.                        --
+// --                                                                         -- 
+// -- --------------------------------------------------------------------------
+// --                                                                         --
+// -- This program is free software; you can redistribute it and/or           --
+// -- modify it under the terms of the GNU General Public License             --
+// -- as published by the Free Software Foundation; either version 2          --
+// -- of the License, or (at your option) any later version.                  --
+// --                                                                         --
+// -- This program is distributed in the hope that it will be useful,         --
+// -- but WITHOUT ANY WARRANTY; without even the implied warranty of          --
+// -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           --
+// -- GNU General Public License for more details.                            --
+// --                                                                         --
+// -- You should have received a copy of the GNU General Public License       --
+// -- along with this program; if not, write to the Free Software             --
+// -- Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA           --
+// -- 02110-1301, USA.                                                        --
+// --                                                                         --
+// -----------------------------------------------------------------------------
+// --                                                                         -- 
+// --  ZAP register file implemented using flip-flops which makes sense for an--
+// --  FPGA implementation where flip-flops are plentiful.                    --
+// --                                                                         --
+// -----------------------------------------------------------------------------
 
 `default_nettype none
 

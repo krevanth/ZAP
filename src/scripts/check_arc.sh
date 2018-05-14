@@ -1,4 +1,5 @@
 #!/bin/bash
+# Used to check CPU architecture.
 
 dpkg --print-architecture | grep amd64 
 

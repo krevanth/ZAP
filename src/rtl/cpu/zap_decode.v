@@ -1,26 +1,32 @@
-// ----------------------------------------------------------------------------
-//                            The ZAP Project
-//                     (C)2016-2017, Revanth Kamaraj.     
-// ----------------------------------------------------------------------------
-// Filename     : zap_decode.v     
-// HDL          : Verilog-2001
-// Module       : zap_decode      
-// Author       : Revanth Kamaraj
-// License      : GPL v2
-// ----------------------------------------------------------------------------
-//                               ABSTRACT
-//                               --------
-// This module performs core ARM instruction decoding by translating ARM
-// instructions into an internal long format that can be processed by downstream
-// logic. Note that the predecode stage must massage the 32-bit instruction to
-// 36-bit before feeding it into this unit.
-// ----------------------------------------------------------------------------
-//                              INFORMATION                                  
-//                              ------------
-// Reset method : --
-// Clock        : Core clock
-// Depends      : --        
-// ----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// --                                                                         --
+// --                   (C) 2016-2018 Revanth Kamaraj.                        --
+// --                                                                         -- 
+// -- --------------------------------------------------------------------------
+// --                                                                         --
+// -- This program is free software; you can redistribute it and/or           --
+// -- modify it under the terms of the GNU General Public License             --
+// -- as published by the Free Software Foundation; either version 2          --
+// -- of the License, or (at your option) any later version.                  --
+// --                                                                         --
+// -- This program is distributed in the hope that it will be useful,         --
+// -- but WITHOUT ANY WARRANTY; without even the implied warranty of          --
+// -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           --
+// -- GNU General Public License for more details.                            --
+// --                                                                         --
+// -- You should have received a copy of the GNU General Public License       --
+// -- along with this program; if not, write to the Free Software             --
+// -- Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA           --
+// -- 02110-1301, USA.                                                        --
+// --                                                                         --
+// -----------------------------------------------------------------------------
+// --                                                                         --
+// -- This module performs core ARM instruction decoding by translating ARM   --
+// -- instructions into an internal long format that can be processed by core --
+// -- logic. Note that the predecode stage must change the 32-bit instr. to   --
+// -- 36-bit before feeding it into this unit.                                --
+// --                                                                         --
+// -----------------------------------------------------------------------------
 
 
 `default_nettype none

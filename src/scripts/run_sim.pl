@@ -2,21 +2,14 @@
 
 my $HELP = "
 ###############################################################################
+
 Perl script to simulate the ZAP processor. This script itself calls other
 scripts and programs.
 
-NOTE: Please see sample_command.csh for a command sample.
-
 Usage :
 perl run_sim.pl
-[+seed+<seed_value>]                                                    -- Force a specific seed for simulation.
-[+sim]                                                                  -- Force register file debug and some extra error messages.
-+test+<test_case>                                                       -- Run a specific test case. Ignore the .tc ending.
-+dump_start+<start_addr_of_dump>+<number_of_words_in_dump>              -- Starting memory address to start logging and number of words to log.
-[+irq_en]                                                               -- Trigger IRQ interrupts from bench.                                        
-[+fiq_en]                                                               -- Trigger FIQ interrupts from bench.
-+max_clock_cycles+<max_clock_cycles>                                    -- Set maximum clock cycles for which the simulation should run. 
-[+tlb_debug]                                                            -- Enable TLB debugging interactive.
++test+<test_case>           -- Run a specific test case.
+
 ###############################################################################
 ";
 

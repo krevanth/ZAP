@@ -7,7 +7,8 @@
 #                                                #
 # This is a common makefile to be used for all   #   
 # testcases. Note that all paths are relative    #
-# to the testcase directory.                     #
+# to the testcase directory. Do a make c2asm     #
+# if you need the assembly version of C files.   #
 #                                                #
 ##################################################
 
