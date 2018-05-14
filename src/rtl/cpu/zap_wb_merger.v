@@ -21,7 +21,9 @@
 // --                                                                         --
 // -----------------------------------------------------------------------------
 // --                                                                         -- 
-// -- Merges two Wishbone busses onto a single bus.                           --
+// -- Merges two Wishbone busses onto a single bus. One side can from the     --
+// -- instruction cache while the other from data cache. This module can      --
+// -- be used to connect any 2 generic Wishbone devices.                      --
 // --                                                                         --
 // -----------------------------------------------------------------------------
 
