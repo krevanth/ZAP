@@ -98,7 +98,7 @@ $IVL_OPTIONS .= " -Pzap_test.CODE_CACHE_SIZE=$CODE_CACHE_SIZE ";
 $IVL_OPTIONS .= "-DMAX_CLOCK_CYCLES=$MAX_CLOCK_CYCLES ";
 
 if ( $IRQ_EN )          {        $IVL_OPTIONS .= "-DIRQ_EN ";   }
-if ( $FIQ_EN )          {        $IVL_OPTIONS .= "=DFIQ_EN ";   }
+if ( $FIQ_EN )          {        $IVL_OPTIONS .= "-DFIQ_EN ";   }
 if ( $STALL )           {        $IVL_OPTIONS .= "-DSTALL ";    }
 if ( $SYNTHESIS )       {        $IVL_OPTIONS .= "-DSYNTHESIS ";}
 
@@ -131,8 +131,9 @@ print "*I: Rand is $SEED...\n";
 print "iverilog $IVL_OPTIONS\n";
 die "*E: Verilog Compilation Failed!\n" if system("iverilog $IVL_OPTIONS");
 die "*E: VVP execution error!\n" if system("vvp $VVP_PATH | tee $LOG_FILE_PATH");
-die "*E: An error occurred! Please check ERRORS!\n"   unless system("grep \\*E $LOG_FILE_PATH");
-die "*E: An error occurred! Please check WARNINGS!\n" unless system("grep \\*W $LOG_FILE_PATH");
+
+die "*E: Errors occurred! Please grep for Errors in $LOG_FILE_PATH\n"       unless system("grep Error   $LOG_FILE_PATH");
+die "*E: There were Warnings! Please grep for Warnings in $LOG_FILE_PATH\n" unless system("grep Warning $LOG_FILE_PATH");
 
 exit 0;
 

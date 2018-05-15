@@ -11,7 +11,7 @@ _Pabt    : b __pabt
 _Dabt    : b __dabt
 reserved : b _Reset
 irq      : b IRQ
-fiq      : b __fiq
+fiq      : b FIQ  
 
 UNDEF:
 // Undefined vector.
@@ -35,6 +35,7 @@ mov r14, #15
 // Restore them.
 ldmfa sp!, {r0-r12, pc}^
 
+// IRQ.
 IRQ:
 sub r14, r14, #4
 stmfd sp!, {r0-r12, r14}
@@ -53,6 +54,15 @@ mov r11, #13
 mov r12, #14
 mov r14, #15
 ldmfd sp!, {r0-r12, pc}^
+
+FIQ:
+# Return from FIQ after writing to FIQ registers.
+mov r8,  #9
+mov r9,  #10
+mov r10, #12
+mov r11, #13
+mov r12, #14
+subs pc, r14, #4
 
 SWI:
 ldr sp,=#2500
@@ -99,9 +109,9 @@ msr cpsr_c, r3
 mov r4, #1
 ldr sp, =#3500
 
-// Enable interrupts.
+// Enable interrupts (FIQ and IRQ).
 mrs r1, cpsr
-bic r1, r1, #0x80
+bic r1, r1, #0xC0
 msr cpsr_c, r1
 
 // Enable cache (Uses a single bit to enable both caches).

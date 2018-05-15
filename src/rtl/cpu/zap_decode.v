@@ -653,7 +653,7 @@ begin
         3'b001: process_register_specified_shift ( i_instruction );
         default:
         begin
-                $display("*W: WARNING: This should never happen! Check the RTL..!");
+                $display("Error : Decoder Error.");
                 $finish;
         end
         endcase

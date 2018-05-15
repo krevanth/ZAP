@@ -407,7 +407,7 @@ begin
 
                                         default:
                                         begin
-                                        $display($time, "WARNING: Bad coprocessor instruction %b", i_cp_word);
+                                        $display($time, "Error: Bad coprocessor instruction %b", i_cp_word);
                                         $finish;
                                         end
 

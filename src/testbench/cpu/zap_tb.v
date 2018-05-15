@@ -213,6 +213,18 @@ end
 
 `endif
 
+`ifdef FIQ_EN
+
+always @ (negedge i_clk)
+begin: blk1
+        reg [1:0] x;
+        x = $random;
+
+        i_fiq = (x == 0) ? 1'd1 : 1'd0 ; // 25 percent chance.
+end
+
+`endif
+
 initial i_reset = 1'd0;
 
 initial

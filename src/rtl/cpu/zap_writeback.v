@@ -505,7 +505,7 @@ begin
         end
         else
         begin
-                $display($time, "FUNC_ERROR :: CPU is changing out of USR mode without an exception...");
+                $display($time, "Error : %m CPU is changing out of USR mode without an exception...");
                 $stop;
         end
 end

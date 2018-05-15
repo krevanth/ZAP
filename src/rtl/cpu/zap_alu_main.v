@@ -38,86 +38,157 @@ module zap_alu_main #(
         parameter [31:0] FLAG_WDT  = 32'd32  // Width of active CPSR.
 )
 (
-        input wire      [64*8-1:0]         i_decompile,
-        output reg      [64*8-1:0]         o_decompile,
+        /**********************************************************************
+         * 
+         *                              INPUTS 
+         *
+         *********************************************************************/
 
-        input wire                         i_hijack,                    // Enable hijack.
-        input wire      [31:0]             i_hijack_op1,                // Hijack operand 1.
-        input wire      [31:0]             i_hijack_op2,                // Hijack operand 2.
-        input wire                         i_hijack_cin,                // Hijack carry in.
-        output wire     [31:0]             o_hijack_sum,                // Hijack sum out.
 
-        input wire                         i_clk,                       // Clock.
-        input wire                         i_reset,                     // sync active high reset.
-        input wire  [31:0]                 i_cpsr_nxt,                  // From passive CPSR.
-        input wire                         i_clear_from_writeback,      // Clear unit.
-        input wire                         i_data_stall,                // DCACHE stall.
-        input wire                         i_switch_ff,                 // Switch state.
-        input wire   [1:0]                 i_taken_ff,                  // Branch prediction.
-        input wire   [31:0]                i_pc_ff,                     // Addr of instr.
-        input wire                         i_nozero_ff,                 // Zero flag will not be set.
-        input wire  [31:0]                 i_mem_srcdest_value_ff,      // Value to store. 
-        input wire  [31:0]                 i_alu_source_value_ff,       // ALU source value.
-        input wire  [31:0]                 i_shifted_source_value_ff,   // Shifted source value.
-        input wire                         i_shift_carry_ff,            // Carry from shifter.        
-        input wire  [31:0]                 i_pc_plus_8_ff,              // PC + 8 value.
+        // ------------------------------------------------------------------
+        // Decompile Interface. Only for debug.
+        // ------------------------------------------------------------------
 
-        input wire                         i_abt_ff,                    // ABT flagged.
-        input wire                         i_irq_ff,                    // IRQ flagged.
-        input wire                         i_fiq_ff,                    // FIQ flagged.
-        input wire                         i_swi_ff,                    // SWI flagged.
+        input wire      [64*8-1:0]              i_decompile,
+        output reg      [64*8-1:0]              o_decompile,
 
-        input wire  [zap_clog2(PHY_REGS)-1:0] i_mem_srcdest_index_ff,           // LD/ST Memory data register index.    
-        input wire                            i_mem_load_ff,                    // LD/ST Memory load.
-        input wire                            i_mem_store_ff,                   // LD/ST Memory store.                    
-        input wire                            i_mem_pre_index_ff,               // LD/ST Pre/Post index.
-        input wire                            i_mem_unsigned_byte_enable_ff,    // LD/ST uint8_t  data type.
-        input wire                            i_mem_signed_byte_enable_ff,      // LD/ST int8_t   data type.
-        input wire                            i_mem_signed_halfword_enable_ff,  // LD/ST int16_t data type.
-        input wire                            i_mem_unsigned_halfword_enable_ff,// LD/ST uint16_t  data type.
-        input wire                            i_mem_translate_ff,               // LD/ST Force user view of memory.
+        // ------------------------------------------------------------------
+        // ALU Hijack Interface. For Thumb Data Abort address calculation.
+        // ------------------------------------------------------------------
+
+        input wire                              i_hijack,                    // Enable hijack.
+        input wire      [31:0]                  i_hijack_op1,                // Hijack operand 1.
+        input wire      [31:0]                  i_hijack_op2,                // Hijack operand 2.
+        input wire                              i_hijack_cin,                // Hijack carry in.
+        output wire     [31:0]                  o_hijack_sum,                // Hijack sum out.
+
+        // ------------------------------------------------------------------
+        // Clock and reset
+        // ------------------------------------------------------------------
+
+        input wire                              i_clk,                       // Clock.
+        input wire                              i_reset,                     // sync active high reset.
+
+        // -------------------------------------------------------------------
+        // Clear and Stall signals.
+        // -------------------------------------------------------------------
+
+        input wire                              i_clear_from_writeback,      // Clear unit.
+        input wire                              i_data_stall,                // DCACHE stall.
+
+        // -------------------------------------------------------------------
+        // Misc. signals
+        // -------------------------------------------------------------------
+
+        input wire  [31:0]                      i_cpsr_nxt,                  // From passive CPSR.
+        input wire                              i_switch_ff,                 // Switch state.
+        input wire   [1:0]                      i_taken_ff,                  // Branch prediction.
+        input wire   [31:0]                     i_pc_ff,                     // Addr of instr.
+        input wire                              i_nozero_ff,                 // Zero flag will not be set.
+
+        // ------------------------------------------------------------------
+        // Source values
+        // ------------------------------------------------------------------
+
+        input wire  [31:0]                      i_alu_source_value_ff,       // ALU source value.
+        input wire  [31:0]                      i_shifted_source_value_ff,   // Shifted source value.
+        input wire                              i_shift_carry_ff,            // Carry from shifter.        
+        input wire  [31:0]                      i_pc_plus_8_ff,              // PC + 8 value.
+
+        // ------------------------------------------------------------------
+        // Interrupt Tagging
+        // ------------------------------------------------------------------
+
+        input wire                              i_abt_ff,                    // ABT flagged.
+        input wire                              i_irq_ff,                    // IRQ flagged.
+        input wire                              i_fiq_ff,                    // FIQ flagged.
+        input wire                              i_swi_ff,                    // SWI flagged.
+        input wire                              i_und_ff,                    // Flagged undefined instructions.
+        input wire                              i_data_mem_fault,            // Flagged Data abort.
+
+        // ------------------------------------------------------------------
+        // Memory Access Related
+        // ------------------------------------------------------------------
+
+        input wire  [31:0]                      i_mem_srcdest_value_ff,           // Value to store. 
+        input wire  [zap_clog2(PHY_REGS)-1:0]   i_mem_srcdest_index_ff,           // LD/ST Memory data register index.    
+        input wire                              i_mem_load_ff,                    // LD/ST Memory load.
+        input wire                              i_mem_store_ff,                   // LD/ST Memory store.                    
+        input wire                              i_mem_pre_index_ff,               // LD/ST Pre/Post index.
+        input wire                              i_mem_unsigned_byte_enable_ff,    // LD/ST uint8_t  data type.
+        input wire                              i_mem_signed_byte_enable_ff,      // LD/ST int8_t   data type.
+        input wire                              i_mem_signed_halfword_enable_ff,  // LD/ST int16_t data type.
+        input wire                              i_mem_unsigned_halfword_enable_ff,// LD/ST uint16_t  data type.
+        input wire                              i_mem_translate_ff,               // LD/ST Force user view of memory.
+        input wire                              i_force32align_ff,                // Force address alignment to 32-bit.
+
+        // -------------------------------------------------------------------
+        // ALU controls
+        // -------------------------------------------------------------------
 
         input wire  [3:0]                       i_condition_code_ff,            // CC associated with instr.
         input wire  [zap_clog2(PHY_REGS)-1:0]   i_destination_index_ff,         // Target register index.
         input wire  [zap_clog2(ALU_OPS)-1:0]    i_alu_operation_ff,             // Operation to perform.
         input wire                              i_flag_update_ff,               // Update flags if 1.
-        input wire                              i_force32align_ff,              // Force address alignment to 32-bit.
-        input wire                              i_und_ff,                       // Flagged undefined instructions.
-        input wire                              i_data_mem_fault,               // Flagged Data abort.
 
-        output reg [31:0]                   o_alu_result_nxt,           // For feedback. ALU result _nxt version.
-        output reg [31:0]                   o_alu_result_ff,            // ALU result flopped version.
+        /**********************************************************************
+         * 
+         *                              OUTPUTS
+         *
+         *********************************************************************/
 
-        output reg                          o_abt_ff,                   // Instruction abort flagged.
-        output reg                          o_irq_ff,                   // IRQ flagged.
-        output reg                          o_fiq_ff,                   // FIQ flagged.
-        output reg                          o_swi_ff,                   // SWI flagged.
-        output reg                          o_und_ff,                   // Flagged undefined instructions
+        // -----------------------------------------------------------------
+        // ALU result
+        // -----------------------------------------------------------------
 
-        output reg                          o_dav_ff,                   // Instruction valid.
-        output reg                          o_dav_nxt,                  // Instruction valid _nxt version.
-        output reg [31:0]                   o_pc_plus_8_ff,             // Instr address + 8.
-        output reg                          o_clear_from_alu,           // ALU commands a pipeline clear and a predictor correction.
-        output reg [31:0]                   o_pc_from_alu,              // Corresponding address to go to is provided here.
-        output reg [zap_clog2(PHY_REGS)-1:0]o_destination_index_ff,     // Destination register index.
-        output reg [FLAG_WDT-1:0]           o_flags_ff,                 // Output flags (CPSR).
-        output reg [FLAG_WDT-1:0]           o_flags_nxt,                // CPSR next.
-        output reg                          o_confirm_from_alu,         // Tell branch predictor it was correct.
+        output reg [31:0]                       o_alu_result_nxt,           // For feedback. ALU result _nxt version.
+        output reg [31:0]                       o_alu_result_ff,            // ALU result flopped version.
+        output reg                              o_dav_ff,                   // Instruction valid.
+        output reg                              o_dav_nxt,                  // Instruction valid _nxt version.
+        output reg [FLAG_WDT-1:0]               o_flags_ff,                 // Output flags (CPSR).
+        output reg [FLAG_WDT-1:0]               o_flags_nxt,                // CPSR next.
+        output reg [zap_clog2(PHY_REGS)-1:0]    o_destination_index_ff,     // Destination register index.
 
-        output reg  [zap_clog2(PHY_REGS)-1:0]  o_mem_srcdest_index_ff,  // LD/ST data register.
-        output reg                          o_mem_load_ff,              // LD/ST load indicator.
-        output reg                          o_mem_store_ff,             // LD/ST store indicator.
-        output reg [31:0]                   o_mem_address_ff,           // LD/ST address to access.
-        output reg                          o_mem_unsigned_byte_enable_ff,     // uint8_t
-        output reg                          o_mem_signed_byte_enable_ff,       // int8_t
-        output reg                          o_mem_signed_halfword_enable_ff,   // int16_t
-        output reg                          o_mem_unsigned_halfword_enable_ff, // uint16_t
-        output reg [31:0]                   o_mem_srcdest_value_ff,     // LD/ST value to store.
-        output reg                          o_mem_translate_ff,         // LD/ST force user view of memory.
-        output reg [3:0]                    o_ben_ff,                   // LD/ST byte enables (only for STore instructions).
-        output reg  [31:0]                  o_address_nxt,              // D pin of address register to drive TAG RAMs.
+        // -----------------------------------------------------------------
+        // Interrupt Tagging
+        // -----------------------------------------------------------------
 
+        output reg                              o_abt_ff,                   // Instruction abort flagged.
+        output reg                              o_irq_ff,                   // IRQ flagged.
+        output reg                              o_fiq_ff,                   // FIQ flagged.
+        output reg                              o_swi_ff,                   // SWI flagged.
+        output reg                              o_und_ff,                   // Flagged undefined instructions
+
+        // -----------------------------------------------------------------
+        // Jump Controls, BP Confirm, PC + 8
+        // -----------------------------------------------------------------
+
+        output reg [31:0]                       o_pc_plus_8_ff,             // Instr address + 8.
+        output reg                              o_clear_from_alu,           // ALU commands a pipeline clear and a predictor correction.
+        output reg [31:0]                       o_pc_from_alu,              // Corresponding address to go to is provided here.
+        output reg                              o_confirm_from_alu,         // Tell branch predictor it was correct.
+
+        // ----------------------------------------------------------------
+        // Memory access related
+        // ----------------------------------------------------------------
+
+        output reg  [zap_clog2(PHY_REGS)-1:0]   o_mem_srcdest_index_ff,  // LD/ST data register.
+        output reg                              o_mem_load_ff,              // LD/ST load indicator.
+        output reg                              o_mem_store_ff,             // LD/ST store indicator.
+        output reg [31:0]                       o_mem_address_ff,           // LD/ST address to access.
+        output reg                              o_mem_unsigned_byte_enable_ff,     // uint8_t
+        output reg                              o_mem_signed_byte_enable_ff,       // int8_t
+        output reg                              o_mem_signed_halfword_enable_ff,   // int16_t
+        output reg                              o_mem_unsigned_halfword_enable_ff, // uint16_t
+        output reg [31:0]                       o_mem_srcdest_value_ff,     // LD/ST value to store.
+        output reg                              o_mem_translate_ff,         // LD/ST force user view of memory.
+        output reg [3:0]                        o_ben_ff,                   // LD/ST byte enables (only for STore instructions).
+        output reg  [31:0]                      o_address_nxt,              // D pin of address register to drive TAG RAMs.
+
+        // -------------------------------------------------------------
         // Wishbone signal outputs.
+        // -------------------------------------------------------------
+
         output reg                              o_data_wb_we_nxt,
         output reg                              o_data_wb_cyc_nxt,
         output reg                              o_data_wb_stb_nxt,
@@ -139,9 +210,14 @@ module zap_alu_main #(
 wire [31:0] mem_srcdest_value_nxt;
 wire [3:0] ben_nxt;
 
-// Address about to be output. Used to potentially drive tag RAMs etc.
+// Address about to be output. Used to drive tag RAMs etc.
 reg [31:0]                      mem_address_nxt;
 
+/*
+   For memory stores, we must generate correct byte enables. This is done
+   by examining access type inputs. For loads, always 1111 is generated.
+   If there is neither a load or a store, the old value is preserved.
+*/
 assign ben_nxt = i_mem_store_ff ? generate_ben (
                                                  i_mem_unsigned_byte_enable_ff, 
                                                  i_mem_signed_byte_enable_ff, 
@@ -677,7 +753,7 @@ begin: blk2
         default: 
         begin
                 rd = 0;
-                $display("*W: WARNING: Logic unit got non logic opcode...");
+                $display("*Error: Logic unit got non logic opcode...");
                 $finish;
         end
         endcase           
@@ -761,7 +837,7 @@ endfunction
 
 // ----------------------------------------------------------------------------
 
-// Generate byte enables.
+// Generate byte enables based on access mode.
 function [3:0] generate_ben (   input ub, // Unsigned byte. 
                                 input sb, // Signed byte.
                                 input uh, // Unsigned halfword.
@@ -792,18 +868,21 @@ begin
 
         generate_ben = x;
 end
-endfunction
+endfunction // generate_ben
 
 `ifndef SYNTHESIS
 
-always @*
-if ( flags_nxt[`CPSR_MODE] != USR && flags_ff[`CPSR_MODE] == USR )
-begin
-        $display($time, "FUNC_ERROR :: %m CPU is changing out of USR mode without an exception...");
-        $stop;
-end
+        always @*
+        begin
+                if ( flags_nxt[`CPSR_MODE] != USR && flags_ff[`CPSR_MODE] == USR )
+                begin
+                        $display($time, "Error: %m CPU is changing out of USR mode without an exception...");
+                        $stop;
+                end
+        end
 
 `endif
 
 endmodule // zap_alu_main.v
+
 `default_nettype wire

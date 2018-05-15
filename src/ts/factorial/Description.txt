@@ -1,5 +1,5 @@
 This test mainly runs a program to find factorial of 5 and write
-the value 3.14 to a memory location. IRQ is available and simply
+the value 3.14 to a memory location. IRQ/FIQ is available and simply
 does a push, modify and pop back of registers. At the end an 
 SWI is called which performs a bunch of multiplications and 
 serial load/store. This setup uses the MMU but is set up for 
