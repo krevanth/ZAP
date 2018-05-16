@@ -314,6 +314,7 @@ begin
                 // Clear and preserve flags. Keep sleeping.
                 clear(flags_ff);
                 sleep_ff                         <= 1'd1; 
+                o_dav_ff                         <= 1'd0; // Don't give any output.
         end
         else
         begin
@@ -587,9 +588,11 @@ begin: flags_bp_feedback
         begin
                 //
                 // Any sign of an interrupt is present, put unit to sleep.
-                // The current instruction will not be executed ultimately.
+                // The current instruction will not be executed ultimately
+                // but rather a SUB LR, PC, 4 will be which will be stored in
+                // the link register.
                 //
-                o_dav_nxt = 1'd0;
+                o_dav_nxt = 1'd1;
                 sleep_nxt = 1'd1;
         end
         else if ( (opcode == FMOV) && o_dav_nxt ) // Writes to CPSR...

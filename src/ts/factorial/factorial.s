@@ -62,6 +62,11 @@ mov r9,  #10
 mov r10, #12
 mov r11, #13
 mov r12, #14
+mov r8, #0
+mov r9, #0
+mov r10, #0
+mov r11, #10
+mov r12, #0
 subs pc, r14, #4
 
 SWI:
