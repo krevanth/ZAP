@@ -83,12 +83,14 @@ my $VVP_PATH        = "$SCRATCH/zap.vvp";
 my $VCD_PATH        = "$SCRATCH/zap.vcd";
 my $PROG_PATH       = "$SCRATCH/zap_mem.v";
 my $TARGET_BIN_PATH = "$SCRATCH/zap.bin";
+my $UART_PATH       = "$SCRATCH/zapuart.fifo";
 
 # Generate IVL options.
-my $IVL_OPTIONS .= " -I$ZAP_HOME/src/rtl/cpu -I$ZAP_HOME/obj/ts/$TEST ";
-   $IVL_OPTIONS .= " $ZAP_HOME/src/rtl/*/*.v $ZAP_HOME/src/testbench/*/*.v -o $VVP_PATH -gstrict-ca-eval -Wall -g2001 -Winfloop -DSEED=$SEED -DMEMORY_IMAGE=\\\"$PROG_PATH\\\" ";
+my $IVL_OPTIONS .= " -I$ZAP_HOME/src/rtl/cpu -I$ZAP_HOME/obj/ts/$TEST -I$ZAP_HOME/src/testbench/cpu/uart16550/rtl $ZAP_HOME/src/testbench/cpu/uart16550/rtl/*.v ";
+   $IVL_OPTIONS .= " $ZAP_HOME/src/rtl/*/*.v $ZAP_HOME/src/testbench/cpu/*.v -o $VVP_PATH -gstrict-ca-eval -Wall -g2001 -Winfloop -DSEED=$SEED -DMEMORY_IMAGE=\\\"$PROG_PATH\\\" ";
 
 $IVL_OPTIONS .= " -DVCD_FILE_PATH=\\\"$VCD_PATH\\\" "; 
+$IVL_OPTIONS .= " -DUART_FILE_PATH=\\\"$UART_PATH\\\" "; 
 $IVL_OPTIONS .= " -Pzap_test.RAM_SIZE=$RAM_SIZE -Pzap_test.START=$DUMP_START -Pzap_test.COUNT=$DUMP_SIZE -DLINUX -Pzap_test.STORE_BUFFER_DEPTH=$SBUF_DEPTH ";
 $IVL_OPTIONS .= " -Pzap_test.BP_ENTRIES=$BP -Pzap_test.FIFO_DEPTH=$FIFO ";
 $IVL_OPTIONS .= " -Pzap_test.DATA_SECTION_TLB_ENTRIES=$DATA_SECTION_TLB_ENTRIES ";
@@ -129,6 +131,14 @@ print HH '$display("Simulation Complete. All checks (if any) passed.");$finish;'
 
 print "*I: Rand is $SEED...\n";
 print "iverilog $IVL_OPTIONS\n";
+
+system("rm -f $UART_PATH");    # Remove UART file.
+system("mknod $UART_PATH p");  # Create a UART output FIFO file.
+
+# UART output monitor.
+print "Setting up UART output monitor";
+system("xterm -T 'TB UART Output' -hold -e 'cat $UART_PATH ; echo ; echo ------------------ ; echo UART_Output_Complete ; echo ------------------' &");
+
 die "*E: Verilog Compilation Failed!\n" if system("iverilog $IVL_OPTIONS");
 die "*E: VVP execution error!\n" if system("vvp $VVP_PATH | tee $LOG_FILE_PATH");
 

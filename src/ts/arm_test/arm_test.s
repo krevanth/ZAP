@@ -36,7 +36,7 @@
 	.global test_cond, test_fwd, test_bshift, test_logic, test_adder, test_bshift_reg, test_load
 	.global test_store, test_byte, test_cpsr, test_mul, test_ldmstm, test_r15jumps, test_rti
 
-_start:
+_Reset:
 	bl test_cond
 fail1:
 	teq r0, #0

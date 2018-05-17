@@ -1,0 +1,3 @@
+The CPU core simply programs the 16550 UART Tx in TB and sends 
+the byte 0xAA repeatedly a few times and then, the CPU enters
+an infinite loop until the simulation ends. 

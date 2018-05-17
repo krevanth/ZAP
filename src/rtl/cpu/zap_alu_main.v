@@ -218,12 +218,12 @@ reg [31:0]                      mem_address_nxt;
    by examining access type inputs. For loads, always 1111 is generated.
    If there is neither a load or a store, the old value is preserved.
 */
-assign ben_nxt = i_mem_store_ff ? generate_ben (
+assign ben_nxt = /*i_mem_store_ff ?*/ generate_ben (
                                                  i_mem_unsigned_byte_enable_ff, 
                                                  i_mem_signed_byte_enable_ff, 
                                                  i_mem_unsigned_halfword_enable_ff, 
                                                  i_mem_unsigned_halfword_enable_ff, 
-                                                 mem_address_nxt) : i_mem_load_ff ? 4'b1111 : o_ben_ff;
+                                                 mem_address_nxt) /*: i_mem_load_ff ? 4'b1111 : o_ben_ff*/;
 
 assign mem_srcdest_value_nxt =  duplicate (
                                                  i_mem_unsigned_byte_enable_ff, 
@@ -232,10 +232,10 @@ assign mem_srcdest_value_nxt =  duplicate (
                                                  i_mem_unsigned_halfword_enable_ff, 
                                                  i_mem_srcdest_value_ff );  
 
-//
-// These override global N,Z,C,V definitions which are on CPSR. These params
-// are localized over the 4-bit flag structure.
-//
+/*
+   These override global N,Z,C,V definitions which are on CPSR. These params
+   are localized over the 4-bit flag structure.
+*/
 localparam [1:0] _N  = 2'd3;
 localparam [1:0] _Z  = 2'd2;
 localparam [1:0] _C  = 2'd1;
@@ -247,10 +247,18 @@ localparam [1:0] WNT = 2'd1;
 localparam [1:0] WT  = 2'd2;
 localparam [1:0] ST  = 2'd3;
 
-// Sleep flop.
+/* 
+   Sleep flop. When 1 unit sleeps i.e., does not produce any output except on
+   the first clock cycle where LR is calculated using the ALU.
+*/
 reg                             sleep_ff, sleep_nxt;
 
-// CPSR (Active CPSR).
+/*
+   CPSR (Active CPSR). The active CPSR is from the where the CPU flags are
+   read out and the mode also is. Mode changes via manual writes to CPSR
+   are first written to the active and they then propagate to the passive CPSR
+   in the writeback stage. This reduces the pipeline flush penalty.
+*/
 reg [31:0]                      flags_ff, flags_nxt;
 
 reg [31:0]                      rm, rn; // RM = shifted source value Rn for
@@ -262,13 +270,15 @@ reg [31:0]                      rm, rn; // RM = shifted source value Rn for
 // Destination index about to be output.
 reg [zap_clog2(PHY_REGS)-1:0]      o_destination_index_nxt;
 
-// Negation of Rm and Rn.
+// 1s complement of Rm and Rn.
 wire [31:0]                     not_rm = ~rm;
 wire [31:0]                     not_rn = ~rn;
 
-// Wires to emulate an adder.
+// Wires which connect to an adder.
 reg [31:0]      op1, op2;
 reg             cin;
+
+// 32-bit adder with carry input and carry output.
 wire [32:0]     sum = {1'd0, op1} + {1'd0, op2} + {32'd0, cin};
 
 reg [31:0] tmp_flags, tmp_sum;
@@ -276,7 +286,10 @@ reg [31:0] tmp_flags, tmp_sum;
 // Opcode.
 wire [zap_clog2(ALU_OPS)-1:0] opcode = i_alu_operation_ff;
 
-// Hijack interface.
+/*
+   Hijack interface. Data aborts use the hijack interface to find return
+   address. The writeback drives the ALU inputs to find the final output.
+*/
 assign o_hijack_sum = sum;
 
 // ----------------------------------------------------------------------------

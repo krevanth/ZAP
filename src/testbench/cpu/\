@@ -272,7 +272,7 @@ integer signed fh;
 
 initial
 begin
-        fh = $fopen(`UART_FILE_PATH, "w");
+        fh = $fopen(`UART_FILE_PATH);
 
         if ( fh == -1 ) 
         begin
@@ -289,9 +289,8 @@ always @ (negedge i_clk)
 begin
         if ( UART_SR_DAV )
         begin
-                $display("UART Wrote %c", UART_SR);
+                $display("UART Wrote %c", UART_SR, "w");
                 $fwrite(fh, "%c", UART_SR);
-                $fflush(fh);
         end
 end
 
