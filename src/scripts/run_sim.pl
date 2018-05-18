@@ -136,6 +136,9 @@ system("rm -f $UART_PATH");    # Remove UART file.
 system("mknod $UART_PATH p");  # Create a UART output FIFO file.
 
 # UART output monitor.
+die "Error: XTerm could not be found!" if system("which xterm");
+die "Error: Icarus Verilog could not be found!" if system("which iverilog");
+
 print "Setting up UART output monitor";
 system("xterm -T 'TB UART Output' -hold -e 'cat $UART_PATH ; echo ; echo ------------------ ; echo UART_Output_Complete ; echo ------------------' &");
 
