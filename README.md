@@ -1,4 +1,4 @@
-## *ZAP* : ARM compatible core with cache and MMU (ARMv4T ISA compatible)
+## *ZAP* : An ARM compatible core with cache and MMU (ARMv4T ISA compatible)
 
 #### Author        : Revanth Kamaraj (revanth91kamaraj@gmail.com)
 #### License       : GPL v2
@@ -19,7 +19,7 @@ Experimental.
 ### Bugs and Known Issues
 
  - Issues with the Thumb ISA.  
- - SWAP does not keep CYC signal asserted.
+ - SWAP does not bypass cache.
 
 ### Bus Interface 
  
