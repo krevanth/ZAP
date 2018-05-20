@@ -159,12 +159,12 @@ begin: blk1
         wb_stb_nxt      = 0;
         wb_cyc_nxt      = 0;
         wb_adr_nxt      = 0;
-	wb_sel_nxt	= 0;
+        wb_sel_nxt      = 0;
 
         dac_nxt         = dac_ff;
         state_nxt       = state_ff;
 
-		   dnxt = dff;
+        dnxt            = dff;
 
         case ( state_ff )
         IDLE:
@@ -177,9 +177,10 @@ begin: blk1
                                 $display($time, "%m :: Core generated address %x", i_address);
                                 $display($time, "%m :: Moving to FETCH_L1_DESC. i_baddr = %x baddr_tran_base = %x addr_va_table_index = %x", 
                                          i_baddr, i_baddr[`VA__TRANSLATION_BASE], i_address[`VA__TABLE_INDEX]);
-`ifdef TLB_DEBUG
-                                $stop;
-`endif
+
+                                `ifdef TLB_DEBUG
+                                        $stop;
+                                `endif
 
                                 o_busy = 1'd1;
 
@@ -195,9 +196,10 @@ begin: blk1
                         else if ( i_fsr[3:0] != 4'b0000 ) /* Access Violation. */
                         begin
                                 $display($time, "%m :: Access violation fsr = %x far = %x...", i_fsr, i_far);
-`ifdef TLB_DEBUG
-                                $stop;
-`endif
+
+                                `ifdef TLB_DEBUG
+                                        $stop;
+                                `endif
 
                                 o_fault = 1'd1;
                                 o_busy  = 1'd0;
@@ -209,23 +211,25 @@ begin: blk1
                                 `ifdef DISP_TLB_SUCCESS
                                         $display($time, "TLB Hit for address = %x MMU enable = %x!", i_address, i_mmu_en);
                                 `endif
-`ifdef TLB_DEBUG
-                                $stop;
-`endif
+
+                                `ifdef TLB_DEBUG
+                                        $stop;
+                                `endif
                         end
                 end
         end
 
-		FETCH_L1_DESC_0:
-		begin
-			o_busy = 1;
-			if ( i_wb_ack )
-			begin
-				dnxt = i_wb_dat;
-				state_nxt = FETCH_L1_DESC;
-			end
+                FETCH_L1_DESC_0:
+                begin
+                        o_busy = 1;
+
+                        if ( i_wb_ack )
+                        begin
+                                dnxt = i_wb_dat;
+                                state_nxt = FETCH_L1_DESC;
+                        end
                         else tsk_hold_wb_access;
-		end
+                end
 
         FETCH_L1_DESC:
         begin
@@ -241,9 +245,11 @@ begin: blk1
                 if ( 1 ) 
                 begin
                         $display($time, "%m :: ACK received. Read data is %x", i_wb_dat);
-`ifdef TLB_DEBUG
-                        $stop;
-`endif
+
+                        `ifdef TLB_DEBUG
+                                $stop;
+                        `endif
+
                         case ( dff[`ID] )
 
                         SECTION_ID:
@@ -259,9 +265,20 @@ begin: blk1
                                 state_nxt       = REFRESH_CYCLE; 
 
                                 $display($time, "%m :: It is a section ID. Writing to section TLB as %x. Moving to refresh cycle...", o_setlb_wdata);
-`ifdef TLB_DEBUG                
-                                $stop;
-`endif
+
+                                $display("#########################################################");
+                                $display("            SECTION DESCRIPTOR DETAILS                  #");
+                                $display("#########################################################");
+                                $display("# BASE ADDRESS  = 0x%x ", o_setlb_wdata[`SECTION_TLB__BASE]);
+                                $display("# DAC           = 0b%b",  o_setlb_wdata[`SECTION_TLB__DAC_SEL]);
+                                $display("# AP bits       = 0b%b",  o_setlb_wdata[`SECTION_TLB__AP]);
+                                $display("# Cacheable     = 0b%b",  o_setlb_wdata[`SECTION_TLB__CB] >> 1);
+                                $display("# Bufferable    = 0b%b",  o_setlb_wdata[`SECTION_TLB__CB] & 2'b01);
+                                $display("#########################################################");
+
+                                `ifdef TLB_DEBUG                
+                                        $stop;
+                                `endif
                         end
 
                         PAGE_ID:
@@ -278,10 +295,11 @@ begin: blk1
                                 tsk_prpr_wb_rd({dff[`L1_PAGE__PTBR], 
                                                   i_address[`VA__L2_TABLE_INDEX], 2'd0});
 
-                                $display($time, "%m :: Page ID.");
-`ifdef TLB_DEBUG
-                                $stop;
-`endif
+                                $display($time, "%m :: L1 received Page ID.");
+
+                                `ifdef TLB_DEBUG
+                                        $stop;
+                                `endif
                         end               
 
                         default: /* Generate section translation fault. Fault Class II */
@@ -294,9 +312,10 @@ begin: blk1
                                 state_nxt    = IDLE;
 
                                 $display($time, "%m :: FSR section translation fault!");
-`ifdef TLB_DEBUG
-                                $stop;
-`endif
+
+                                `ifdef TLB_DEBUG
+                                        $stop;
+                                `endif
                         end
  
                         endcase
@@ -304,15 +323,20 @@ begin: blk1
                 else tsk_hold_wb_access;
         end
 
-		  FETCH_L2_DESC_0:
-		  begin
-				o_busy = 1;
-				if ( i_wb_ack )
-				begin
-					dnxt = i_wb_dat;
-					state_nxt = FETCH_L2_DESC;
-				end else tsk_hold_wb_access;
-		  end
+        FETCH_L2_DESC_0:
+        begin
+                        o_busy = 1;
+
+                        if ( i_wb_ack )
+                        begin
+                                dnxt            = i_wb_dat;
+                                state_nxt       = FETCH_L2_DESC;
+                        end 
+                        else 
+                        begin
+                                tsk_hold_wb_access;
+                        end
+        end
 
         FETCH_L2_DESC:
         begin
@@ -326,12 +350,24 @@ begin: blk1
                                 /* Update TLB */
                                 o_sptlb_wen   = 1'd1;
 
+                                /* Define TLB fields to write */
                                 o_sptlb_wdata[`SPAGE_TLB__TAG]     = i_address[`VA__SPAGE_TAG];
-                                o_sptlb_wdata[`SPAGE_TLB__DAC_SEL] = dac_ff; /* DAC selector from L1. */
+                                o_sptlb_wdata[`SPAGE_TLB__DAC_SEL] = dac_ff;                    /* DAC selector from L1. */
                                 o_sptlb_wdata[`SPAGE_TLB__AP]      = dff[`L2_SPAGE__AP];
                                 o_sptlb_wdata[`SPAGE_TLB__CB]      = dff[`L2_SPAGE__CB];
                                 o_sptlb_wdata[`SPAGE_TLB__BASE]    = dff[`L2_SPAGE__BASE];
 
+                                $display("#########################################################");
+                                $display("              SPAGE DESCRIPTOR DETAILS                  #");
+                                $display("#########################################################");
+                                $display("# BASE ADDRESS  = 0x%x ", o_sptlb_wdata[`SPAGE_TLB__BASE]);
+                                $display("# DAC           = 0b%b",  o_sptlb_wdata[`SPAGE_TLB__DAC_SEL]);
+                                $display("# AP bits       = 0b%b",  o_sptlb_wdata[`SPAGE_TLB__AP]);
+                                $display("# Cacheable     = 0b%b",  o_sptlb_wdata[`SPAGE_TLB__CB] >> 1);
+                                $display("# Bufferable    = 0b%b",  o_sptlb_wdata[`SPAGE_TLB__CB] & 2'b01);
+                                $display("#########################################################");
+
+                                /* Go to REFRESH */
                                 state_nxt   = REFRESH_CYCLE;
                         end
 
@@ -342,6 +378,16 @@ begin: blk1
 
                                 /* DAC is inserted in between to save bits */
                                 o_lptlb_wdata = {i_address[`VA__LPAGE_TAG], dac_ff, dff};
+
+                                $display("#########################################################");
+                                $display("              LPAGE DESCRIPTOR DETAILS                  #");
+                                $display("#########################################################");
+                                $display("# BASE ADDRESS  = 0x%x ", o_lptlb_wdata[`LPAGE_TLB__BASE]);
+                                $display("# DAC           = 0b%b",  o_lptlb_wdata[`LPAGE_TLB__DAC_SEL]);
+                                $display("# AP bits       = 0b%b",  o_lptlb_wdata[`LPAGE_TLB__AP]);
+                                $display("# Cacheable     = 0b%b",  o_lptlb_wdata[`LPAGE_TLB__CB] >> 1);
+                                $display("# Bufferable    = 0b%b",  o_lptlb_wdata[`LPAGE_TLB__CB] & 2'b01);
+                                $display("#########################################################");
 
                                 state_nxt   = REFRESH_CYCLE;
                         end
@@ -363,9 +409,10 @@ begin: blk1
         REFRESH_CYCLE:
         begin
                 $display($time, "%m :: Entered refresh cycle. Moving to IDLE...");
-`ifdef TLB_DEBUG
-                $stop;
-`endif
+
+                `ifdef TLB_DEBUG
+                        $stop;
+                `endif
 
                 o_busy    = 1'd1;
                 state_nxt = IDLE;
@@ -384,18 +431,18 @@ begin
                  state_ff        <=      IDLE;
                  wb_stb_ff       <=      0;
                  wb_cyc_ff       <=      0;
-		 wb_adr_ff	 <=      0;	
-		 wb_sel_ff	 <=	 0;
+                 wb_adr_ff       <=      0;
+                 wb_sel_ff       <=      0;
         end
         else
         begin
                 state_ff        <=      state_nxt;
                 wb_stb_ff       <=      wb_stb_nxt;
                 wb_cyc_ff       <=      wb_cyc_nxt;
-	        wb_adr_ff	<=	wb_adr_nxt;
+                wb_adr_ff       <=      wb_adr_nxt;
                 dac_ff          <=      dac_nxt;
-	        wb_sel_ff	<=	wb_sel_nxt;
-			  dff <= dnxt;
+                wb_sel_ff       <=      wb_sel_nxt;
+                dff             <=      dnxt;
         end
 end
 
@@ -414,37 +461,41 @@ task tsk_prpr_wb_rd ( input [31:0] adr );
 begin
         $display($time, "%m :: Reading from location %x", adr);
 
-`ifdef TLB_DEBUG
-        $stop;
-`endif
+        `ifdef TLB_DEBUG
+                $stop;
+        `endif
 
-        wb_stb_nxt = 1'd1;
-        wb_cyc_nxt = 1'd1;
-        wb_adr_nxt = adr;
-	wb_sel_nxt[3:0] = 4'b1111;
+        wb_stb_nxt      = 1'd1;
+        wb_cyc_nxt      = 1'd1;
+        wb_adr_nxt      = adr;
+        wb_sel_nxt[3:0] = 4'b1111;
 end
 endtask
 
 // ----------------------------------------------------------------------------
 
+`ifndef SYNTHESIS
 
 always @ (posedge i_mmu_en)
 begin
         $display($time, "%m :: MMU Enabled!");
 
-`ifdef TLB_DEBUG
-        $stop;
-`endif
+        `ifdef TLB_DEBUG
+                $stop;
+        `endif
 end
 
 always @ (negedge i_mmu_en)
 begin
         $display($time, "%m :: MMU Disabled!");
 
-`ifdef TLB_DEBUG
-        $stop;  
-`endif      
+        `ifdef TLB_DEBUG
+                $stop;  
+        `endif      
 end
 
+`endif
+
 endmodule // zap_tlb_fsm.v
+
 `default_nettype wire

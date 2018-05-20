@@ -86,9 +86,10 @@
 `define L2_SPAGE__BASE   31:12
 `define L2_SPAGE__AP     11:4
 `define L2_SPAGE__CB     3:2
+
 `define L2_LPAGE__BASE   31:16
 `define L2_LPAGE__AP     11:4
-`define L2_SPAGE__CB     3:2
+`define L2_LPAGE__CB     3:2
 
 // Section TLB Structure - 1:0 is undefined.
 `define SECTION_TLB__BASE    31:20

@@ -148,7 +148,7 @@ begin
                         o_fsr = get_fsr
                         (
                                 1'd1, 1'd0, 1'd0,               // Section.
-                                2'd0,                           // DONT CARE. Sections do not have access permissions.
+                                2'd0,                           // DONT CARE. Sections do not further divisions in AP SEL.
                                 i_cpsr[4:0] == USR,
                                 i_rd,
                                 i_wr,
