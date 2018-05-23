@@ -1,5 +1,6 @@
-
+//
 // Startup file for factorial.
+//
 
 .global _Reset
 
@@ -14,9 +15,11 @@ irq      : b IRQ
 fiq      : b FIQ  
 
 UNDEF:
+
 // Undefined vector.
 // LR Points to next instruction.
 stmfa sp!, {r0-r12, r14}
+
 // Corrupt registers.
 mov r0, #1
 mov r1, #2
@@ -32,6 +35,7 @@ mov r10, #12
 mov r11, #13
 mov r12, #14
 mov r14, #15
+
 // Restore them.
 ldmfa sp!, {r0-r12, pc}^
 
@@ -39,6 +43,7 @@ ldmfa sp!, {r0-r12, pc}^
 IRQ:
 sub r14, r14, #4
 stmfd sp!, {r0-r12, r14}
+
 mov r0, #1
 mov r1, #2
 mov r2, #3
@@ -53,6 +58,19 @@ mov r10, #12
 mov r11, #13
 mov r12, #14
 mov r14, #15
+
+# Restart timer
+ldr r0 ,=#0xFFFFFFC0    // Timer base address.
+add r0, r0, #12
+ldr r1, =#0x1
+str r1, [r0]            // Restart the timer.
+
+# Clear interrupt in VIC.
+ldr r0, =#0xFFFFFFA0    // VIC base address
+add r0, r0, #8  
+ldr r1, =#0xFFFFFFFF    
+str r1, [r0]            // Clear all interrupt pending status
+
 ldmfd sp!, {r0-r12, pc}^
 
 FIQ:
@@ -134,9 +152,22 @@ mcr p15, 0, r1, c3, c0, 0
 
 // Set up a section desctiptor for identity mapping that is Cachaeable.
 mov r1, #1
-mov r1, r1, lsl #14
-mov r2, #14  // Cacheable descriptor.
-str r2, [r1] // Write identity section desctiptor to 16KB location.
+mov r1, r1, lsl #14     // 16KB
+mov r2, #14             // Cacheable identity descriptor.
+str r2, [r1]            // Write identity section desctiptor to 16KB location.
+ldr r6, [r1]            // R6 holds the descriptor.
+mov r7, r1              // R7 holds the address.
+
+// Set up a section descriptor for upper 1MB of virtual address space.
+// This is identity mapping. Uncacheable.
+mov r1, #1
+mov r1, r1, lsl #14     // 16KB. This is descriptor 0.
+// Go to descriptor 4095. This is the address BASE + (#DESC * 4).
+ldr r2,=#16380
+add r1, r1, r2
+// Prepare a descriptor. Descriptor = 0xFFF00002 (Uncacheable section descriptor).
+ldr r2 ,=#0xFFF00002
+str r2, [r1]
 ldr r6, [r1]
 mov r7, r1
 
@@ -152,6 +183,25 @@ msr cpsr_c, r2
 ldr sp,=#3500
 
 // Run main loop.
+
+// Program VIC to allow timer interrupts.
+ldr r0, =#0xFFFFFFA0    // VIC base address.
+add r0, r0, #4          // Move to INT_MASK
+ldr r1, =#0x0           // Prepare mask value
+str r1, [r0]            // Unmask all interrupt sources.
+
+// Program timer peripheral to tick every 10000 clock cycles.
+ldr r0 ,=#0xFFFFFFC0    // Timer base address.
+ldr r1 ,=#1
+str r1, [r0]            // Enable timer
+add r0, r0, #4
+ldr r1, =#255  
+str r1, [r0]            // Program to 255 clocks.
+add r0, r0, #8
+ldr r1, =#0x1
+str r1, [r0]            // Start the timer.
+
+
 bl main
 swi #0x00
 here: b here

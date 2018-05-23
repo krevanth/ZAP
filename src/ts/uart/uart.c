@@ -25,7 +25,11 @@ void UARTInit()
 
 void UARTWrite(char* s)
 {
-        for(int i=0;i<strlen(s);i++)
+        int len;
+
+        len = strlen(s);
+
+        for(int i=0;i<len;i++)
         {
                 UARTWriteByte(s[i]);
         }       

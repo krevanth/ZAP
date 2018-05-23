@@ -2,17 +2,21 @@
 `include "zap_defines.vh"
 
 //
-// Top level testbench. Ties the CPU together with RAM and UART.
-// UART address space starts from FFFFFFE0 to FFFFFFFF.
+// Top level testbench. Ties the CPU together with RAM, UART, VIC and a timer.
+//
+// UART  address space starts from FFFFFFE0 to FFFFFFFF
+// Timer address space starts from FFFFFFC0 to FFFFFFDF
+// VIC   address space starts from FFFFFFA0 to FFFFFFBF
 //
 
 module zap_test; // +nctop+zap_test
 
-// Bench related.
-
-//`define STALL
-//`define IRQ_EN
-//`define MAX_CLOCK_CYCLES 100000
+localparam UART_LO      = 32'hFFFFFFE0;
+localparam UART_HI      = 32'hFFFFFFFF;
+localparam TIMER_LO     = 32'hFFFFFFC0;
+localparam TIMER_HI     = 32'hFFFFFFDF;
+localparam VIC_LO       = 32'hFFFFFFA0;
+localparam VIC_HI       = 32'hFFFFFFBF;
 
 // CPU config.
 parameter RAM_SIZE                      = 32768;
@@ -35,18 +39,19 @@ parameter STORE_BUFFER_DEPTH            = 32;
 reg             i_clk;
 reg             i_reset;
 
-reg             i_irq;
-reg             i_fiq;
 
-wire            data_wb_cyc; reg data_wb_cyc_ram, data_wb_cyc_uart;
-wire            data_wb_stb; reg data_wb_stb_ram, data_wb_stb_uart;
+wire            data_wb_cyc; reg                data_wb_cyc_ram, data_wb_cyc_uart, data_wb_cyc_timer, data_wb_cyc_vic;
+wire            data_wb_stb; reg                data_wb_stb_ram, data_wb_stb_uart, data_wb_stb_timer, data_wb_stb_vic;
+reg [31:0]      data_wb_din; wire [31:0]        data_wb_din_ram, data_wb_din_uart, data_wb_din_timer, data_wb_din_vic;
+reg             data_wb_ack; wire               data_wb_ack_ram, data_wb_ack_uart, data_wb_ack_timer, data_wb_ack_vic;
+
 wire [3:0]      data_wb_sel;
 wire            data_wb_we;
-reg [31:0]     data_wb_din; wire [31:0] data_wb_din_ram, data_wb_din_uart;
 wire [31:0]     data_wb_dout;
 wire [31:0]     data_wb_adr;
-reg             data_wb_ack; wire data_wb_ack_ram, data_wb_ack_uart;
 wire [2:0]      data_wb_cti; // Cycle Type Indicator.
+
+wire            global_irq;
 
 // Wishbone selector.
 always @*
@@ -55,13 +60,31 @@ begin
         data_wb_stb_uart = 0;
         data_wb_cyc_ram  = 0;
         data_wb_stb_ram  = 0;
+        data_wb_cyc_timer = 0;
+        data_wb_stb_timer = 0;
+        data_wb_cyc_vic = 0;
+        data_wb_stb_vic = 0;
 
-        if ( &data_wb_adr[31:5] ) // UART access
+        if ( data_wb_adr >= UART_LO && data_wb_adr <= UART_HI ) // UART access
         begin
                 data_wb_cyc_uart = data_wb_cyc;
                 data_wb_stb_uart = data_wb_stb;
                 data_wb_ack      = data_wb_ack_uart;
                 data_wb_din      = data_wb_din_uart; 
+        end
+        else if ( data_wb_adr >= TIMER_LO && data_wb_adr <= TIMER_HI )  // Timer access
+        begin
+                data_wb_cyc_timer = data_wb_cyc;
+                data_wb_stb_timer = data_wb_stb;
+                data_wb_ack       = data_wb_ack_timer;
+                data_wb_din       = data_wb_din_timer; 
+        end
+        else if ( data_wb_adr >= VIC_LO && data_wb_adr <= VIC_HI ) // VIC access.
+        begin
+                data_wb_cyc_vic   = data_wb_cyc;
+                data_wb_stb_vic   = data_wb_stb;
+                data_wb_ack       = data_wb_ack_vic;
+                data_wb_din       = data_wb_din_vic;                
         end
         else // RAM access
         begin
@@ -82,14 +105,6 @@ begin
         
         `ifdef STALL
                 $display("STALL defined!");
-        `endif
-        
-        `ifdef IRQ_EN
-                $display("IRQ_EN defined!");
-        `endif
-        
-        `ifdef FIQ_EN
-                $display("FIQ_EN defined!");
         `endif
         
         `ifdef MAX_CLOCK_CYCLES
@@ -113,6 +128,8 @@ begin
         $display("parameter STORE_BUFFER_DEPTH            = %d", STORE_BUFFER_DEPTH          ) ;
 
 end
+
+//////////////////////////////////////////////////////////////////////////////////
 
 // =========================
 // Processor core.
@@ -139,9 +156,8 @@ u_zap_top
 (
         .i_clk(i_clk),
         .i_reset(i_reset),
-        .i_irq(i_irq),
-        .i_fiq(i_fiq),
-
+        .i_irq(global_irq),
+        .i_fiq(1'd0),
         .o_wb_cyc(data_wb_cyc),
         .o_wb_stb(data_wb_stb),
         .o_wb_adr(data_wb_adr),
@@ -150,7 +166,8 @@ u_zap_top
         .i_wb_dat(data_wb_din),
         .o_wb_dat(data_wb_dout),
         .i_wb_ack(data_wb_ack),
-        .o_wb_sel(data_wb_sel)
+        .o_wb_sel(data_wb_sel),
+        .o_wb_bte()             // Always zero.
 
 );
 
@@ -160,6 +177,7 @@ u_zap_top
 
 wire uart_in = 1'd0;
 wire uart_out;
+wire uart_irq;
 
 uart_top u_uart_top (
 
@@ -174,7 +192,7 @@ uart_top u_uart_top (
         .wb_cyc_i(data_wb_cyc_uart),
         .wb_sel_i(data_wb_sel),
         .wb_ack_o(data_wb_ack_uart),
-        .int_o   (), // Interrupt.
+        .int_o   (uart_irq), // Interrupt.
         
         // UART signals.
         .srx_pad_i(uart_in),
@@ -186,6 +204,48 @@ uart_top u_uart_top (
         .ri_pad_i (1'd0),
         .dcd_pad_i(1'd0)
 );
+
+// ===============================
+// Timer
+// ===============================
+
+wire timer_irq;
+
+timer u_timer (
+        .i_clk(i_clk),
+        .i_rst(i_reset),
+        .i_wb_adr(data_wb_adr),
+        .i_wb_dat(data_wb_dout),
+        .i_wb_stb(data_wb_stb_timer),
+        .i_wb_cyc(data_wb_cyc_timer),   // From core
+        .i_wb_wen(data_wb_we),
+        .i_wb_sel(data_wb_sel),
+        .o_wb_dat(data_wb_din_timer),   // To core.
+        .o_wb_ack(data_wb_ack_timer),
+        .o_irq(timer_irq)               // Interrupt
+);
+
+// ===============================
+// VIC
+// ===============================
+
+vic #(.SOURCES(2)) u_vic (
+        .i_clk(i_clk),
+        .i_rst(i_reset),
+        .i_wb_adr(data_wb_adr),
+        .i_wb_dat(data_wb_dout),
+        .i_wb_stb(data_wb_stb_vic),
+        .i_wb_cyc(data_wb_cyc_vic), // From core
+        .i_wb_wen(data_wb_we),
+        .i_wb_sel(data_wb_sel),
+        .o_wb_dat(data_wb_din_vic), // To core.
+        .o_wb_ack(data_wb_ack_vic),
+
+        .i_irq({timer_irq, uart_irq}), // Concatenate interrupt sources.
+        .o_irq(global_irq)             // Interrupt out
+);
+
+///////////////////////////////////////////////////////////////////////////////
 
 reg [3:0] clk_ctr = 4'd0;
 
@@ -344,34 +404,10 @@ integer seed_new = `SEED + 1;
 // Interrupts
 // ===========================
 
-`ifdef IRQ_EN
-
-always @ (negedge i_clk)
-begin
-        i_irq = $random(seed);
-end
-
-`endif
-
-`ifdef FIQ_EN
-
-always @ (negedge i_clk)
-begin: blk1
-        reg [1:0] x;
-        x = $random(seed_new);
-
-        i_fiq = (x == 0) ? 1'd1 : 1'd0 ; // 25 percent chance.
-end
-
-`endif
-
 initial i_reset = 1'd0;
 
 initial
 begin
-        i_irq = 0;
-        i_fiq = 0;
-
         for(i=START;i<START+COUNT;i=i+4)
         begin
                 $display("DATA INITIAL :: mem[%d] = %x", i, {U_MODEL_RAM_DATA.ram[(i/4)]});

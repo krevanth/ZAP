@@ -166,7 +166,7 @@ begin
                 buf_ff[0]               <= buf_nxt[0];
                 buf_ff[1]               <= buf_nxt[1];
                 buf_ff[2]               <= buf_nxt[2];
-	        buf_ff[3]		<= buf_nxt[3];
+                buf_ff[3]               <= buf_nxt[3];
         end
 end
 
@@ -185,7 +185,7 @@ begin
         cache_clean_req_nxt     = cache_clean_req_ff;
         cache_inv_req_nxt       = cache_clean_req_ff;
         o_fsr = 0;
-	o_far = 0;
+        o_far = 0;
         o_cache_tag = 0;
         o_cache_inv_done = 0;
         o_cache_clean_done = 0;
@@ -223,8 +223,8 @@ begin
                         /* MMU access fault. */
                         o_err = 1'd1;
                         o_ack = 1'd1;
-			o_fsr = i_fsr;
-			o_far = i_far;
+                        o_fsr = i_fsr;
+                        o_far = i_far;
                 end
                 else if ( i_busy )
                 begin
@@ -258,7 +258,6 @@ begin
                                                 {i_din,i_din,i_din,i_din};
   
                                                 o_cache_line_ben  = ben_comp ( i_address[3:2], i_ben ); 
-//                                                i_ben << (i_address[3:2] << 2);
 
                                                 /* Write to tag and also write out physical address. */
                                                 o_cache_tag_wr_en               = 1'd1;
@@ -315,7 +314,7 @@ begin
                                 o_wb_adr_nxt    = i_phy_addr;
                                 o_wb_dat_nxt    = i_din;
                                 o_wb_wen_nxt    = i_wr;
-                                o_wb_sel_nxt    = /*i_wr ?*/ i_ben /*: 4'b1111*/;
+                                o_wb_sel_nxt    = i_ben; // Was i_wr ? i_ben : 4'b1111
                                 o_wb_cti_nxt    = CTI_CLASSIC;
                         end                        
                 end

@@ -43,8 +43,8 @@ input wire [2:0]             I_WB_CTI,
 input wire [31:0]            I_WB_ADR,    
 input wire [31:0]            I_WB_DAT,    
 input wire                   I_WB_WE,
-output reg [31:0]       O_WB_DAT,    
-output reg              O_WB_ACK,     
+output reg [31:0]            O_WB_DAT,    
+output reg                   O_WB_ACK,     
 
 // Wishbone interface.
 output reg                   o_wb_cyc,

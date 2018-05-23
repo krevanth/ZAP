@@ -26,8 +26,6 @@ my $SEED                        = $Config{'SEED'};
 my $SYNTHESIS                   = $Config{'SYNTHESIS'};
 my $DUMP_START                  = $Config{'DUMP_START'};
 my $DUMP_SIZE                   = $Config{'DUMP_SIZE'};
-my $IRQ_EN                      = $Config{'IRQ_EN'};
-my $FIQ_EN                      = $Config{'FIQ_EN'};
 my $MAX_CLOCK_CYCLES            = $Config{'MAX_CLOCK_CYCLES'};
 my $TLB_DEBUG                   = $Config{'DEFINE_TLB_DEBUG'};
 my $STALL                       = $Config{'ALLOW_STALLS'};
@@ -49,6 +47,8 @@ my $SBUF_DEPTH                  = $Config{'STORE_BUFFER_DEPTH'};
 my $ZAP_HOME                    = "../../../";
 my $TEST                        = "null";
 my $SCRATCH                     = "/dev/null";
+my $IRQ_EN                      = 0;
+my $FIQ_EN                      = 0; 
 
 if ( $SEED == -1 ) {
                 $SEED = randSeed();
@@ -86,7 +86,9 @@ my $TARGET_BIN_PATH = "$SCRATCH/zap.bin";
 my $UART_PATH       = "$SCRATCH/zapuart.fifo";
 
 # Generate IVL options.
-my $IVL_OPTIONS .= " -I$ZAP_HOME/src/rtl/cpu -I$ZAP_HOME/obj/ts/$TEST -I$ZAP_HOME/src/testbench/cpu/uart16550/rtl $ZAP_HOME/src/testbench/cpu/uart16550/rtl/*.v ";
+my $IVL_OPTIONS .= 
+" -I$ZAP_HOME/src/rtl/cpu -I$ZAP_HOME/obj/ts/$TEST -I$ZAP_HOME/src/testbench/cpu/uart16550/rtl $ZAP_HOME/src/testbench/cpu/uart16550/rtl/*.v $ZAP_HOME/src/testbench/cpu/timer/timer.v  $ZAP_HOME/src/testbench/cpu/vic/vic.v";
+
    $IVL_OPTIONS .= " $ZAP_HOME/src/rtl/*/*.v $ZAP_HOME/src/testbench/cpu/*.v -o $VVP_PATH -gstrict-ca-eval -Wall -g2001 -Winfloop -DSEED=$SEED -DMEMORY_IMAGE=\\\"$PROG_PATH\\\" ";
 
 $IVL_OPTIONS .= " -DVCD_FILE_PATH=\\\"$VCD_PATH\\\" "; 

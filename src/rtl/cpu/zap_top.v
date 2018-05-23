@@ -74,9 +74,12 @@ parameter [31:0] CODE_CACHE_SIZE          =  32'd1024  // Cache size in bytes.
         output wire  [31:0]     o_wb_dat,
         output  wire [3:0]      o_wb_sel,
         output wire [2:0]       o_wb_cti,
+        output wire [1:0]       o_wb_bte,
         input   wire            i_wb_ack,
         input   wire [31:0]     i_wb_dat
 );
+
+assign o_wb_bte = 2'b00; // Linear Burst.
 
 localparam COMPRESSED_EN = 1'd1;
 

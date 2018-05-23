@@ -173,7 +173,7 @@ begin: blk1
                 begin
                         if ( i_walk )
                         begin
-                                $display($time, "%m :: Page fault! Need to page walk!");
+                                $display($time, "%m :: Page fault! Need to page walk! i_walk = %b", i_walk);
                                 $display($time, "%m :: Core generated address %x", i_address);
                                 $display($time, "%m :: Moving to FETCH_L1_DESC. i_baddr = %x baddr_tran_base = %x addr_va_table_index = %x", 
                                          i_baddr, i_baddr[`VA__TRANSLATION_BASE], i_address[`VA__TABLE_INDEX]);
@@ -219,17 +219,21 @@ begin: blk1
                 end
         end
 
-                FETCH_L1_DESC_0:
-                begin
-                        o_busy = 1;
+        FETCH_L1_DESC_0:
+        begin
+                $display($time, "%m :: In state FETCH_L1_DESC_0");
 
-                        if ( i_wb_ack )
-                        begin
-                                dnxt = i_wb_dat;
-                                state_nxt = FETCH_L1_DESC;
-                        end
-                        else tsk_hold_wb_access;
+                o_busy = 1;
+
+                if ( i_wb_ack )
+                begin
+                        dnxt = i_wb_dat;
+                        state_nxt = FETCH_L1_DESC;
+
+                        $display($time, "%m :: Received %x from WB. Moving to FETCH_L1_DESC...", dnxt );
                 end
+                else tsk_hold_wb_access;
+        end
 
         FETCH_L1_DESC:
         begin
