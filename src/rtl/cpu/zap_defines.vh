@@ -70,7 +70,7 @@
 `define VA__SECTION_TAG     31:20+$clog2(SECTION_TLB_ENTRIES)
 
 `define VA__SPAGE_AP_SEL    11:10    
-`define VA__LPAGE_AP_SEL    17:16
+`define VA__LPAGE_AP_SEL    15:14
 
 // L1 Section Descriptior Breakup
 `define L1_SECTION__BASE      31:20
