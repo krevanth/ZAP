@@ -105,7 +105,7 @@ begin
                         if ( i_instruction[20] ) // Load
                                 $sformat(o_decompile, "LDM%s %b %s %b", `CCC, i_instruction[24:20], i_instruction[19:16], i_instruction[15:0]); 
                         else
-                                $sformat(o_decompile, "LDM%s %b %s %b", `CCC, i_instruction[24:20], i_instruction[19:16], i_instruction[15:0]); 
+                                $sformat(o_decompile, "STM%s %b %s %b", `CCC, i_instruction[24:20], i_instruction[19:16], i_instruction[15:0]); 
                 end
                 else 
                 casez ( i_instruction[31:0] )

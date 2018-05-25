@@ -18,14 +18,17 @@
 .PHONY: c2asm
 .PHONY: compiler
 .PHONY: dirs
+.PHONY: cleanall
 
 TC           := $(shell basename `pwd`)
-OBJ_DIR      := ../../../obj/ts/$(TC)/
 GCC_PATH     := ../../../obj/gcc-arm-none-eabi-*/bin/
 SCRIPT_PATH  := ../../scripts/
 C_FILES      := $(wildcard *.c)
 S_FILES      := $(wildcard *.s)
+H_FILES      := $(wildcard *.h)
 LD_FILE      := $(wildcard *.ld)
+COBJFILES    := $(patsubst %.c,../../../obj/ts/$(TC)/%_c.o,$(C_FILES))
+AOBJFILES    := $(patsubst %.s,../../../obj/ts/$(TC)/%_s.o,$(S_FILES))
 GCC_SRC      := ../../../sw/gcc-arm-none-eabi-*-linux.tar.*
 CFLAGS       := -c -msoft-float -mfloat-abi=soft -mcpu=arm7tdmi -g
 SFLAGS       := -mcpu=arm7tdmi -g
@@ -36,22 +39,28 @@ AS           := $(GCC_PATH)/arm-none-eabi-as
 LD           := $(GCC_PATH)/arm-none-eabi-ld
 OB           := $(GCC_PATH)/arm-none-eabi-objcopy
 
-$(OBJ_DIR)/asm_file.o: $(S_FILES)
+# This rule will convert every ASM to file its corresponding object file.
+../../../obj/ts/$(TC)/%_s.o: %.s
 	$(AS) $(SFLAGS) $^ -o $@
 
-$(OBJ_DIR)/c_file.o: $(C_FILES)
-	$(CC) $(CFLAGS) $^ -o $@
+# This rule will convert every C file to its corresponding object file.
+../../../obj/ts/$(TC)/%_c.o: %.c $(H_FILES)
+	$(CC) $(CFLAGS) $< -o $@
 
-$(OBJ_DIR)/$(TC).elf: $(LD_FILE) $(OBJ_DIR)/asm_file.o $(OBJ_DIR)/c_file.o $(TC).ld
-	$(LD) $(LFLAGS) $< $^ -o $@
+# Rule to convert the object files to an ELF file.
+../../../obj/ts/$(TC)/$(TC).elf: $(LD_FILE) $(AOBJFILES) $(COBJFILES)
+	$(LD) $(LFLAGS) $^ -o $@
 
-$(OBJ_DIR)/$(TC).bin: $(OBJ_DIR)/$(TC).elf
+# Rule to generate a BIN file.
+../../../obj/ts/$(TC)/$(TC).bin: ../../../obj/ts/$(TC)/$(TC).elf
 	$(OB) $(OFLAGS) $^ $@
 
-$(OBJ_DIR)/zap_mem.v: $(OBJ_DIR)/$(TC).bin 
+# Rule to convert the bin file to a Verilog image.
+../../../obj/ts/$(TC)/zap_mem.v: ../../../obj/ts/$(TC)/$(TC).bin 
 	perl $(SCRIPT_PATH)/bin2vlog.pl $< $@
 
-all: dirs $(CC) $(AS) $(LD) $(OB) $(OBJ_DIR)/zap_mem.v 
+# Rule to run the simulation.
+all: dirs $(CC) ../../../obj/ts/$(TC)/zap_mem.v
 	perl $(SCRIPT_PATH)/run_sim.pl +test+$(TC) 
 
 $(AS): 
@@ -59,21 +68,25 @@ $(LD):
 $(OB):
 
 $(CC): $(GCC_SRC)
-	mkdir -p $(OBJ_DIR)
+	mkdir -p ../../../obj/ts/$(TC)/
 	tar -xvf $(GCC_SRC) -C ../../../obj/ 
 	touch $@
 
 dirs:
 	bash ../../scripts/check_arc.sh
-	mkdir -p $(OBJ_DIR)
-	touch $(OBJ_DIR)
+	mkdir -p ../../../obj/ts/$(TC)/
+	touch ../../../obj/ts/$(TC)/
 
 clean: 
-	rm -fv  $(OBJ_DIR)/* 
-	rm -rfv $(OBJ_DIR)/../../gcc-arm-none-*
+	mkdir -p ../../../obj/ts/$(TC)/
+	rm -fv  ../../../obj/ts/$(TC)/*
+
+cleanall:
+	rm -fv  ../../../obj/ts/$(TC)/*
+	rm -rfv ../../../obj/ts/$(TC)/../../gcc-arm-none-*
 
 c2asm: $(C_FILES)
-	$(CC) -S $(CFLGAS) $(C_FILES) -o $(OBJ_DIR)/c_file.asm
+	$(CC) -S $(CFLGAS) $(C_FILES) -o ../../../obj/ts/$(TC)/c_file.asm
 
 print-%  : ; @echo $* = $($*)
 

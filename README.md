@@ -27,7 +27,7 @@ Wishbone B3 compatible 32-bit bus.
 
 ### Documentation
 
-Please see the HTML file at *doc/html/zap\_doc.htm*
+Please see the PDF file at *doc/ZAP_PROCESSOR_CORE_DATASHEET.pdf*
 
 ### Features 
 

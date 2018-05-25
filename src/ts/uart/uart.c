@@ -1,15 +1,4 @@
-char* UART_DLAB1 = 0xFFFFFFE0;
-char* UART_DLAB2 = 0xFFFFFFE1;
-char* UART_THR   = 0xFFFFFFE0;
-char* UART_LCR   = 0xFFFFFFE3;
-
-char* str = "I am the ZAP CPU :-). Hello World.";
-
-int main(void)
-{
-        UARTInit();
-        return 0;
-}
+#include "uart.h"
 
 void UARTInit()
 {
@@ -17,9 +6,6 @@ void UARTInit()
         *UART_DLAB1      = 1;
         *UART_DLAB2      = 0;
         *UART_LCR        = (*UART_LCR) & ~(1 << 7);
-        
-        UARTWrite(str);
-
         return 0;
 }
 
