@@ -85,8 +85,8 @@ cleanall:
 	rm -fv  ../../../obj/ts/$(TC)/*
 	rm -rfv ../../../obj/ts/$(TC)/../../gcc-arm-none-*
 
-c2asm: $(C_FILES)
-	$(CC) -S $(CFLGAS) $(C_FILES) -o ../../../obj/ts/$(TC)/c_file.asm
+c2asm:
+	$(CC) -S $(CFLGAS) $(X) -o ../../../obj/ts/$(TC)/$(X).asm
 
 print-%  : ; @echo $* = $($*)
 
