@@ -97,26 +97,18 @@ end
 
 initial
 begin
-      
+        $display("################################################################################");
+        $display("SEED in decimal = %d", `SEED);
         $display("parameter RAM_SIZE              %d", RAM_SIZE           ); 
         $display("parameter START                 %d", START              ); 
         $display("parameter COUNT                 %d", COUNT              ); 
         $display("parameter FIFO_DEPTH            %d", u_zap_top.FIFO_DEPTH);
-        
         `ifdef STALL
                 $display("STALL defined!");
         `endif
-        
-        `ifdef MAX_CLOCK_CYCLES
-                $display("MAX_CLOCK_CYCLES defined!");
-        `endif
-        
         `ifdef TLB_DEBUG
                 $display("TLB_DEBUG defined!");
         `endif
-        
-        // CPU config.
-        
         $display("parameter DATA_SECTION_TLB_ENTRIES      = %d", DATA_SECTION_TLB_ENTRIES    ) ;
         $display("parameter DATA_LPAGE_TLB_ENTRIES        = %d", DATA_LPAGE_TLB_ENTRIES      ) ;
         $display("parameter DATA_SPAGE_TLB_ENTRIES        = %d", DATA_SPAGE_TLB_ENTRIES      ) ;
@@ -126,6 +118,7 @@ begin
         $display("parameter CODE_SPAGE_TLB_ENTRIES        = %d", CODE_SPAGE_TLB_ENTRIES      ) ;
         $display("parameter CODE_CACHE_SIZE               = %d", CODE_CACHE_SIZE             ) ;
         $display("parameter STORE_BUFFER_DEPTH            = %d", STORE_BUFFER_DEPTH          ) ;
+        $display("################################################################################");
 
 end
 
