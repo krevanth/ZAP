@@ -173,8 +173,9 @@ begin
                 // PC is pumped down the pipeline.
                 o_pc_ff <= i_pc_ff;
 
-                // Instruction.
-                o_instruction <= i_instruction;
+                // Instruction. If 16-bit aligned address, move data from
+                // cache by 16-bit to focus on the instruction.
+                o_instruction <= i_pc_ff[1] ? i_instruction >> 16 : i_instruction;
         end
         else
         begin
@@ -182,6 +183,19 @@ begin
                 o_valid        <= 1'd0;
         end
 end
+
+`ifndef SYNTHESIS
+
+always @ (negedge i_clk)
+begin
+        if ( i_pc_ff[0] != 1'd0 ) 
+        begin
+                $display($time, ": Error: PC LSB isn't zero. This is not legal! (Module_Src = %m)");
+                $finish;
+        end
+end
+
+`endif
 
 // ----------------------------------------------------------------------------
 

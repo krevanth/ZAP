@@ -16,6 +16,7 @@
         SYNTHESIS                   => 1,       # Make this to 1 to simulate compile from a synthesis perspective.
 
         # Testbench configuration.
+        UART_TX_TERMINAL            => 1,       # 1 Enables UART TX terminal. 0 disables it.
         EXT_RAM_SIZE                => 32768,   # External RAM size.
         SEED                        => -1,      # Seed. Use -1 to use random seed.
         DUMP_START                  => 2000,    # Starting memory address from which to dump.

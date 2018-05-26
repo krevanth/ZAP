@@ -172,5 +172,16 @@ begin
         end
 end
 
+`ifndef SYNTHESIS
+
+// Helpful for debug.
+zap_decompile u_zap_decompile (
+.i_instruction(o_instruction),
+.i_dav(o_instruction_valid),
+.o_decompile()
+);
+
+`endif
+
 endmodule 
 `default_nettype wire

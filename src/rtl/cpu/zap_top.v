@@ -296,8 +296,8 @@ zap_cache #(
 u_code_cache (
 .i_clk              (i_clk),
 .i_reset            (reset),
-.i_address          (cpu_iaddr),
-.i_address_nxt      (cpu_iaddr_nxt),
+.i_address          (cpu_iaddr     & 32'hFFFF_FFFC), // Cut off lower 2 bits.
+.i_address_nxt      (cpu_iaddr_nxt & 32'hFFFF_FFFC), // Cut off lower 2 bits.
 
 .i_rd              (cpu_instr_stb),
 .i_wr              (1'd0),

@@ -1,0 +1,3 @@
+This test simply switches to thumb state (in SVC mode) and
+writes to R0 to R7. R0 should read -1 while the others should
+read 10.
