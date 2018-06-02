@@ -30,7 +30,7 @@ LD_FILE      := $(wildcard *.ld)
 COBJFILES    := $(patsubst %.c,../../../obj/ts/$(TC)/%_c.o,$(C_FILES))
 AOBJFILES    := $(patsubst %.s,../../../obj/ts/$(TC)/%_s.o,$(S_FILES))
 GCC_SRC      := ../../../sw/gcc-arm-none-eabi-*-linux.tar.*
-CFLAGS       := -c -msoft-float -mfloat-abi=soft -mcpu=arm7tdmi -g
+CFLAGS       := -c -msoft-float -mfloat-abi=soft -march=armv4t -g
 SFLAGS       := -mcpu=arm7tdmi -g
 LFLAGS       := -T
 OFLAGS       := -O binary

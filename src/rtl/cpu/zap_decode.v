@@ -127,7 +127,7 @@ localparam [1:0] SIGNED_HALF_WORD       = 2'd2;
 `ifndef SYNTHESIS
 
 // Debug only.
-reg bx, dp, br, mrs, msr, ls, mult, halfword_ls, swi, dp1, dp2, dp3, lmult;
+reg bx, dp, br, mrs, msr, ls, mult, halfword_ls, swi, dp1, dp2, dp3, lmult, clz;
 
 always @*
 begin
@@ -149,6 +149,7 @@ begin
         //
         if ( i_instruction_valid )
         casez ( i_instruction[31:0] )
+        CLZ_INSTRUCTION:                               clz = 1;
         BX_INST:                                       bx  = 1;
         MRS:                                           mrs = 1;
         MSR,MSR_IMMEDIATE:                             msr = 1;
@@ -217,7 +218,8 @@ begin: mainBlk1
                 end
                 else if ( i_instruction_valid )
                 casez ( i_instruction[31:0] )
-                BX_INST:                      decode_bx ( i_instruction );
+                CLZ_INSTRUCTION:              decode_clz ( i_instruction );
+                BX_INST:                      decode_bx  ( i_instruction );
                 MRS:                          decode_mrs ( i_instruction );   
                 MSR,MSR_IMMEDIATE:            decode_msr ( i_instruction );
 
@@ -244,6 +246,28 @@ begin: mainBlk1
 end    
 
 // ----------------------------------------------------------------------------
+
+// =============================
+// Decode CLZ
+// =============================
+task decode_clz ( input [35:0] i_instruction );
+begin: tskDecodeClz
+        o_condition_code        =       i_instruction[31:28];
+        o_flag_update           =       1'd0; // Instruction does not update any flags.
+        o_alu_operation         =       CLZ;  // Added.
+
+        // Rn = 0.
+        o_alu_source            =       0;
+        o_alu_source[32]        =       IMMED_EN; 
+
+        // Rm = register whose CLZ must be found.
+        o_shift_source          =       {i_instruction[`DP_RB_EXTEND], i_instruction[`DP_RB]}; // Rm
+        o_shift_source[32]      =       INDEX_EN;
+        o_shift_operation       =       LSL;
+        o_shift_length          =       0;
+        o_shift_length[32]      =       IMMED_EN; // Shift length is 0 of course.
+end
+endtask
 
 // =============================
 // Decode long multiplication.
@@ -471,11 +495,12 @@ endtask
 // the job of the writeback stage.
 task decode_bx( input [34:0] i_instruction );
 begin: tskDecodeBx
-        reg [31:0] temp;
-        temp = i_instruction[31:0];
-        temp[11:4] = 0;
+        reg [34:0] temp;
 
-        process_instruction_specified_shift(temp[11:0]);
+        temp = i_instruction[31:0];
+        temp[31:4] = 0; // Zero out stuff to avoid conflicts in the function.
+
+        process_instruction_specified_shift(temp);
 
         // The RAW ALU source does not matter.
         o_condition_code        = i_instruction[31:28];

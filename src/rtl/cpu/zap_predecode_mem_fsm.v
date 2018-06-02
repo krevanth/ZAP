@@ -105,8 +105,11 @@ wire [11:0] branch_offset = i_instruction[11:0];
 wire [11:0] oc_offset;
 
 // Registers.
-reg     [2:0]   state_ff, state_nxt;
+reg     [3:0]   state_ff, state_nxt;
 reg     [15:0]  reglist_ff, reglist_nxt;
+
+// Const reg for BLX.
+reg     [31:0]  const_ff, const_nxt;
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -119,6 +122,13 @@ localparam SWAP2        = 4;
 localparam LMULT_BUSY   = 5;
 localparam BL_S1        = 6;
 localparam SWAP3        = 7;
+localparam BLX1_ARM_S0  = 8;
+localparam BLX1_ARM_S1  = 9;
+localparam BLX1_ARM_S2  = 10;
+localparam BLX1_ARM_S3  = 11;
+localparam BLX1_ARM_S4  = 12;
+localparam BLX1_ARM_S5  = 13;
+localparam BLX2_ARM_S0  = 14;
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -129,6 +139,8 @@ assign oc_offset = ones_counter(i_instruction);
 // Next state and output logic.
 always @*
 begin
+        const_nxt = const_ff;
+
         // Block interrupts by default.
         o_irq = 0;
         o_fiq = 0;
@@ -141,10 +153,132 @@ begin
         o_stall_from_decode     = 1'd0;
 
         case ( state_ff )
+                BLX1_ARM_S0: // SCONST = ($signed(constant) << 2) + ( H << 1 ))
+                begin: blk3223
+                        reg H;
+
+                        o_stall_from_decode = 1'd1;
+
+                        H = i_instruction[24];
+                        const_nxt = ( { {8{i_instruction[23]}} , i_instruction[23:0] } << 2 ) + ( H << 1 );
+
+                        // MOV DUMMY0, SCONST[7:0] ror 0
+                        o_instruction[31:0] = {AL, 2'b00, 1'b1, MOV, 1'd0, 4'd0, 4'd0, 4'd0, const_nxt[7:0]};
+                        {o_instruction[`DP_RD_EXTEND], o_instruction[`DP_RD]} = ARCH_DUMMY_REG0;
+                end
+
+                BLX1_ARM_S1:
+                begin
+                        o_stall_from_decode = 1'd1;
+
+                        // ORR DUMMY0, DUMMY0, SCONST[15:8]  ror 12*2 
+                        o_instruction[31:0] = {AL, 2'b00, 1'b1, ORR, 1'd0, 4'd0, 4'd0, 4'd12, const_nxt[15:8]};
+                        {o_instruction[`DP_RD_EXTEND], o_instruction[`DP_RD]} = ARCH_DUMMY_REG0;
+                        {o_instruction[`DP_RA_EXTEND], o_instruction[`DP_RA]} = ARCH_DUMMY_REG0;
+                end
+
+                BLX1_ARM_S2:
+                begin
+                        o_stall_from_decode = 1'd1;
+
+                        // ORR DUMMY0, DUMMY0, SCONST[23:16] ror 8*2
+                         o_instruction[31:0] = {AL, 2'b00, 1'b1, ORR, 1'd0, 4'd0, 4'd0, 4'd8, const_nxt[23:16]};
+                        {o_instruction[`DP_RD_EXTEND], o_instruction[`DP_RD]} = ARCH_DUMMY_REG0;
+                        {o_instruction[`DP_RA_EXTEND], o_instruction[`DP_RA]} = ARCH_DUMMY_REG0;
+                end
+
+                BLX1_ARM_S3:
+                begin
+                        o_stall_from_decode = 1'd1;
+
+                        // ORR DUMMY0, DUMMY0, SCONST[31:24] ror 4*2
+                         o_instruction[31:0] = {AL, 2'b00, 1'b1, ORR, 1'd0, 4'd0, 4'd0, 4'd4, const_nxt[31:24]};
+                        {o_instruction[`DP_RD_EXTEND], o_instruction[`DP_RD]} = ARCH_DUMMY_REG0;
+                        {o_instruction[`DP_RA_EXTEND], o_instruction[`DP_RA]} = ARCH_DUMMY_REG0;                       
+                end
+
+                BLX1_ARM_S4:
+                begin
+                        o_stall_from_decode = 1'd1;
+
+                        // ORR DUMMY0, DUMMY0, 1 - Needed to indicate a switch
+                        // to Thumb.                       
+                         o_instruction[31:0] = {AL, 2'b00, 1'b1, ORR, 1'd0, 4'd0, 4'd0, 4'd0, !i_cpsr_t};
+                        {o_instruction[`DP_RD_EXTEND], o_instruction[`DP_RD]} = ARCH_DUMMY_REG0;
+                        {o_instruction[`DP_RA_EXTEND], o_instruction[`DP_RA]} = ARCH_DUMMY_REG0;   
+                end
+
+                BLX1_ARM_S5:
+                begin
+                        // Remove stall.
+                        o_stall_from_decode = 1'd0;
+
+                        // BX DUMMY0
+                        o_instruction = 32'hE12FFF10;
+                        {o_instruction[`DP_RB_EXTEND], o_instruction[`DP_RB]} = ARCH_DUMMY_REG0;
+                end
+
+                BLX2_ARM_S0:
+                begin
+                        // Remove stall.
+                        o_stall_from_decode     = 1'd0;
+
+                        // BX Rm. Just remove the L bit. Conditional is passed
+                        // on.
+                        o_instruction           = i_instruction;
+                        o_instruction[5]        = 1'd0;
+                end
+
                 IDLE:
                 begin
+                        // BLX1 detected. Unconditional!!!
+                        // Immediate Offset.
+                        if ( i_instruction[31:25] == BLX1[31:25] && i_instruction_valid ) 
+                        begin
+`ifdef LDM_DEBUG
+                                $display($time, "%m: BLX1 detected!");
+`endif
+                                // We must generate a SUBAL LR,PC,4 ROR 0
+                                // This makes LR have the value
+                                // PC+8-4=PC+4 which is the address of
+                                // the next instruction.
+                                o_instruction           = {AL, 2'b00, 1'b1, SUB, 1'd0, 4'd14, 4'd15, 12'd4};
+
+                                // In Thumb mode, we must generate PC+4-2
+                                if ( i_cpsr_t ) 
+                                begin
+                                        o_instruction[11:0] = 12'd2; // Modify the instruction.
+                                end
+
+                                o_stall_from_decode     = 1'd1; // Stall the core.
+                                state_nxt               = BLX1_ARM_S0; 
+                        end
+                        else if ( i_instruction[27:4] == BLX2[27:4] && i_instruction_valid ) // BLX2 detected. Register offset. CONDITIONAL.
+                        begin
+`ifdef LDM_DEBUG
+                                $display($time, "%m: BLX2 detected!");
+`endif
+                                // Write address of next instruction to LR. Now this
+                                // depends on the mode we're in. Mode in the sense
+                                // ARM/Thumb. We need to look at i_cpsr_t.
+
+                                // We need to generate a SUBcc LR,PC,4 ROR 0
+                                // to store the next instruction address in
+                                // LR.
+                                o_instruction           = {i_instruction[31:28], 2'b00, 1'b1, SUB, 1'd0, 4'd14, 4'd15, 12'd4};
+
+                                // In Thumb mode, we need to remove 2 from PC
+                                // instead of 4.
+                                if ( i_cpsr_t ) 
+                                begin
+                                        o_instruction[11:0] = 12'd2; // modify instr.
+                                end
+
+                                o_stall_from_decode     = 1'd1; // Stall the core.
+                                state_nxt               = BLX2_ARM_S0; 
+                        end
                         // LDM/STM detected...
-                        if ( id == 3'b100 && i_instruction_valid )
+                        else if ( id == 3'b100 && i_instruction_valid )
                         begin
                                 // Backup base register.
                                 // MOV DUMMY0, Base
@@ -186,7 +320,7 @@ begin
                         end
                         else if ( i_instruction[27:23] == 5'b00010 && 
                                   i_instruction[21:20] == 2'b00 && 
-                                  i_instruction[11:4] == 4'b1001 )
+                                  i_instruction[11:4] == 4'b1001 && i_instruction_valid ) // SWAP
                         begin
                                 // Swap 
 `ifdef LDM_DEBUG                                
@@ -211,7 +345,7 @@ begin
                                 o_stall_from_decode = 1'd1;  
                         end
                         else if ( i_instruction[27:23] == 5'd1 && 
-                                  i_instruction[7:4] == 4'b1001 )
+                                  i_instruction[7:4] == 4'b1001 && i_instruction_valid )
                         begin
                                         // LMULT
                                         state_nxt           = LMULT_BUSY;
@@ -222,7 +356,7 @@ begin
                                         o_instruction_valid = i_instruction_valid;
                         end
                         else if ( i_instruction[27:25] == 3'b101 && 
-                                  i_instruction[24] ) // BL.
+                                  i_instruction[24] && i_instruction_valid ) // BL.
                         begin
                                 // Move to new state. In that state, we will 
                                 // generate a plain branch.
@@ -537,6 +671,7 @@ begin
         begin
                 state_ff   <= state_nxt;
                 reglist_ff <= reglist_nxt; 
+                const_ff   <= const_nxt;
         end
 end
 
@@ -547,6 +682,7 @@ task clear;
 begin
         state_ff                <= IDLE;
         reglist_ff              <= 16'd0;
+        const_ff                <= 32'd0;
 end
 endtask
 

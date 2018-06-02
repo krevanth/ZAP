@@ -189,13 +189,24 @@ localparam      [31:0]  STC                                             =       
 // CDP
 localparam      [31:0]  CDP                                             =                                       32'b????_1110_????????_????????_????????;
 
-/* COMPRESSED ( Not THUMB! THIS IS NOT COMPATIBLE WITH THE THUMB(R) ISA. ) */
+// CLZ
+localparam      [31:0]  CLZ_INSTRUCTION                                 =                                       32'b????_00010110_1111_????_1111_0001_????;
+
+// BLX(1)
+localparam      [31:0] BLX1                                             =                                       32'b1111_101_?_????????_????????_????????; 
+
+// BLX(2)
+localparam      [31:0] BLX2                                             =                                       32'b????_00010010_1111_1111_1111_0011_????;
+
+/* Thumb ISA */
 
 //B
 localparam      [15:0]  T_BRANCH_COND                                   =                                       16'b1101_????_????????;
 localparam      [15:0]  T_BRANCH_NOCOND                                 =                                       16'b11100_???????????;
 localparam      [15:0]  T_BL                                            =                                       16'b1111_?_???????????;
 localparam      [15:0]  T_BX                                            =                                       16'b01000111_0_?_???_000;
+localparam      [15:0]  T_BLX1                                          =                                       16'b11101_???????????;
+localparam      [15:0]  T_BLX2                                          =                                       16'b010001111_?_???_000;
 
 // SWI
 localparam      [15:0]  T_SWI                                           =                                       16'b11011111_????????;
