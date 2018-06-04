@@ -20,6 +20,7 @@
 .PHONY: dirs
 .PHONY: cleanall
 
+ARCH         := armv4t
 TC           := $(shell basename `pwd`)
 GCC_PATH     := ../../../obj/gcc-arm-none-eabi-*/bin/
 SCRIPT_PATH  := ../../scripts/
@@ -30,8 +31,8 @@ LD_FILE      := $(wildcard *.ld)
 COBJFILES    := $(patsubst %.c,../../../obj/ts/$(TC)/%_c.o,$(C_FILES))
 AOBJFILES    := $(patsubst %.s,../../../obj/ts/$(TC)/%_s.o,$(S_FILES))
 GCC_SRC      := ../../../sw/gcc-arm-none-eabi-*-linux.tar.*
-CFLAGS       := -c -msoft-float -mfloat-abi=soft -march=armv4t -g
-SFLAGS       := -mcpu=arm7tdmi -g
+CFLAGS       := -c -msoft-float -mfloat-abi=soft -march=$(ARCH) -g 
+SFLAGS       := -march=$(ARCH) -g
 LFLAGS       := -T
 OFLAGS       := -O binary
 CC           := $(GCC_PATH)/arm-none-eabi-gcc
@@ -86,7 +87,7 @@ cleanall:
 	rm -rfv ../../../obj/ts/$(TC)/../../gcc-arm-none-*
 
 c2asm:
-	$(CC) -S $(CFLGAS) $(X) -o ../../../obj/ts/$(TC)/$(X).asm
+	$(CC) -S $(CFLAGS) $(X) -o ../../../obj/ts/$(TC)/$(X).asm
 
 print-%  : ; @echo $* = $($*)
 

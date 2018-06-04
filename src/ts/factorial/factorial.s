@@ -190,12 +190,12 @@ add r0, r0, #4          // Move to INT_MASK
 ldr r1, =#0x0           // Prepare mask value
 str r1, [r0]            // Unmask all interrupt sources.
 
-// Program timer peripheral to tick every 255 clock cycles.
+// Program timer peripheral to tick every 32 clock cycles.
 ldr r0 ,=#0xFFFFFFC0    // Timer base address.
 ldr r1 ,=#1
 str r1, [r0]            // Enable timer
 add r0, r0, #4
-ldr r1, =#255     
+ldr r1, =#32     
 str r1, [r0]            // Program to 255 clocks.
 add r0, r0, #8
 ldr r1, =#0x1

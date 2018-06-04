@@ -103,12 +103,15 @@ begin
         $display("parameter START                 %d", START              ); 
         $display("parameter COUNT                 %d", COUNT              ); 
         $display("parameter FIFO_DEPTH            %d", u_zap_top.FIFO_DEPTH);
+
         `ifdef STALL
                 $display("STALL defined!");
         `endif
+
         `ifdef TLB_DEBUG
                 $display("TLB_DEBUG defined!");
         `endif
+
         $display("parameter DATA_SECTION_TLB_ENTRIES      = %d", DATA_SECTION_TLB_ENTRIES    ) ;
         $display("parameter DATA_LPAGE_TLB_ENTRIES        = %d", DATA_LPAGE_TLB_ENTRIES      ) ;
         $display("parameter DATA_SPAGE_TLB_ENTRIES        = %d", DATA_SPAGE_TLB_ENTRIES      ) ;
@@ -149,7 +152,13 @@ u_zap_top
 (
         .i_clk(i_clk),
         .i_reset(i_reset),
-        .i_irq(global_irq),
+
+        `ifdef IRQ_EN
+                .i_irq(global_irq),
+        `else
+                .i_irq(1'd0),
+        `endif
+
         .i_fiq(1'd0),
         .o_wb_cyc(data_wb_cyc),
         .o_wb_stb(data_wb_stb),

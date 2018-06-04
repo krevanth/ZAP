@@ -388,6 +388,14 @@ begin
 `ifdef SH_DEBUG
                         $display($time, "%m: => It is an immediate value.");
 `endif
+        end
+        else if ( index_from_issue == PHY_PC ) 
+        begin
+                resolve_conflict = i_pc_plus_8_ff; 
+
+`ifdef SH_DEBUG
+                        $display($time, "%m: => Giving PC");
+`endif                
         end 
         else if ( index_from_this_stage == index_from_issue[$clog2(PHY_REGS)-1:0] && result_from_alu_valid )
         begin

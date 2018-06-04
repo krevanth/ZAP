@@ -202,7 +202,7 @@ begin
                         o_stall_from_decode = 1'd1;
 
                         // ORR DUMMY0, DUMMY0, 1 - Needed to indicate a switch
-                        // to Thumb.                       
+                        // to Thumb if needed.                       
                          o_instruction[31:0] = {AL, 2'b00, 1'b1, ORR, 1'd0, 4'd0, 4'd0, 4'd0, !i_cpsr_t};
                         {o_instruction[`DP_RD_EXTEND], o_instruction[`DP_RD]} = ARCH_DUMMY_REG0;
                         {o_instruction[`DP_RA_EXTEND], o_instruction[`DP_RA]} = ARCH_DUMMY_REG0;   
@@ -235,9 +235,8 @@ begin
                         // Immediate Offset.
                         if ( i_instruction[31:25] == BLX1[31:25] && i_instruction_valid ) 
                         begin
-`ifdef LDM_DEBUG
                                 $display($time, "%m: BLX1 detected!");
-`endif
+
                                 // We must generate a SUBAL LR,PC,4 ROR 0
                                 // This makes LR have the value
                                 // PC+8-4=PC+4 which is the address of
@@ -255,9 +254,8 @@ begin
                         end
                         else if ( i_instruction[27:4] == BLX2[27:4] && i_instruction_valid ) // BLX2 detected. Register offset. CONDITIONAL.
                         begin
-`ifdef LDM_DEBUG
                                 $display($time, "%m: BLX2 detected!");
-`endif
+
                                 // Write address of next instruction to LR. Now this
                                 // depends on the mode we're in. Mode in the sense
                                 // ARM/Thumb. We need to look at i_cpsr_t.

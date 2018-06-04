@@ -9,6 +9,7 @@ scripts and programs.
 Usage :
 perl run_sim.pl
 +test+<test_case>           -- Run a specific test case.
++irq_en                     -- Configure TB to use IRQ.
 
 ###############################################################################
 ";
@@ -30,6 +31,7 @@ my $MAX_CLOCK_CYCLES            = $Config{'MAX_CLOCK_CYCLES'};
 my $TLB_DEBUG                   = $Config{'DEFINE_TLB_DEBUG'};
 my $STALL                       = $Config{'ALLOW_STALLS'};
 my $TX_TERM                     = $Config{'UART_TX_TERMINAL'};
+my $IRQ_EN                      = $Config{'IRQ_EN'};
 
 # System configuration.
 my $DATA_CACHE_SIZE             = $Config{'DATA_CACHE_SIZE'};
@@ -48,7 +50,6 @@ my $SBUF_DEPTH                  = $Config{'STORE_BUFFER_DEPTH'};
 my $ZAP_HOME                    = "../../../";
 my $TEST                        = "null";
 my $SCRATCH                     = "/dev/null";
-my $IRQ_EN                      = 0;
 my $FIQ_EN                      = 0; 
 
 if ( $SEED == -1 ) {
@@ -108,9 +109,9 @@ $IVL_OPTIONS .= " -Pzap_test.CODE_SECTION_TLB_ENTRIES=$CODE_SECTION_TLB_ENTRIES 
 $IVL_OPTIONS .= " -Pzap_test.CODE_CACHE_SIZE=$CODE_CACHE_SIZE ";
 $IVL_OPTIONS .= "-DMAX_CLOCK_CYCLES=$MAX_CLOCK_CYCLES ";
 
-if ( $IRQ_EN )          {        $IVL_OPTIONS .= "-DIRQ_EN ";   }
+if ( $IRQ_EN )          {        print "Script: IRQ defined.\n" ; $IVL_OPTIONS .= "-DIRQ_EN ";   }
 if ( $FIQ_EN )          {        $IVL_OPTIONS .= "-DFIQ_EN ";   }
-if ( $STALL )           {        $IVL_OPTIONS .= "-DSTALL ";    }
+if ( $STALL )           {        print "Script: Stall defined.\n" ; $IVL_OPTIONS .= "-DSTALL ";    }
 if ( $SYNTHESIS )       {        $IVL_OPTIONS .= "-DSYNTHESIS ";}
 
 if ( $MAX_CLOCK_CYCLES == 0 )   {  die "*E: MAX_CLOCK_CYCLES set to 0. Ending script...";  }

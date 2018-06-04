@@ -38,6 +38,9 @@ module zap_predecode_compress (
         input wire [31:0]       i_instruction,
         input wire              i_instruction_valid,
 
+        // Offset input.
+        input wire [11:0]       i_offset,
+
         // Interrupts. Active high level sensitive signals.
         input wire              i_irq,
         input wire              i_fiq,
@@ -69,15 +72,12 @@ module zap_predecode_compress (
 
 ///////////////////////////////////////////////////////////////////////////////
 
-reg [11:0] offset_ff, offset_nxt;  // Remember offset.
+reg [11:0] offset_w;  // Previous offset.
 
 ///////////////////////////////////////////////////////////////////////////////
 
-// Keep buferring offset since a long offset is constructed using consecutive
-// valid compressed instructions.
-always @ (posedge i_clk) 
-        if ( i_instruction_valid )
-                offset_ff <= offset_nxt;
+always @*
+        offset_w = i_offset;
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -90,12 +90,12 @@ begin
         o_irq                   = i_irq;
         o_fiq                   = i_fiq;
         o_force32_align         = 0;
-        offset_nxt              = i_instruction[11:0];
-
 
         if ( i_cpsr_ff_t && i_instruction_valid ) // compressed mode enable
         begin
                 casez ( i_instruction[15:0] )
+                        T_BLX1                  : decode_blx1;
+                        T_BLX2                  : decode_blx2;
                         T_ADD_SUB_LO            : decode_add_sub_lo; 
                         T_SWI                   : decode_swi;
                         T_BRANCH_COND           : decode_conditional_branch; 
@@ -502,22 +502,49 @@ endtask
 
 ///////////////////////////////////////////////////////////////////////////////
 
+task decode_blx1;
+begin
+        o_instruction = 0; // Default value.
+
+        // Generate a BLX1.
+        o_instruction[31:25] =  7'b1111_101;    // BLX1 identifier.   
+        o_instruction[24]    =  1'd0;           // H - bit.
+        o_instruction[23:0]  =  ($signed(offset_w) << 12) | (i_instruction[10:0] << 1);  // Corrected.
+        o_irq                = 1'd0;
+        o_fiq                = 1'd0;
+end
+endtask
+
+////////////////////////////////////////////////////////////////////////////////
+
+task decode_blx2;
+begin
+        o_instruction = {4'b1110,4'b0001,4'b0010,4'b1111,4'b1111,4'b1111,4'b0011, i_instruction[6:3]}; 
+        o_irq         = 1'd0;
+        o_fiq         = 1'd0; 
+end
+endtask
+
+///////////////////////////////////////////////////////////////////////////////
+
 task decode_bl;
 begin
         case ( i_instruction[11] )
                 1'd0:
                 begin
-                        // Store the offset and send out a dummy instruction.
-                        // offset_nxt      = i_instruction[11:0];
-                        o_instruction   = 32'd0;
-                        o_irq           = 1'd0;
-                        o_fiq           = 1'd0;
+                        // Send out a dummy instruction. Preserve lower
+                        // 12-bits though to serve as offset. Set condition
+                        // code to NV.
+                        o_instruction        = i_instruction[11:0];
+                        o_instruction[31:28] = 4'b1111;
+                        o_irq                = 1'd0;
+                        o_fiq                = 1'd0;
                 end
                 1'd1:
                 begin
                         // Generate a full jump.
                         o_instruction = {1'd1, 2'b0, AL, 3'b101, 1'b1, 24'd0};
-                        o_instruction[23:0] = ($signed(offset_ff) << 12) | (i_instruction[11:0]); 
+                        o_instruction[23:0] = ($signed(offset_w) << 12) | (i_instruction[10:0] << 1);  // Corrected.
                         o_irq           = 1'd0;
                         o_fiq           = 1'd0;
                 end

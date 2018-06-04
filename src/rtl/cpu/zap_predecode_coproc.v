@@ -113,6 +113,12 @@ wire c3 = i_instruction[11:8] == 4'b1111;
 wire c4 = i_instruction[34:32] == 3'd0;
 wire c5 = c1 & c2 & c3 & c4;
 
+`ifndef SYNTHESIS
+
+reg eclass;
+
+`endif
+
 // Next state logic.
 always @*
 begin
@@ -126,38 +132,66 @@ begin
         o_irq                   = i_irq;
         o_fiq                   = i_fiq;
 
+        `ifndef SYNTHESIS
+                eclass = 0;
+        `endif
+
         case ( state_ff )
         IDLE:
                 // Activate only if no thumb, not in USER mode and CP15 access is requested.
-                casez ( (!i_cpsr_ff_t && (i_cpsr_ff_mode != USR) & (i_instruction[11:8] == 4'b1111) & (i_instruction[34:32] == 3'd0)) ? i_instruction[31:0] : 35'd0 )
+                casez ( (!i_cpsr_ff_t && (i_instruction[34:32] == 3'd0) && i_valid) ? i_instruction[31:0] : 35'd0 )
                 MRC, MCR, LDC, STC, CDP:
                 begin
-                        // Send ANDNV R0, R0, R0 instruction.
-                        o_instruction = {4'b1111, 28'd0}; 
-                        o_valid       = 1'd0;
-                        o_irq         = 1'd0;
-                        o_fiq         = 1'd0;
+                        if ( i_instruction[11:8] == 4'b1111 && i_cpsr_ff_mode != USR )  // CP15 and root access -- perfectly fine.
+                        begin
+                                // Send ANDNV R0, R0, R0 instruction.
+                                o_instruction = {4'b1111, 28'd0}; 
+                                o_valid       = 1'd0;
+                                o_irq         = 1'd0;
+                                o_fiq         = 1'd0;
 
-                        // As long as there is an instruction to process...
-                        if ( i_pipeline_dav )
-                        begin
-                                // Do not impose any output. However, continue
-                                // to stall all before this unit in the 
-                                // pipeline.
-                                o_valid                 = 1'd0;
-                                o_stall_from_decode     = 1'd1;
-                                cp_dav_nxt              = 1'd0;
-                                cp_word_nxt             = 32'd0;
+                                // As long as there is an instruction to process...
+                                if ( i_pipeline_dav )
+                                begin
+                                        // Do not impose any output. However, continue
+                                        // to stall all before this unit in the 
+                                        // pipeline.
+                                        o_valid                 = 1'd0;
+                                        o_stall_from_decode     = 1'd1;
+                                        cp_dav_nxt              = 1'd0;
+                                        cp_word_nxt             = 32'd0;
+                                end
+                                else
+                                begin
+                                        // Prepare to move to BUSY. Continue holding
+                                        // stall. Send out 0s.
+                                        o_valid                 = 1'd0;
+                                        o_stall_from_decode     = 1'd1;
+                                        cp_word_nxt             = i_instruction;
+                                        cp_dav_nxt              = 1'd1;
+                                        state_nxt               = BUSY;
+                                end
                         end
-                        else
+                        else // Warning...
                         begin
-                                // Prepare to move to BUSY. Continue holding
-                                // stall. Send out 0s.
-                                o_valid                 = 1'd0;
-                                o_stall_from_decode     = 1'd1;
-                                cp_word_nxt             = i_instruction;
-                                cp_dav_nxt              = 1'd1;
-                                state_nxt               = BUSY;
+                                `ifndef SYNTHESIS
+
+                                if ( i_instruction[11:8] != 4'b1111 ) 
+                                        eclass = 1;
+                                else
+                                        eclass = 2;
+            
+                                `endif
+
+                                // Remain transparent since this is not a coprocessor
+                                // instruction.
+                                o_valid                 = i_valid;
+                                o_instruction           = i_instruction;
+                                o_irq                   = i_irq;
+                                o_fiq                   = i_fiq;
+                                cp_dav_nxt              = 0;
+                                o_stall_from_decode     = 0;
+                                cp_word_nxt             = {32{1'dx}}; // Don't care.
                         end
                 end
                 default:
