@@ -1,15 +1,25 @@
-// ----------------------------------------------------------------------------
-//                            The ZAP Project
-//                     (C)2016-2017, Revanth Kamaraj.     
-// ----------------------------------------------------------------------------
-// Filename     : zap_issue_main.v
-// HDL          : Verilog-2001
-// Module       : zap_issue       
-// Author       : Revanth Kamaraj
-// License      : GPL v2
-// ----------------------------------------------------------------------------
-//                               ABSTRACT
-//                               --------
+// ---------------------------------------------------------------------------
+// --                                                                       --
+// --                   (C) 2016-2018 Revanth Kamaraj.                      --
+// --                                                                       -- 
+// -- ------------------------------------------------------------------------
+// --                                                                       --
+// -- This program is free software; you can redistribute it and/or         --
+// -- modify it under the terms of the GNU General Public License           --
+// -- as published by the Free Software Foundation; either version 2        --
+// -- of the License, or (at your option) any later version.                --
+// --                                                                       --
+// -- This program is distributed in the hope that it will be useful,       --
+// -- but WITHOUT ANY WARRANTY; without even the implied warranty of        --
+// -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         --
+// -- GNU General Public License for more details.                          --
+// --                                                                       --
+// -- You should have received a copy of the GNU General Public License     --
+// -- along with this program; if not, write to the Free Software           --
+// -- Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA         --
+// -- 02110-1301, USA.                                                      --
+// --                                                                       --
+// ---------------------------------------------------------------------------
 //  This stage converts register indices into actual values. Register indices
 //  are also pumped forward to allow resolution in the shift stage. PC
 //  references must be resolved here since the value gives PC + 8. Instructions
@@ -17,12 +27,6 @@
 //  stage. We do not issue a multiply if the source is still in the output of this 
 //  stage just like shifts. That's to ensure incorrect registers are not
 //  read.
-// ----------------------------------------------------------------------------
-//                              INFORMATION                                  
-//                              ------------
-// Reset method : Synchronous active high reset
-// Clock        : Core clock
-// Depends      : --        
 // ----------------------------------------------------------------------------
 
 `default_nettype none
