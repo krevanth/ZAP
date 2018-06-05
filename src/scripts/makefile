@@ -20,7 +20,7 @@
 .PHONY: dirs
 .PHONY: cleanall
 
-ARCH         := armv4t
+ARCH         := armv5t
 TC           := $(shell basename `pwd`)
 GCC_PATH     := ../../../obj/gcc-arm-none-eabi-*/bin/
 SCRIPT_PATH  := ../../scripts/

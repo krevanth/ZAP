@@ -336,9 +336,9 @@ endtask
 task decode_mult ( input [INS_WDT-1:0] i_instruction );
 begin
         if ( i_instruction[21] == 1'd0 ) 
-                $sformat(o_decompile, "MUL%s %s,%s,%s",`CCC,`CRD,`CRB,arch_reg_num(i_instruction[11:8]));      
+                $sformat(o_decompile, "MUL%s %s,%s,%s",`CCC,`CRN,`CRD,arch_reg_num(i_instruction[11:8]));      
         else
-                $sformat(o_decompile, "MUL%s %s,%s,%s",`CCC,`CRD,`CRB,arch_reg_num(i_instruction[11:8]));
+                $sformat(o_decompile, "MLA%s %s,%s,%s,%s",`CCC,`CRN,`CRD,arch_reg_num(i_instruction[11:8]), arch_reg_num(i_instruction[3:0]));
 end
 endtask
 

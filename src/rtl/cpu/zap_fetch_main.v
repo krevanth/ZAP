@@ -77,7 +77,7 @@ output reg [31:0]  o_pc_ff,        // PC output.
 input wire         i_confirm_from_alu,  // Confirm branch prediction from ALU.
 input wire [31:0]  i_pc_from_alu,       // Address of branch. 
 input wire [1:0]   i_taken,             // Predicted status.
-output wire [1:0]  o_taken_ff           // Prediction.
+output wire [1:0]  o_taken_ff           // Prediction. Not a flip-flop...
 
 );
 
@@ -90,6 +90,12 @@ wire _unused_ok_;
 
 // If an instruction abort occurs, this unit sleeps until it is woken up.
 reg sleep_ff;
+
+// Taken_v
+wire [1:0] taken_v;
+
+// Predict non branches as not taken...
+assign o_taken_ff = i_instruction[28:26] == 3'b101 ? taken_v : SNT;
 
 // ----------------------------------------------------------------------------
 
@@ -238,7 +244,7 @@ zap_ram_simple
         ),
 
         // Send the read data over to o_taken_ff which is a 2-bit value.
-        .o_rd_data(o_taken_ff) 
+        .o_rd_data(taken_v) 
 );
 
 // ----------------------------------------------------------------------------
