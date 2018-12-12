@@ -1,4 +1,4 @@
-## *ZAP* : An ARM compatible core with cache and MMU (ARMv4T ISA compatible)
+## *ZAP* : An ARMv4T compatible core with cache and MMU
 
 #### Author        : Revanth Kamaraj (revanth91kamaraj@gmail.com)
 #### License       : GPL v2
