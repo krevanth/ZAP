@@ -1,1 +1,2 @@
 This test enables RX and TX and echoes RX to the TX console. All this on UART0.
+TC runs forever. Use Ctrl+C to halt the TC.

@@ -432,7 +432,7 @@ u_zap_fetch_main (
         .i_confirm_from_alu             (confirm_from_alu),
         .i_pc_from_alu                  (shifter_pc_ff),
         .i_taken                        (shifter_taken_ff),
-        .o_taken_ff                     (fetch_bp_state)
+        .o_taken                        (fetch_bp_state)
 );
 
 // =========================
