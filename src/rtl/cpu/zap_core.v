@@ -34,14 +34,20 @@ module zap_core #(
 
         // Depth of FIFO.
         parameter [31:0] FIFO_DEPTH = 4
- ) 
+) 
 (
 
-// Clock and reset.
-input wire                              i_clk,                  // ZAP clock.        
-input wire                              i_reset,                // Active high synchronous reset.
+// ------------------------------------------------
+// Clock and reset. Reset is synchronous.
+// ------------------------------------------------
 
+input wire                              i_clk,                  
+input wire                              i_reset,                
+
+// -------------------------------------------------
 // Wishbone memory access for data.
+// -------------------------------------------------
+
 output wire                             o_data_wb_we,
 output wire                             o_data_wb_cyc,
 output wire                             o_data_wb_stb,
@@ -63,11 +69,17 @@ output wire [31:0]                      o_data_wb_adr_nxt,
 // Force user view.
 output wire                             o_mem_translate,
 
+// --------------------------------------------------
 // Interrupts. Active high.
+// --------------------------------------------------
+
 input wire                              i_fiq,                  // FIQ signal.
 input wire                              i_irq,                  // IRQ signal.
 
+// ---------------------------------------------------
 // Wishbone instruction access ports.
+// ---------------------------------------------------
+
 output wire     [31:0]                  o_instr_wb_adr, // Code address.                  
 output wire                             o_instr_wb_cyc, // Always 1.
 output wire                             o_instr_wb_stb, // Always 1.
@@ -84,7 +96,10 @@ output wire                             o_instr_wb_stb_nxt,
 // Determines user or supervisory mode. Cache must use this for VM.
 output wire      [31:0]                 o_cpsr,                 
 
+// -----------------------------------------------------
 // For MMU/cache connectivity.
+// -----------------------------------------------------
+
 input wire      [31:0]                  i_fsr,
 input wire      [31:0]                  i_far,
 output wire      [31:0]                 o_dac,
@@ -102,17 +117,7 @@ output wire                             o_icache_en,
 input   wire                            i_dcache_inv_done,
 input   wire                            i_icache_inv_done,
 input   wire                            i_dcache_clean_done,
-input   wire                            i_icache_clean_done,
-
-// Pipeline stall and clear signals. Hi to lo priority order. Sent out of the
-// core for use outside. These are generally not used.
-//
-output wire                             o_clear_from_writeback, // |   
-output wire                             o_clear_from_alu,       // |
-output wire                             o_stall_from_shifter,   // |
-output wire                             o_stall_from_issue,     // |
-output wire                             o_stall_from_decode,    // | Low Priority.
-output wire                             o_clear_from_decode     // V
+input   wire                            i_icache_clean_done
 );
 
 // ----------------------------------------------------------------------------
@@ -131,7 +136,7 @@ localparam FLAG_WDT  = 32;
 
 // Low Bandwidth Coprocessor (COP) I/F to CP15 control block.
 wire                             copro_done;        // COP done.
-wire                             copro_dav;        // COP command valid.
+wire                             copro_dav;         // COP command valid.
 wire  [31:0]                     copro_word;        // COP command.
 wire                             copro_reg_en;      // COP controls registers.
 wire      [$clog2(PHY_REGS)-1:0] copro_reg_wr_index;// Reg. file write index.
@@ -139,47 +144,59 @@ wire      [$clog2(PHY_REGS)-1:0] copro_reg_rd_index;// Reg. file read index.
 wire      [31:0]                 copro_reg_wr_data; // Reg. file write data.
 wire     [31:0]                  copro_reg_rd_data; // Reg. file read data.
 
-wire reset; // From reset synchronizer.
-
-// From writeback.
-wire shelve;
-
-// Interrupt synchronizer.
-wire fiq;
-wire irq;
+wire                            reset;               // Tied to i_reset.
+wire                            shelve;              // From writeback.
+wire                            fiq;                 // Tied to FIQ.
+wire                            irq;                 // Tied to IRQ.
 
 // Clear and stall signals.
-wire stall_from_decode;
-wire clear_from_alu;
-wire stall_from_issue;
-wire clear_from_writeback;
+wire                            stall_from_decode;
+wire                            clear_from_alu;
+wire                            stall_from_issue;
+wire                            clear_from_writeback;
+wire                            data_stall;
+wire                            code_stall;
+wire                            instr_valid;
+wire                            pipeline_is_not_empty;
 
 // Fetch
-wire [31:0] fetch_instruction;  // Instruction from the fetch unit.
-wire        fetch_valid;        // Instruction valid from the fetch unit.
-wire        fetch_instr_abort;  // abort indicator.
-wire [31:0] fetch_pc_plus_8_ff; // PC + 8 generated from the fetch unit.
-wire [31:0] fetch_pc_ff;        // PC generated from fetch unit.
-wire [1:0]  fetch_bp_state;
+wire [31:0]                     fetch_instruction;  // Instruction from the fetch unit.
+wire                            fetch_valid;        // Instruction valid from the fetch unit.
+wire                            fetch_instr_abort;  // abort indicator.
+wire [31:0]                     fetch_pc_plus_8_ff; // PC + 8 generated from the fetch unit.
+wire [31:0]                     fetch_pc_ff;        // PC generated from fetch unit.
+wire [1:0]                      fetch_bp_state;
 
 // FIFO.
-wire [31:0] fifo_pc_plus_8;
-wire fifo_valid;
-wire fifo_instr_abort;
-wire [31:0] fifo_instruction;
-wire [1:0] fifo_bp_state;
+wire [31:0]                     fifo_pc_plus_8;
+wire                            fifo_valid;
+wire                            fifo_instr_abort;
+wire [31:0]                     fifo_instruction;
+wire [1:0]                      fifo_bp_state;
 
 // Predecode
-wire [31:0]     predecode_pc_plus_8;
-wire [31:0]     predecode_pc;
-wire            predecode_irq;
-wire            predecode_fiq;
-wire            predecode_abt; 
-wire [35:0]     predecode_inst;
-wire            predecode_val;
-wire            predecode_force32;
-wire            predecode_und;
-wire [1:0]      predecode_taken;
+wire [31:0]                     predecode_pc_plus_8;
+wire [31:0]                     predecode_pc;
+wire                            predecode_irq;
+wire                            predecode_fiq;
+wire                            predecode_abt; 
+wire [35:0]                     predecode_inst;
+wire                            predecode_val;
+wire                            predecode_force32;
+wire                            predecode_und;
+wire [1:0]                      predecode_taken;
+
+// Compressed decoder.
+wire                            thumb_irq;
+wire                            thumb_fiq;
+wire                            thumb_iabort;
+wire [34:0]                     thumb_instruction;
+wire                            thumb_valid;
+wire                            thumb_und;
+wire                            thumb_force32;
+wire [1:0]                      thumb_bp_state;
+wire [31:0]                     thumb_pc_ff;
+wire [31:0]                     thumb_pc_plus_8_ff;
 
 // Decode
 wire [3:0]                      decode_condition_code;
@@ -329,44 +346,46 @@ wire                            memory_und_ff;
 wire                            memory_data_abt_ff;
 
 // Writeback
-wire [31:0] rd_data_0;
-wire [31:0] rd_data_1;
-wire [31:0] rd_data_2;
-wire [31:0] rd_data_3;
-wire [31:0] cpsr_nxt, cpsr;
+wire [31:0]                     rd_data_0;
+wire [31:0]                     rd_data_1;
+wire [31:0]                     rd_data_2;
+wire [31:0]                     rd_data_3;
+wire [31:0]                     cpsr_nxt, cpsr;
 
-wire        wb_hijack;
-wire [31:0] wb_hijack_op1;
-wire [31:0] wb_hijack_op2;
-wire        wb_hijack_cin;
-wire [31:0] alu_hijack_sum;
+// Hijack interface - related to Writeback - ALU interaction.
+wire                            wb_hijack;
+wire [31:0]                     wb_hijack_op1;
+wire [31:0]                     wb_hijack_op2;
+wire                            wb_hijack_cin;
+wire [31:0]                     alu_hijack_sum;
 
-// ----------------------------------------------------------------------------
-
-assign o_cpsr        = alu_flags_ff;
-
-// Pipeline controls exposed.
-assign o_clear_from_writeback = clear_from_writeback;
-assign o_clear_from_alu     = clear_from_alu;
-assign o_stall_from_shifter = stall_from_shifter;
-assign o_stall_from_issue   = stall_from_issue;
-assign o_stall_from_decode  = stall_from_decode;
-assign o_clear_from_decode  = clear_from_decode;
-
-
-// Data wishbone signals (defaults).
-assign o_data_wb_adr = {alu_address_ff[31:2], 2'd0};
-assign o_data_wb_adr_nxt = {alu_address_nxt[31:2], 2'd0};
-
-// Default Wishbone values (Code). 
-assign o_instr_wb_we  = 1'd0;
-assign o_instr_wb_sel = 4'b1111;
+// Decompile chain for debugging.
+wire [64*8-1:0]                 decode_decompile;
+wire [64*8-1:0]                 issue_decompile;
+wire [64*8-1:0]                 shifter_decompile;
+wire [64*8-1:0]                 alu_decompile;
+wire [64*8-1:0]                 memory_decompile; 
+wire [64*8-1:0]                 rb_decompile;
 
 // ----------------------------------------------------------------------------
 
-assign reset    = i_reset; // Assume external synchronizer.
-assign irq      = i_irq;   // Assume externally synchronized to core clock.
-assign fiq      = i_fiq;   // Assume externally synchronized to core clock.
+assign o_cpsr                   = alu_flags_ff;
+assign o_data_wb_adr            = {alu_address_ff[31:2], 2'd0};
+assign o_data_wb_adr_nxt        = {alu_address_nxt[31:2], 2'd0};
+assign o_instr_wb_we            = 1'd0;
+assign o_instr_wb_sel           = 4'b1111;
+assign reset                    = i_reset; 
+assign irq                      = i_irq;   
+assign fiq                      = i_fiq;   
+assign data_stall               = o_data_wb_stb && o_data_wb_cyc && !i_data_wb_ack;
+assign code_stall               = (!o_instr_wb_stb && !o_instr_wb_cyc) || !i_instr_wb_ack;
+assign instr_valid              = o_instr_wb_stb && o_instr_wb_cyc && i_instr_wb_ack & !shelve;
+assign pipeline_is_not_empty    =         predecode_val                      ||     
+                                          (decode_condition_code    != NV)   ||
+                                          (issue_condition_code_ff  != NV)   ||
+                                          (shifter_condition_code_ff!= NV)   ||
+                                          alu_dav_ff                         ||
+                                          memory_dav_ff;  
 
 // ----------------------------------------------------------------------------
 
@@ -382,7 +401,7 @@ u_zap_fetch_main (
         .i_clk                          (i_clk), 
         .i_reset                        (reset),
 
-        .i_code_stall                   ((!o_instr_wb_stb && !o_instr_wb_cyc) || !i_instr_wb_ack),
+        .i_code_stall                   (code_stall),
 
         .i_clear_from_writeback         (clear_from_writeback),
         .i_clear_from_decode            (clear_from_decode),
@@ -397,7 +416,7 @@ u_zap_fetch_main (
 
         .i_pc_ff                        (o_instr_wb_adr),
         .i_instruction                  (i_instr_wb_dat),
-        .i_valid                        (o_instr_wb_stb && o_instr_wb_cyc && i_instr_wb_ack & !shelve),
+        .i_valid                        (instr_valid),
         .i_instr_abort                  (i_instr_wb_err),
 
         .i_cpsr_ff_t                    (alu_flags_ff[T]),
@@ -421,84 +440,63 @@ u_zap_fetch_main (
 // =========================
 zap_fifo
 #( .WDT(67), .DEPTH(FIFO_DEPTH) ) U_ZAP_FIFO (
-        .i_clk(i_clk),
-        .i_reset(i_reset),
-        .i_clear_from_writeback(clear_from_writeback),
+        .i_clk                          (i_clk),
+        .i_reset                        (i_reset),
+        .i_clear_from_writeback         (clear_from_writeback),
 
-        .i_write_inhibit                ( (!o_instr_wb_stb && !o_instr_wb_cyc) || !i_instr_wb_ack ),
+        .i_write_inhibit                ( code_stall ),
+        .i_data_stall                   ( data_stall ),
 
-        .i_data_stall(
-                                        o_data_wb_stb && 
-                                         o_data_wb_cyc && 
-                                        !i_data_wb_ack
-        ),
+        .i_clear_from_alu               (clear_from_alu),
+        .i_stall_from_shifter           (stall_from_shifter),
+        .i_stall_from_issue             (stall_from_issue),  
+        .i_stall_from_decode            (stall_from_decode),
+        .i_clear_from_decode            (clear_from_decode),
 
-        .i_clear_from_alu(clear_from_alu),
-        .i_stall_from_shifter(stall_from_shifter),
-        .i_stall_from_issue(stall_from_issue),  
-        .i_stall_from_decode(stall_from_decode),
-        .i_clear_from_decode(clear_from_decode),
+        .i_instr                        ({fetch_pc_plus_8_ff, fetch_instr_abort, fetch_instruction, fetch_bp_state}),
+        .i_valid                        (fetch_valid),
+        .o_instr                        ({fifo_pc_plus_8, fifo_instr_abort, fifo_instruction, fifo_bp_state}),
+        .o_valid                        (fifo_valid),
 
-        .i_instr({fetch_pc_plus_8_ff, fetch_instr_abort, fetch_instruction, fetch_bp_state}),
-        .i_valid(fetch_valid),
-
-        .o_instr({fifo_pc_plus_8, fifo_instr_abort, fifo_instruction, fifo_bp_state}),
-        .o_valid(fifo_valid),
-
-        .o_wb_stb(o_instr_wb_stb),
-        .o_wb_stb_nxt(o_instr_wb_stb_nxt),
-        .o_wb_cyc(o_instr_wb_cyc)
+        .o_wb_stb                       (o_instr_wb_stb),
+        .o_wb_stb_nxt                   (o_instr_wb_stb_nxt),
+        .o_wb_cyc                       (o_instr_wb_cyc)
 );
-
-wire thumb_irq;
-wire thumb_fiq;
-wire thumb_iabort;
-wire [34:0] thumb_instruction;
-wire thumb_valid;
-wire thumb_und;
-wire thumb_force32;
-wire [1:0] thumb_bp_state;
-wire [31:0] thumb_pc_ff;
-wire [31:0] thumb_pc_plus_8_ff;
 
 // =========================
 // COMPRESSED DECODER STAGE
 // =========================
 zap_thumb_decoder u_zap_thumb_decoder (
-.i_clk          (i_clk),
-.i_reset        (i_reset),
-.i_clear_from_writeback(clear_from_writeback),
-.i_data_stall   (
-                                        o_data_wb_stb && 
-                                        o_data_wb_cyc && 
-                                        !i_data_wb_ack
-),
-.i_clear_from_alu(clear_from_alu),
-.i_stall_from_shifter(stall_from_shifter),
-.i_stall_from_issue(stall_from_issue),
-.i_stall_from_decode(stall_from_decode),
-.i_clear_from_decode(clear_from_decode),
+.i_clk                                  (i_clk),
+.i_reset                                (i_reset),
+.i_clear_from_writeback                 (clear_from_writeback),
+.i_data_stall                           (data_stall),
+.i_clear_from_alu                       (clear_from_alu),
+.i_stall_from_shifter                   (stall_from_shifter),
+.i_stall_from_issue                     (stall_from_issue),
+.i_stall_from_decode                    (stall_from_decode),
+.i_clear_from_decode                    (clear_from_decode),
 
-.i_taken        (fifo_bp_state),
-.i_instruction  (fifo_instruction),
-.i_instruction_valid(fifo_valid),
-.i_irq          (fifo_valid ? irq && !alu_flags_ff[I] : 1'd0), // Pass interrupt only if mask = 0 and instruction exists.
-.i_fiq          (fifo_valid ? fiq && !alu_flags_ff[F] : 1'd0), // Pass interrupt only if mask = 0 and instruction exists.
-.i_iabort       (fifo_instr_abort),
-.o_iabort       (thumb_iabort),
-.i_cpsr_ff_t    (alu_flags_ff[T]),
-.i_pc_ff        (alu_flags_ff[T] ? fifo_pc_plus_8 - 32'd4 : fifo_pc_plus_8 - 32'd8),
-.i_pc_plus_8_ff (fifo_pc_plus_8),
+.i_taken                                (fifo_bp_state),
+.i_instruction                          (fifo_instruction),
+.i_instruction_valid                    (fifo_valid),
+.i_irq                                  (fifo_valid ? irq && !alu_flags_ff[I] : 1'd0), // Pass interrupt only if mask = 0 and instruction exists.
+.i_fiq                                  (fifo_valid ? fiq && !alu_flags_ff[F] : 1'd0), // Pass interrupt only if mask = 0 and instruction exists.
+.i_iabort                               (fifo_instr_abort),
+.o_iabort                               (thumb_iabort),
+.i_cpsr_ff_t                            (alu_flags_ff[T]),
+.i_pc_ff                                (alu_flags_ff[T] ? fifo_pc_plus_8 - 32'd4 : fifo_pc_plus_8 - 32'd8),
+.i_pc_plus_8_ff                         (fifo_pc_plus_8),
 
-.o_instruction  (thumb_instruction),
-.o_instruction_valid (thumb_valid),
-.o_und          (thumb_und),
-.o_force32_align(thumb_force32),
-.o_pc_ff        (thumb_pc_ff),
-.o_pc_plus_8_ff (thumb_pc_plus_8_ff),
-.o_irq          (thumb_irq),
-.o_fiq          (thumb_fiq),
-.o_taken_ff     (thumb_bp_state)
+.o_instruction                          (thumb_instruction),
+.o_instruction_valid                    (thumb_valid),
+.o_und                                  (thumb_und),
+.o_force32_align                        (thumb_force32),
+.o_pc_ff                                (thumb_pc_ff),
+.o_pc_plus_8_ff                         (thumb_pc_plus_8_ff),
+.o_irq                                  (thumb_irq),
+.o_fiq                                  (thumb_fiq),
+.o_taken_ff                             (thumb_bp_state)
 );
 
 // =========================
@@ -518,9 +516,7 @@ u_zap_predecode (
         .i_reset                        (reset),
 
         .i_clear_from_writeback         (clear_from_writeback),
-        .i_data_stall                   (o_data_wb_stb && 
-                                         o_data_wb_cyc && 
-                                        !i_data_wb_ack),
+        .i_data_stall                   (data_stall), 
         .i_clear_from_alu               (clear_from_alu),
         .i_stall_from_shifter           (stall_from_shifter),
         .i_stall_from_issue             (stall_from_issue),
@@ -543,14 +539,7 @@ u_zap_predecode (
         .i_und                          (thumb_und),
 
         .i_copro_done                   (copro_done),
-        .i_pipeline_dav                 (
-                                          predecode_val                      ||     
-                                          (decode_condition_code    != NV)   ||
-                                          (issue_condition_code_ff  != NV)   ||
-                                          (shifter_condition_code_ff!= NV)   ||
-                                          alu_dav_ff                         ||
-                                          memory_dav_ff                      
-                                        ),
+        .i_pipeline_dav                 (pipeline_is_not_empty),
 
         // Output.
         .o_stall_from_decode            (stall_from_decode),
@@ -576,8 +565,6 @@ u_zap_predecode (
         .o_taken_ff                     (predecode_taken)
 );
 
-wire [64*8-1:0] decode_decompile;
-
 // =====================
 // DECODE STAGE 
 // =====================
@@ -596,9 +583,7 @@ u_zap_decode_main (
         .i_reset                        (reset),
 
         .i_clear_from_writeback         (clear_from_writeback),
-        .i_data_stall                   (o_data_wb_cyc && 
-                                         o_data_wb_stb && 
-                                        !i_data_wb_ack),
+        .i_data_stall                   (data_stall),
         .i_clear_from_alu               (clear_from_alu),
         .i_stall_from_shifter           (stall_from_shifter),
         .i_stall_from_issue             (stall_from_issue),
@@ -652,8 +637,6 @@ u_zap_decode_main (
 // ISSUE 
 // ==================
 
-wire [64*8-1:0] issue_decompile;
-
 zap_issue_main #(
         .PHY_REGS(PHY_REGS),
         .SHIFT_OPS(SHIFT_OPS),
@@ -679,9 +662,7 @@ u_zap_issue_main
         .i_reset                        (reset),
         .i_clear_from_writeback         (clear_from_writeback),
         .i_stall_from_shifter           (stall_from_shifter),
-        .i_data_stall                   (o_data_wb_cyc && 
-                                         o_data_wb_stb && 
-                                        !i_data_wb_ack),
+        .i_data_stall                   (data_stall), 
         .i_clear_from_alu               (clear_from_alu),
         .i_pc_plus_8_ff                 (decode_pc_plus_8_ff),
         .i_condition_code_ff            (decode_condition_code),
@@ -779,8 +760,6 @@ u_zap_issue_main
 // SHIFTER STAGE 
 // =======================
 
-wire [64*8-1:0] shifter_decompile;
-
 zap_shifter_main #(
         .PHY_REGS(PHY_REGS),
         .ALU_OPS(ALU_OPS),
@@ -788,27 +767,25 @@ zap_shifter_main #(
 )
 u_zap_shifter_main
 (
-        .i_decompile(issue_decompile),
-        .o_decompile(shifter_decompile),
+        .i_decompile                    (issue_decompile),
+        .o_decompile                    (shifter_decompile),
 
-        .i_pc_ff(issue_pc_ff),
-        .o_pc_ff(shifter_pc_ff),
+        .i_pc_ff                        (issue_pc_ff),
+        .o_pc_ff                        (shifter_pc_ff),
 
-        .i_taken_ff(issue_taken_ff),
-        .o_taken_ff(shifter_taken_ff),
+        .i_taken_ff                     (issue_taken_ff),
+        .o_taken_ff                     (shifter_taken_ff),
 
-        .i_und_ff(issue_und_ff),
-        .o_und_ff(shifter_und_ff),
+        .i_und_ff                       (issue_und_ff),
+        .o_und_ff                       (shifter_und_ff),
 
-        .o_nozero_ff(shifter_nozero_ff),
+        .o_nozero_ff                    (shifter_nozero_ff),
 
-        // Inputs.
         .i_clk                          (i_clk), 
         .i_reset                        (reset),
+
         .i_clear_from_writeback         (clear_from_writeback),
-        .i_data_stall                   (o_data_wb_cyc && 
-                                         o_data_wb_stb && 
-                                        !i_data_wb_ack),
+        .i_data_stall                   (data_stall), 
         .i_clear_from_alu               (clear_from_alu),
         .i_condition_code_ff            (issue_condition_code_ff),
         .i_destination_index_ff         (issue_destination_index_ff),
@@ -891,8 +868,6 @@ u_zap_shifter_main
 // ALU STAGE 
 // ===============
 
-wire [64*8-1:0] alu_decompile;
-
 zap_alu_main #(
         .PHY_REGS(PHY_REGS),
         .SHIFT_OPS(SHIFT_OPS),
@@ -900,33 +875,30 @@ zap_alu_main #(
 )
 u_zap_alu_main
 (
-        .i_decompile    (shifter_decompile),
-        .o_decompile    (alu_decompile),
+        .i_decompile                    (shifter_decompile),
+        .o_decompile                    (alu_decompile),
 
-        .i_hijack     (wb_hijack      ),
-        .i_hijack_op1 ( wb_hijack_op1 ),
-        .i_hijack_op2 ( wb_hijack_op2 ),
-        .i_hijack_cin ( wb_hijack_cin ),
-        .o_hijack_sum ( alu_hijack_sum ),
+        .i_hijack                       ( wb_hijack     ),
+        .i_hijack_op1                   ( wb_hijack_op1 ),
+        .i_hijack_op2                   ( wb_hijack_op2 ),
+        .i_hijack_cin                   ( wb_hijack_cin ),
+        .o_hijack_sum                   ( alu_hijack_sum ),
 
-        .i_taken_ff                      (shifter_taken_ff),
-        .o_confirm_from_alu              (confirm_from_alu),
+        .i_taken_ff                     (shifter_taken_ff),
+        .o_confirm_from_alu             (confirm_from_alu),
 
         .i_pc_ff                        (shifter_pc_ff),
 
-        .i_und_ff(shifter_und_ff),
-        .o_und_ff(alu_und_ff),
+        .i_und_ff                       (shifter_und_ff),
+        .o_und_ff                       (alu_und_ff),
 
-        .i_nozero_ff ( shifter_nozero_ff ),
+        .i_nozero_ff                    ( shifter_nozero_ff ),
 
-         .i_clk                          (i_clk),// & i_instr_wb_ack),
+         .i_clk                          (i_clk),
          .i_reset                        (reset),
-         .i_clear_from_writeback         (clear_from_writeback),   // | High Pri
-         .i_data_stall                   (o_data_wb_cyc && 
-                                          o_data_wb_stb && 
-                                          !i_data_wb_ack),         // V Low Pri
-
-         .i_cpsr_nxt                     (cpsr_nxt), // FROM WB
+         .i_clear_from_writeback         (clear_from_writeback),   
+         .i_data_stall                   (data_stall), 
+         .i_cpsr_nxt                     (cpsr_nxt), 
          .i_flag_update_ff               (shifter_flag_update_ff),
          .i_switch_ff                    (shifter_switch_ff),
 
@@ -1014,18 +986,16 @@ u_zap_alu_main
 // MEMORY 
 // ====================
 
-wire [64*8-1:0] memory_decompile; // For debug. Goes to RB DC ip.
-
 zap_memory_main #(
        .PHY_REGS(PHY_REGS) 
 )
 u_zap_memory_main
 (
-        .i_decompile(alu_decompile),
-        .o_decompile(memory_decompile),
+        .i_decompile                    (alu_decompile),
+        .o_decompile                    (memory_decompile),
 
-        .i_und_ff (alu_und_ff),
-        .o_und_ff (memory_und_ff),
+        .i_und_ff                       (alu_und_ff),
+        .o_und_ff                       (memory_und_ff),
 
         .i_mem_address_ff               (alu_address_ff),
 
@@ -1039,8 +1009,7 @@ u_zap_memory_main
         .i_uhalf_ff                     (alu_uhalf_ff),     // Unsigned half word.
         
         .i_clear_from_writeback         (clear_from_writeback),
-        .i_data_stall                   (o_data_wb_cyc && o_data_wb_stb 
-                                                       && !i_data_wb_ack),
+        .i_data_stall                   (data_stall),
         .i_alu_result_ff                (alu_alu_result_ff),
         .i_flags_ff                     (alu_flags_ff), 
         
@@ -1089,8 +1058,6 @@ u_zap_memory_main
         .o_mem_rd_data                 (memory_mem_rd_data)
 );
 
-wire [64*8-1:0] rb_decompile;
-
 // ==================
 // WRITEBACK 
 // ==================
@@ -1110,8 +1077,7 @@ u_zap_writeback
 
         .i_reset                (reset),           // ZAP reset.
         .i_valid                (memory_dav_ff),
-        .i_data_stall           (o_data_wb_cyc && o_data_wb_stb 
-                                               && !i_data_wb_ack),
+        .i_data_stall           (data_stall),
         .i_clear_from_alu       (clear_from_alu),
         .i_pc_from_alu          (pc_from_alu),
         .i_stall_from_decode    (stall_from_decode),
@@ -1123,7 +1089,7 @@ u_zap_writeback
         .i_clear_from_decode    (clear_from_decode),
         .i_pc_from_decode       (pc_from_decode),
 
-        .i_code_stall           ((!o_instr_wb_stb && !o_instr_wb_cyc) || (!i_instr_wb_ack)),
+        .i_code_stall           (code_stall),  
 
         // Used to valid writes on i_wr_index1.
         .i_mem_load_ff          (memory_mem_load_ff), 
@@ -1228,4 +1194,5 @@ endcase
 `endif
 
 endmodule // zap_core.v
+
 `default_nettype wire

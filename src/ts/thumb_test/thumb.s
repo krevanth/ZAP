@@ -1,12 +1,14 @@
 .text
 .global _Reset
+.set SP_INIT, 4000
+.set R0_FINAL_VALUE, 0xFFFFFFFF
 
 _Reset:
-ldr sp, =#4000 
+ldr sp, =SP_INIT
 ldr r0, =myThumbFunction+1
 mov lr, pc
-bx r0
-ldr r0, =#0xFFFFFFFF
+bx r0 // Jump to Thumb code
+ldr r0, =R0_FINAL_VALUE
 here: b here
 
 .thumb_func

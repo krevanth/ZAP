@@ -44,6 +44,12 @@
 `define OPCODE_EXTEND           35      // To differentiate lower and higher -> 
                                         // 1 means higher, 0 lower.
 
+// Instruction fields in CP15 instruction.
+`define opcode_2                7:5        
+`define crm                     3:0
+`define crn                     19:16
+`define cp_id                   11:8
+
 // ----------------------------------------------------------------------------
 
 // Generic defines.

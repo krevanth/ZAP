@@ -29,17 +29,15 @@ module zap_writeback #(
 )
 (
         // Decompile.
-        input   wire    [64*8-1:0]      i_decompile,
-        output  reg     [64*8-1:0]      o_decompile,
+        input   wire    [64*8-1:0]           i_decompile,
+        output  reg     [64*8-1:0]           o_decompile,
 
         // Shelve output.
         output wire                          o_shelve,
 
         // Clock and reset.
         input wire                           i_clk, 
-
-
-        input wire                           i_reset,   // ZAP reset.
+        input wire                           i_reset,   
 
         // Inputs from memory unit valid signal.
         input wire                           i_valid,
@@ -88,12 +86,9 @@ module zap_writeback #(
 
         // Coprocessor.
         input wire                              i_copro_reg_en,
-
         input wire      [$clog2(PHY_REGS)-1:0]  i_copro_reg_wr_index,
         input wire      [$clog2(PHY_REGS)-1:0]  i_copro_reg_rd_index,
-
         input wire      [31:0]                  i_copro_reg_wr_data,
-
         output reg      [31:0]                  o_copro_reg_rd_data_ff,
 
         // Read data from the register file.
@@ -103,11 +98,11 @@ module zap_writeback #(
         output wire     [31:0]               o_rd_data_3,
 
         // Program counter (dedicated port).
-        output reg      [31:0]               o_pc,
-        output reg      [31:0]               o_pc_nxt,
+        output wire     [31:0]               o_pc,
+        output wire     [31:0]               o_pc_nxt,
 
         // CPSR output
-        output reg       [31:0]              o_cpsr_nxt,
+        output wire      [31:0]              o_cpsr_nxt,
 
         // Clear from writeback
         output reg                           o_clear_from_writeback,
@@ -120,47 +115,17 @@ module zap_writeback #(
         input wire     [31:0]                 i_hijack_sum
 );
 
-///////////////////////////////////////////////////////////////////////////////
+`include "zap_defines.vh"
+`include "zap_localparams.vh"
+`include "zap_functions.vh"
 
+// ----------------------------------------------
+// Localparams
+// ----------------------------------------------
 
-`ifndef SYNTHESIS
-
-reg fiq_ack;
-reg irq_ack;
-reg und_ack;
-reg dabt_ack;
-reg iabt_ack;
-reg swi_ack;
-
+`ifndef ARM_MODE
+        `define ARM_MODE (cpsr_ff[T] == 1'd0)
 `endif
-
-// PC and CPSR are separate registers.
-reg     [31:0]  cpsr_ff, cpsr_nxt;
-reg     [31:0]  pc_ff, pc_nxt;
-
-reg [$clog2(PHY_REGS)-1:0]     wa1, wa2;
-reg [31:0]                     wdata1, wdata2;
-reg                            wen;
-
-reg [31:0] pc_shelve_ff, pc_shelve_nxt;
-reg shelve_ff, shelve_nxt;
-
-
-assign o_shelve = shelve_ff;
-
-`ifndef SYNTHESIS
-integer irq_addr = 0;
-`endif
-
-///////////////////////////////////////////////////////////////////////////////
-
-// Coprocessor accesses.
-always @ (posedge i_clk) 
-begin
-        o_copro_reg_rd_data_ff <= i_reset ? 0 : o_rd_data_0;
-end
-
-///////////////////////////////////////////////////////////////////////////////
 
 localparam RST_VECTOR   = 32'h00000000;
 localparam UND_VECTOR   = 32'h00000004;
@@ -170,23 +135,40 @@ localparam DABT_VECTOR  = 32'h00000010;
 localparam IRQ_VECTOR   = 32'h00000018;
 localparam FIQ_VECTOR   = 32'h0000001C;
 
-///////////////////////////////////////////////////////////////////////////////
+// ----------------------------------------------
+// Variables
+// ----------------------------------------------
 
-`include "zap_defines.vh"
-`include "zap_localparams.vh"
-`include "zap_functions.vh"
+`ifndef SYNTHESIS
+        reg fiq_ack;
+        reg irq_ack;
+        reg und_ack;
+        reg dabt_ack;
+        reg iabt_ack;
+        reg swi_ack;
+        integer irq_addr = 0;
+        reg temp_set;
+        reg error;
+        initial error = 0;
+        initial temp_set = 0;
+`endif
 
-///////////////////////////////////////////////////////////////////////////////
+reg     [31:0]                  cpsr_ff, cpsr_nxt;
+reg     [31:0]                  pc_ff, pc_nxt;
+reg [$clog2(PHY_REGS)-1:0]      wa1, wa2;
+reg [31:0]                      wdata1, wdata2;
+reg                             wen;
+reg [31:0]                      pc_shelve_ff, pc_shelve_nxt;
+reg                             shelve_ff, shelve_nxt;
 
-// CPSR dedicated output.
-always @*
-begin
-        o_pc            = pc_ff;
-        o_pc_nxt        = pc_nxt & 32'hfffffffe;
-        o_cpsr_nxt      = cpsr_nxt;
-end
+assign  o_shelve        = shelve_ff; // Shelve the PC until it is needed.
+assign  o_pc            = pc_ff;
+assign  o_pc_nxt        = pc_nxt & 32'hfffffffe;
+assign  o_cpsr_nxt      = cpsr_nxt;
 
-///////////////////////////////////////////////////////////////////////////////
+// ----------------------------------------------
+// Register file
+// ----------------------------------------------
 
 zap_register_file u_zap_register_file
 (
@@ -212,56 +194,45 @@ zap_register_file u_zap_register_file
  .o_rd_data_d    (       o_rd_data_3     )
 );
 
-///////////////////////////////////////////////////////////////////////////////
+// ---------------------------------------------
+// Combinational Logic
+// ---------------------------------------------
 
-`define ARM_MODE (cpsr_ff[T] == 1'd0)
-
-`ifndef SYNTHESIS
-reg temp_set;
-reg error;
-initial error = 0;
-initial temp_set = 0;
-`endif
-
-// The register file function.
-always @*
+always @ (*)
 begin: blk1
 
         integer i;
 
-        shelve_nxt = shelve_ff;
+        shelve_nxt    = shelve_ff;
         pc_shelve_nxt = pc_shelve_ff;
 
-
-
         `ifndef SYNTHESIS
-                fiq_ack = 0;
-                irq_ack = 0;
-                und_ack = 0;
+                fiq_ack  = 0;
+                irq_ack  = 0;
+                und_ack  = 0;
                 dabt_ack = 0;
                 iabt_ack = 0;
-                swi_ack = 0;
+                swi_ack  = 0;
         `endif
 
-        o_hijack    =  0;
+        o_hijack     = 0;
         o_hijack_op1 = 0;
         o_hijack_op2 = 0;
         o_hijack_cin = 0;
 
-        wen = 1'd0;
-        wa1 = PHY_RAZ_REGISTER;
-        wa2 = PHY_RAZ_REGISTER;
-        wdata1 = 32'd0;
-        wdata2 = 32'd0;
+        wen     = 1'd0;
+        wa1     = PHY_RAZ_REGISTER;
+        wa2     = PHY_RAZ_REGISTER;
+        wdata1  = 32'd0;
+        wdata2  = 32'd0;
 
         o_clear_from_writeback = 0;
 
-        pc_nxt = pc_ff;
+        pc_nxt   = pc_ff;
         cpsr_nxt = cpsr_ff;
 
 
-        // PC control sequence.
-
+        // Low priority PC control tree.
 
         if ( i_clear_from_alu )
         begin
@@ -306,7 +277,6 @@ begin: blk1
                 cpsr_nxt[T]      = 1'd0; // Go to ARM mode.
         end
                 
-
         if ( i_data_abt )
         begin
                 o_hijack    =  1'd1;
@@ -316,12 +286,13 @@ begin: blk1
 
                 // Returns do LR - 8 to get back to the same instruction.
                 pc_shelve( DABT_VECTOR ); 
-                wen    = 1;
-                wdata1 = `ARM_MODE ? i_pc_buf_ff : i_hijack_sum[31:0];
-                wa1    = PHY_ABT_R14;
-                wa2    = PHY_ABT_SPSR;
-                wdata2 = cpsr_ff;
-                cpsr_nxt[`CPSR_MODE]  = ABT;
+
+                wen                     = 1;
+                wdata1                  = `ARM_MODE ? i_pc_buf_ff : i_hijack_sum[31:0];
+                wa1                     = PHY_ABT_R14;
+                wa2                     = PHY_ABT_SPSR;
+                wdata2                  = cpsr_ff;
+                cpsr_nxt[`CPSR_MODE]    = ABT;
 
                 `ifndef SYNTHESIS
                         dabt_ack = 1'd1;
@@ -330,15 +301,18 @@ begin: blk1
         end
         else if ( i_fiq )
         begin
+                $display($time, " - %m :: FIQ detected.");
+
                 // Returns do LR - 4 to get back to the same instruction.
                 pc_shelve ( FIQ_VECTOR ); 
-                wen    = 1;
-                wdata1 = `ARM_MODE ? i_wr_data : i_pc_buf_ff ;
-                wa1    = PHY_FIQ_R14;
-                wa2    = PHY_FIQ_SPSR;
-                wdata2 = cpsr_ff;
-                cpsr_nxt[`CPSR_MODE]  = FIQ;
-                cpsr_nxt[F] = 1'd1;
+
+                wen                     = 1;
+                wdata1                  = `ARM_MODE ? i_wr_data : i_pc_buf_ff ;
+                wa1                     = PHY_FIQ_R14;
+                wa2                     = PHY_FIQ_SPSR;
+                wdata2                  = cpsr_ff;
+                cpsr_nxt[`CPSR_MODE]    = FIQ;
+                cpsr_nxt[F]             = 1'd1;
 
                 `ifndef SYNTHESIS
                         fiq_ack = 1'd1;
@@ -346,29 +320,28 @@ begin: blk1
         end
         else if ( i_irq )
         begin
+                $display($time, " - %m :: IRQ detected.");
+
                 pc_shelve (IRQ_VECTOR); 
 
-                wen    = 1;
-                wdata1 = `ARM_MODE ? i_wr_data : i_pc_buf_ff ;
-
-                `ifndef SYNTHESIS
-                irq_addr = wdata1;
-                `endif
-
-                wa1    = PHY_IRQ_R14;
-                wa2    = PHY_IRQ_SPSR;
-                wdata2 = cpsr_ff;
-                cpsr_nxt[`CPSR_MODE]  = IRQ;
+                wen                     = 1;
+                wdata1                  = `ARM_MODE ? i_wr_data : i_pc_buf_ff ;
+                wa1                     = PHY_IRQ_R14;
+                wa2                     = PHY_IRQ_SPSR;
+                wdata2                  = cpsr_ff;
+                cpsr_nxt[`CPSR_MODE]    = IRQ;
                 // Returns do LR - 4 to get back to the same instruction.
 
                 `ifndef SYNTHESIS
-                irq_ack = 1'd1;
+                        irq_addr = wdata1;
+                        irq_ack  = 1'd1;
                 `endif
         end
         else if ( i_instr_abt )
         begin
                 // Returns do LR - 4 to get back to the same instruction.
                 pc_shelve (PABT_VECTOR); 
+
                 wen    = 1;
                 wdata1 = `ARM_MODE ? i_wr_data : i_pc_buf_ff ;
                 wa1    = PHY_ABT_R14;
@@ -384,12 +357,13 @@ begin: blk1
         begin
                 // Returns do LR to return to the next instruction.
                 pc_shelve(SWI_VECTOR); 
-                wen    = 1;
-                wdata1 = `ARM_MODE ? i_wr_data : i_pc_buf_ff ;
-                wa1    = PHY_SVC_R14;
-                wa2    = PHY_SVC_SPSR;
-                wdata2 = cpsr_ff;
-                cpsr_nxt[`CPSR_MODE]  = SVC;
+
+                wen                     = 1;
+                wdata1                  = `ARM_MODE ? i_wr_data : i_pc_buf_ff ;
+                wa1                     = PHY_SVC_R14;
+                wa2                     = PHY_SVC_SPSR;
+                wdata2                  = cpsr_ff;
+                cpsr_nxt[`CPSR_MODE]    = SVC;
 
                 `ifndef SYNTHESIS
                         swi_ack = 1'd1;
@@ -399,12 +373,13 @@ begin: blk1
         begin
                 // Returns do LR to return to the next instruction.
                 pc_shelve(UND_VECTOR); 
-                wen    = 1;
-                wdata1 = `ARM_MODE ? i_wr_data : i_pc_buf_ff ;
-                wa1    = PHY_UND_R14;
-                wa2    = PHY_UND_SPSR;
-                wdata2 = cpsr_ff;
-                cpsr_nxt[`CPSR_MODE]  = UND;
+
+                wen                     = 1;
+                wdata1                  = `ARM_MODE ? i_wr_data : i_pc_buf_ff ;
+                wa1                     = PHY_UND_R14;
+                wa2                     = PHY_UND_SPSR;
+                wdata2                  = cpsr_ff;
+                cpsr_nxt[`CPSR_MODE]    = UND;
 
                 `ifndef SYNTHESIS
                         und_ack = 1'd1;
@@ -412,12 +387,12 @@ begin: blk1
         end
         else if ( i_copro_reg_en )
         begin
-               // Write to register.
+               // Write to register (Coprocessor command).
                wen      = 1;
                wa1      = i_copro_reg_wr_index;
                wdata1   = i_copro_reg_wr_data;
         end
-        else if ( i_valid )
+        else if ( i_valid ) // If valid,
         begin
                 // Only then execute the instruction at hand...
                 cpsr_nxt                =   i_flags;
@@ -436,17 +411,22 @@ begin: blk1
                 // Load to PC will trigger from writeback.
                 if ( i_mem_load_ff && i_wr_index_1 == ARCH_PC)
                 begin
+                        $display($time, " - %m :: Detected load to PC. Trigger a writeback.");
+
                         pc_shelve (i_wr_data_1);
                         o_clear_from_writeback  = 1'd1;
                 end
         end
 
+        // Ensure lower 2 bits of PC are always tied to VSS.
         pc_nxt = pc_nxt & 32'hffff_fffe;
 end
 
-///////////////////////////////////////////////////////////////////////////////
+// ----------------------------------------------
+// Sequential Logic
+// ----------------------------------------------
 
-always @ (posedge i_clk)
+always @ ( posedge i_clk )
 begin
         if ( i_reset )
         begin
@@ -461,15 +441,18 @@ begin
         end
         else
         begin
-                shelve_ff    <= shelve_nxt;
-                pc_shelve_ff <= pc_shelve_nxt;
-                pc_ff        <= pc_nxt;
-                cpsr_ff      <= cpsr_nxt;
-                o_decompile  <= i_decompile;
+                shelve_ff                 <= shelve_nxt;
+                pc_shelve_ff              <= pc_shelve_nxt;
+                pc_ff                     <= pc_nxt;
+                cpsr_ff                   <= cpsr_nxt;
+                o_decompile               <= i_decompile;
+                o_copro_reg_rd_data_ff    <= o_rd_data_0;
         end
 end
 
-///////////////////////////////////////////////////////////////////////////////
+// ----------------------------------------------
+// Tasks
+// ----------------------------------------------
 
 task pc_shelve (input [31:0] new_pc);
 begin
@@ -489,26 +472,26 @@ endtask
 
 `ifndef SYNTHESIS
 
-always @*
-if ( cpsr_nxt[`CPSR_MODE] != USR && cpsr_ff[`CPSR_MODE] == USR )
-begin
-        if ( 
-                i_data_abt      || 
-                i_fiq           || 
-                i_irq           || 
-                i_instr_abt     || 
-                i_swi           ||
-                i_und
-         )
+        always @ (*)
+        if ( cpsr_nxt[`CPSR_MODE] != USR && cpsr_ff[`CPSR_MODE] == USR )
         begin
-                // OKAY...
+                if ( 
+                        i_data_abt      || 
+                        i_fiq           || 
+                        i_irq           || 
+                        i_instr_abt     || 
+                        i_swi           ||
+                        i_und
+                 )
+                begin
+                        // OKAY...
+                end
+                else
+                begin
+                        $display($time, "Error : %m CPU is changing out of USR mode without an exception...");
+                        $stop;
+                end
         end
-        else
-        begin
-                $display($time, "Error : %m CPU is changing out of USR mode without an exception...");
-                $stop;
-        end
-end
 
 `endif
 

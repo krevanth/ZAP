@@ -186,9 +186,7 @@ begin
                         if ( I_WB_CTI == CTI_BURST ) // Burst of 4 words. Each word is 4 byte.
                         begin
                                 state_nxt = PRPR_RD_BURST;
-                                //state_nxt = PRPR_RD_SINGLE; //PRPR_RD_BURST;
-                                $display("Read burst requested! Address base = %x", I_WB_ADR);
-                                //$stop;
+                                $display($time, " - %m :: Read burst requested. Base address = %x", I_WB_ADR);
                         end
                         else // Single.
                         begin
@@ -216,8 +214,7 @@ begin
                 if ( O_WB_ACK )
                 begin
                         dnxt = dff + 1'd1;
-                        $display($time, "EARLY ACK READ BURST. DATA IS %x", O_WB_DAT);
-                        //$stop;
+                        $display($time, " - %m :: Early response received for read burst. Data received %x", O_WB_DAT);
                 end
 
                 if ( ctr_ff == BURST_LEN * 4 )
@@ -238,8 +235,8 @@ begin
                                                 1'd0 };
                         ctr_nxt = ctr_ff + 4;
 
-                        $display($time, "READ_BURST :: Writing data SEL = %x DATA = %x ADDR = %x EOB = %x WEN = %x to the FIFO", fsm_write_data[69:66], fsm_write_data[65:34], fsm_write_data[33:2], fsm_write_data[1], fsm_write_data[0]);
-                        //$stop;
+                        $display($time, " - %m :: Read Burst. Writing data SEL = %x DATA = %x ADDR = %x EOB = %x WEN = %x to the FIFO", 
+                        fsm_write_data[69:66], fsm_write_data[65:34], fsm_write_data[33:2], fsm_write_data[1], fsm_write_data[0]);
                 end                
         end
 
@@ -274,8 +271,7 @@ begin
                 if ( O_WB_ACK )
                 begin
                         dnxt = dff + 1;
-                        $display("READ BURST! ACK sent. Data provided is %x", O_WB_DAT);
-                        //$stop;
+                        $display($time, " - %m :: Read Burst. ACK sent. Data provided is %x", O_WB_DAT);
                 end
 
                 if ( dff == BURST_LEN && !o_wb_stb )

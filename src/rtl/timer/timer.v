@@ -22,19 +22,27 @@
 // -- 02110-1301, USA.                                                        --
 // --                                                                         --
 // -----------------------------------------------------------------------------
+//                                                                            --
+// This is a Wishbone timer peripheral with simple controls.                  --
+//                                                                            --
+// Registers:
+// 0x0 (DEVEN) - 0x1 to enable the timer unit. 0x0 to disable the unit.       --
+// 0x4 (DEVPR) - Timer length in number of Wishbone clocks.                   --
+// 0x8 (DEVAK) - Write: 0x1 to acknowledge interrupt. Read: 0x1 reveals timer --
+//               interrupt occured.                                           --
+// 0xC (DEVST) - 0x1 to start the timer. Write only. Always reads 0x0.        --
+//                                                                            --
+// ------------------------------------------------------------------------------
 
+module timer #(
 
-//
-// A testbench model of a wishbone timer peripheral.
-//
-// Local addresses:
-// 0x0 (DEVEN) - 0x1 to enable the timer unit. 0x0 to disable the unit.
-// 0x4 (DEVPR) - Timer length in number of Wishbone clocks.
-// 0x8 (DEVAK) - Write: 0x1 to acknowledge interrupt. Read: 0x1 reveals timer interrupt occured.
-// 0xC (DEVST) - 0x1 to start the timer. Write only. Always reads 0x0.
-//
+        // Register addresses.
+        parameter       [31:0]  TIMER_ENABLE_REGISTER = 32'h0,
+        parameter       [31:0]  TIMER_LIMIT_REGISTER  = 32'h4,
+        parameter       [31:0]  TIMER_INTACK_REGISTER = 32'h8,
+        parameter       [31:0]  TIMER_START_REGISTER  = 32'hC
 
-module timer (
+) (
 
 // Clock and reset.
 input wire                  i_clk,
@@ -52,22 +60,22 @@ output reg                  o_wb_ack,
 
 
 // Interrupt output. Level interrupt.
-output  reg             o_irq
+output  reg                 o_irq
 
 );
 
 // Timer registers.
-reg [31:0] DEVEN;  // 0x0
-reg [31:0] DEVPR;  // 0x4
-reg [31:0] DEVAK;  // 0x8
-reg [31:0] DEVST;  // 0xC
+reg [31:0] DEVEN;  
+reg [31:0] DEVPR;  
+reg [31:0] DEVAK;  
+reg [31:0] DEVST;  
 
-`ifndef TB_TIMER
-`define TB_TIMER
-        `define DEVEN 32'h0
-        `define DEVPR 32'h4
-        `define DEVAK 32'h8
-        `define DEVST 32'hC
+`ifndef ZAP_SOC_TIMER
+`define ZAP_SOC_TIMER
+        `define DEVEN TIMER_ENABLE_REGISTER
+        `define DEVPR TIMER_LIMIT_REGISTER
+        `define DEVAK TIMER_INTACK_REGISTER
+        `define DEVST TIMER_START_REGISTER
 `endif
 
 // Timer core.
@@ -88,11 +96,12 @@ localparam WBIDLE       = 0;
 localparam WBREAD       = 1;
 localparam WBWRITE      = 2;
 localparam WBACK        = 3;
+localparam WBDONE       = 4;
 
-always @*
+always @ (*)
         o_irq    = done;
 
-always @*
+always @ (*)
 begin
         start    = DEVST[0];
         enable   = DEVEN[0];
@@ -100,7 +109,7 @@ begin
         clr      = DEVAK[0];
 end
 
-always @ (posedge i_clk)
+always @ ( posedge i_clk )
 begin
         DEVST <= 0;
 
@@ -110,7 +119,7 @@ begin
                 DEVPR <= 0;
                 DEVAK <= 0;
                 DEVST <= 0;
-                wbstate <= WBIDLE;
+                wbstate  <= WBIDLE;
                 o_wb_dat <= 0;
                 o_wb_ack <= 0;
         end
@@ -135,7 +144,7 @@ begin
                                 case(i_wb_adr)
                                 `DEVEN: // DEVEN
                                 begin
-                                        $display($time, " - %m --> Writing register DEVEN...");
+                                        $display($time, " - %m :: Writing register DEVEN...");
                                         if ( i_wb_sel[0] ) DEVEN[7:0]   <= i_wb_dat >> 0; 
                                         if ( i_wb_sel[1] ) DEVEN[15:8]  <= i_wb_dat >> 8; 
                                         if ( i_wb_sel[2] ) DEVEN[23:16] <= i_wb_dat >> 16; 
@@ -144,7 +153,7 @@ begin
 
                                 `DEVPR: // DEVPR
                                 begin
-                                        $display($time, " - %m --> Writing register DEVPR...");
+                                        $display($time, " - %m :: Writing register DEVPR...");
                                         if ( i_wb_sel[0] ) DEVPR[7:0]   <= i_wb_dat >> 0; 
                                         if ( i_wb_sel[1] ) DEVPR[15:8]  <= i_wb_dat >> 8; 
                                         if ( i_wb_sel[2] ) DEVPR[23:16] <= i_wb_dat >> 16; 
@@ -154,7 +163,7 @@ begin
 
                                 `DEVAK: // DEVAK
                                 begin
-                                        $display($time, " - %m --> Writing register DEVAK...");
+                                        $display($time, " - %m :: Writing register DEVAK...");
                                         if ( i_wb_sel[0] ) DEVPR[7:0]   <= i_wb_dat >> 0; 
                                         if ( i_wb_sel[1] ) DEVPR[15:8]  <= i_wb_dat >> 8; 
                                         if ( i_wb_sel[2] ) DEVPR[23:16] <= i_wb_dat >> 16; 
@@ -163,7 +172,7 @@ begin
 
                                 `DEVST: // DEVST
                                 begin
-                                        $display($time, " - %m --> Writing register DEVST...");
+                                        $display($time, " - %m :: Writing register DEVST...");
                                         if ( i_wb_sel[0] ) DEVST[7:0]   <= i_wb_dat >> 0; 
                                         if ( i_wb_sel[1] ) DEVST[15:8]  <= i_wb_dat >> 8; 
                                         if ( i_wb_sel[2] ) DEVST[23:16] <= i_wb_dat >> 16; 
@@ -189,8 +198,14 @@ begin
 
                         WBACK:
                         begin
-                                o_wb_ack <= 1'd1;
-                                wbstate    <= WBIDLE;
+                                o_wb_ack   <= 1'd1;
+                                wbstate    <= WBDONE;
+                        end
+
+                        WBDONE:
+                        begin
+                                o_wb_ack  <= 1'd0;
+                                wbstate   <= IDLE;
                         end
                 endcase                
         end
@@ -211,7 +226,7 @@ begin
                 begin
                         if ( start ) 
                         begin
-                                $display($time,": Timer started counting...");
+                                $display($time," - %m :: Timer started counting...");
                                 state <= COUNTING;
                         end
                 end
@@ -222,7 +237,7 @@ begin
 
                         if ( ctr == finalval ) 
                         begin
-                                $display($time, ": Timer done counting...");
+                                $display($time, " - %m :: Timer done counting...");
                                 state <= DONE;
                         end                                
                 end
@@ -233,14 +248,14 @@ begin
 
                         if ( start ) 
                         begin
-                                $display($time, ": Timer got START from DONE state...");
+                                $display($time, " - %m :: Timer got START from DONE state...");
                                 done  <= 0;
                                 state <= COUNTING;
                                 ctr   <= 0;
                         end
                         else if ( clr ) // Acknowledge. 
                         begin
-                                $display($time, ": Timer got done in ACK state...");
+                                $display($time, " - %m :: Timer got done in ACK state...");
                                 done  <= 0;
                                 state <= IDLE;
                                 ctr   <= 0;

@@ -32,8 +32,14 @@
 `include "zap_defines.vh"
 
 module zap_cache_fsm   #(
-parameter CACHE_SIZE    = 1024  // Bytes.
-) /* Port List */       (
+        parameter CACHE_SIZE    = 1024  // Bytes.
+) 
+
+// ---------------------------------------------- 
+//  Port List 
+// ----------------------------------------------        
+
+(
 
 /* Clock and reset */
 input   wire                      i_clk,
@@ -99,13 +105,13 @@ input   wire    [31:0]  i_wb_dat
 
 );
 
+// -------------------------------------------------------------
+// Includes and Localparams
+// -------------------------------------------------------------
+
 `include "zap_localparams.vh"
 `include "zap_defines.vh"
 `include "zap_functions.vh"
-
-/* Signal aliases */
-wire cache_cmp   = (i_cache_tag[`CACHE_TAG__TAG] == i_address[`VA__CACHE_TAG]);
-wire cache_dirty = i_cache_tag_dirty;
 
 /* States */
 localparam IDLE                 = 0; /* Resting state. */
@@ -116,39 +122,53 @@ localparam FETCH_SINGLE         = 4; /* Ultimately validates cache line. Parent 
 localparam REFRESH              = 5; /* Cache refresh parent state */
 localparam INVALIDATE           = 6; /* Cache invalidate parent state */
 localparam CLEAN                = 7; /* Cache clean parent state */
-
 localparam NUMBER_OF_STATES     = 8; 
 
-/* Flops */
-reg [$clog2(NUMBER_OF_STATES)-1:0] state_ff, state_nxt;
-reg [31:0] buf_ff [3:0];
-reg [31:0] buf_nxt[3:0];
-reg cache_clean_req_nxt, cache_clean_req_ff;
-reg cache_inv_req_nxt, cache_inv_req_ff;
+// ---------------------------------------------------------------
+// Signal aliases   
+// ---------------------------------------------------------------
 
-/* Address Counter */
-reg [2:0] adr_ctr_ff, adr_ctr_nxt; // Needs to take on 0,1,2,3 AND 4(nxt).
+wire cache_cmp   = (i_cache_tag[`CACHE_TAG__TAG] == i_address[`VA__CACHE_TAG]);
+wire cache_dirty = i_cache_tag_dirty;
 
-reg hit; // debug.
+// ---------------------------------------------------------------
+// Variables
+// ---------------------------------------------------------------
 
+reg [$clog2(NUMBER_OF_STATES)-1:0]      state_ff, state_nxt;
+reg [31:0]                              buf_ff [3:0];
+reg [31:0]                              buf_nxt[3:0];
+reg                                     cache_clean_req_nxt, 
+                                        cache_clean_req_ff;
+reg                                     cache_inv_req_nxt, 
+                                        cache_inv_req_ff;
+reg [2:0]                               adr_ctr_ff, adr_ctr_nxt; // Needs to take on 0,1,2,3 AND 4(nxt).
+reg                                     hit;                     // For debug only.
+
+// ----------------------------------------------------------------
+// Logic
+// ----------------------------------------------------------------
+
+/* Tie flops to the output */
 always @* o_cache_clean_req = cache_clean_req_ff; // Tie req flop to output.
-always @* o_cache_inv_req = cache_inv_req_ff;
+always @* o_cache_inv_req = cache_inv_req_ff;     // Tie inv flop to output.
 
+/* Sequential Block */
 always @ (posedge i_clk)
 begin
         if ( i_reset )
         begin
-                o_wb_cyc_ff <= 0;
-                o_wb_stb_ff <= 0;
-                o_wb_wen_ff <= 0;
-                o_wb_sel_ff <= 0;
-                o_wb_dat_ff <= 0;
-                o_wb_cti_ff <= CTI_CLASSIC;
-                o_wb_adr_ff <= 0;
-                cache_clean_req_ff <= 0;
-                cache_inv_req_ff <= 0;
-                adr_ctr_ff <= 0;
-                state_ff   <= IDLE;
+                o_wb_cyc_ff             <= 0;
+                o_wb_stb_ff             <= 0;
+                o_wb_wen_ff             <= 0;
+                o_wb_sel_ff             <= 0;
+                o_wb_dat_ff             <= 0;
+                o_wb_cti_ff             <= CTI_CLASSIC;
+                o_wb_adr_ff             <= 0;
+                cache_clean_req_ff      <= 0;
+                cache_inv_req_ff        <= 0;
+                adr_ctr_ff              <= 0;
+                state_ff                <= IDLE;
         end
         else
         begin
@@ -170,6 +190,7 @@ begin
         end
 end
 
+/* Combo block */
 always @*
 begin
         /* Default values */
@@ -184,23 +205,23 @@ begin
         o_wb_sel_nxt            = o_wb_sel_ff;
         cache_clean_req_nxt     = cache_clean_req_ff;
         cache_inv_req_nxt       = cache_clean_req_ff;
-        o_fsr = 0;
-        o_far = 0;
-        o_cache_tag = 0;
-        o_cache_inv_done = 0;
-        o_cache_clean_done = 0;
-        o_cache_tag_dirty = 0;
-        o_cache_tag_wr_en = 0;
-        o_cache_line = 0;
-        o_cache_line_ben = 0;
-        o_dat = 0;
-        o_ack = 0;
-        o_err = 0;
-        buf_nxt[0] = buf_ff[0];
-        buf_nxt[1] = buf_ff[1];
-        buf_nxt[2] = buf_ff[2];       
-        buf_nxt[3] = buf_ff[3];
-        hit = 0;
+        o_fsr                   = 0;
+        o_far                   = 0;
+        o_cache_tag             = 0;
+        o_cache_inv_done        = 0;
+        o_cache_clean_done      = 0;
+        o_cache_tag_dirty       = 0;
+        o_cache_tag_wr_en       = 0;
+        o_cache_line            = 0;
+        o_cache_line_ben        = 0;
+        o_dat                   = 0;
+        o_ack                   = 0;
+        o_err                   = 0;
+        buf_nxt[0]              = buf_ff[0];
+        buf_nxt[1]              = buf_ff[1];
+        buf_nxt[2]              = buf_ff[2];       
+        buf_nxt[3]              = buf_ff[3];
+        hit                     = 0;
  
         case(state_ff)
 
@@ -448,6 +469,10 @@ begin
         endcase
 end
 
+// ------------------------------------------------------------------------
+// Tasks and functions.
+// ------------------------------------------------------------------------
+
 function [31:0] adapt_cache_data 
 (input [1:0] shift, input [127:0] cd);
 begin: blk1
@@ -473,8 +498,6 @@ begin
 end
 endfunction
 
-// ----------------------------------------------------------------------------
-
 /* Function to generate Wishbone read signals. */
 task  wb_prpr_read;
 input [31:0] i_address;
@@ -491,8 +514,6 @@ begin
         o_wb_dat_nxt = 0;
 end
 endtask
-
-// ----------------------------------------------------------------------------
 
 /* Function to generate Wishbone write signals */
 task  wb_prpr_write;
@@ -513,8 +534,6 @@ begin
 end
 endtask
 
-// ----------------------------------------------------------------------------
-
 /* Disables Wishbone */
 task  kill_access;
 begin
@@ -531,10 +550,13 @@ endtask
 // ----------------------------------------------------------------------------
 
 // synopsys translate_off
+ 
 wire [31:0] buf0_ff, buf1_ff, buf2_ff;
+
 assign buf0_ff = buf_ff[0];
 assign buf1_ff = buf_ff[1];
 assign buf2_ff = buf_ff[2];
+
 wire [31:0] buf3_ff = buf_ff[3];
 wire [31:0] buf0_nxt = buf_nxt[0];
 wire [31:0] buf1_nxt = buf_nxt[1];
@@ -548,5 +570,6 @@ wire [31:0] dbg_ct_pa    = o_cache_tag[`CACHE_TAG__PA];
 
 // synopsys translate_on
 
-endmodule
+endmodule // zap_cache_fsm
+
 `default_nettype wire

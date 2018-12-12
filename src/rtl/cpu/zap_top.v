@@ -31,7 +31,10 @@
 
 module zap_top #(
 
-// Enable cache and MMU.
+// -----------------------------------
+// BP entries, FIFO depths
+// -----------------------------------
+
 parameter               BP_ENTRIES              = 1024, // Predictor depth.
 parameter               FIFO_DEPTH              = 4,    // FIFO depth.
 parameter               STORE_BUFFER_DEPTH      = 16,   // Depth of the store buffer.
@@ -53,20 +56,26 @@ parameter [31:0] CODE_SPAGE_TLB_ENTRIES   =  32'd16,   // Small page TLB entries
 parameter [31:0] CODE_CACHE_SIZE          =  32'd1024  // Cache size in bytes.
 
 )(
-        // Clock. CPU uses posedge synchronous design.
-        input   wire            i_clk,
+        // --------------------------------------
+        // Clock and reset
+        // --------------------------------------
 
-        // Active high and synchronous. Must be clean and synchronous.
+        input   wire            i_clk,
         input   wire            i_reset,
 
+        // ---------------------------------------
         // Interrupts. 
-        // Both of them are active high and level trigerred.
+        // Both of them are active high and level 
+        // trigerred.
+        // ---------------------------------------
+
         input   wire            i_irq,
         input   wire            i_fiq,
 
         // ---------------------
         // Wishbone interface.
         // ---------------------
+
         output  wire            o_wb_cyc,
         output  wire            o_wb_stb,
         output  wire [31:0]     o_wb_adr,
@@ -87,52 +96,46 @@ localparam COMPRESSED_EN = 1'd1;
 `include "zap_localparams.vh"
 `include "zap_functions.vh"
 
-wire wb_cyc, wb_stb, wb_we;
-wire [3:0] wb_sel;
-wire [31:0] wb_dat, wb_idat;
-wire [31:0] wb_adr;
-wire [2:0] wb_cti;
-wire wb_ack;
+wire            wb_cyc, wb_stb, wb_we;
+wire [3:0]      wb_sel;
+wire [31:0]     wb_dat, wb_idat;
+wire [31:0]     wb_adr;
+wire [2:0]      wb_cti;
+wire            wb_ack;
+reg             reset;      
 
-reg reset;       // Drives global reset throughout the CPU.
-
-//
-// Reset synchrnonizer is assumed to be external to the CPU.
-// * EXTERNAL RESET MUST BE CLEAN AND SYNCHRONOUS *
-//
+// Synchronous reset signal flopped.
 always @ (posedge i_clk)
-begin
         reset    <= i_reset;
-end
 
-wire cpu_mmu_en;
-wire [31:0] cpu_cpsr;
-wire cpu_mem_translate;
+wire            cpu_mmu_en;
+wire [31:0]     cpu_cpsr;
+wire            cpu_mem_translate;
 
-wire [31:0] cpu_daddr, cpu_daddr_nxt;
-wire [31:0] cpu_iaddr, cpu_iaddr_nxt;
+wire [31:0]     cpu_daddr, cpu_daddr_nxt;
+wire [31:0]     cpu_iaddr, cpu_iaddr_nxt;
 
-wire [7:0] dc_fsr;
-wire [31:0] dc_far;
+wire [7:0]      dc_fsr;
+wire [31:0]     dc_far;
 
-wire cpu_dc_en, cpu_ic_en;
+wire            cpu_dc_en, cpu_ic_en;
 
-wire [1:0] cpu_sr;
-wire [31:0] cpu_baddr, cpu_dac_reg;
+wire [1:0]      cpu_sr;
+wire [31:0]     cpu_baddr, cpu_dac_reg;
 
-wire cpu_dc_inv, cpu_ic_inv;
-wire cpu_dc_clean, cpu_ic_clean;
+wire            cpu_dc_inv, cpu_ic_inv;
+wire            cpu_dc_clean, cpu_ic_clean;
 
-wire dc_inv_done, ic_inv_done, dc_clean_done, ic_clean_done;
+wire            dc_inv_done, ic_inv_done, dc_clean_done, ic_clean_done;
 
-wire cpu_dtlb_inv, cpu_itlb_inv;
+wire            cpu_dtlb_inv, cpu_itlb_inv;
 
-wire data_ack, data_err, instr_ack, instr_err;
+wire            data_ack, data_err, instr_ack, instr_err;
 
-wire [31:0] ic_data, dc_data, cpu_dc_dat;
-wire cpu_instr_stb;
-wire cpu_dc_we, cpu_dc_stb;
-wire [3:0] cpu_dc_sel;
+wire [31:0]     ic_data, dc_data, cpu_dc_dat;
+wire            cpu_instr_stb;
+wire            cpu_dc_we, cpu_dc_stb;
+wire [3:0]      cpu_dc_sel;
 
 wire            c_wb_stb;
 wire            c_wb_cyc;
@@ -212,16 +215,8 @@ zap_core #(
 .o_dcache_en            (cpu_dc_en),
 .o_icache_en            (cpu_ic_en),
 
-// Combo Outputs - UNUSED.
-.o_clear_from_alu       (),
-.o_stall_from_shifter   (),
-.o_stall_from_issue     (),
-.o_stall_from_decode    (),
-.o_clear_from_decode    (),
-.o_clear_from_writeback (),
-
 // Data IF nxt.
-.o_data_wb_adr_nxt     (cpu_daddr_nxt), // Data addr nxt. Used to drive address of data tag RAM.
+.o_data_wb_adr_nxt      (cpu_daddr_nxt), // Data addr nxt. Used to drive address of data tag RAM.
 .o_data_wb_we_nxt       (),
 .o_data_wb_cyc_nxt      (),
 .o_data_wb_stb_nxt      (), 
@@ -236,56 +231,57 @@ zap_core #(
 
 );
 
-zap_cache #(.CACHE_SIZE(DATA_CACHE_SIZE), 
-.SPAGE_TLB_ENTRIES(DATA_SPAGE_TLB_ENTRIES), 
-.LPAGE_TLB_ENTRIES(DATA_LPAGE_TLB_ENTRIES), 
-.SECTION_TLB_ENTRIES(DATA_SECTION_TLB_ENTRIES)) 
+zap_cache #(
+        .CACHE_SIZE(DATA_CACHE_SIZE), 
+        .SPAGE_TLB_ENTRIES(DATA_SPAGE_TLB_ENTRIES), 
+        .LPAGE_TLB_ENTRIES(DATA_LPAGE_TLB_ENTRIES), 
+        .SECTION_TLB_ENTRIES(DATA_SECTION_TLB_ENTRIES)) 
 u_data_cache (
-.i_clk          (i_clk),
-.i_reset        (reset),
-.i_address      (cpu_daddr),
-.i_address_nxt  (cpu_daddr_nxt),
+.i_clk                  (i_clk),
+.i_reset                (reset),
+.i_address              (cpu_daddr),
+.i_address_nxt          (cpu_daddr_nxt),
 
-.i_rd           (!cpu_dc_we && cpu_dc_stb),
-.i_wr           (cpu_dc_we),
-.i_ben          (cpu_dc_sel),
-.i_dat          (cpu_dc_dat),
-.o_dat          (dc_data),
-.o_ack          (data_ack),
-.o_err          (data_err),
+.i_rd                   (!cpu_dc_we && cpu_dc_stb),
+.i_wr                   (cpu_dc_we),
+.i_ben                  (cpu_dc_sel),
+.i_dat                  (cpu_dc_dat),
+.o_dat                  (dc_data),
+.o_ack                  (data_ack),
+.o_err                  (data_err),
 
-.o_fsr          (dc_fsr),
-.o_far          (dc_far),
-.i_mmu_en       (cpu_mmu_en),
-.i_cache_en     (cpu_dc_en),
+.o_fsr                  (dc_fsr),
+.o_far                  (dc_far),
+.i_mmu_en               (cpu_mmu_en),
+.i_cache_en             (cpu_dc_en),
 .i_cache_inv_req        (cpu_dc_inv),
 .i_cache_clean_req      (cpu_dc_clean),
 .o_cache_inv_done       (dc_inv_done),
 .o_cache_clean_done     (dc_clean_done),
-.i_cpsr         (cpu_mem_translate ? USR : cpu_cpsr),
-.i_sr           (cpu_sr),
-.i_baddr        (cpu_baddr),
-.i_dac_reg      (cpu_dac_reg),
-.i_tlb_inv      (cpu_dtlb_inv),
+.i_cpsr                 (cpu_mem_translate ? USR : cpu_cpsr),
+.i_sr                   (cpu_sr),
+.i_baddr                (cpu_baddr),
+.i_dac_reg              (cpu_dac_reg),
+.i_tlb_inv              (cpu_dtlb_inv),
 
-.o_wb_stb       (),
-.o_wb_cyc       (),
-.o_wb_wen       (),
-.o_wb_sel       (),
-.o_wb_dat       (),
-.o_wb_adr       (),
-.o_wb_cti       (),
+.o_wb_stb               (),
+.o_wb_cyc               (),
+.o_wb_wen               (),
+.o_wb_sel               (),
+.o_wb_dat               (),
+.o_wb_adr               (),
+.o_wb_cti               (),
 
-.i_wb_dat       (wb_dat),
-.i_wb_ack       (d_wb_ack),
+.i_wb_dat               (wb_dat),
+.i_wb_ack               (d_wb_ack),
 
-.o_wb_stb_nxt   (d_wb_stb),
-.o_wb_cyc_nxt   (d_wb_cyc),
-.o_wb_wen_nxt   (d_wb_wen),
-.o_wb_sel_nxt   (d_wb_sel),
-.o_wb_dat_nxt   (d_wb_dat),
-.o_wb_adr_nxt   (d_wb_adr),
-.o_wb_cti_nxt   (d_wb_cti)
+.o_wb_stb_nxt           (d_wb_stb),
+.o_wb_cyc_nxt           (d_wb_cyc),
+.o_wb_wen_nxt           (d_wb_wen),
+.o_wb_sel_nxt           (d_wb_sel),
+.o_wb_dat_nxt           (d_wb_dat),
+.o_wb_adr_nxt           (d_wb_adr),
+.o_wb_cti_nxt           (d_wb_cti)
 );
 
 zap_cache #(
@@ -307,8 +303,8 @@ u_code_cache (
 .o_ack             (instr_ack),
 .o_err             (instr_err),
 
-.o_fsr(), // UNCONNO.
-.o_far(), // UNCONNO.
+.o_fsr             (), 
+.o_far             (), 
 .i_mmu_en          (cpu_mmu_en),
 .i_cache_en        (cpu_ic_en),
 .i_cache_inv_req   (cpu_ic_inv),
@@ -401,4 +397,5 @@ zap_wb_adapter #(.DEPTH(STORE_BUFFER_DEPTH)) u_zap_wb_adapter (
 );
 
 endmodule // zap_top.v
+
 `default_nettype wire

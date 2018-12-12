@@ -1,1 +1,0 @@
-This test displays a string to the TB UART output console.

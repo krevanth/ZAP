@@ -2,5 +2,6 @@ This test mainly runs a program to find factorial of 5 and write
 the value 3.14 to a memory location. This setup uses the MMU but is set up for 
 identity mapping using sections. IRQs are generated using the timer in the
 testbench. At the end an SWI is called which performs a bunch of multiplications 
-and serial load/store. 
+and serial load/store. FIQs are enabled in testbench to be periodically generated
+every 256 clock cycles. 
 

@@ -95,7 +95,7 @@ reg sleep_ff;
 wire [1:0] taken_v;
 
 // Predict non branches as not taken...
-assign o_taken_ff = i_instruction[28:26] == 3'b101 ? taken_v : SNT;
+assign o_taken_ff = o_instruction[28:26] == 3'b101 ? taken_v : SNT;
 
 // ----------------------------------------------------------------------------
 
@@ -196,7 +196,7 @@ always @ (negedge i_clk)
 begin
         if ( i_pc_ff[0] != 1'd0 ) 
         begin
-                $display($time, ": Error: PC LSB isn't zero. This is not legal! (Module_Src = %m)");
+                $display($time, " - %m :: Error: PC LSB isn't zero. This is not legal...");
                 $finish;
         end
 end

@@ -36,11 +36,9 @@
 .PHONY: c2asm
 .PHONY: compiler
 .PHONY: dirs
-.PHONY: cleanall
 
 ARCH         := armv5t
 TC           := $(shell basename `pwd`)
-GCC_PATH     := ../../../obj/gcc-arm-none-eabi-*/bin/
 SCRIPT_PATH  := ../../scripts/
 C_FILES      := $(wildcard *.c)
 S_FILES      := $(wildcard *.s)
@@ -48,15 +46,14 @@ H_FILES      := $(wildcard *.h)
 LD_FILE      := $(wildcard *.ld)
 COBJFILES    := $(patsubst %.c,../../../obj/ts/$(TC)/%_c.o,$(C_FILES))
 AOBJFILES    := $(patsubst %.s,../../../obj/ts/$(TC)/%_s.o,$(S_FILES))
-GCC_SRC      := ../../../sw/gcc-arm-none-eabi-*-linux.tar.*
 CFLAGS       := -c -msoft-float -mfloat-abi=soft -march=$(ARCH) -g 
 SFLAGS       := -march=$(ARCH) -g
 LFLAGS       := -T
 OFLAGS       := -O binary
-CC           := $(GCC_PATH)/arm-none-eabi-gcc
-AS           := $(GCC_PATH)/arm-none-eabi-as
-LD           := $(GCC_PATH)/arm-none-eabi-ld
-OB           := $(GCC_PATH)/arm-none-eabi-objcopy
+CC           := arm-none-eabi-gcc
+AS           := arm-none-eabi-as
+LD           := arm-none-eabi-ld
+OB           := arm-none-eabi-objcopy
 
 # This rule will convert every ASM to file its corresponding object file.
 ../../../obj/ts/$(TC)/%_s.o: %.s
@@ -82,27 +79,18 @@ OB           := $(GCC_PATH)/arm-none-eabi-objcopy
 all: dirs $(CC) ../../../obj/ts/$(TC)/zap_mem.v
 	perl $(SCRIPT_PATH)/run_sim.pl +test+$(TC) 
 
+$(CC):
 $(AS): 
 $(LD):
 $(OB):
 
-$(CC): $(GCC_SRC)
-	mkdir -p ../../../obj/ts/$(TC)/
-	tar -xvf $(GCC_SRC) -C ../../../obj/ 
-	touch $@
-
 dirs:
-	bash ../../scripts/check_arc.sh
 	mkdir -p ../../../obj/ts/$(TC)/
 	touch ../../../obj/ts/$(TC)/
 
 clean: 
 	mkdir -p ../../../obj/ts/$(TC)/
 	rm -fv  ../../../obj/ts/$(TC)/*
-
-cleanall:
-	rm -fv  ../../../obj/ts/$(TC)/*
-	rm -rfv ../../../obj/ts/$(TC)/../../gcc-arm-none-*
 
 c2asm:
 	$(CC) -S $(CFLAGS) $(X) -o ../../../obj/ts/$(TC)/$(X).asm

@@ -1,5 +1,3 @@
-// TODO: Fix SWAP instruction. 
-
 // -----------------------------------------------------------------------------
 // --                                                                         --
 // --                   (C) 2016-2018 Revanth Kamaraj.                        --
@@ -83,33 +81,28 @@ module zap_predecode_mem_fsm
 
 ///////////////////////////////////////////////////////////////////////////////
 
-//
 // Instruction breakup
-// These assignments are repeated in the function.
-//
-wire [3:0] base    = i_instruction[`BASE];
-wire [3:0] srcdest = i_instruction[`SRCDEST];
-wire [3:0] cc      = i_instruction[31:28];
-wire [2:0] id      = i_instruction[27:25];
-wire pre_index     = i_instruction[24];
-wire up            = i_instruction[23];
-wire s_bit         = i_instruction[22];
-wire writeback     = i_instruction[21];
-wire load          = i_instruction[20];
-wire store         = !load;
-wire [15:0] reglist= i_instruction[15:0];
-wire link          = i_instruction[24];
-wire [11:0] branch_offset = i_instruction[11:0];
+wire [3:0]  cc                  ; 
+wire [2:0]  id                  ; 
+wire        pre_index           ; 
+wire        up                  ; 
+wire        s_bit               ; 
+wire        writeback           ; 
+wire        load                ; 
+wire [3:0]  base                ; 
+wire [15:0] reglist             ; 
 
-// Ones counter offset.
-wire [11:0] oc_offset;
+// Instruction breakup assignment.
+assign {cc, id, pre_index, up, s_bit, writeback, load, base, reglist} = i_instruction;
 
-// Registers.
-reg     [3:0]   state_ff, state_nxt;
-reg     [15:0]  reglist_ff, reglist_nxt;
+wire        store                = !load;
+wire        link                 = i_instruction[24];
+wire [11:0] branch_offset        = i_instruction[11:0];
 
-// Const reg for BLX.
-reg     [31:0]  const_ff, const_nxt;
+wire [11:0] oc_offset;                  // Ones counter offset.
+reg  [3:0]  state_ff, state_nxt;        // State.
+reg  [15:0] reglist_ff, reglist_nxt;    // Register list.
+reg     [31:0]  const_ff, const_nxt;    // For BLX - const reg.
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -540,36 +533,23 @@ end
 
 function [33:0] map ( input [31:0] instr, input [3:0] enc, input [15:0] list );
 // These override the globals within the function scope.
-reg [3:0] base;    
-reg [3:0] srcdest; 
-reg [3:0] cc;      
-reg [2:0] id;      
-reg pre_index;     
-reg up;            
-reg s_bit;         
-reg writeback;     
-reg load;          
-reg store;         
-reg [15:0] reglist;
-reg restore;
+reg [3:0]       cc;      
+reg [2:0]       id;      
+reg             pre_index;     
+reg             up;            
+reg             s_bit;         
+reg             writeback;     
+reg             load;          
+reg [3:0]       base;    
+reg [15:0]      reglist;
+reg             store;         
+reg             restore;
 begin
         restore = 0;
 
-        // All variables used inside the function depend solely on the i/p args.
-        // Thus repeating the assignments.
-                
-        base            = instr[`BASE];
-        srcdest         = instr[`SRCDEST];
-        cc              = instr[31:28];
-        id              = instr[27:25];
-        pre_index       = instr[24];
-        up              = instr[23];         
-        s_bit           = instr[22];
-        writeback       = instr[21];
-        load            = instr[20];
-        store           = !load;
-        reglist         = instr[15:0];
+        {cc, id, pre_index, up, s_bit, writeback, load, base, reglist} = instr;
 
+        store = !load;
         map = instr;
         map = map & ~(1<<22); // No byte access.
         map = map & ~(1<<25); // Constant Offset (of 4).
@@ -686,7 +666,6 @@ endtask
 
 // Counts the number of ones and multiplies that by 4 to get final
 // address offset.
-//
 function  [11:0] ones_counter (
         input [15:0]    i_word    // Register list.
 );

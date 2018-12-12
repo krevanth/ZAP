@@ -59,37 +59,40 @@ mov r11, #13
 mov r12, #14
 mov r14, #15
 
+.set TIMER_BASE_ADDRESS, 0xFFFFFFC0
+
 # Restart timer
-ldr r0 ,=#0xFFFFFFC0    // Timer base address.
+ldr r0,=TIMER_BASE_ADDRESS    // Timer base address.
 add r0, r0, #12
-ldr r1, =#0x1
-str r1, [r0]            // Restart the timer.
+mov r1, #1
+str r1, [r0]                  // Restart the timer.
+
+.set VIC_BASE_ADDRESS,  0xFFFFFFA0
+.set CLEAR_ALL_PENDING, 0xFFFFFFFF
 
 # Clear interrupt in VIC.
-ldr r0, =#0xFFFFFFA0    // VIC base address
+ldr r0, =VIC_BASE_ADDRESS   // VIC base address
 add r0, r0, #8  
-ldr r1, =#0xFFFFFFFF    
-str r1, [r0]            // Clear all interrupt pending status
+ldr r1, =CLEAR_ALL_PENDING    
+str r1, [r0]                // Clear all interrupt pending status
 
+# Restore
 ldmfd sp!, {r0-r12, pc}^
 
 FIQ:
-# Return from FIQ after writing to FIQ registers.
+# Return from FIQ after writing to FIQ registers - shouldn't affect other things.
 mov r8,  #9
 mov r9,  #10
 mov r10, #12
 mov r11, #13
 mov r12, #14
-mov r8, #0
-mov r9, #0
-mov r10, #0
-mov r11, #10
-mov r12, #0
 subs pc, r14, #4
 
 SWI:
-ldr sp,=#2500
-ldr r11, =#2004
+.set SWI_SP_VALUE,  2500
+.set SWI_R11_VALUE, 2004
+ldr sp,=SWI_SP_VALUE
+ldr r11,=SWI_R11_VALUE
 mov r0, #12
 mov r1, #0
 mov r2, r0, lsr #32
@@ -122,7 +125,9 @@ mrs r2, cpsr
 bic r2, r2, #31
 orr r2, r2, #18 
 msr cpsr_c, r2
-ldr sp, =#3000
+
+.set IRQ_SP_VALUE, 3000
+ldr sp,=IRQ_SP_VALUE
 
 // Switch to UND mode.
 mrs r3, cpsr
@@ -130,7 +135,9 @@ bic r3, r3, #31
 orr r3, r3, #27
 msr cpsr_c, r3
 mov r4, #1
-ldr sp, =#3500
+
+.set UND_SP_VALUE, 3500
+ldr sp, =UND_SP_VALUE
 
 // Enable interrupts (FIQ and IRQ).
 mrs r1, cpsr
@@ -138,7 +145,8 @@ bic r1, r1, #0xC0
 msr cpsr_c, r1
 
 // Enable cache (Uses a single bit to enable both caches).
-ldr r1, =#4100
+.set ENABLE_CACHE_CP_WORD, 4100
+ldr r1, =ENABLE_CACHE_CP_WORD
 mcr p15, 0, r1, c1, c1, 0
 
 // Write out identitiy section mapping. Write 16KB to register 2.
@@ -162,17 +170,22 @@ mov r7, r1              // R7 holds the address.
 // This is identity mapping. Uncacheable.
 mov r1, #1
 mov r1, r1, lsl #14     // 16KB. This is descriptor 0.
+
 // Go to descriptor 4095. This is the address BASE + (#DESC * 4).
-ldr r2,=#16380
+.set DESCRIPTOR_IO_SECTION_OFFSET, 16380 // 4095 x 4
+ldr r2,=DESCRIPTOR_IO_SECTION_OFFSET
 add r1, r1, r2
+
 // Prepare a descriptor. Descriptor = 0xFFF00002 (Uncacheable section descriptor).
-ldr r2 ,=#0xFFF00002
+.set DESCRIPTOR_IO_SECTION, 0xFFF00002
+ldr r2 ,=DESCRIPTOR_IO_SECTION
 str r2, [r1]
 ldr r6, [r1]
 mov r7, r1
 
 // ENABLE MMU
-ldr r1, =#4101
+.set ENABLE_MMU_CP_WORD, 4101
+ldr r1, =ENABLE_MMU_CP_WORD
 mcr p15, 0, r1, c1, c1, 0
 
 // Switch mode.
@@ -180,29 +193,35 @@ mrs r2, cpsr
 bic r2, r2, #31
 orr r2, r2, #16
 msr cpsr_c, r2
-ldr sp,=#3500
+
+.set USR_SP_VALUE, 4000
+ldr sp,=USR_SP_VALUE
 
 // Run main loop.
 
 // Program VIC to allow timer interrupts.
-ldr r0, =#0xFFFFFFA0    // VIC base address.
-add r0, r0, #4          // Move to INT_MASK
-ldr r1, =#0x0           // Prepare mask value
-str r1, [r0]            // Unmask all interrupt sources.
+ldr r0, =VIC_BASE_ADDRESS // VIC base address.
+add r0, r0, #4            // Move to INT_MASK
+mov r1, #0                // Prepare mask value
+str r1, [r0]              // Unmask all interrupt sources.
 
 // Program timer peripheral to tick every 32 clock cycles.
-ldr r0 ,=#0xFFFFFFC0    // Timer base address.
-ldr r1 ,=#1
-str r1, [r0]            // Enable timer
+ldr r0 ,=TIMER_BASE_ADDRESS     // Timer base address.
+mov r1 , #1
+str r1, [r0]                    // Enable timer
 add r0, r0, #4
-ldr r1, =#32     
-str r1, [r0]            // Program to 255 clocks.
+mov r1, #32     
+str r1, [r0]                    // Program to 255 clocks.
 add r0, r0, #8
-ldr r1, =#0x1
-str r1, [r0]            // Start the timer.
+mov r1, #0x1
+str r1, [r0]                    // Start the timer.
 
-
+// Call C code
 bl main
+
+// Do SWI 0x0
 swi #0x00
+
+// Loop forever
 here: b here
 

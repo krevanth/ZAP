@@ -31,62 +31,30 @@
 `default_nettype none
 
 module zap_decompile #(parameter INS_WDT = 36) ( 
-                input wire      [36-1:0]        i_instruction,  // 36-bit instruction.
+                input wire      [36-1:0]        i_instruction,  // 36-bit instruction into decode.
                 input wire                      i_dav,          // Instruction valid.
                 output reg      [64*8-1:0]      o_decompile     // 1024 bytes max of assembler string.
         );
 
-`ifndef SYNTHESIS // if simulating...
+`ifndef SYNTHESIS 
 
 `include "zap_defines.vh"
 `include "zap_localparams.vh"
 `include "zap_functions.vh"
 
-
-// These defines can be wrapped around a single `ifndef instead of several of
-// them as shown.
-
-`ifndef CCC
-        `define CCC cond_code(i_instruction[31:28])
-`endif
-
-`ifndef CRB
-        `define CRB arch_reg_num({i_instruction[`DP_RB_EXTEND], i_instruction[`DP_RB]})
-`endif
-
-`ifndef CRD
-        `define CRD arch_reg_num({i_instruction[`DP_RD_EXTEND], i_instruction[`DP_RD]})
-`endif
-
-`ifndef CDR1
-        `define CRD1 arch_reg_num({i_instruction[`SRCDEST_EXTEND], i_instruction[`SRCDEST]})
-`endif
-
-`ifndef CRN
-        `define CRN arch_reg_num({i_instruction[`DP_RA_EXTEND], i_instruction[`DP_RA]})
-`endif
-
-`ifndef CRN1
-        `define CRN1 arch_reg_num({i_instruction[`BASE_EXTEND], i_instruction[`BASE]})
-`endif
-
-`ifndef COPCODE
+`ifndef ZAP_DECOMPILE_DEFINES
+        `define CCC     cond_code(i_instruction[31:28])
+        `define CRB     arch_reg_num({i_instruction[`DP_RB_EXTEND], i_instruction[`DP_RB]})
+        `define CRD     arch_reg_num({i_instruction[`DP_RD_EXTEND], i_instruction[`DP_RD]})
+        `define CRD1    arch_reg_num({i_instruction[`SRCDEST_EXTEND], i_instruction[`SRCDEST]})
+        `define CRN     arch_reg_num({i_instruction[`DP_RA_EXTEND], i_instruction[`DP_RA]})
+        `define CRN1    arch_reg_num({i_instruction[`BASE_EXTEND], i_instruction[`BASE]})
         `define COPCODE get_opcode({i_instruction[`OPCODE_EXTEND], i_instruction[24:21]})
-`endif
-
-`ifndef CSHTYPE
         `define CSHTYPE get_shtype(i_instruction[6:5])
+        `define CRS     arch_reg_num(i_instruction[11:8]);
+        `define CRM     arch_reg_num({i_instruction[`DP_RB_EXTEND], i_instruction[`DP_RB]});
 `endif
 
-`ifndef CRS
-        `define CRS arch_reg_num(i_instruction[11:8]);
-`endif
-
-`ifndef CRM
-        `define CRM arch_reg_num({i_instruction[`DP_RB_EXTEND], i_instruction[`DP_RB]});
-`endif
-
-// Decompile block. Makes task calls.
 always @*
 begin
                 if ( !i_dav ) 
@@ -493,7 +461,6 @@ endfunction
 
 `else 
 
-// `ifdef SYNTHESIS
 always @*
         o_decompile = 0; // In synthesis mode.
 

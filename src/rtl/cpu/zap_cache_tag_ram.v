@@ -31,95 +31,62 @@
 // -----------------------------------------------------------------------------
 
 `default_nettype none
+`include "zap_defines.vh"
 
-module zap_cache_tag_ram ( // Verilog 1995 port syntax. Need to convert to 2001.
+module zap_cache_tag_ram #( 
 
-i_clk,
-i_reset,
+parameter CACHE_SIZE = 1024 // Bytes.
 
-i_address_nxt,
-i_address,
+)(
 
-i_cache_en,
+input   wire                            i_clk,
+input   wire                            i_reset,
+input   wire    [31:0]                  i_address_nxt,
+input   wire    [31:0]                  i_address,
+input   wire                            i_cache_en,
+input   wire    [127:0]                 i_cache_line,
+input   wire    [15:0]                  i_cache_line_ben,
+output  reg     [127:0]                 o_cache_line,
+input   wire                            i_cache_tag_wr_en,
+input   wire    [`CACHE_TAG_WDT-1:0]    i_cache_tag,
+input   wire                            i_cache_tag_dirty,
 
-i_cache_line,
-o_cache_line,
+output  reg     [`CACHE_TAG_WDT-1:0]    o_cache_tag,
+output  reg                             o_cache_tag_valid,
+output  reg                             o_cache_tag_dirty,
+input   wire                            i_cache_clean_req,
+output  reg                             o_cache_clean_done,
+input   wire                            i_cache_inv_req,
+output  reg                             o_cache_inv_done,
 
-i_cache_line_ben,
-
-i_cache_tag_wr_en,
-i_cache_tag,
-i_cache_tag_dirty,
-
-o_cache_tag,
-o_cache_tag_valid,
-o_cache_tag_dirty,
-
-i_cache_inv_req,
-o_cache_inv_done,
-
-i_cache_clean_req,
-o_cache_clean_done,
-
-// Cache clean operations occur through these ports.
-o_wb_stb_nxt, o_wb_stb_ff,
-o_wb_cyc_nxt, o_wb_cyc_ff,
-o_wb_adr_nxt, o_wb_adr_ff,
-o_wb_wen_nxt, o_wb_wen_ff,
-o_wb_sel_nxt, o_wb_sel_ff,
-o_wb_dat_nxt, o_wb_dat_ff,
-o_wb_cti_nxt, o_wb_cti_ff,
-i_wb_ack, i_wb_dat
+/* 
+ * Cache clean operations occur through these ports.
+ * Memory access ports, both NXT and FF. Usually you'll be connecting NXT ports 
+ */
+output  reg                             o_wb_cyc_ff, o_wb_cyc_nxt,
+output  reg                             o_wb_stb_ff, o_wb_stb_nxt,
+output  reg     [31:0]                  o_wb_adr_ff, o_wb_adr_nxt,
+output  reg     [31:0]                  o_wb_dat_ff, o_wb_dat_nxt,
+output  reg     [3:0]                   o_wb_sel_ff, o_wb_sel_nxt,
+output  reg                             o_wb_wen_ff, o_wb_wen_nxt,
+output  reg     [2:0]                   o_wb_cti_ff, o_wb_cti_nxt, /* Cycle Type Indicator - 010, 111 */
+input wire      [31:0]                  i_wb_dat,
+input wire                              i_wb_ack
 
 );
 
 // ----------------------------------------------------------------------------
 
 `include "zap_localparams.vh"
-`include "zap_defines.vh"
-
-parameter CACHE_SIZE = 1024; // Bytes.
-
-input   wire                            i_clk;
-input   wire                            i_reset;
-
-input   wire    [31:0]                  i_address_nxt;
-input   wire    [31:0]                  i_address;
-
-input   wire                            i_cache_en;
-
-input   wire    [127:0]                 i_cache_line;
-input   wire    [15:0]                  i_cache_line_ben;
-output  reg     [127:0]                 o_cache_line;
-
-input   wire                            i_cache_tag_wr_en;
-input   wire    [`CACHE_TAG_WDT-1:0]    i_cache_tag;
-input   wire                            i_cache_tag_dirty;
-
-output  reg     [`CACHE_TAG_WDT-1:0]    o_cache_tag;
-output  reg                             o_cache_tag_valid;
-output  reg                             o_cache_tag_dirty;
-
-input   wire                            i_cache_clean_req;
-output  reg                             o_cache_clean_done;
-
-input   wire                            i_cache_inv_req;
-output  reg                             o_cache_inv_done;
-
-/* Memory access ports, both NXT and FF. Usually you'll be connecting NXT ports */
-output  reg                             o_wb_cyc_ff, o_wb_cyc_nxt;
-output  reg                             o_wb_stb_ff, o_wb_stb_nxt;
-output  reg     [31:0]                  o_wb_adr_ff, o_wb_adr_nxt;
-output  reg     [31:0]                  o_wb_dat_ff, o_wb_dat_nxt;
-output  reg     [3:0]                   o_wb_sel_ff, o_wb_sel_nxt;
-output  reg                             o_wb_wen_ff, o_wb_wen_nxt;
-output  reg     [2:0]                   o_wb_cti_ff, o_wb_cti_nxt; /* Cycle Type Indicator - 010, 111 */
-input wire      [31:0]                  i_wb_dat;
-input wire                              i_wb_ack;
-
-// ----------------------------------------------------------------------------
 
 localparam NUMBER_OF_DIRTY_BLOCKS = ((CACHE_SIZE/16)/16); // Keep cache size > 16 bytes.
+
+// States.
+localparam IDLE                         = 0;
+localparam CACHE_CLEAN_GET_ADDRESS      = 1;
+localparam CACHE_CLEAN_WRITE            = 2;
+localparam CACHE_INV                    = 3;
+
 
 // ----------------------------------------------------------------------------
 
@@ -138,13 +105,18 @@ reg                             tag_ram_clean;
 
 // ----------------------------------------------------------------------------
 
+reg [1:0] state_ff, state_nxt;
+
+// ----------------------------------------------------------------------------
+
 reg [$clog2(NUMBER_OF_DIRTY_BLOCKS)-1:0] blk_ctr_ff, blk_ctr_nxt;
-reg [2:0] adr_ctr_ff, adr_ctr_nxt;
+reg [2:0]                                adr_ctr_ff, adr_ctr_nxt;
 
 // ----------------------------------------------------------------------------
 
 initial
 begin: blk1
+        // FPGA anyway initializes to 0 on start.
         integer i;
 
         for(i=0;i<CACHE_SIZE/16;i=i+1)
@@ -194,8 +166,6 @@ end
 
 // ----------------------------------------------------------------------------
 
-//integer i;
-
 always @ (posedge i_clk)
 begin
         o_cache_tag_dirty                   <= dirty [ tag_ram_rd_addr ];
@@ -220,27 +190,20 @@ end
 
 // ----------------------------------------------------------------------------
 
-localparam IDLE                         = 0;
-localparam CACHE_CLEAN_GET_ADDRESS      = 1;
-localparam CACHE_CLEAN_WRITE            = 2;
-localparam CACHE_INV                    = 3;
-
-reg [1:0] state_ff, state_nxt;
-
 always @ (posedge i_clk)
 begin
         if ( i_reset )
         begin
-                o_wb_cyc_ff <= 0;
-                o_wb_stb_ff <= 0;
-                o_wb_wen_ff <= 0;
-                o_wb_sel_ff <= 0;
-                o_wb_dat_ff <= 0;
-                o_wb_cti_ff <= CTI_CLASSIC;
-                o_wb_adr_ff <= 0;
-                adr_ctr_ff <= 0;
-                blk_ctr_ff <= 0;
-                state_ff   <= IDLE;
+                o_wb_cyc_ff             <= 0;
+                o_wb_stb_ff             <= 0;
+                o_wb_wen_ff             <= 0;
+                o_wb_sel_ff             <= 0;
+                o_wb_dat_ff             <= 0;
+                o_wb_cti_ff             <= CTI_CLASSIC;
+                o_wb_adr_ff             <= 0;
+                adr_ctr_ff              <= 0;
+                blk_ctr_ff              <= 0;
+                state_ff                <= IDLE;
         end
         else
         begin
@@ -253,22 +216,11 @@ begin
                 o_wb_adr_ff             <= o_wb_adr_nxt;
                 adr_ctr_ff              <= adr_ctr_nxt;
                 blk_ctr_ff              <= blk_ctr_nxt;
-		state_ff		<= state_nxt;
+                state_ff                <= state_nxt;
         end
 end
 
 // ----------------------------------------------------------------------------
-
-
-
-function [4:0] baggage ( input [CACHE_SIZE/16-1:0] dirty, input [31:0] blk_ctr_ff );
-reg [31:0] shamt;
-integer i;
-begin
-        shamt = blk_ctr_ff << 4;
-        baggage = pri_enc1(dirty >> shamt);
-end
-endfunction
 
 always @*
 begin
@@ -314,11 +266,11 @@ begin
                         blk_ctr_nxt = 0;
 
                 `ifndef SYNTHESIS
-                        $display($time, "%m :: INFO :: Cache clean requested...");
+                        $display($time, " - %m :: Cache clean requested...");
 
                         for(i=0;i<CACHE_SIZE/16;i=i+1)
                         begin
-                                $display("Line %d : %x %d", i, dat_ram[i], dirty[i]);
+                                $display($time, " - %m :: Line %d : %x %d", i, dat_ram[i], dirty[i]);
                         end
 
                         `ifdef CACHE_DEBUG
@@ -403,6 +355,8 @@ begin
         endcase                
 end
 
+// -----------------------------------------------------------------------------
+
 // Priority encoder.
 function  [4:0] pri_enc1 ( input [15:0] in );
 begin: priEncFn
@@ -428,6 +382,8 @@ begin: priEncFn
 end
 endfunction
 
+// -----------------------------------------------------------------------------
+
 function [31:0] get_tag_ram_rd_addr (
 input [31:0] blk_ctr,
 input [CACHE_SIZE/16-1:0] dirty
@@ -450,7 +406,7 @@ task  wb_prpr_read;
 input [31:0] i_address;
 input [2:0]  i_cti;
 begin
-        $display($time, "%m :: Reading from address %x", i_address);
+        $display($time, " - %m :: Reading from address %x", i_address);
 
         o_wb_cyc_nxt = 1'd1;
         o_wb_stb_nxt = 1'd1;
@@ -458,7 +414,7 @@ begin
         o_wb_sel_nxt = 4'b1111;
         o_wb_adr_nxt = i_address;
         o_wb_cti_nxt = i_cti;
-	o_wb_dat_nxt = 0;
+        o_wb_dat_nxt = 0;
 end
 endtask
 
@@ -497,6 +453,15 @@ end
 endtask
 
 // ----------------------------------------------------------------------------
+
+function [4:0] baggage ( input [CACHE_SIZE/16-1:0] dirty, input [31:0] blk_ctr_ff );
+reg [31:0] shamt;
+integer i;
+begin
+        shamt = blk_ctr_ff << 4;
+        baggage = pri_enc1(dirty >> shamt);
+end
+endfunction
 
 endmodule // zap_cache_tag_ram.v
 `default_nettype wire

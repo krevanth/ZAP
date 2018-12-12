@@ -35,25 +35,30 @@ module zap_cp15_cb #(
         parameter PHY_REGS = 64
 )
 (
+        // ----------------------------------------------------------------
         // Clock and reset.
+        // ----------------------------------------------------------------
+
         input wire                              i_clk,
         input wire                              i_reset,
 
-        //
-        // Coprocessor bus.
-        //
+        // ----------------------------------------------------------------
+        // Coprocessor instruction and done signal.
+        // ----------------------------------------------------------------
 
-        // Coprocessor instruction.
         input wire      [31:0]                  i_cp_word,
-
-        // Coprocessor instruction valid.
         input wire                              i_cp_dav,
-
-        // Coprocessor done.
         output reg                              o_cp_done,
 
+        // ----------------------------------------------------------------
         // CPSR from processor.
+        // ----------------------------------------------------------------
+
         input  wire     [31:0]                  i_cpsr,
+
+        // ----------------------------------------------------------------
+        // Register file RW interface
+        // ----------------------------------------------------------------
 
         // Asserted if we want to control of the register file.
         // Controls a MUX that selects signals.
@@ -69,20 +74,16 @@ module zap_cp15_cb #(
         output reg [$clog2(PHY_REGS)-1:0]       o_reg_wr_index,
                                                 o_reg_rd_index,
 
-        //
+        // ----------------------------------------------------------------
         // From MMU.
-        //
+        // ----------------------------------------------------------------
 
-        // The FSR stands for "Fault Status Register"
-        // The FAR stands for "Fault Address Register"
         input wire      [31:0]                  i_fsr,
         input wire      [31:0]                  i_far,
 
-        //
-        // These go to the MMU
-        //
-
-        // COMMON TO BOTH DATA AND CODE MMU.
+        // -----------------------------------------------------------------
+        // MMU configuration signals.
+        // -----------------------------------------------------------------
 
         // Domain Access Control Register.
         output reg      [31:0]                  o_dac,
@@ -96,7 +97,9 @@ module zap_cp15_cb #(
         // SR register.
         output reg      [1:0]                   o_sr,
 
-        // SEPARATE SIGNALS FOR DATA AND CODE MMU.
+        // -----------------------------------------------------------------
+        // Invalidate and clean controls.
+        // -----------------------------------------------------------------
 
         // Cache invalidate signal.
         output reg                              o_dcache_inv,
@@ -127,37 +130,16 @@ module zap_cp15_cb #(
 `include "zap_defines.vh"
 `include "zap_functions.vh"
 
+// ---------------------------------------------
+// Variables
+// ---------------------------------------------
 
 reg [31:0] r [6:0]; // Coprocessor registers. R7 is write-only.
 reg [3:0]    state; // State variable.
 
-`ifndef SYNTHESIS
-integer ops;
-initial ops = 0;
-`endif
-
-// Ties registers to output ports via a register.
-always @ (posedge i_clk)
-begin
-        if ( i_reset )
-        begin
-                o_dcache_en <= 0;
-                o_icache_en <= 0;
-                o_mmu_en    <= 0;
-                o_dac       <= 32'dx;
-                o_baddr     <= 32'dx;
-                o_sr        <= 2'dx;
-        end
-        else
-        begin
-        o_dcache_en <= r[1][2];                  // Data cache enable.
-        o_icache_en <= r[1][12];                 // Instruction cache enable.
-        o_mmu_en    <= r[1][0];                  // MMU enable.
-        o_dac       <= r[3];                     // DAC register.
-        o_baddr     <= r[2];                      // Base address.               
-        o_sr        <= {r[1][8],r[1][9]};         // SR register. 
-        end
-end
+// ---------------------------------------------
+// Localparams
+// ---------------------------------------------
 
 // States.
 localparam IDLE                 = 0;
@@ -192,13 +174,35 @@ localparam CASE_FLUSH_ID_TLB         = 7'b000_0111;
 localparam CASE_FLUSH_I_TLB          = 7'b000_0101;
 localparam CASE_FLUSH_D_TLB          = 7'b000_0110;
 
-// Instruction fields.
-`define opcode_2        7:5        
-`define crm             3:0
-`define crn             19:16
-`define cp_id           11:8
+// ---------------------------------------------
+// Sequential Logic
+// ---------------------------------------------
 
-always @ (posedge i_clk)
+// Ties registers to output ports via a register.
+always @ ( posedge i_clk )
+begin
+        if ( i_reset )
+        begin
+                o_dcache_en <= 1'd0;
+                o_icache_en <= 1'd0;
+                o_mmu_en    <= 1'd0;
+                o_dac       <= 32'dx;
+                o_baddr     <= 32'dx;
+                o_sr        <= 2'dx;
+        end
+        else
+        begin
+                o_dcache_en <= r[1][2];                  // Data cache enable.
+                o_icache_en <= r[1][12];                 // Instruction cache enable.
+                o_mmu_en    <= r[1][0];                  // MMU enable.
+                o_dac       <= r[3];                     // DAC register.
+                o_baddr     <= r[2];                     // Base address.               
+                o_sr        <= {r[1][8],r[1][9]};        // SR register. 
+        end
+end
+
+// Core logic.
+always @ ( posedge i_clk )
 begin
         if ( i_reset )
         begin
@@ -214,7 +218,6 @@ begin
                 o_reg_wr_data  <= 0;
                 o_reg_wr_index <= 0;
                 o_reg_rd_index <= 0;
-
                 r[0]           <= 32'h0; 
                 r[1]           <= 32'd0;
                 r[2]           <= 32'd0;
@@ -223,20 +226,22 @@ begin
                 r[5]           <= 32'd0;
                 r[6]           <= 32'd0;
 
-                // Default values.
+                //
+                // Default values - rest of them are still zero due to
+                // previous assignment.
+                // r[1][3]   - Write buffer always enabled.
+                // r[1][7:4] - 0 = LEndian(7), 0 = 0, 1 = 32-bit address range
+                //             1 = 32-bit handlers enabled(4). 
+                //
                 r[0][23:16]     <= 32'h1;
                 r[1][1]         <= 1'd1;
-                r[1][3]         <= 1'd1; // Write buffer always enabled.
-                r[1][7:4]       <= 4'b0011; // 0 = Little Endian, 0 = 0, 1 = 32-bit address range, 1 = 32-bit handlers enabled.
+                r[1][3]         <= 1'd1;    
+                r[1][7:4]       <= 4'b0011; 
                 r[1][11]        <= 1'd1;                
                 r[1][13]        <= 1'd0;
         end
         else
         begin
-`ifndef SYNTHESIS
-                ops             <= 0;
-`endif
-
                 // Default assignments.
                 o_itlb_inv      <= 1'd0;
                 o_dtlb_inv      <= 1'd0;
@@ -309,32 +314,23 @@ begin
 
                                         CASE_FLUSH_ID_TLB:
                                         begin
-`ifndef SYNTHESIS
-                                                ops <= 1;
-`endif
                                                 o_itlb_inv  <= 1'd1;
                                                 o_dtlb_inv  <= 1'd1;
                                         end
 
                                         CASE_FLUSH_I_TLB:
                                         begin
-`ifndef SYNTHESIS
-                                                ops <= 2;
-`endif
                                                 o_itlb_inv <= 1'd1;
                                         end
 
                                         CASE_FLUSH_D_TLB:  
                                         begin
-`ifndef SYNTHESIS
-                                                ops <= 3;
-`endif
                                                 o_dtlb_inv <= 1'd1;
                                         end                                                        
 
                                         default:
                                         begin
-                                                $display("Bad TLB command!");
+                                                $display($time, " - %m :: Error: Bad TLB command.");
                                                 $finish;
                                         end
 
@@ -345,9 +341,6 @@ begin
                                 case({i_cp_word[`opcode_2], i_cp_word[`crm]})
                                         CASE_FLUSH_ID_CACHE:
                                         begin
-`ifndef SYNTHESIS
-                                                ops <= 4;
-`endif
                                                 // Invalidate caches.
                                                 o_dcache_inv    <= 1'd1;
                                                 state           <= CLR_D_CACHE_AND;
@@ -355,9 +348,6 @@ begin
 
                                         CASE_FLUSH_D_CACHE:
                                         begin
-`ifndef SYNTHESIS
-                                                ops <= 5;
-`endif
 
                                                 // Invalidate data cache.
                                                 o_dcache_inv    <= 1'd1;
@@ -366,9 +356,6 @@ begin
 
                                         CASE_FLUSH_I_CACHE:
                                         begin
-`ifndef SYNTHESIS
-                                                ops <= 6;
-`endif
 
                                                 // Invalidate instruction cache.
                                                 o_icache_inv    <= 1'd1;
@@ -377,9 +364,6 @@ begin
 
                                         CASE_CLEAN_ID_CACHE, CASE_CLEAN_D_CACHE:
                                         begin
-`ifndef SYNTHESIS
-                                                ops <= 7;
-`endif
 
                                                 o_dcache_clean <= 1'd1;
                                                 state          <= CLEAN_D_CACHE;
@@ -387,9 +371,6 @@ begin
 
                                         CASE_CLFLUSH_D_CACHE:
                                         begin
-`ifndef SYNTHESIS
-                                                ops <= 8;
-`endif
 
                                                 o_dcache_clean <= 1'd1;
                                                 state          <= CLFLUSH_D_CACHE;
@@ -397,9 +378,6 @@ begin
 
                                         CASE_CLFLUSH_ID_CACHE:
                                         begin
-`ifndef SYNTHESIS
-                                                ops <= 9;
-`endif
 
                                                 o_dcache_clean <= 1'd1;
                                                 state          <= CLFLUSH_ID_CACHE;
@@ -407,8 +385,8 @@ begin
 
                                         default:
                                         begin
-                                        $display($time, "Error: Bad coprocessor instruction %b", i_cp_word);
-                                        $finish;
+                                                $display($time, " - %m :: Error: Bad coprocessor instruction %b", i_cp_word);
+                                                $finish;
                                         end
 
                                 endcase
@@ -451,13 +429,13 @@ begin
                         if ( i_dcache_inv_done && state == CLR_D_CACHE )
                         begin
                                 o_dcache_inv <= 1'd0;
-                                state <= DONE;
+                                state        <= DONE;
                         end
                         else if ( state == CLR_D_CACHE_AND && i_dcache_inv_done ) 
                         begin
                                 o_dcache_inv <= 1'd0;
                                 o_icache_inv <= 1'd1;
-                                state <= CLR_I_CACHE;
+                                state        <= CLR_I_CACHE;
                         end
                 end       
 
@@ -468,7 +446,7 @@ begin
                         if ( i_icache_inv_done )
                         begin
                                 o_icache_inv <= 1'd0;
-                                state <= DONE;                                                
+                                state        <= DONE;                                                
                         end
                 end
 
@@ -500,10 +478,10 @@ begin
                 end
                 endcase
 
-                // Default assignments. These bits are UNCHANGEABLE.
+                // Default assignments. These bits are unchangeable.
                 r[0][23:16]     <= 32'h1;
                 r[1][1]         <= 1'd1;
-                r[1][3]         <= 1'd1; // Write buffer always enabled.
+                r[1][3]         <= 1'd1;    // Write buffer always enabled.
                 r[1][7:4]       <= 4'b0011; // 0 = Little Endian, 0 = 0, 1 = 32-bit address range, 1 = 32-bit handlers enabled.
                 r[1][11]        <= 1'd1;                
                 r[1][13]        <= 1'd0;
@@ -511,14 +489,14 @@ begin
 end
 
 `ifndef SYNTHESIS
-// Debug only.
-wire [31:0] r0 = r[0];
-wire [31:0] r1 = r[1];
-wire [31:0] r2 = r[2];
-wire [31:0] r3 = r[3];
-wire [31:0] r4 = r[4];
-wire [31:0] r5 = r[5];
-wire [31:0] r6 = r[6];
+        // Debug only.
+        wire [31:0] r0 = r[0];
+        wire [31:0] r1 = r[1];
+        wire [31:0] r2 = r[2];
+        wire [31:0] r3 = r[3];
+        wire [31:0] r4 = r[4];
+        wire [31:0] r5 = r[5];
+        wire [31:0] r6 = r[6];
 `endif
 
 endmodule
