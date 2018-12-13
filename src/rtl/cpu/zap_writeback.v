@@ -139,7 +139,7 @@ localparam FIQ_VECTOR   = 32'h0000001C;
 // Variables
 // ----------------------------------------------
 
-`ifndef SYNTHESIS
+// assertions_start
         reg fiq_ack;
         reg irq_ack;
         reg und_ack;
@@ -147,11 +147,9 @@ localparam FIQ_VECTOR   = 32'h0000001C;
         reg iabt_ack;
         reg swi_ack;
         integer irq_addr = 0;
-        reg temp_set;
-        reg error;
-        initial error = 0;
-        initial temp_set = 0;
-`endif
+        reg temp_set = 0;
+        reg error = 0;
+// assertions_end
 
 reg     [31:0]                  cpsr_ff, cpsr_nxt;
 reg     [31:0]                  pc_ff, pc_nxt;
@@ -206,14 +204,14 @@ begin: blk1
         shelve_nxt    = shelve_ff;
         pc_shelve_nxt = pc_shelve_ff;
 
-        `ifndef SYNTHESIS
+        // assertions_start
                 fiq_ack  = 0;
                 irq_ack  = 0;
                 und_ack  = 0;
                 dabt_ack = 0;
                 iabt_ack = 0;
                 swi_ack  = 0;
-        `endif
+        // assertions_end
 
         o_hijack     = 0;
         o_hijack_op1 = 0;
@@ -294,9 +292,9 @@ begin: blk1
                 wdata2                  = cpsr_ff;
                 cpsr_nxt[`CPSR_MODE]    = ABT;
 
-                `ifndef SYNTHESIS
+                // assertions_start
                         dabt_ack = 1'd1;
-                `endif
+                // assertions_end
 
         end
         else if ( i_fiq )
@@ -314,9 +312,9 @@ begin: blk1
                 cpsr_nxt[`CPSR_MODE]    = FIQ;
                 cpsr_nxt[F]             = 1'd1;
 
-                `ifndef SYNTHESIS
+                // assertions_start
                         fiq_ack = 1'd1;
-                `endif
+                // assertions_end
         end
         else if ( i_irq )
         begin
@@ -332,10 +330,10 @@ begin: blk1
                 cpsr_nxt[`CPSR_MODE]    = IRQ;
                 // Returns do LR - 4 to get back to the same instruction.
 
-                `ifndef SYNTHESIS
+                // assertions_start
                         irq_addr = wdata1;
                         irq_ack  = 1'd1;
-                `endif
+                // assertions_end
         end
         else if ( i_instr_abt )
         begin
@@ -349,9 +347,9 @@ begin: blk1
                 wdata2 = cpsr_ff;
                 cpsr_nxt[`CPSR_MODE]  = ABT;
 
-                `ifndef SYNTHESIS
+                // assertions_start
                         iabt_ack = 1'd1;
-                `endif
+                // assertions_end
         end
         else if ( i_swi )
         begin
@@ -365,9 +363,9 @@ begin: blk1
                 wdata2                  = cpsr_ff;
                 cpsr_nxt[`CPSR_MODE]    = SVC;
 
-                `ifndef SYNTHESIS
+                // assertions_start
                         swi_ack = 1'd1;
-                `endif
+                // assertions_end
         end
         else if ( i_und )
         begin
@@ -381,9 +379,9 @@ begin: blk1
                 wdata2                  = cpsr_ff;
                 cpsr_nxt[`CPSR_MODE]    = UND;
 
-                `ifndef SYNTHESIS
+                // assertions_start
                         und_ack = 1'd1;
-                `endif
+                // assertions_end
         end
         else if ( i_copro_reg_en )
         begin
@@ -470,7 +468,7 @@ begin
 end
 endtask
 
-`ifndef SYNTHESIS
+// assertions_start 
 
         always @ (*)
         if ( cpsr_nxt[`CPSR_MODE] != USR && cpsr_ff[`CPSR_MODE] == USR )
@@ -493,7 +491,7 @@ endtask
                 end
         end
 
-`endif
+// assertions_end
 
 endmodule // zap_register_file.v
 `default_nettype wire

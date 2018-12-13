@@ -458,21 +458,15 @@ begin
         end 
         else if ( i_clear_from_writeback ) 
         begin 
-                $display($time, " - %m :: Got clear command from writeback.");
                 o_data_wb_cyc_nxt = 0;
                 o_data_wb_stb_nxt = 0;
         end
         else if ( i_data_stall ) 
         begin 
-                $display($time, " - %m :: Stalled due to DCACHE stall.");
+                // Save state.
         end
         else if ( i_data_mem_fault || sleep_ff ) 
         begin
-                if ( i_data_mem_fault ) 
-                        $display($time, " - %m ::  Saw data memory fault.");
-                else
-                        $display($time, " - %m :: Sleeping.");
-
                 o_data_wb_cyc_nxt = 0;
                 o_data_wb_stb_nxt = 0;
         end
@@ -669,55 +663,48 @@ begin: flags_bp_feedback
                         if ( i_taken_ff == SNT || i_taken_ff == WNT ) // Incorrectly predicted. 
                         begin
                                 // Quick branches - Flush everything before.
-
-                                $display($time, " - %m :: Branch incorrectly predicted as not-taken. Flush everything after this.");
-
-                                // Dumping ground since PC change is done. Jump to branch target.
+                                // Dumping ground since PC change is done. Jump to branch target for fast switching.
                                 o_destination_index_nxt = PHY_RAZ_REGISTER;
                                 o_clear_from_alu        = 1'd1;
                                 o_pc_from_alu           = tmp_sum;
-                                flags_nxt[T]            = i_switch_ff ? tmp_sum[0] : flags_ff[T]; // Thumb/ARM state if i_switch_ff = 1.
 
                                 if ( i_switch_ff ) 
+                                begin
+                                        flags_nxt[T]            = tmp_sum[0];
+
                                         if ( tmp_sum[0] )
                                                 $display($time, " - %m :: Entering T state.");
                                         else
                                                 $display($time, " - %m :: Entering A state.");
+                                end
                         end
                         else    // Correctly predicted.
                         begin
-                                $display($time, " - %m :: Branch correctly predicted as taken.");
-
                                 // If thumb bit changes, flush everything before
                                 if ( i_switch_ff )
                                 begin
                                         // Quick branches! PC goes to RAZ register since
                                         // change is done.
 
-                                        $display($time, " - %m :: Possible state change. Flushing everything after this.");
-
                                         o_destination_index_nxt = PHY_RAZ_REGISTER;                     
                                         o_clear_from_alu        = 1'd1;
                                         o_pc_from_alu           = tmp_sum; // Jump to branch target.
-                                        flags_nxt[T]            = i_switch_ff ? tmp_sum[0] : flags_ff[T];   
+                                        flags_nxt[T]            = tmp_sum[0];   
                                         
-                                        if ( i_switch_ff ) 
-                                                if ( tmp_sum[0] )
-                                                        $display($time, " - %m :: Entering T state.");
-                                                else
-                                                        $display($time, " - %m :: Entering A state.");
+                                        if ( tmp_sum[0] )
+                                                $display($time, " - %m :: Entering T state.");
+                                        else
+                                                $display($time, " - %m :: Entering A state.");
                                 end
                                 else
                                 begin
                                         // No mode change, do not change anything.
-                                        $display($time, " - %m :: Transforming branch instruction into NOP.");
 
                                         o_destination_index_nxt = PHY_RAZ_REGISTER;
                                         o_clear_from_alu        = 1'd0;
-                                        flags_nxt[T]            = flags_ff[T];
 
                                         // Send confirmation message to branch predictor.
-                                        $display($time, " - %m :: Confirm to branch predictor.");
+
                                         o_pc_from_alu      = 32'd0;
                                         o_confirm_from_alu = 1'd1; 
                                 end
@@ -728,16 +715,14 @@ begin: flags_bp_feedback
                         if ( i_taken_ff == WT || i_taken_ff == ST ) 
                         // Wrong prediction as taken. Go back to the same
                         // branch. Non branches are always predicted as not-taken.
+                        // GO BACK TO THE SAME BRANCH AND INFORM PREDICTOR OF ITS   
+                        // MISTAKE - THE NEXT TIME THE PREDICTION WILL BE NOT-TAKEN.
                         begin
-                                $display($time, " - %m :: Branch taken is incorrect prediction. Flush everything after.");
-                                $display($time, " - %m :: Go to the same branch. Inform the predictor of the mistake.");
-
                                 o_clear_from_alu = 1'd1;
                                 o_pc_from_alu    = i_pc_ff; 
                         end
                         else // Correct prediction.
                         begin
-                                $display($time, " - %m :: Correct prediction as NOT-TAKEN.");
                                 o_clear_from_alu = 1'd0;
                                 o_pc_from_alu    = 32'd0;
                         end
@@ -962,7 +947,7 @@ begin
 end
 endfunction // generate_ben
 
-`ifndef SYNTHESIS
+// assertions_start
 
         /*
          * This assertion ensures that no privilege escalation is possible.
@@ -973,7 +958,7 @@ endfunction // generate_ben
         begin
                 if ( flags_nxt[`CPSR_MODE] != USR && flags_ff[`CPSR_MODE] == USR )
                 begin
-                        $display($time, "Error: %m CPU is changing out of USR mode without an exception...");
+                        $display($time, " - %m :: Error: Privilege Escalation Error.");
                         $stop;
                 end
         end
@@ -1002,7 +987,7 @@ endfunction // generate_ben
         CMN:begin       OPCODE = "CMN";    end
         endcase
 
-`endif
+// assertions_end
 
 endmodule // zap_alu_main.v
 

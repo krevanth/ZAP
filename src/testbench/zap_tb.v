@@ -58,6 +58,15 @@ integer         seed_new = `SEED + 1;
 // Clock generator.
 always #10      i_clk = !i_clk;
 
+wire    w_wb_stb;
+wire    w_wb_cyc;
+wire [31:0] w_wb_dat_to_ram;
+wire [31:0] w_wb_adr;
+wire [3:0] w_wb_sel;
+wire    w_wb_we;
+wire    w_wb_ack;
+wire [31:0] w_wb_dat_from_ram;
+
 // DUT
 chip_top #(
         .FIFO_DEPTH(FIFO_DEPTH),
@@ -75,12 +84,33 @@ chip_top #(
 ) u_chip_top (
         .SYS_CLK  (i_clk),
         .SYS_RST  (i_reset),
-
         .UART0_RXD(uart_in[0]),
         .UART0_TXD(uart_out[0]),
-
         .UART1_RXD(uart_in[1]),
-        .UART1_TXD(uart_out[1])
+        .UART1_TXD(uart_out[1]),
+        .I_IRQ    (28'd0),
+        .I_FIQ    (1'd0),
+        .O_WB_STB (w_wb_stb),
+        .O_WB_CYC (w_wb_cyc),
+        .O_WB_DAT (w_wb_dat_to_ram),
+        .O_WB_ADR (w_wb_adr),
+        .O_WB_SEL (w_wb_sel),
+        .O_WB_WE  (w_wb_we),
+        .I_WB_ACK (w_wb_ack),
+        .I_WB_DAT (w_wb_dat_from_ram)
+);
+
+// RAM
+ram #(.SIZE_IN_BYTES(RAM_SIZE)) u_ram (
+        .i_clk(i_clk),
+        .i_wb_stb (w_wb_stb),
+        .i_wb_cyc (w_wb_cyc),
+        .i_wb_dat (w_wb_dat_to_ram),
+        .i_wb_adr (w_wb_adr),
+        .i_wb_sel (w_wb_sel),
+        .i_wb_we  (w_wb_we),
+        .o_wb_ack (w_wb_ack),
+        .o_wb_dat (w_wb_dat_from_ram)
 );
 
 // UART 0 dumper.
@@ -125,8 +155,10 @@ begin
         $display("parameter CODE_CACHE_SIZE               = %d", CODE_CACHE_SIZE                ) ;
         $display("parameter STORE_BUFFER_DEPTH            = %d", STORE_BUFFER_DEPTH             ) ;
 
-        $dumpfile(`VCD_FILE_PATH);
-        $dumpvars;
+        `ifdef WAVES
+                $dumpfile(`VCD_FILE_PATH);
+                $dumpvars;
+        `endif
 
         @(posedge i_clk);
         i_reset <= 1;

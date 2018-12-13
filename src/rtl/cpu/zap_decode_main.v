@@ -381,7 +381,6 @@ u_zap_decode (
 
 // Decompile
 
-`ifndef SYNTHESIS
 
 zap_decompile u_zap_decompile (
         .i_instruction  (i_instruction),     
@@ -389,11 +388,6 @@ zap_decompile u_zap_decompile (
         .o_decompile    (decompile_tmp)
 );
 
-`else
-
-assign  decompile_tmp = 0;
-
-`endif
 
 endmodule // zap_decode_main.v
 `default_nettype wire

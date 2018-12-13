@@ -488,8 +488,7 @@ begin
         end
 end
 
-`ifndef SYNTHESIS
-        // Debug only.
+// assertions_start
         wire [31:0] r0 = r[0];
         wire [31:0] r1 = r[1];
         wire [31:0] r2 = r[2];
@@ -497,7 +496,7 @@ end
         wire [31:0] r4 = r[4];
         wire [31:0] r5 = r[5];
         wire [31:0] r6 = r[6];
-`endif
+// assertions_end
 
 endmodule
 `default_nettype wire

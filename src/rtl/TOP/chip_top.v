@@ -20,27 +20,26 @@
 // -- 02110-1301, USA.                                                        --
 // --                                                                         --
 // -----------------------------------------------------------------------------
-
-
 //
 // This is the chip top that contains the ZAP core along with
 // 2 x UARTs
 // 2 x Timers
 // 1 x VIC
-// 1 x RAM (Initializable)
 //
 // UART0  address space FFFFFFE0 to FFFFFFFF
 // Timer0 address space FFFFFFC0 to FFFFFFDF
 // VIC0   address space FFFFFFA0 to FFFFFFBF
 // UART1  address space FFFFFF80 to FFFFFF9F
 // Timer1 address space FFFFFF60 to FFFFFF7F
-// RAM    address space 00000000 to RAM_SIZE - 1
+// 
+// Accesses outside this go the the wishbone interface.
 //
+// An extenal Wishbone interface is provided to allow connection to an external
+// Wishbone network for RAMs, ROMs etc.
+//
+// -----------------------------------------------------------------------------
 
 module chip_top #(
-
-// RAM size.
-parameter RAM_SIZE                      = 32768,
 
 // CPU config.
 parameter DATA_SECTION_TLB_ENTRIES      = 4,
@@ -55,15 +54,34 @@ parameter FIFO_DEPTH                    = 4,
 parameter BP_ENTRIES                    = 1024,
 parameter STORE_BUFFER_DEPTH            = 32
 
-)( 
-        input wire  SYS_CLK, 
-        input wire  SYS_RST, 
+)(
+        // Clk and rst 
+        input wire          SYS_CLK, 
+        input wire          SYS_RST, 
 
-        input wire  UART0_RXD, 
-        output wire UART0_TXD,
+        // UART 0
+        input  wire         UART0_RXD, 
+        output wire         UART0_TXD,
 
-        input wire  UART1_RXD,
-        output wire UART1_TXD 
+        // UART 1
+        input  wire         UART1_RXD,
+        output wire         UART1_TXD,
+
+        // Remaining IRQs to the interrupt controller.
+        input   wire [27:0] I_IRQ,              
+
+        // Single FIQ input directly to ZAP CPU.
+        input   wire        I_FIQ,
+
+        // External Wishbone Connection (for RAMs etc).
+        output wire         O_WB_STB,   
+        output wire         O_WB_CYC,   
+        output wire [31:0]  O_WB_DAT,
+        output wire [31:0]  O_WB_ADR,
+        output wire [3:0]   O_WB_SEL,
+        output wire         O_WB_WE,
+        input  wire         I_WB_ACK,
+        input  wire [31:0]  I_WB_DAT
 );
 
 `include "zap_defines.vh"
@@ -81,8 +99,6 @@ localparam UART1_LO                     = 32'hFFFFFF80;
 localparam UART1_HI                     = 32'hFFFFFF9F;
 localparam TIMER1_LO                    = 32'hFFFFFF60;
 localparam TIMER1_HI                    = 32'hFFFFFF7F;
-localparam RAM_HI                       = RAM_SIZE - 32'd1;
-localparam RAM_LO                       = 32'h00000000;
 
 // Internal signals.
 wire            i_clk    = SYS_CLK;
@@ -106,6 +122,19 @@ wire [2:0]      data_wb_cti; // Cycle Type Indicator.
 wire            global_irq;
 wire [1:0]      uart_irq;
 wire [1:0]      timer_irq;
+wire            ext_stb;
+wire            ext_cyc;
+wire [31:0]     ext_adr;
+
+// Assigns.
+assign        O_WB_CYC        = data_wb_cyc_ram;
+assign        O_WB_STB        = data_wb_stb_ram;
+assign        O_WB_ADR        = data_wb_adr;
+assign        O_WB_WE         = data_wb_we;
+assign        O_WB_DAT        = data_wb_dout;
+assign        O_WB_SEL        = data_wb_sel;
+assign        data_wb_din_ram = I_WB_DAT;
+assign        data_wb_ack_ram = I_WB_ACK;
 
 // Wishbone selector.
 always @*
@@ -120,12 +149,10 @@ begin:blk1
                 data_wb_stb_timer[ii] = 0;
         end
 
-        data_wb_cyc_ram   = 0;
-        data_wb_stb_ram   = 0;
         data_wb_cyc_vic   = 0;
         data_wb_stb_vic   = 0;
 
-        if ( data_wb_adr >= UART0_LO && data_wb_adr <= UART0_HI ) // UART0 access
+        if ( data_wb_adr >= UART0_LO && data_wb_adr <= UART0_HI )        // UART0 access
         begin
                 data_wb_cyc_uart[0] = data_wb_cyc;
                 data_wb_stb_uart[0] = data_wb_stb;
@@ -139,14 +166,14 @@ begin:blk1
                 data_wb_ack          = data_wb_ack_timer[0];
                 data_wb_din          = data_wb_din_timer[0]; 
         end
-        else if ( data_wb_adr >= VIC_LO && data_wb_adr <= VIC_HI ) // VIC access.
+        else if ( data_wb_adr >= VIC_LO && data_wb_adr <= VIC_HI )        // VIC access.
         begin
                 data_wb_cyc_vic   = data_wb_cyc;
                 data_wb_stb_vic   = data_wb_stb;
                 data_wb_ack       = data_wb_ack_vic;
                 data_wb_din       = data_wb_din_vic;                
         end
-        else if ( data_wb_adr >= UART1_LO && data_wb_adr <= UART1_HI ) // UART1 access
+        else if ( data_wb_adr >= UART1_LO && data_wb_adr <= UART1_HI )    // UART1 access
         begin
                 data_wb_cyc_uart[1] = data_wb_cyc;
                 data_wb_stb_uart[1] = data_wb_stb;
@@ -160,12 +187,24 @@ begin:blk1
                 data_wb_ack          = data_wb_ack_timer[1];
                 data_wb_din          = data_wb_din_timer[1]; 
         end       
-        else if ( data_wb_adr >= RAM_LO && data_wb_adr <= RAM_HI ) // RAM access
+        else // External WB access.
         begin
-                data_wb_cyc_ram  = data_wb_cyc;
-                data_wb_stb_ram  = data_wb_stb;
                 data_wb_ack      = data_wb_ack_ram;
                 data_wb_din      = data_wb_din_ram; 
+        end
+end
+
+always @ (posedge i_clk)
+begin
+        if ( ext_adr < TIMER1_LO )
+        begin
+                data_wb_cyc_ram <= ext_cyc;
+                data_wb_stb_ram <= ext_stb;
+        end
+        else
+        begin
+                data_wb_cyc_ram <= 1'd0;
+                data_wb_stb_ram <= 1'd0;
         end
 end
 
@@ -191,7 +230,7 @@ u_zap_top
         .i_clk(i_clk),
         .i_reset(i_reset),
         .i_irq(global_irq),
-        .i_fiq    (1'd0),
+        .i_fiq    (I_FIQ),
         .o_wb_cyc (data_wb_cyc),
         .o_wb_stb (data_wb_stb),
         .o_wb_adr (data_wb_adr),
@@ -201,6 +240,12 @@ u_zap_top
         .o_wb_dat (data_wb_dout),
         .i_wb_ack (data_wb_ack),
         .o_wb_sel (data_wb_sel),
+
+        // Strobe and CYC nxt pins.
+        .o_wb_stb_nxt (ext_stb),
+        .o_wb_cyc_nxt (ext_cyc),
+        .o_wb_adr_nxt (ext_adr),
+
         .o_wb_bte ()             // Always zero.
 
 );
@@ -227,7 +272,7 @@ begin
                         .wb_cyc_i(data_wb_cyc_uart[gi]),
                         .wb_sel_i(data_wb_sel),
                         .wb_ack_o(data_wb_ack_uart[gi]),
-                        .int_o           (uart_irq[gi]), // Interrupt.
+                        .int_o   (uart_irq[gi]), // Interrupt.
                         
                         // UART signals.
                         .srx_pad_i         (uart_in[gi]),
@@ -263,7 +308,7 @@ endgenerate
 // VIC
 // ===============================
 
-vic #(.SOURCES(4)) u_vic (
+vic #(.SOURCES(32)) u_vic (
         .i_clk   (i_clk),
         .i_rst   (i_reset),
         .i_wb_adr(data_wb_adr),
@@ -274,24 +319,8 @@ vic #(.SOURCES(4)) u_vic (
         .i_wb_sel(data_wb_sel),
         .o_wb_dat(data_wb_din_vic), // To core.
         .o_wb_ack(data_wb_ack_vic),
-        .i_irq({timer_irq[1], uart_irq[1], timer_irq[0], uart_irq[0]}), // Concatenate interrupt sources.
-        .o_irq(global_irq)                                              // Interrupt out
-);
-
-// ===============================
-// RAM
-// ===============================
-
-ram #( .SIZE_IN_BYTES  (RAM_SIZE) ) u_ram (
-        .i_clk(i_clk),
-        .i_wb_cyc(data_wb_cyc_ram),
-        .i_wb_stb(data_wb_stb_ram),
-        .i_wb_adr(data_wb_adr),
-        .i_wb_we(data_wb_we),
-        .o_wb_dat(data_wb_din_ram),
-        .i_wb_dat(data_wb_dout),
-        .o_wb_ack(data_wb_ack_ram),
-        .i_wb_sel(data_wb_sel)
+        .i_irq({I_IRQ, timer_irq[1], uart_irq[1], timer_irq[0], uart_irq[0]}), // Concatenate 32 interrupt sources.
+        .o_irq(global_irq)                                                   // Interrupt out
 );
 
 endmodule // chip_top

@@ -124,54 +124,54 @@ localparam [1:0] SIGNED_BYTE            = 2'd0;
 localparam [1:0] UNSIGNED_HALF_WORD     = 2'd1;
 localparam [1:0] SIGNED_HALF_WORD       = 2'd2;
 
-`ifndef SYNTHESIS
+// assertions_start
 
-// Debug only.
-reg bx, dp, br, mrs, msr, ls, mult, halfword_ls, swi, dp1, dp2, dp3, lmult, clz;
-
-always @*
-begin
-        bx  = 0;
-        dp  = 0; 
-        br  = 0; 
-        mrs = 0; 
-        msr = 0; 
-        ls = 0; 
-        mult = 0; 
-        halfword_ls = 0; 
-        swi = 0; 
-        dp1 = 0;
-        dp2 = 0;
-        dp3 = 0;
-
-        //
-        // Debugging purposes.
-        //
-        if ( i_instruction_valid )
-        casez ( i_instruction[31:0] )
-        CLZ_INSTRUCTION:                               clz = 1;
-        BX_INST:                                       bx  = 1;
-        MRS:                                           mrs = 1;
-        MSR,MSR_IMMEDIATE:                             msr = 1;
-        DATA_PROCESSING_IMMEDIATE, 
-        DATA_PROCESSING_REGISTER_SPECIFIED_SHIFT, 
-        DATA_PROCESSING_INSTRUCTION_SPECIFIED_SHIFT:   dp  = 1;
-        BRANCH_INSTRUCTION:                            br  = 1;   
-        LS_INSTRUCTION_SPECIFIED_SHIFT,LS_IMMEDIATE:    
+        // Debug only.
+        reg bx, dp, br, mrs, msr, ls, mult, halfword_ls, swi, dp1, dp2, dp3, lmult, clz;
+        
+        always @*
         begin
-                if ( i_instruction[20] )
-                        ls  = 1; // Load
-                else
-                        ls  = 2;  // Store
+                bx      = 0;
+                dp      = 0; 
+                br      = 0; 
+                mrs     = 0; 
+                msr     = 0; 
+                ls      = 0; 
+                mult    = 0; 
+                halfword_ls = 0; 
+                swi = 0; 
+                dp1 = 0;
+                dp2 = 0;
+                dp3 = 0;
+        
+                //
+                // Debugging purposes.
+                //
+                if ( i_instruction_valid )
+                casez ( i_instruction[31:0] )
+                CLZ_INSTRUCTION:                               clz = 1;
+                BX_INST:                                       bx  = 1;
+                MRS:                                           mrs = 1;
+                MSR,MSR_IMMEDIATE:                             msr = 1;
+                DATA_PROCESSING_IMMEDIATE, 
+                DATA_PROCESSING_REGISTER_SPECIFIED_SHIFT, 
+                DATA_PROCESSING_INSTRUCTION_SPECIFIED_SHIFT:   dp  = 1;
+                BRANCH_INSTRUCTION:                            br  = 1;   
+                LS_INSTRUCTION_SPECIFIED_SHIFT,LS_IMMEDIATE:    
+                begin
+                        if ( i_instruction[20] )
+                                ls  = 1; // Load
+                        else
+                                ls  = 2;  // Store
+                end
+                MULT_INST:                        mult            = 1;
+                LMULT_INST:                       lmult           = 1;
+                HALFWORD_LS:                      halfword_ls     = 1; 
+                SOFTWARE_INTERRUPT:               swi             = 1;         
+                endcase
         end
-        MULT_INST:                        mult            = 1;
-        LMULT_INST:                       lmult           = 1;
-        HALFWORD_LS:                      halfword_ls     = 1; 
-        SOFTWARE_INTERRUPT:               swi             = 1;         
-        endcase
-end
 
-`endif
+// assertions_end
 
 // ----------------------------------------------------------------------------
 
@@ -693,9 +693,7 @@ endtask
 //
 task process_immediate ( input [34:0] instruction );
 begin
-        `ifndef SYNTHESIS
-                dp1 = 1;
-        `endif
+        dp1 = 1;
 
         o_shift_length          = instruction[11:8] << 1'd1;
         o_shift_length[32]      = IMMED_EN;
@@ -713,9 +711,7 @@ endtask
 //
 task process_instruction_specified_shift ( input [34:0] instruction );
 begin
-        `ifndef SYNTHESIS
-                dp2 = 1;
-        `endif
+         dp2 = 1;
 
         // ROR #0 = RRC, ASR #0 = ASR #32, LSL #0 = LSL #0, LSR #0 = LSR #32 
         // ROR #n = ROR_1 #n ( n > 0 )
@@ -755,9 +751,7 @@ begin
         $display("%m Process register specified shift...");
 `endif
 
-        `ifndef SYNTHESIS
-                dp3 = 1;
-        `endif
+        dp3 = 1;
 
         o_shift_length          = instruction[11:8];
         o_shift_length[32]      = INDEX_EN;

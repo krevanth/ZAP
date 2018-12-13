@@ -70,7 +70,7 @@ end
 
 reg [39:0] sel;
 
-`ifndef SYNTHESIS
+// assertions_start
         wire [31:0] r0;  assign r0 =  sel[0]  ? MEM[0] : mem[0]; 
         wire [31:0] r1;  assign r1 =  sel[1]  ? MEM[1] : mem[1];
         wire [31:0] r2;  assign r2 =  sel[2]  ? MEM[2] : mem[2];
@@ -111,7 +111,7 @@ reg [39:0] sel;
         wire [31:0] r37; assign r37 = sel[37] ? MEM[37] : mem[37];
         wire [31:0] r38; assign r38 = sel[38] ? MEM[38] : mem[38];
         wire [31:0] r39; assign r39 = sel[39] ? MEM[39] : mem[39];
-`endif
+// assertions_end
 
 always @ (posedge i_clk)
 begin

@@ -20,11 +20,6 @@
 // -- 02110-1301, USA.                                                        --
 // --                                                                         --
 // -----------------------------------------------------------------------------
-//                                                                            --
-// Wishbone RAM. If SYNTHESIS is defined - this will work as a                --
-// 0 cycle memory. If SYNTHESIS is not defined - it models a variable delay   --
-// memory.                                                                    --
-// -----------------------------------------------------------------------------
 
 `default_nettype none
 
@@ -46,10 +41,7 @@ output reg              o_wb_ack = 1'd0
 `include "zap_localparams.vh"
 `include "zap_functions.vh"
 
-`ifndef SYNTHESIS
-        integer seed = `SEED;
-`endif
-
+integer seed = `SEED;
 reg [31:0] ram [SIZE_IN_BYTES/4 -1:0];
 
 // Initialize the RAM with the generated image.
@@ -75,18 +67,13 @@ begin:blk1
 end
 
 // Wishbone RAM.
-`ifndef SYNTHESIS
 
         // Models a variable delay RAM.
         always @ ( negedge i_clk )
         begin:blk
                 reg stall;
 
-                `ifdef STALL
-                        stall = $random(seed);
-                `else
-                        stall = 0;
-                `endif
+                stall = $random(seed);
         
                 if ( !i_wb_we && i_wb_cyc && i_wb_stb && !stall )
                 begin
@@ -109,21 +96,6 @@ end
                         o_wb_dat    <= 'dx;
                 end
         end
-`else
-
-        // Synthesizable simple RAM
-        always @ ( posedge i_clk )
-        begin: blk
-                o_wb_dat <= ram [ i_wb_adr >> 2];
-                o_wb_ack <= i_wb_cyc && i_wb_stb && !o_wb_ack;
-
-                if ( i_wb_cyc && i_wb_stb && i_wb_we && i_wb_sel[0] ) ram [ i_wb_adr >> 2 ][7:0]   <= i_wb_dat[7:0];
-                if ( i_wb_cyc && i_wb_stb && i_wb_we && i_wb_sel[1] ) ram [ i_wb_adr >> 2 ][15:8]  <= i_wb_dat[15:8];
-                if ( i_wb_cyc && i_wb_stb && i_wb_we && i_wb_sel[2] ) ram [ i_wb_adr >> 2 ][23:16] <= i_wb_dat[23:16];
-                if ( i_wb_cyc && i_wb_stb && i_wb_we && i_wb_sel[3] ) ram [ i_wb_adr >> 2 ][31:24] <= i_wb_dat[31:24];
-        end
-
-`endif
 
 endmodule // ram
 

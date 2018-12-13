@@ -115,12 +115,7 @@ wire c2 = i_cpsr_ff_mode != USR;
 wire c3 = i_instruction[11:8] == 4'b1111;
 wire c4 = i_instruction[34:32] == 3'd0;
 wire c5 = c1 & c2 & c3 & c4;
-
-`ifndef SYNTHESIS
-
 reg eclass;
-
-`endif
 
 // Next state logic.
 always @*
@@ -135,9 +130,7 @@ begin
         o_irq                   = i_irq;
         o_fiq                   = i_fiq;
 
-        `ifndef SYNTHESIS
-                eclass = 0;
-        `endif
+        eclass = 0;
 
         case ( state_ff )
         IDLE:
@@ -177,14 +170,12 @@ begin
                         end
                         else // Warning...
                         begin
-                                `ifndef SYNTHESIS
 
                                 if ( i_instruction[11:8] != 4'b1111 ) 
                                         eclass = 1;
                                 else
                                         eclass = 2;
             
-                                `endif
 
                                 // Remain transparent since this is not a coprocessor
                                 // instruction.

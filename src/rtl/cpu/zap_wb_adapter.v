@@ -55,7 +55,14 @@ output wire     [3:0]        o_wb_sel,
 output wire     [2:0]        o_wb_cti,
 output wire                  o_wb_we,
 input wire      [31:0]       i_wb_dat,
-input wire                   i_wb_ack
+input wire                   i_wb_ack,
+
+output reg                   o_wb_stb_nxt,
+output reg                   o_wb_cyc_nxt,
+output wire     [3:0]        o_wb_sel_nxt,
+output wire     [31:0]       o_wb_dat_nxt,
+output wire     [31:0]       o_wb_adr_nxt,
+output wire                  o_wb_we_nxt
 
 );
 
@@ -66,19 +73,21 @@ reg  fsm_write_en;
 reg  [69:0] fsm_write_data;
 wire w_eob;
 wire w_full;
+wire w_eob_nxt;
 
 assign    o_wb_cti = {w_eob, 1'd1, w_eob};
 
 wire w_emp;
 
 // {SEL, DATA, ADDR, EOB, WEN} = 4 + 64 + 1 + 1 = 70 bit.
-zap_sync_fifo #(.WIDTH(70), .DEPTH(DEPTH), .FWFT(1'd0)) U_STORE_FIFO (
+zap_sync_fifo #(.WIDTH(70), .DEPTH(DEPTH), .FWFT(1'd0), .PROVIDE_NXT_DATA(1)) U_STORE_FIFO (
 .i_clk          (i_clk),
 .i_reset        (i_reset),
 .i_ack          ((i_wb_ack && o_wb_stb) || emp_ff),
 .i_wr_en        (fsm_write_en),
 .i_data         (fsm_write_data),
-.o_data         ({o_wb_sel, o_wb_dat, o_wb_adr, w_eob, o_wb_we}),
+.o_data         ({o_wb_sel,     o_wb_dat,     o_wb_adr,     w_eob,     o_wb_we}),
+.o_data_nxt     ({o_wb_sel_nxt, o_wb_dat_nxt, o_wb_adr_nxt, w_eob_nxt, o_wb_we_nxt}),
 .o_empty        (w_emp),
 .o_full         (w_full),
 .o_empty_n      (),
@@ -86,6 +95,7 @@ zap_sync_fifo #(.WIDTH(70), .DEPTH(DEPTH), .FWFT(1'd0)) U_STORE_FIFO (
 .o_full_n_nxt   ()
 );
 
+reg emp_nxt;
 reg emp_ff;
 reg [31:0] ctr_nxt, ctr_ff;
 reg [31:0] dff, dnxt;
@@ -102,21 +112,32 @@ localparam NUMBER_OF_STATES = 7;
 
 reg [$clog2(NUMBER_OF_STATES)-1:0] state_ff, state_nxt;
 
-// FIFO pipeline register.
+// FIFO pipeline register and nxt state logic.
+always @ (*)
+begin
+        emp_nxt      = emp_ff;
+        o_wb_stb_nxt = o_wb_stb;
+        o_wb_cyc_nxt = o_wb_cyc;
+
+        if ( i_reset ) 
+        begin
+                emp_nxt      = 1'd1;
+                o_wb_stb_nxt = 1'd0;
+                o_wb_cyc_nxt = 1'd0;
+        end
+        else if ( emp_ff || (i_wb_ack && o_wb_stb) ) 
+        begin
+                emp_nxt      = w_emp;
+                o_wb_stb_nxt = !w_emp;
+                o_wb_cyc_nxt = !w_emp;
+        end
+end
+
 always @ (posedge i_clk)
 begin
-        if ( i_reset )
-        begin
-                emp_ff   <= 1'd1;
-                o_wb_stb <= 1'd0;
-                o_wb_cyc <= 1'd0;
-        end
-        else if ( emp_ff || (i_wb_ack && o_wb_stb) )
-        begin
-                emp_ff   <= w_emp;
-                o_wb_stb <= !w_emp;
-                o_wb_cyc <= !w_emp;
-        end
+        emp_ff   <= emp_nxt;
+        o_wb_stb <= o_wb_stb_nxt;
+        o_wb_cyc <= o_wb_cyc_nxt;
 end
 
 // Flip flop clocking block.

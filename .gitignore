@@ -1,8 +1,5 @@
 # Object folder
 obj/
-opencores/
-update_opencores.sh
-diff_opencores.sh
 
 # Windows image file caches
 Thumbs.db

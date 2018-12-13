@@ -13,7 +13,6 @@ IFS=""
 
 while true
 do
-        read -n 1 -r char
+        read -n1 -r -d "" char
         echo -n "$char" >> "$1"
-        sync
 done

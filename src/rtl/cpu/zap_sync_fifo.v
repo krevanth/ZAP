@@ -27,9 +27,10 @@
 
 // FWFT means "First Word Fall Through".
 module zap_sync_fifo #(
-        parameter WIDTH = 32, 
-        parameter DEPTH = 32, 
-        parameter FWFT = 1
+        parameter WIDTH            = 32, 
+        parameter DEPTH            = 32, 
+        parameter FWFT             = 1,
+        parameter PROVIDE_NXT_DATA = 0
 )
 (
         // Clock and reset
@@ -43,6 +44,7 @@ module zap_sync_fifo #(
         // Data busses
         input   wire [WIDTH-1:0] i_data,
         output  reg [WIDTH-1:0]  o_data,
+        output  reg [WIDTH-1:0]  o_data_nxt,
 
         // Flags
         output wire              o_empty,
@@ -102,6 +104,7 @@ begin:gb1
                 always @*
                 begin
                         o_data = sel_ff ? dt_ff : bram_ff;
+                        o_data_nxt = 0; // Tied off.
                 end
         end
         else
@@ -112,6 +115,21 @@ begin:gb1
                         begin
                                 o_data <= mem [ rptr_ff[PTR_WDT-2:0] ];
                         end
+                end
+
+                if ( PROVIDE_NXT_DATA ) 
+                begin: f11
+                        always @ (*)
+                        begin 
+                                if ( i_ack && nempty ) 
+                                        o_data_nxt = mem [ rptr_ff[PTR_WDT-2:0] ];
+                                else
+                                        o_data_nxt = o_data;
+                        end
+                end
+                else
+                begin: f22
+                        always @* o_data_nxt = 0;
                 end
         end
 end

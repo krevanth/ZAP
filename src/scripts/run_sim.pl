@@ -30,6 +30,7 @@ use warnings;
 my %Config = do "./Config.cfg";
 
 # Extract from config
+my $WAVES                       = $Config{'WAVES'};
 my $RAM_SIZE                    = $Config{'EXT_RAM_SIZE'}; 
 my $SEED                        = $Config{'SEED'};      
 my $SYNTHESIS                   = $Config{'SYNTHESIS'};
@@ -37,7 +38,6 @@ my $DUMP_START                  = $Config{'DUMP_START'};
 my $DUMP_SIZE                   = $Config{'DUMP_SIZE'};
 my $MAX_CLOCK_CYCLES            = $Config{'MAX_CLOCK_CYCLES'};
 my $TLB_DEBUG                   = $Config{'DEFINE_TLB_DEBUG'};
-my $STALL                       = $Config{'ALLOW_STALLS'};
 my $TX_TERM0                    = $Config{'UART0_TX_TERMINAL'};
 my $TX_TERM1                    = $Config{'UART1_TX_TERMINAL'};
 my $RX_TERM0                    = $Config{'UART0_RX_TERMINAL'};
@@ -94,7 +94,7 @@ my $UART1_PATH_RX               = "$SCRATCH/zapuart1.rx";
 
 # Generate IVL options including VCD generation path.
 my $IVL_OPTIONS  = " -I$ZAP_HOME/src/rtl/cpu -I$ZAP_HOME/obj/ts/$TEST -I$ZAP_HOME/src/rtl/External_IP/uart16550/rtl            ";
-   $IVL_OPTIONS .= "  $ZAP_HOME/src/rtl/External_IP/uart16550/rtl/*.v $ZAP_HOME/src/rtl/timer/timer.v  $ZAP_HOME/src/rtl/vic/vic.v $ZAP_HOME/src/rtl/ram/ram.v ";
+   $IVL_OPTIONS .= "  $ZAP_HOME/src/rtl/External_IP/uart16550/rtl/*.v $ZAP_HOME/src/rtl/timer/timer.v  $ZAP_HOME/src/rtl/vic/vic.v ";
    $IVL_OPTIONS .= "  $ZAP_HOME/src/rtl/cpu/*.v   ";
    $IVL_OPTIONS .= "  $ZAP_HOME/src/rtl/TOP/chip_top.v ";
    $IVL_OPTIONS .= "  $ZAP_HOME/src/testbench/*.v "; 
@@ -116,12 +116,12 @@ $IVL_OPTIONS .= " -Pzap_test.CODE_SECTION_TLB_ENTRIES=$CODE_SECTION_TLB_ENTRIES 
 $IVL_OPTIONS .= " -Pzap_test.CODE_CACHE_SIZE=$CODE_CACHE_SIZE ";
 
 # Defines
-if ( 1       )          {        $IVL_OPTIONS .= " -DMAX_CLOCK_CYCLES=$MAX_CLOCK_CYCLES " };
+if ( 1       )          {        $IVL_OPTIONS .= " -DMAX_CLOCK_CYCLES=$MAX_CLOCK_CYCLES " }
 if ( $IRQ_EN )          {        $IVL_OPTIONS .= "-DIRQ_EN ";                             }
 if ( $FIQ_EN )          {        $IVL_OPTIONS .= "-DFIQ_EN ";                             }
-if ( $STALL )           {        $IVL_OPTIONS .= "-DSTALL ";                              }
 if ( $SYNTHESIS )       {        $IVL_OPTIONS .= "-DSYNTHESIS ";                          }
 if ( $TLB_DEBUG )       {        $IVL_OPTIONS .= "-DTLB_DEBUG ";                          }
+if ( $WAVES )           {        $IVL_OPTIONS .= "-DWAVES ";                              }
 
 ###########################################################################################################################################
 # Create checker assertion verilog include file.
@@ -186,7 +186,11 @@ if ( $RX_TERM1 ) {        die "Failed to open UART RX terminal 1." if system1("x
 
 die "*E: Verilog Compilation Failed!\n"  if system1("iverilog $IVL_OPTIONS");
 die "*E: Failed to read out Log FIFO!\n" if system1("rm -f $LOG_FILE_PATH ; mkfifo $LOG_FILE_PATH ; cat $LOG_FILE_PATH | gzip  > $COMPRESSED_LOG_FILE_PATH &");
-die "*E: Failed to read out VCD FIFO!\n" if system1("rm -f $VCD_PATH      ; mkfifo $VCD_PATH      ; cat $VCD_PATH      | gzip  > $COMPRESSED_VCD_PATH &");
+
+if ( $WAVES ) {
+        die "*E: Failed to read out VCD FIFO!\n" if system1("rm -f $VCD_PATH      ; mkfifo $VCD_PATH      ; cat $VCD_PATH      | gzip  > $COMPRESSED_VCD_PATH &");
+}
+
 die "*E: VVP execution error!\n"         if system1("vvp $VVP_PATH | tee $LOG_FILE_PATH");
 
 ###############################################################################################################################################

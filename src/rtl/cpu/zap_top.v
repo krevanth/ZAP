@@ -78,6 +78,9 @@ parameter [31:0] CODE_CACHE_SIZE          =  32'd1024  // Cache size in bytes.
 
         output  wire            o_wb_cyc,
         output  wire            o_wb_stb,
+        output  wire            o_wb_stb_nxt,
+        output  wire            o_wb_cyc_nxt,
+        output wire  [31:0]     o_wb_adr_nxt,
         output  wire [31:0]     o_wb_adr,
         output  wire            o_wb_we,
         output wire  [31:0]     o_wb_dat,
@@ -393,7 +396,15 @@ zap_wb_adapter #(.DEPTH(STORE_BUFFER_DEPTH)) u_zap_wb_adapter (
 .o_wb_adr(o_wb_adr),
 .o_wb_cti(o_wb_cti),
 .i_wb_dat(i_wb_dat),
-.i_wb_ack(i_wb_ack)
+.i_wb_ack(i_wb_ack),
+
+// CYC and STB nxt.
+.o_wb_stb_nxt (o_wb_stb_nxt),
+.o_wb_cyc_nxt (o_wb_cyc_nxt),
+.o_wb_adr_nxt (o_wb_adr_nxt),
+.o_wb_sel_nxt (),
+.o_wb_dat_nxt (),
+.o_wb_we_nxt  ()
 );
 
 endmodule // zap_top.v

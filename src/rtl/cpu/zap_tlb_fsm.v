@@ -478,27 +478,19 @@ endtask
 
 // ----------------------------------------------------------------------------
 
-`ifndef SYNTHESIS
+// assertions_start
 
 always @ (posedge i_mmu_en)
 begin
         $display($time, " - %m :: MMU Enabled!");
-
-        `ifdef TLB_DEBUG
-                $stop;
-        `endif
 end
 
 always @ (negedge i_mmu_en)
 begin
         $display($time, " - %m :: MMU Disabled!");
-
-        `ifdef TLB_DEBUG
-                $stop;  
-        `endif      
 end
 
-`endif
+// assertions_end
 
 endmodule // zap_tlb_fsm.v
 

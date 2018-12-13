@@ -265,7 +265,8 @@ begin
                         tag_ram_wr_en = 0;
                         blk_ctr_nxt = 0;
 
-                `ifndef SYNTHESIS
+                // assertions_start
+
                         $display($time, " - %m :: Cache clean requested...");
 
                         for(i=0;i<CACHE_SIZE/16;i=i+1)
@@ -273,10 +274,7 @@ begin
                                 $display($time, " - %m :: Line %d : %x %d", i, dat_ram[i], dirty[i]);
                         end
 
-                        `ifdef CACHE_DEBUG
-                                $stop;
-                        `endif
-                `endif
+                // assertions_end
 
 
                         state_nxt = CACHE_CLEAN_GET_ADDRESS;

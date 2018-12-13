@@ -321,9 +321,8 @@ begin
         o_wb_wen_nxt = wb_wen[state_nxt];
 end
 
-`ifndef SYNTHESIS
-        reg     xerr;
-        initial xerr = 0;
+// assertions_start
+        reg     xerr = 0;
         
         always @ (posedge i_clk)
         begin 
@@ -335,7 +334,7 @@ end
                         $stop;
                 end
         end
-`endif
+// assertions_end
 
 endmodule // zap_cache
 

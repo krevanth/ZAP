@@ -1176,22 +1176,20 @@ zap_cp15_cb u_zap_cp15_cb (
         .i_icache_clean_done    (i_icache_clean_done)
 );
 
-`ifndef SYNTHESIS
-
 reg [(8*8)-1:0] CPU_MODE; // Max 8 characters i.e. 64-bit string.
 
 always @*
 case(o_cpsr[`CPSR_MODE])
-FIQ: CPU_MODE = "FIQ"; 
-IRQ: CPU_MODE = "IRQ";
-USR: CPU_MODE = "USR";
-UND: CPU_MODE = "UND";
-SVC: CPU_MODE = "SVC";
-ABT: CPU_MODE = "ABT";
-SYS: CPU_MODE = "SYS";
+FIQ:     CPU_MODE = "FIQ"; 
+IRQ:     CPU_MODE = "IRQ";
+USR:     CPU_MODE = "USR";
+UND:     CPU_MODE = "UND";
+SVC:     CPU_MODE = "SVC";
+ABT:     CPU_MODE = "ABT";
+SYS:     CPU_MODE = "SYS";
+default: CPU_MODE = "???";
 endcase
 
-`endif
 
 endmodule // zap_core.v
 

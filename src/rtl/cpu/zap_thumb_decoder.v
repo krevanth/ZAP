@@ -173,16 +173,14 @@ begin
         end
 end
 
-`ifndef SYNTHESIS
-
 // Helpful for debug.
 zap_decompile u_zap_decompile (
-.i_instruction(o_instruction),
-.i_dav(o_instruction_valid),
-.o_decompile()
+        .i_instruction  ({1'd0, o_instruction}),
+        .i_dav          (o_instruction_valid),
+        .o_decompile    ()
 );
 
-`endif
 
-endmodule 
+endmodule // zap_thumb_decoder
+
 `default_nettype wire

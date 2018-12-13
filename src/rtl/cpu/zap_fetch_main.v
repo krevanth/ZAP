@@ -190,8 +190,6 @@ begin
         end
 end
 
-`ifndef SYNTHESIS
-
 always @ (negedge i_clk)
 begin
         if ( i_pc_ff[0] != 1'd0 ) 
@@ -200,8 +198,6 @@ begin
                 $finish;
         end
 end
-
-`endif
 
 // ----------------------------------------------------------------------------
 
@@ -301,15 +297,12 @@ assign _unused_ok_ =   i_pc_from_alu[0] &&
 
 // ---------------------------------------------------------------------------------
 
-`ifndef SYNTHESIS
-
 zap_decompile u_zap_decompile (
         .i_instruction  ({4'd0, o_instruction}),
         .i_dav          (o_valid),
         .o_decompile    ()
 );
 
-`endif
 
 endmodule // zap_fetch_main.v
 `default_nettype wire

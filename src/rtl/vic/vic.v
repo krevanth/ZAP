@@ -55,7 +55,7 @@ output reg                   o_wb_ack,
 
 // Interrupt sources in. Concatenate all
 // sources together.
-input    [SOURCES-1:0]       i_irq,
+input wire   [SOURCES-1:0]       i_irq,
 
 // Interrupt output. Level interrupt.
 output  reg                  o_irq
@@ -103,7 +103,7 @@ begin
                 integer i;
 
                 // Normally record interrupts. These are sticky bits.
-                for(i=0;i<SOURCES;i++)
+                for(i=0;i<SOURCES;i=i+1)
                         INT_STATUS[i] <= INT_STATUS[i] == 0 ? i_irq[i] : 1'd1;
 
                 case(wbstate)
@@ -139,10 +139,10 @@ begin
                                         integer i;
 
                                         $display($time, " - %m :: Writing to INT_CLEAR register...");
-                                        if ( i_wb_sel[0] ) for(i=0; i <=7;i++) if ( i_wb_dat[i] ) INT_STATUS[i] <= 1'd0; 
-                                        if ( i_wb_sel[1] ) for(i=8; i<=15;i++) if ( i_wb_dat[i] ) INT_STATUS[i] <= 1'd0; 
-                                        if ( i_wb_sel[2] ) for(i=16;i<=23;i++) if ( i_wb_dat[i] ) INT_STATUS[i] <= 1'd0; 
-                                        if ( i_wb_sel[3] ) for(i=24;i<=31;i++) if ( i_wb_dat[i] ) INT_STATUS[i] <= 1'd0; 
+                                        if ( i_wb_sel[0] ) for(i=0; i <=7;i=i+1) if ( i_wb_dat[i] ) INT_STATUS[i] <= 1'd0; 
+                                        if ( i_wb_sel[1] ) for(i=8; i<=15;i=i+1) if ( i_wb_dat[i] ) INT_STATUS[i] <= 1'd0; 
+                                        if ( i_wb_sel[2] ) for(i=16;i<=23;i=i+1) if ( i_wb_dat[i] ) INT_STATUS[i] <= 1'd0; 
+                                        if ( i_wb_sel[3] ) for(i=24;i<=31;i=i+1) if ( i_wb_dat[i] ) INT_STATUS[i] <= 1'd0; 
                                 end
 
                                 default: $display($time, " - %m :: Warning: Attemting to write to illgal register...");
