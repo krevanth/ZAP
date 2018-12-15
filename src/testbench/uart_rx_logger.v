@@ -78,7 +78,9 @@ begin
         repeat(16) @(posedge i_clk) o_line <= wchar[5];
         repeat(16) @(posedge i_clk) o_line <= wchar[6];
         repeat(16) @(posedge i_clk) o_line <= wchar[7];
-        repeat(32) @(posedge i_clk) o_line <=     1'd1;
+
+        // Wait 1K clocks between input bytes.
+        repeat(1024) @(posedge i_clk) o_line <=     1'd1;
 end
 endtask
 
