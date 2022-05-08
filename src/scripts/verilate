@@ -1,0 +1,138 @@
+#!/usr/bin/perl -w
+
+# -----------------------------------------------------------------------------
+# --                                                                         --
+# --                   (C) 2016-2022 Revanth Kamaraj (krevanth)              --
+# --                                                                         -- 
+# -- --------------------------------------------------------------------------
+# --                                                                         --
+# -- This program is free software; you can redistribute it and/or           --
+# -- modify it under the terms of the GNU General Public License             --
+# -- as published by the Free Software Foundation; either version 2          --
+# -- of the License, or (at your option) any later version.                  --
+# --                                                                         --
+# -- This program is distributed in the hope that it will be useful,         --
+# -- but WITHOUT ANY WARRANTY; without even the implied warranty of          --
+# -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           --
+# -- GNU General Public License for more details.                            --
+# --                                                                         --
+# -- You should have received a copy of the GNU General Public License       --
+# -- along with this program; if not, write to the Free Software             --
+# -- Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA           --
+# -- 02110-1301, USA.                                                        --
+# --                                                                         --
+# -----------------------------------------------------------------------------
+
+
+use strict;
+use warnings;
+
+my %Config                      = do "./Config.cfg";
+my $ZAP_HOME                    = "../../../";
+my $RAM_SIZE                    = $Config{'EXT_RAM_SIZE'}; 
+my $SYNTHESIS                   = $Config{'SYNTHESIS'};
+my $DUMP_SIZE                   = $Config{'DUMP_SIZE'};
+my $MAX_CLOCK_CYCLES            = $Config{'MAX_CLOCK_CYCLES'};
+my $IRQ_EN                      = $Config{'IRQ_EN'};
+my $FIQ_EN                      = $Config{'FIQ_EN'}; 
+my $DATA_CACHE_SIZE             = $Config{'DATA_CACHE_SIZE'};
+my $CODE_CACHE_SIZE             = $Config{'CODE_CACHE_SIZE'};
+my $CODE_SECTION_TLB_ENTRIES    = $Config{'CODE_SECTION_TLB_ENTRIES'};
+my $CODE_SPAGE_TLB_ENTRIES      = $Config{'CODE_SPAGE_TLB_ENTRIES'};
+my $CODE_LPAGE_TLB_ENTRIES      = $Config{'CODE_LPAGE_TLB_ENTRIES'};
+my $DATA_SECTION_TLB_ENTRIES    = $Config{'DATA_SECTION_TLB_ENTRIES'};
+my $DATA_SPAGE_TLB_ENTRIES      = $Config{'DATA_SPAGE_TLB_ENTRIES'};
+my $DATA_LPAGE_TLB_ENTRIES      = $Config{'DATA_LPAGE_TLB_ENTRIES'};
+my $BP                          = $Config{'BP_DEPTH'};
+my $FIFO                        = $Config{'INSTR_FIFO_DEPTH'};
+my $SBUF_DEPTH                  = $Config{'STORE_BUFFER_DEPTH'};
+my $REG_HIER                    = "u_chip_top.u_zap_top.u_zap_core.u_zap_writeback.u_zap_register_file";
+my $SEED                        = $Config{'SEED'} == -1 ? int rand (0xffffffff) : $Config{'SEED'};
+my $SCRATCH                     = "$ZAP_HOME/obj/ts/$ARGV[0]"; 
+my $TEST                        = $ARGV[0]; 
+my $VCD_PATH                    = "$SCRATCH/zap.vcd";
+my $PROG_PATH                   = "$SCRATCH/zap_mem.v";
+
+my $IVL_OPTIONS  = " -I$ZAP_HOME/src/rtl ";
+   $IVL_OPTIONS .= "   $ZAP_HOME/src/rtl/*.sv ";
+   $IVL_OPTIONS .= " -I$ZAP_HOME/obj/ts/$TEST ";
+   $IVL_OPTIONS .= "  $ZAP_HOME/src/testbench/*.v "; 
+   $IVL_OPTIONS .= " -GRAM_SIZE=$RAM_SIZE ";
+   $IVL_OPTIONS .= " -GSTORE_BUFFER_DEPTH=$SBUF_DEPTH ";
+   $IVL_OPTIONS .= " -GBP_ENTRIES=$BP ";
+   $IVL_OPTIONS .= " -GFIFO_DEPTH=$FIFO ";
+   $IVL_OPTIONS .= " -GDATA_SECTION_TLB_ENTRIES=$DATA_SECTION_TLB_ENTRIES ";
+   $IVL_OPTIONS .= " -GDATA_LPAGE_TLB_ENTRIES=$DATA_LPAGE_TLB_ENTRIES ";
+   $IVL_OPTIONS .= " -GDATA_SPAGE_TLB_ENTRIES=$DATA_SPAGE_TLB_ENTRIES ";
+   $IVL_OPTIONS .= " -GDATA_CACHE_SIZE=$DATA_CACHE_SIZE ";
+   $IVL_OPTIONS .= " -GCODE_SECTION_TLB_ENTRIES=$CODE_SECTION_TLB_ENTRIES ";
+   $IVL_OPTIONS .= " -GCODE_LPAGE_TLB_ENTRIES=$CODE_LPAGE_TLB_ENTRIES "; 
+   $IVL_OPTIONS .= " -GCODE_SPAGE_TLB_ENTRIES=$CODE_SPAGE_TLB_ENTRIES ";
+   $IVL_OPTIONS .= " -GCODE_CACHE_SIZE=$CODE_CACHE_SIZE ";
+   $IVL_OPTIONS .= " +define+MAX_CLOCK_CYCLES=$MAX_CLOCK_CYCLES ";
+   $IVL_OPTIONS .= " +define+SEED=$SEED ";
+   $IVL_OPTIONS .= " +define+MEMORY_IMAGE=\\\"$PROG_PATH\\\" ";
+   $IVL_OPTIONS .= " +define+VCD_FILE_PATH=\\\"$VCD_PATH\\\" "; 
+   $IVL_OPTIONS .= " +define+IRQ_EN "      if ( $IRQ_EN    );
+   $IVL_OPTIONS .= " +define+FIQ_EN "      if ( $FIQ_EN    );                       
+   $IVL_OPTIONS .= " +define+SYNTHESIS "   if ( $SYNTHESIS );                    
+   $IVL_OPTIONS .= " +define+REG_HIER=$REG_HIER ";
+
+#######################################################################################################################
+# Create checker assertion verilog include file.
+#######################################################################################################################
+
+open(HH, ">$ZAP_HOME/obj/ts/$TEST/zap_check.vh") or die "Could not write to $ZAP_HOME/obj/ts/$TEST/zap_check.vh";
+
+my $RAM_HIER = "zap_test.u_ram.ram";
+my $X = $Config{'FINAL_CHECK'}; 
+
+foreach(keys (%$X)) {
+        my $string = "$_, $$X{$_}, ${RAM_HIER}[$_/4]";
+        print HH 
+        "if ( ${RAM_HIER}[$_/4] !== ", $$X{"$_"}, ') 
+         begin 
+                $display("Error: Memory values not matched. PTR = %d EXP = %x REC = %x", ', $string , ' ); 
+                o_sim_err <= 1;
+                o_sim_ok  <= 0;
+         end 
+         else 
+         begin
+         end'
+        ,
+        "\n";
+}
+
+$X = $Config{'REG_CHECK'};
+
+foreach(keys (%$X)) {
+        my $string = "\"$_\", $$X{$_}, $_";
+        print HH 
+        "if ( $_ !== ", $$X{"$_"}, ') 
+         begin 
+                $display("Error: Register values not matched. PTR = %s EXP = %x REC = %x", ', $string , ' ); 
+                o_sim_err <= 1;
+                o_sim_ok  <= 0;
+         end 
+         else 
+         begin
+         end'
+         ,
+         "\n";
+}
+
+#######################################################################################################################
+# Execute verilator
+#######################################################################################################################
+
+die "Error: Failed to obtain number of processing cores." if system("getconf _NPROCESSORS_ONLN");
+
+my $C = `getconf _NPROCESSORS_ONLN`; chomp $C;
+
+my $cmd = 
+"verilator -Wno-lint --cc --exe  --build $ZAP_HOME/src/testbench/zap_test.cpp --Mdir $ZAP_HOME/obj/ts/$TEST --top zap_test $IVL_OPTIONS --trace --x-assign unique --x-initial unique --trace-threads 1 --threads $C -j --error-limit 1";
+
+die "Error: Failed to build executable." if system("$cmd");
+
+exit 0;
+
