@@ -178,6 +178,8 @@ For arch based distros:
 ```bash
 sudo pacman -S arm-none-eabi-gcc arm-none-eabi-binutils gdb openocd verilator gtkwave make perl xterm gcc   
 ```
+*Please note that a version of Verilator that is at least 4.x is required.*
+
 #### Running a test case
 ```bash
 cd $PROJ_ROOT/src/ts/$test_name          # $PROJ_ROOT is the project directory.

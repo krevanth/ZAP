@@ -79,6 +79,21 @@ my $IVL_OPTIONS  = " -I$ZAP_HOME/src/rtl ";
    $IVL_OPTIONS .= " +define+REG_HIER=$REG_HIER ";
 
 #######################################################################################################################
+# Check Verilator version.
+#######################################################################################################################
+
+die "ERROR: Verilator not found on your system. Exiting." if system("verilator --version");
+
+my $x = `verilator --version`;
+chomp $x;
+
+$x =~ m/Verilator (.*?) .*$/;
+my $version = $1;
+print "Got verilator version $1\n";
+
+die "ERROR: Unsupported verilator version. Older version of verilator have bugs that make it incompatible with the ZAP core. You will need at least 4.x. Exiting."  if ( $version < 4 );
+
+#######################################################################################################################
 # Create checker assertion verilog include file.
 #######################################################################################################################
 
