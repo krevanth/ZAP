@@ -133,6 +133,9 @@ module zap_issue_main
         // combinational logic followed by flops(FFs).
         //
 
+        // ALU flags.
+        input   logic                            i_shifter_flag_update_ff,
+
         // The ALU never changes destination anyway. Destination from shifter.
         input logic  [$clog2(PHY_REGS )-1:0]     i_shifter_destination_index_ff,
 
@@ -185,7 +188,7 @@ module zap_issue_main
 
         // ARM to compressed switch.
         input logic                              i_switch_ff,
-        output logic                            o_switch_ff,
+        output logic                             o_switch_ff,
 
         // Outputs to register file.
         output logic      [$clog2(PHY_REGS )-1:0] o_rd_index_0,
@@ -268,9 +271,10 @@ logic [31:0] o_alu_source_value_nxt,
 // Individual lock signals. These are ORed to get the final lock.
 logic shift_lock;
 logic load_lock;
+logic flag_lock;
 logic lock;               // Asserted when an instruction cannot be issued and leads to all stages before it stalling.
 
-always_comb  lock = shift_lock | load_lock;
+always_comb  lock = shift_lock | load_lock | flag_lock;
 
 task automatic clear;
 begin
@@ -525,7 +529,7 @@ logic [31:0] get;
 begin
         if   ( index[32] )                 // Catch constant here.
         begin
-                        get = index[31:0]; 
+                get = index[31:0]; 
         end
         else if ( index[5:0] == PHY_RAZ_REGISTER[5:0] )   // Catch RAZ here.
         begin
@@ -538,7 +542,7 @@ begin
         end
         else if ( index[5:0] == PHY_CPSR[5:0] )   // Catch CPSR here.
         begin
-                get = cpu_mode; 
+                get = cpu_mode[31:0]; 
         end
         // Match in ALU stage.
         else if   ( index[5:0] == shifter_destination_index_ff[5:0] && alu_dav_nxt  )                 
@@ -701,6 +705,13 @@ begin
                                !o_shifter_disable_nxt && 
                                 o_flag_update_ff
                         );
+
+        flag_lock       = determine_flag_lock ( i_shift_source_ff, o_flag_update_ff, i_alu_dav_nxt, 
+                                                i_shifter_flag_update_ff  ) ||
+                          determine_flag_lock ( i_shift_length_ff, o_flag_update_ff, i_alu_dav_nxt, 
+                                                i_shifter_flag_update_ff  ) ||
+                          determine_flag_lock ( i_alu_source_ff  , o_flag_update_ff, i_alu_dav_nxt, 
+                                                i_shifter_flag_update_ff  );
 end
 
 always_comb
@@ -780,6 +791,29 @@ begin
         unused = |{index[31:6]};
 end
 endfunction
+
+// ---------------------------------------------------------------------------------
+
+function determine_flag_lock (
+        input   [32:0]  index,
+        input           flag_update,
+        input           alu_dav_nxt,
+        input           shifter_flag_update_ff
+);
+        determine_flag_lock = 1'd0;
+
+        if ( index[32] != IMMED_EN && index[5:0] == PHY_CPSR[5:0] )
+        begin
+                if ( flag_update || (shifter_flag_update_ff && alu_dav_nxt) )
+                begin
+                        determine_flag_lock = 1'd1;
+                end
+        end
+
+        unused = |{index[31:6]};
+endfunction
+
+// ---------------------------------------------------------------------------------
 
 task automatic reset;
 begin

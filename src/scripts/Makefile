@@ -37,7 +37,7 @@
 .PHONY: dirs
 
 SHELL        := /bin/bash -o pipefail
-ARCH         := armv5t
+ARCH         := armv5te
 TC           := $(shell basename `pwd`)
 SCRIPT_PATH  := ../../scripts/
 C_FILES      := $(wildcard *.c)

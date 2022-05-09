@@ -103,7 +103,9 @@ begin:blk1
                         o_result = i_source << 1;
 
                         if ( o_result[31] != i_source[31] )
+                        begin
                                 o_sat = 1'd1;
+                        end
 
                         if ( o_sat == 1'd1 )
                         begin

@@ -33,10 +33,23 @@
         .global test_store, test_byte, test_cpsr, test_mul, test_ldmstm, test_r15jumps, test_rti
 
 _Reset:
+        b enable_cache
 
+// ------------------------------
+// CONSTANT POOL
+// ------------------------------
+
+.word 4100
+.word 16380
+.word 0xFFF00002
+.word 4101 
+.word 0x7fffffff
+
+enable_cache:
         // Enable cache (Uses a single bit to enable both caches).
         .set ENABLE_CACHE_CP_WORD, 4100
-        ldr r1, =ENABLE_CACHE_CP_WORD
+        mov r0, #4
+        ldr r1, [r0]
         mcr p15, 0, r1, c1, c1, 0
         
         // Write out identitiy section mapping. Write 16KB to register 2.
@@ -63,22 +76,34 @@ _Reset:
         
         // Go to descriptor 4095. This is the address BASE + (#DESC * 4).
         .set DESCRIPTOR_IO_SECTION_OFFSET, 16380 // 4095 x 4
-        ldr r2,=DESCRIPTOR_IO_SECTION_OFFSET
+        mov r0, #8
+        ldr r2,[r0]
         add r1, r1, r2
         
         // Prepare a descriptor. Descriptor = 0xFFF00002 (Uncacheable section descriptor).
         .set DESCRIPTOR_IO_SECTION, 0xFFF00002
-        ldr r2 ,=DESCRIPTOR_IO_SECTION
+        mov r0, #0xC
+        ldr r2 ,[r0]
         str r2, [r1]
         ldr r6, [r1]
         mov r7, r1
         
         // ENABLE MMU
         .set ENABLE_MMU_CP_WORD, 4101
-        ldr r1, =ENABLE_MMU_CP_WORD
+        mov r0, #0x10
+        ldr r1, [r0]
         mcr p15, 0, r1, c1, c1, 0
 
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
         msr cpsr, #0x1f         @ Enter SYS mode.
+
+        bl test_sat
+
+fail_sat:
+        teq r0, #0
+        mov r1, #0
+        bne fail_sat
 
         bl test_clz
 fail0:
@@ -182,6 +207,176 @@ passed:
         mvn r13, #0
         mvn r14, #0
         b passed
+
+        @ test sat
+test_sat:
+        mov r0, #0x1
+        mov r6, #0x14
+        ldr r6, [r6]
+
+        @ Test 1 - test bit 27 of CPSR is set after QADD.
+
+        mov r1, #0xffffffff
+        mov r5, #0x80000000
+
+        qadd r2, r1, r5
+        mrs r3, cpsr
+        and r3, r3, #0x08000000
+        teq r3, #0x08000000
+        bne fail
+
+        add r0, r0, #1
+
+        @ Test 2 - test result of saturating add to be smallest negative number.
+
+        qadd r2, r5, r1
+        teq r2, #0x80000000
+        bne fail
+
+        add r0, r0, #1
+
+        @ Test 3 - Ensure bit 27 of CPSR remains set after non saturating ADD.
+
+        adds r2, r5, r1
+        mrs r3, cpsr
+        and r3, r3, #0x08000000
+        teq r3, #0x08000000
+        bne fail
+
+        add r0, r0, #1
+
+        //////////////////////////////////////////////////////////////////////////
+
+        mov r7, #0
+        msr cpsr_flg, r7
+
+        @ Test 4 - test bit 27 of CPSR is set after QADD
+
+        mov r1, #0x40000000
+        mov r5, #0x40000000
+
+        qadd r2, r1, r5
+        mrs r3, cpsr
+        and r3, r3, #0x08000000
+        teq r3, #0x08000000
+        bne fail
+
+        add r0, r0, #1
+
+        @ Test 5 - test result of saturating add to be the largest positive number.
+
+        qadd r2, r5, r1
+        teq r2, r6
+        bne fail
+
+        add r0, r0, #1
+
+        @ Test 6 - Ensure bit 27 of CPSR remains set after non saturating ADD.
+
+        adds r3, r5, r1
+        mrs r3, cpsr
+        and r3, r3, #0x08000000
+        teq r3, #0x08000000
+        bne fail
+
+        add r0, r0, #1
+
+        ////////////////////////////////////////////////////////////////////////////
+
+        msr cpsr_flg, r7
+
+        @ Test 7 - test bit 27 of CPSR is set after QSUB
+
+        mov r1, #0x80000000
+        mov r5, #0x1
+
+        qsub r2, r1, r5
+        mrs r3, cpsr
+        and r3, r3, #0x08000000
+        teq r3, #0x08000000
+        bne fail
+
+        add r0, r0, #1
+
+        @ Test 8 - test result of saturating subtract to be the largest positive number.
+
+        qsub r2, r5, r1
+        teq r2, r6
+        bne fail
+
+        add r0, r0, #1
+
+        @ Test 9 - test result of saturating subtract to be the smallest negative number.
+
+        qsub r2, r1, r5
+        teq r2, #0x80000000
+        bne fail
+
+        add r0, r0, #1
+
+        @ Test 10 - Ensure bit 27 of CPSR remains set after non saturating SUB.
+
+        subs r2, r5, r1
+        mrs r2, cpsr
+        and r2, r2, #0x08000000
+        teq r2, #0x08000000
+        bne fail
+
+        add r0, r0, #1
+
+        ///////////////////////////////////////////////////////////////////////////////
+
+        msr cpsr_flg, r7
+
+        @ Test 11 - test bit 27 of CPSR is set after QSUB
+
+        mov r1, #0x7ffffffe  // MAX - 1
+        mov r5, #0xfffffffe  // -2
+        // Result =  MAX - 1 + 2 = MAX + 1 = Saturate to MAX.
+
+        qsub r2, r1, r5
+        mrs r3, cpsr
+        and r3, r3, #0x08000000
+        teq r3, #0x08000000
+        bne fail
+
+        add r0, r0, #1
+
+        @ Test 12 - test result of saturating subtract to be the smallest -ve number.
+
+        // - 2 - MAX + 1 = - MAX - 1 
+        qsub r2, r5, r1
+        teq r2, #0x80000000
+        bne fail
+
+        add r0, r0, #1
+
+        @ Test 13 - test result of saturating subtract to be the largest +ve number.
+
+        qsub r2, r1, r5
+        teq r2, r6
+        bne fail
+
+        add r0, r0, #1
+
+        @ Test 14 - Ensure bit 27 of CPSR remains set after non saturating SUB.
+
+        subs r2, r5, r1
+        mrs r4, cpsr
+        and r4, r4, #0x08000000
+        teq r4, #0x08000000
+        bne fail
+
+        add r0, r0, #1
+
+        ///////////////////////////////////////////////////////////////////////////////
+
+        mov r0, #0
+        msr cpsr_flg, r0        // Clear out flags to keep in sync with the rest of the test program.
+
+        bx lr
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         @ test CLZ
 test_clz:

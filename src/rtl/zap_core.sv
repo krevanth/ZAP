@@ -700,6 +700,7 @@ u_zap_issue_main
 
         // Feedback.
         .i_shifter_destination_index_ff (shifter_destination_index_ff),
+        .i_shifter_flag_update_ff       (shifter_flag_update_ff),
         .i_alu_destination_index_ff     (alu_destination_index_ff),
         .i_memory_destination_index_ff  (memory_destination_index_ff),
         .i_alu_dav_nxt                  (alu_dav_nxt),

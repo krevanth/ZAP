@@ -25,7 +25,7 @@
 // -- ARM instructions to assembler instructions for debug purposes.        --
 // -- When running in synthesis mode, the output of this module is tied     --       
 // -- to a constant since this module really finds use only in debug.       --      
-// -- SYNTHESIS WILL IGNORE THIS MODULE.                                    -- 
+// -- Define DEBUG_EN during simulation to help in debugging.               -- 
 // --                                                                       --
 // ---------------------------------------------------------------------------
 
@@ -37,7 +37,7 @@ module zap_decompile #(parameter [31:0] INS_WDT = 32'd36) (
                 output logic      [64*8-1:0]     o_decompile     // 1024 bytes max of assembler string.
         );
 
-`ifndef SYNTHESIS 
+`ifdef DEBUG_EN
                         /* ONLY IN SIMULATION */
 
                         `include "zap_defines.svh"

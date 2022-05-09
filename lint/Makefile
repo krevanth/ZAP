@@ -22,5 +22,5 @@
 # // -----------------------------------------------------------------------------
 
 lint:
-	verilator --lint-only -Wall ../src/rtl/*.sv -I../src/rtl/  +define+SYNTHESIS
+	verilator --lint-only -Wall ../src/rtl/*.sv -I../src/rtl/
 

@@ -235,13 +235,15 @@ begin
         2'b10: o_alu_operation         = {1'd0, OP_QDADD};
         2'b11: o_alu_operation         = {1'd0, OP_QDSUB};
         endcase
-        
+
+        // Processor does Rn - Rm.
+ 
         // Rn
-        o_alu_source            = {29'd0, instruction[`ZAP_DP_RA]};
+        o_alu_source            = {29'd0, instruction[3:0]};
         o_alu_source[32]        = INDEX_EN;
 
         // Rm
-        o_shift_source          = {29'd0, instruction[`ZAP_DP_RB]};
+        o_shift_source          = {29'd0, instruction[19:16]};
         o_shift_source[32]      = INDEX_EN;
 
         // Rs

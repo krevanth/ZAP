@@ -30,7 +30,7 @@ use warnings;
 my %Config                      = do "./Config.cfg";
 my $ZAP_HOME                    = "../../../";
 my $RAM_SIZE                    = $Config{'EXT_RAM_SIZE'}; 
-my $SYNTHESIS                   = $Config{'SYNTHESIS'};
+my $DEBUG_EN                    = $Config{'DEBUG_EN'};
 my $DUMP_SIZE                   = $Config{'DUMP_SIZE'};
 my $MAX_CLOCK_CYCLES            = $Config{'MAX_CLOCK_CYCLES'};
 my $IRQ_EN                      = $Config{'IRQ_EN'};
@@ -75,7 +75,7 @@ my $IVL_OPTIONS  = " -I$ZAP_HOME/src/rtl ";
    $IVL_OPTIONS .= " +define+VCD_FILE_PATH=\\\"$VCD_PATH\\\" "; 
    $IVL_OPTIONS .= " +define+IRQ_EN "      if ( $IRQ_EN    );
    $IVL_OPTIONS .= " +define+FIQ_EN "      if ( $FIQ_EN    );                       
-   $IVL_OPTIONS .= " +define+SYNTHESIS "   if ( $SYNTHESIS );                    
+   $IVL_OPTIONS .= " +define+DEBUG_EN "    if ( $DEBUG_EN  );
    $IVL_OPTIONS .= " +define+REG_HIER=$REG_HIER ";
 
 #######################################################################################################################

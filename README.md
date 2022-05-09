@@ -212,7 +212,7 @@ gtkwave zap.vcd                          # Exists if selected by Config.cfg of t
         BP_DEPTH                    => 1024,    # Branch predictor depth.
         INSTR_FIFO_DEPTH            => 4,       # Instruction buffer depth.
         STORE_BUFFER_DEPTH          => 8,       # Store buffer depth.
-        SYNTHESIS                   => 1,       # Make this to 1 to remove decompile output. 0 enables decompile output.
+        DEBUG_EN                    => 1,       # Make this to 1 to enable better debug. Keep 0 for synthesis.
 
         # Testbench configuration.
         EXT_RAM_SIZE                => 32768,   # External RAM size.

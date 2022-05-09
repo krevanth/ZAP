@@ -262,8 +262,9 @@ logic [$clog2   (ALU_OPS)-1:0]   opcode;
 // Assigns
 // -------------------------------------------------------------------------------
 
+assign unused = |{SHIFT_OPS, _V, 1'd1}; /* IGNORE */
+
 assign opcode = i_alu_operation_ff;
-assign unused = |{SHIFT_OPS, _V};
 assign sum    = {1'd0, op1} + {1'd0, op2} + {32'd0, cin};
 assign not_rm = ~rm;
 assign not_rn = ~rn;
@@ -505,7 +506,7 @@ end
 always_comb
 begin: alu_result
 
-        logic [$clog2   (ALU_OPS)-1:0] op;
+        logic [$clog2 (ALU_OPS)-1:0] op;
         logic n,z,c,v;
         logic [31:0] exp_mask;
 
@@ -585,19 +586,31 @@ begin: alu_result
                 n = sum[31];
 
                 // Overflow.
-                if ( ( op == {2'd0, ADD} || 
-                       op == {2'd0, ADC} || 
+                if ( ( op == {2'd0, ADD}   || 
+                       op == {2'd0, ADC}   || 
+                       op == {1'd0, OP_QADD}  ||
+                       op == {1'd0, OP_QDADD} ||
                        op == {2'd0, CMN} ) && (rn[31] == rm[31]) && (sum[31] != rn[31]) )
+                begin
                         v = 1;
-                else if ( (op == {2'd0, RSB} || 
-                           op == {2'd0, RSC}) && (rm[31] == !rn[31]) && (sum[31] != rm[31] ) )
+                end
+                else if ( (op[$clog2(ALU_OPS)-1:0] == {2'd0, RSB} || 
+                           op[$clog2(ALU_OPS)-1:0] == {2'd0, RSC}) && (rm[31] == !rn[31]) && (sum[31] != rm[31] ) )
+                begin
                         v = 1;
-                else if ( (op == {2'd0, SUB} || 
-                           op == {2'd0, SBC} || 
-                           op == {2'd0, CMP}) && (rn[31] == !rm[31]) && (sum[31] != rn[31]) )
+                end
+                else if ( (op == {2'd0, SUB}      || 
+                           op == {2'd0, SBC}      || 
+                           op == {1'd0, OP_QSUB}  ||
+                           op == {1'd0, OP_QDSUB} ||
+                           op == {2'd0, CMP}) && (rn[31] != rm[31]) && (sum[31] != rn[31]) ) // rn - rm
+                begin
                         v = 1;
+                end
                 else
+                begin
                         v = 0;
+                end
 
                 //       
                 // If you choose not to update flags, do not change the flags.
@@ -625,11 +638,22 @@ begin: alu_result
                 begin        
                         if ( v ) // result saturated due to ALU operation.
                         begin
-                                // Find the direction of saturation.
-                                if ( rm[31] == rn[31] && rm[31] )
-                                        tmp_sum = {1'd1, {31{1'd0}}};
+                                if ( op == {1'd0, OP_QADD} || op == {1'd0, OP_QDADD} )
+                                begin
+                                        // Find the direction of saturation.
+                                        if ( rm[31] )
+                                                tmp_sum = {1'd1, {31{1'd0}}};
+                                        else
+                                                tmp_sum = {1'd0, {31{1'd1}}};
+                                end
                                 else
-                                        tmp_sum = {1'd0, {31{1'd1}}};
+                                begin
+                                        // Use rn to determine saturation.
+                                        if ( rn[31] )
+                                                tmp_sum = {1'd1, {31{1'd0}}};
+                                        else
+                                                tmp_sum = {1'd0, {31{1'd1}}};
+                                end
                         end
                 end
         end
@@ -771,34 +795,24 @@ begin: adder_ip_mux
         op    = i_alu_operation_ff;
 
         case ( op )
-       {1'd0, FMOV}: begin op1 = i_pc_plus_8_ff ; op2 = ~32'd4 ; cin =   1'd1;      end
+       {1'd0, FMOV}: begin              op1 = i_pc_plus_8_ff ; op2 = ~32'd4 ; cin =   1'd1;              end
         {2'd0, ADD}, 
         {1'd0, OP_QADD}, 
-        {1'd0, OP_QDADD}: 
-        begin 
-                   op1 = rn             ; op2 = rm     ; cin =   1'd0;     
-        end
-        {2'd0, ADC}: begin op1 = rn             ; op2 = rm     ; cin =   flags[{3'd0, _C}]; end
+        {1'd0, OP_QDADD}: begin         op1 = rn             ; op2 = rm     ; cin =   1'd0;              end
+        {2'd0, ADC}: begin              op1 = rn             ; op2 = rm     ; cin =   flags[{3'd0, _C}]; end
         {2'd0, SUB}, 
         {1'd0, OP_QSUB}, 
-        {1'd0, OP_QDSUB}: 
-        begin 
-                   op1 = rn             ; op2 = not_rm ; cin =   1'd1;     
-        end
-        {2'd0, RSB}: begin op1 = rm             ; op2 = not_rn ; cin =   1'd1;     end
-        {2'd0, SBC}: begin op1 = rn             ; op2 = not_rm ; cin =   !flags[{3'd0, _C}];end
-        {2'd0, RSC}: begin op1 = rm             ; op2 = not_rn ; cin =   !flags[{3'd0, _C}];end
+        {1'd0, OP_QDSUB}: begin         op1 = rn             ; op2 = not_rm ; cin =   1'd1;               end
+        {2'd0, RSB}: begin              op1 = rm             ; op2 = not_rn ; cin =   1'd1;               end
+        {2'd0, SBC}: begin              op1 = rn             ; op2 = not_rm ; cin =   !flags[{3'd0, _C}]; end
+        {2'd0, RSC}: begin              op1 = rm             ; op2 = not_rn ; cin =   !flags[{3'd0, _C}]; end
 
         // Target is not written.
-        {2'd0, CMP}: begin op1 = rn             ; op2 = not_rm ; cin =   1'd1;     end 
-        {2'd0, CMN}: begin op1 = rn             ; op2 = rm     ; cin =   1'd0;     end 
+        {2'd0, CMP}: begin              op1 = rn             ; op2 = not_rm ; cin =   1'd1;               end 
+        {2'd0, CMN}: begin              op1 = rn             ; op2 = rm     ; cin =   1'd0;               end 
 
-        default:
-        begin
-                op1 = 0;
-                op2 = 0;
-                cin = 0;
-        end
+        // Default.
+        default:     begin              op1 = 0;              op2 = 0;        cin = 0;                    end
         endcase
 end
 
