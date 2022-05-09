@@ -170,16 +170,28 @@ git clone https://github.com/krevanth/ZAP.git
 #### 3.4. Run Sample Tests (Demo)
 
 #### Packages Required
+
+***NOTE: ZAP is built and tested using the following tool versions. Your mileage may vary.***
+
+```text
+Linux linuxserver 5.17.5-arch1-1 #1 SMP PREEMPT Wed, 27 Apr 2022 20:56:11 +0000 x86_64 GNU/Linux
+Verilator 4.220 2022-03-12 rev UNKNOWN.REV
+gcc version 11.2.0 (GCC) 
+arm-none-eabi-gcc version 11.3.0 (Arch Repository)
+perl 5.34.1
+gtkwave 3.3.111
+GNU GDB 11.2
+OpenOCD 0.11.0
+GNU Make 4.3
+```
 For debian based distros:
 ```bash
-sudo apt-get install gcc-arm-none-eabi binutils-arm-none-eabi gdb openocd verilator gtkwave make perl xterm gcc 
+sudo apt-get install gcc-arm-none-eabi binutils-arm-none-eabi gdb openocd verilator gtkwave make perl gcc 
 ```
 For arch based distros:
 ```bash
-sudo pacman -S arm-none-eabi-gcc arm-none-eabi-binutils gdb openocd verilator gtkwave make perl xterm gcc   
+sudo pacman -S arm-none-eabi-gcc arm-none-eabi-binutils gdb openocd verilator gtkwave make perl gcc   
 ```
-*Please note that a version of Verilator that is at least 4.x is required.*
-
 #### Running a test case
 ```bash
 cd $PROJ_ROOT/src/ts/$test_name          # $PROJ_ROOT is the project directory.
