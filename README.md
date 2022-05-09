@@ -181,7 +181,7 @@ sudo pacman -S arm-none-eabi-gcc arm-none-eabi-binutils gdb openocd verilator gt
 #### Running a test case
 ```bash
 cd $PROJ_ROOT/src/ts/$test_name          # $PROJ_ROOT is the project directory.
-make                                     # Runs the test using IVerilog.
+make                                     # Runs the test using verilator
 cd $PROJ_ROOT/obj/ts/$test_name          # Switch to object folder.
 gvim zap.log                             # View the log file
 gtkwave zap.vcd                          # Exists if selected by Config.cfg of that test case.
