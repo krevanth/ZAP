@@ -22,5 +22,5 @@
 # // -----------------------------------------------------------------------------
 
 lint:
-	../src/scripts/checkver && verilator --lint-only -Wall ../src/rtl/*.sv -I../src/rtl/
+	../src/scripts/checkver && verilator --lint-only -Wall ../src/rtl/*.sv -I../src/rtl/ && echo "Lint OK"
 
