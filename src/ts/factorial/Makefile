@@ -22,4 +22,4 @@
 # // -----------------------------------------------------------------------------
 
 # Call original makefile
-include ../../scripts/Makefile
+include ../../scripts/runsim
