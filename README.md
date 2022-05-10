@@ -27,6 +27,8 @@ LinkedIn: www.linkedin.com/in/revanth-kamaraj-178662113
          WITH THIS PROGRAM; IF NOT, WRITE TO THE FREE SOFTWARE FOUNDATION, INC.,
          51 FRANKLIN STREET, FIFTH FLOOR, BOSTON, MA 02110-1301 USA.
                                                 
+*** The ZAP project requires Linux distributions that provide reasonably modern packages like Arch/Manjaro/Fedora. Note that Ubuntu/Debian based linux distributions have horribly outdated packages and are not supported. ***
+
 ### 1. Introduction 
 
 ZAP is a Verilog processor core that can execute ARM&reg;v5TE binaries. Note that ZAP is ***NOT*** an ARM clone. 
@@ -169,9 +171,12 @@ git clone https://github.com/krevanth/ZAP.git
 
 #### 3.4. Run Sample Tests (Demo)
 
-#### Packages Required
+#### Toolchain Setup
 
-*** NOTE: ZAP is built and tested to work using the listed OS and tool versions. ***
+ZAP is built and tested to work using the listed OS and tool versions. You are encounraged to use tool versions that 
+are higher than or equal to the ones listed to avoid toolchain related bugs. Debian/Ubuntu based linux distributions 
+are not supported by the ZAP project due to them holding ancient packages, which often contain several toolchain bugs. 
+The ZAP project is best run on linux distributions like Arch/Manjaro/Fedora as they provide up to date tools. 
 
 ```text
 OS                      : 5.17.5 x86_64 GNU/Linux (Arch Linux)
@@ -184,14 +189,6 @@ GNU GDB                 : 11.2
 openocd                 : 0.11.0
 gnu Make                : 4.3
 vivado                  : 2021.2 (64-Bit)
-```
-For debian based distros:
-```bash
-sudo apt-get install gcc-arm-none-eabi binutils-arm-none-eabi gdb openocd verilator gtkwave make perl gcc 
-```
-For arch based distros:
-```bash
-sudo pacman -S arm-none-eabi-gcc arm-none-eabi-binutils gdb openocd verilator gtkwave make perl gcc   
 ```
 #### Running a test case
 ```bash
