@@ -31,6 +31,7 @@
         .text
         .global test_cond, test_fwd, test_bshift, test_logic, test_adder, test_bshift_reg, test_load
         .global test_store, test_byte, test_cpsr, test_mul, test_ldmstm, test_r15jumps, test_rti
+        .global test_clz, test_sat
 
 _Reset:
         b enable_cache
@@ -98,6 +99,14 @@ enable_cache:
 
         msr cpsr, #0x1f         @ Enter SYS mode.
 
+// Must check TEQ first.
+fail_teq:
+        mov r0, #1
+        teq r0, #0
+        beq fail_teq
+        teq r0, #1
+        bne fail_teq
+        
         bl test_sat
 
 fail_sat:
