@@ -171,18 +171,19 @@ git clone https://github.com/krevanth/ZAP.git
 
 #### Packages Required
 
-***NOTE: ZAP is built and tested using the following tool versions. Your mileage may vary.***
+*** NOTE: ZAP is built and tested to work using the listed OS and tool versions. ***
 
 ```text
-Linux linuxserver 5.17.5-arch1-1 #1 SMP PREEMPT Wed, 27 Apr 2022 20:56:11 +0000 x86_64 GNU/Linux
-Verilator 4.220 2022-03-12 rev UNKNOWN.REV
-gcc version 11.2.0 (GCC) 
-arm-none-eabi-gcc version 11.3.0 (Arch Repository)
-perl 5.34.1
-gtkwave 3.3.111
-GNU GDB 11.2
-OpenOCD 0.11.0
-GNU Make 4.3
+OS                      : 5.17.5 x86_64 GNU/Linux (Arch Linux)
+verilator               : 4.220 
+GCC                     : 11.2.0 (GCC) 
+arm-none-eabi-gcc       : 11.3.0 (Arch Repository)
+perl                    : 5.34.1
+gtkwave                 : 3.3.111
+GNU GDB                 : 11.2
+openocd                 : 0.11.0
+gnu Make                : 4.3
+vivado                  : 2021.2 (64-Bit)
 ```
 For debian based distros:
 ```bash
@@ -231,8 +232,6 @@ gtkwave zap.vcd                          # Exists if selected by Config.cfg of t
         # Testbench configuration.
         EXT_RAM_SIZE                => 32768,   # External RAM size.
         SEED                        => -1,      # Seed. Use -1 to use random seed.
-        DUMP_START                  => 2000,    # Starting memory address from which to dump.
-        DUMP_SIZE                   => 200,     # Length of dump in bytes.
         MAX_CLOCK_CYCLES            => 100000,  # Clock cycles to run the simulation for.
         REG_CHECK                   => {"r1" => "32'h4", 
                                         "r2" => "32'd3"},      # Make this an anonymous has with entries like "r10" => "32'h0" etc. These are the internal register indices.
