@@ -7,7 +7,9 @@ LinkedIn: www.linkedin.com/in/revanth-kamaraj-178662113
          krevanth ~ git version 2.35.2
          -----------------------------
          Project   : ZAP
-         Author    : Revanth Kamaraj(krevanth)
+         Author(s) : 418  Revanth Kamaraj (krevanth) <revanth91kamaraj@gmail.com>
+                       1  Erez Binyamin (erez)       <ezbn2532@gmail.com>
+
          Repo      : https://github.com/krevanth/ZAP.git
          License   : GPL-2.0-only
 
@@ -27,9 +29,16 @@ LinkedIn: www.linkedin.com/in/revanth-kamaraj-178662113
          WITH THIS PROGRAM; IF NOT, WRITE TO THE FREE SOFTWARE FOUNDATION, INC.,
          51 FRANKLIN STREET, FIFTH FLOOR, BOSTON, MA 02110-1301 USA.
                                                 
-*** The ZAP project requires Linux distributions that provide reasonably modern packages like Arch/Manjaro/Fedora. Note that Ubuntu/Debian based linux distributions have horribly outdated packages and are not supported. ***
+### 1. Contributors
 
-### 1. Introduction 
+Except where otherwise noted, the ZAP processor and its source code is Copyright Revanth Kamaraj(krevanth). The proper 
+notices are in the head of each file. 
+
+Credit to Bharat Mulagondla (https://github.com/bharathmulagondla) for finding bugs in TLB logic.
+
+Credit to Erez Biryamin (https://https://github.com/ErezBinyamin/) for adding Docker images.
+
+### 2. Introduction 
 
 ZAP is a Verilog processor core that can execute ARM&reg;v5TE binaries. Note that ZAP is ***NOT*** an ARM clone. 
 ZAP is a completely different implementation and unique superpipelined microarchitecture built from scratch with the 
@@ -41,9 +50,9 @@ cache and MMU control. The software compatibility allows ZAP to boot full operat
 
 ![Wishbone logo](https://wishbone-interconnect.readthedocs.io/en/latest/_images/wishbone_stamp.svg) 
 
-### 2. Microarchitecture and Implementation 
+### 3. Microarchitecture and Implementation 
 
-#### 2.1. Superpipelined Microarchitecture 
+#### 3.1. Superpipelined Microarchitecture 
 ![Pipeline Overview](./misc/pipeline.svg)
 
  * Please note that the processor is *not* an ARM clone but a completely different RTL and unique microarchitecture design, microarchitected by me from scratch, in synthesizable SV.
@@ -73,14 +82,14 @@ cache and MMU control. The software compatibility allows ZAP to boot full operat
  * Provides Verilog parameters for configuration including cache and TLB parameters.
  * Design is microarchitected and implemented in synthesizable SV HDL.
 
-#### 2.1.1. Clock and Reset
+#### 3.1.1. Clock and Reset
 
-##### 2.1.1.1. Clock
+##### 3.1.1.1. Clock
  * The processor uses a synchronous single clock based design style.
  * All sequential elements are edge sensitive and are driven on the rising edge of clock.
    * All IO interfaces are also driven on the rising edge of the clock.
 
-##### 2.1.1.2. Reset 
+##### 3.1.1.2. Reset 
  * Reset should be: 
    * Synchronous to the rising edge of clock. 
    * Should be pulsed high for atleast 1 cycle of clock. 
@@ -89,7 +98,7 @@ cache and MMU control. The software compatibility allows ZAP to boot full operat
    * Processor will start executing instructions from physical bus address 0x0. 
    * Processor will be in supervisory mode (SVC). 
 
-### 3. Coprocessor 15 CSRs
+### 4. Coprocessor 15 CSRs
 
 Please refer to the arch spec for CP15 CSR requirements.
 
@@ -111,7 +120,7 @@ Please refer to the arch spec for CP15 CSR requirements.
      * CASE_CLEAN_AND_FLUSH_D_CACHE      = 7'b000_1110
  * Register 13: FCSE Register.
 
-### 3. Usage
+### 5. Usage
 
  * To use the ZAP processor in your project:
    * Add all the files *.v in src/rtl/ to your project.
@@ -121,14 +130,14 @@ Please refer to the arch spec for CP15 CSR requirements.
      * Interrupts should be routed from the appropriate VIC. Interrupts are level sensitive and should be synchronous to the CPU clock.
      * Wire up clock and reset as required.
 
-### 3.1. Installation (GIT)
+### 5.1. Installation (GIT)
 
 To get the files of the ZAP processor, please execute:
 
 ```bash
 git clone https://github.com/krevanth/ZAP.git
 ```
-#### 3.2. CPU Configuration (Verilog Parameters)
+#### 5.2. CPU Configuration (Verilog Parameters)
 
 | Parameter                | Default| Description                                                                               |
 |--------------------------|--------|-------------------------------------------------------------------------------------------|
@@ -148,7 +157,7 @@ git clone https://github.com/krevanth/ZAP.git
 | DATA_CACHE_LINE          |  64    | Cache Line for Data (Bytes). Keep 2^n and >= 16 Bytes                                     |
 | CODE_CACHE_LINE          |  64    | Cache Line for Code (Bytes). Keep 2^n and >= 16 Bytes                                     |
 
-#### 3.3. CPU Top Level IO Interface (src/rtl/zap_top.v, Module: zap_top)
+#### 5.3. CPU Top Level IO Interface (src/rtl/zap_top.v, Module: zap_top)
  
 32-Bit Pipelined Wishbone B3 Compatible Bus (CTI/BTE Enabled)
 
@@ -169,41 +178,27 @@ git clone https://github.com/krevanth/ZAP.git
 |        input  | 1        |  i_wb_ack          |  Wishbone ack signal. Recommended to use Wishbone registered feedback cycles.                 | Rising edge of i_clk |
 |        input  | [31:0]   |  i_wb_dat          |  Wishbone data input signal.                                                                  | Rising edge of i_clk |
 
-#### 3.4. Run Sample Tests (Demo)
+#### 5.4. Running Provded Tests
 
-#### Toolchain Setup
+If your site does not have Verilator >= 4.x installed, you should use docker. Assuming you are part of docker group, simply do:
 
-ZAP is built and tested to work using the listed OS and tool versions. You are encounraged to use tool versions that 
-are higher than or equal to the ones listed to avoid toolchain related bugs. Debian/Ubuntu based linux distributions 
-are not supported by the ZAP project due to them holding ancient packages, which often contain several toolchain bugs. 
-The ZAP project is best run on linux distributions like Arch/Manjaro/Fedora as they provide up to date tools. 
-
-```text
-OS                      : 5.17.5 x86_64 GNU/Linux (Arch Linux)
-verilator               : 4.220 
-GCC                     : 11.2.0 (GCC) 
-arm-none-eabi-gcc       : 11.3.0 (Arch Repository)
-perl                    : 5.34.1
-gtkwave                 : 3.3.111
-GNU GDB                 : 11.2
-openocd                 : 0.11.0
-gnu Make                : 4.3
-vivado                  : 2021.2 (64-Bit)
-```
-#### Running a test case
 ```bash
-cd $PROJ_ROOT/src/ts/$test_name          # $PROJ_ROOT is the project directory.
-make                                     # Runs the test using verilator
-cd $PROJ_ROOT/obj/ts/$test_name          # Switch to object folder.
-gvim zap.log                             # View the log file
-gtkwave zap.vcd                          # Exists if selected by Config.cfg of that test case.
+make -f docker.mk
 ```
-### Summary
+
+If your distro does provide Verilator >= 4.x, you simply need to install the required packages at your site: verilator, 
+gcc, arm-none-eabi-gcc, perl, gtkwave, gdb, openocd, make. Once installed, simply do:
+
+```bash
+make -f make.mk
+```
+
+### 5.5. Test Environment Description
  * Let the variable $test_name hold the name of the test. 
  * See the src/ts directory for some basic tests pre-installed. 
  * Available test names include: factorial (tests cache, MMU, interrupts), arm_test (Modified test suite that is derived from the ARM4U project), thumb_test (Very basic test), uart (Loopback test). 
- * New tests can be added using these as starting templates. 
- * Please note that these will be run on the sample TB SOC platform (chip_top) that consist of the ZAP processor, 2 x UARTs, a VIC and a timer. 
+ * New tests can be added using these as starting templates.
+ * Please note that these will be run on the sample TB SOC platform (chip_top) that consist of the ZAP processor, 2 x UARTs, a VIC and a timer. See src/testbench/testbench.v for more information.
  * Tests will produce appropriate logs and wave files in the obj/src/ts/$test_name folder.
  * Each time a test is run, a lint is performed on the SV RTL code using Verilator.
  * Verilator is used to run simulations.
@@ -235,12 +230,14 @@ gtkwave zap.vcd                          # Exists if selected by Config.cfg of t
         FINAL_CHECK                 => {"32'h100" => "32'd4", 
                                         "32'h66" => "32'h4"}   # Make this an anonymous hash with entries like verilog_address => verilog_value etc.
 ```
-### 4. FPGA Device Utilization on 7a35t-ftg256-2L (Default Parameters, -mode out_of_context)
+### 7. FPGA Device Utilization on 7a35t-ftg256-2L (Default Parameters, -mode out_of_context)
+
+Synthesis has been run with Vivado 2021.2 (64-Bit).
 
 ```text
 
 Utilization Design Information
-
+86
 1. Slice Logic
 --------------
 
@@ -614,15 +611,10 @@ PW    :            0  Failing Endpoints,  Worst Slack        3.415ns,  Total Vio
 
 ```
 
-### 7. References
+### 8. References
 
  * COMPUTER ARCHITECTURE: A QUANTITATIVE APPROACH 5TH EDITION JOHN L. HENNESSY, DAVID A. PATTERSON (ISBN: 9788178672663)
  * ARM SYSTEM-ON-CHIP ARCHITECTURE BY STEVE FURBER (ISBN: 9788131708408)
  * VERILOG HDL: A GUIDE TO DIGITAL DESIGN AND SYNTHESIS BY SAMIR PALNITKAR (ISBN: 9788177589184)
 
-### 8. Contributors
-
-Except where otherwise noted, the ZAP processor and its source code is Copyright Revanth Kamaraj(krevanth). The proper notices are in the head of each file. 
-
-Credit to Bharat Mulagondla (https://github.com/bharathmulagondla) for finding bugs in TLB logic.
 

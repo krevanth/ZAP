@@ -1,6 +1,6 @@
 # // -----------------------------------------------------------------------------
 # // --                                                                         --
-# // --                   (C) 2016-2022 Revanth Kamaraj (krevanth)              --
+# // --     (C) 2022 Erez Biryamin (Erez), Revanth Kamaraj (krevanth)           --
 # // --                                                                         -- 
 # // -- --------------------------------------------------------------------------
 # // --                                                                         --
@@ -20,6 +20,23 @@
 # // -- 02110-1301, USA.                                                        --
 # // --                                                                         --
 # // -----------------------------------------------------------------------------
+# // This bash script will run all the provided ZAP tests in docker.            --
+# // -----------------------------------------------------------------------------
 
-# Execute the main Makefile.
-include ../../scripts/runsim.mkh
+IMAGE_TAG=local/zap
+
+.PHONY: all
+.PHONY: clean
+
+all: .image_build test
+
+test:
+	docker run -it -v `pwd`:`pwd` $(IMAGE_TAG) make -j -C `pwd`/src/ts
+
+.image_build: Dockerfile
+	docker build --no-cache --rm --tag $(IMAGE_TAG) .
+	touch .image_build
+
+clean:
+	rm -f .image_build
+	docker image rmi -f $(IMAGE_TAG)

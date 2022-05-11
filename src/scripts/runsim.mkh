@@ -82,14 +82,18 @@ SCRIPT_FILES := $(wildcard ../../scripts/*)
 ../../../obj/ts/$(TC)/Vzap_test: ../../../obj/ts/$(TC)/zap_mem.v $(CPU_FILES) $(TB_FILES) $(SCRIPT_FILES)
 	cd ../../../lint && make lint && cd ../src/ts/$(TC) && $(SCRIPT_PATH)/verilate $(TC) 
 
-# Final rule.
-all: dirs ../../../obj/ts/$(TC)/Vzap_test
+# Rule to generate logfile and VCD.
+../../../obj/ts/$(TC)/zap.vcd ../../../obj/ts/(TC)/zap.log: ../../../obj/ts/$(TC)/Vzap_test
 	cd ../../../obj/ts/$(TC) && ./Vzap_test +verilator+seed+$$RANDOM | tee ../../../obj/ts/$(TC)/zap.log
 
-$(CC):
-$(AS): 
-$(LD):
-$(OB):
+# Final rule
+all: dirs ../../../obj/ts/$(TC)/zap.vcd
+	echo "Log/VCD file is available at ../../../obj/ts/$(TC)/zap.log and ../../../obj/ts/$(TC)/zap.vcd"
+	gtkwave ../../../obj/ts/$(TC)/zap.vcd &
+
+#########################################
+# PHONY declared targets.
+#########################################
 
 dirs:
 	mkdir -p ../../../obj/ts/$(TC)/
@@ -101,10 +105,6 @@ clean:
 
 c2asm:
 	$(CC) -S $(CFLAGS) $(X) -o ../../../obj/ts/$(TC)/$(X).asm
-
-waves:
-	gtkwave ../../../obj/ts/$(TC)/zap.vcd &
-	gvim    ../../../obj/ts/$(TC)/zap.log & 
 
 print-%  : ; @echo $* = $($*)
 
