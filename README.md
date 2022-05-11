@@ -7,8 +7,8 @@ LinkedIn: www.linkedin.com/in/revanth-kamaraj-178662113
          krevanth ~ git version 2.35.2
          -----------------------------
          Project   : ZAP
-         Author(s) : 418  Revanth Kamaraj (krevanth) <revanth91kamaraj@gmail.com>
-                       1  Erez Binyamin (erez)       <ezbn2532@gmail.com>
+         Author(s) : 418  Revanth Kamaraj(krevanth)   <revanth91kamaraj@gmail.com>
+                       1  Erez Binyamin(ErezBinyamin) <ezbn2532@gmail.com>
 
          Repo      : https://github.com/krevanth/ZAP.git
          License   : GPL-2.0-only
@@ -34,9 +34,9 @@ LinkedIn: www.linkedin.com/in/revanth-kamaraj-178662113
 Except where otherwise noted, the ZAP processor and its source code is Copyright Revanth Kamaraj(krevanth). The proper 
 notices are in the head of each file. 
 
-Credit to Bharat Mulagondla (https://github.com/bharathmulagondla) for finding bugs in TLB logic.
+Credit to Bharat Mulagondla (bharathmulagondla) (https://github.com/bharathmulagondla) for finding bugs in TLB logic.
 
-Credit to Erez Biryamin (https://https://github.com/ErezBinyamin/) for adding Docker images.
+Credit to Erez (ErezBinyamin) (https://https://github.com/ErezBinyamin/) for adding Docker images.
 
 ### 2. Introduction 
 
