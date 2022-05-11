@@ -7,7 +7,7 @@ LinkedIn: www.linkedin.com/in/revanth-kamaraj-178662113
          krevanth ~ git version 2.35.2
          -----------------------------
          Project   : ZAP
-         Author(s) : 421  Revanth Kamaraj(krevanth)   <revanth91kamaraj@gmail.com>
+         Author(s) : 422  Revanth Kamaraj(krevanth)   <revanth91kamaraj@gmail.com>
                        1  Erez Binyamin(ErezBinyamin) <ezbn2532@gmail.com>
 
          Repo      : https://github.com/krevanth/ZAP.git
@@ -180,7 +180,7 @@ git clone https://github.com/krevanth/ZAP.git
 
 #### 5.4. Running Provded Tests
 
-If your site does not have Verilator >= 4.x installed, you should use docker. Assuming you are part of docker group, simply do:
+If your site does not provide Verilator >= 4.x, you should use docker. Assuming you are part of docker group, simply do:
 
 ```bash
 make -f docker.mk
