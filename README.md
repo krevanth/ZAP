@@ -4,10 +4,10 @@
 
 LinkedIn: www.linkedin.com/in/revanth-kamaraj-178662113
 
-         krevanth ~ git version 2.35.2
+         krevanth ~ git version 2.36.1
          -----------------------------
          Project   : ZAP
-         Author(s) : 422  Revanth Kamaraj(krevanth)   <revanth91kamaraj@gmail.com>
+         Author(s) : 423  Revanth Kamaraj(krevanth)   <revanth91kamaraj@gmail.com>
                        1  Erez Binyamin(ErezBinyamin) <ezbn2532@gmail.com>
 
          Repo      : https://github.com/krevanth/ZAP.git
@@ -29,6 +29,20 @@ LinkedIn: www.linkedin.com/in/revanth-kamaraj-178662113
          WITH THIS PROGRAM; IF NOT, WRITE TO THE FREE SOFTWARE FOUNDATION, INC.,
          51 FRANKLIN STREET, FIFTH FLOOR, BOSTON, MA 02110-1301 USA.
                                                 
+### HOW TO RUN
+
+If your distro does not provide Verilator >= 4.x, you should use docker. Assuming you are part of docker group, simply do:
+
+```bash
+make -f docker.mk
+```
+
+If your distro does provide Verilator >= 4.x, you simply need to install the required packages on your system: verilator, 
+gcc, arm-none-eabi-gcc, perl, gtkwave, gdb, openocd, make. Once installed, simply do:
+
+```bash
+make -f make.mk
+```
 ### 1. Contributors
 
 Except where otherwise noted, the ZAP processor and its source code is Copyright Revanth Kamaraj(krevanth). The proper 
@@ -36,7 +50,7 @@ notices are in the head of each file.
 
 Credit to Bharat Mulagondla (bharathmulagondla) (https://github.com/bharathmulagondla) for finding bugs in TLB logic.
 
-Credit to Erez (ErezBinyamin) (https://https://github.com/ErezBinyamin/) for adding Docker images.
+Credit to Erez Binyamin (https://https://github.com/ErezBinyamin/) for adding Docker images.
 
 ### 2. Introduction 
 
@@ -180,13 +194,13 @@ git clone https://github.com/krevanth/ZAP.git
 
 #### 5.4. Running Provded Tests
 
-If your site does not provide Verilator >= 4.x, you should use docker. Assuming you are part of docker group, simply do:
+If your distro does not provide Verilator >= 4.x, you should use docker. Assuming you are part of docker group, simply do:
 
 ```bash
 make -f docker.mk
 ```
 
-If your distro does provide Verilator >= 4.x, you simply need to install the required packages at your site: verilator, 
+If your distro does provide Verilator >= 4.x, you simply need to install the required packages on your system: verilator, 
 gcc, arm-none-eabi-gcc, perl, gtkwave, gdb, openocd, make. Once installed, simply do:
 
 ```bash
