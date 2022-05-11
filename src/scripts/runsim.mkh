@@ -79,7 +79,7 @@ SCRIPT_FILES := $(wildcard ../../scripts/*)
 	$(SCRIPT_PATH)/bin2vlog $< $@
 
 # Rule to lint and verilate.
-../../../obj/ts/$(TC)/Vzap_test: ../../../obj/ts/$(TC)/zap_mem.v $(CPU_FILES) $(TB_FILES) $(SCRIPT_FILES)
+../../../obj/ts/$(TC)/Vzap_test: ../../../obj/ts/$(TC)/zap_mem.v $(CPU_FILES) $(TB_FILES) $(SCRIPT_FILES) Config.cfg
 	cd ../../../lint && make lint && cd ../src/ts/$(TC) && $(SCRIPT_PATH)/verilate $(TC) 
 
 # Rule to generate logfile and VCD.

@@ -587,41 +587,24 @@ check_timing report
 ----------------------------
  There are 0 combinational latch loops in the design through latch input
 
+```
 
-------------------------------------------------------------------------------------------------
-| Clock Summary
-| -------------
-------------------------------------------------------------------------------------------------
+### 7. FPGA Clock Timing 7a35t-ftg256-2L (Default Parameters, -mode out_of_context)
+
+```text
+
+Clock Summary:
 
 Clock  Waveform(ns)         Period(ns)      Frequency(MHz)
 -----  ------------         ----------      --------------
-i_clk  {0.000 4.546}        9.091           109.999         
+i_clk  {0.000 4.85}         9.7             103.093
 
 
-------------------------------------------------------------------------------------------------
-| Design Timing Summary
-| ---------------------
-------------------------------------------------------------------------------------------------
+Timing Details:
 
-    WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints     WPWS(ns)     TPWS(ns)  TPWS Failing Endpoints  TPWS Total Endpoints  
-    -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------     --------     --------  ----------------------  --------------------  
-     -0.605     -151.422                    704                35879        0.067        0.000                      0                35879        3.415        0.000                       0                 11480  
-
-
-------------------------------------------------------------------------------------------------
-| Timing Details
-| --------------
-------------------------------------------------------------------------------------------------
-
-
----------------------------------------------------------------------------------------------------
-From Clock:  i_clk
-  To Clock:  i_clk
-
-Setup :          704  Failing Endpoints,  Worst Slack       -0.605ns,  Total Violation     -151.422ns
+Setup :            0  Failing Endpoints,  Worst Slack        0.004ns,  Total Violation        0.000ns
 Hold  :            0  Failing Endpoints,  Worst Slack        0.067ns,  Total Violation        0.000ns
 PW    :            0  Failing Endpoints,  Worst Slack        3.415ns,  Total Violation        0.000ns
----------------------------------------------------------------------------------------------------
 
 ```
 
