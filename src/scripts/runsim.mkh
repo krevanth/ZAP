@@ -74,22 +74,14 @@ SCRIPT_FILES := $(wildcard ../../scripts/*)
 ../../../obj/ts/$(TC)/$(TC).bin: ../../../obj/ts/$(TC)/$(TC).elf
 	$(OB) $(OFLAGS) $^ $@
 
-# Rule to convert the bin file to a Verilog image.
-../../../obj/ts/$(TC)/zap_mem.v: ../../../obj/ts/$(TC)/$(TC).bin 
-	$(SCRIPT_PATH)/bin2vlog $< $@
-
 # Rule to lint and verilate.
-../../../obj/ts/$(TC)/Vzap_test: ../../../obj/ts/$(TC)/zap_mem.v $(CPU_FILES) $(TB_FILES) $(SCRIPT_FILES) Config.cfg
-	cd ../../../lint && make lint && cd ../src/ts/$(TC) && $(SCRIPT_PATH)/verilate $(TC) 
+../../../obj/ts/$(TC)/Vzap_test: $(CPU_FILES) $(TB_FILES) $(SCRIPT_FILES) Config.cfg ../../../obj/ts/$(TC)/$(TC).bin 
+	cd ../../../lint && $(MAKE) lint && cd ../src/ts/$(TC) && $(SCRIPT_PATH)/verilate $(TC) 
 
-# Rule to generate logfile and VCD.
-../../../obj/ts/$(TC)/zap.vcd ../../../obj/ts/(TC)/zap.log: ../../../obj/ts/$(TC)/Vzap_test
-	cd ../../../obj/ts/$(TC) && ./Vzap_test +verilator+seed+$$RANDOM | tee ../../../obj/ts/$(TC)/zap.log
-
-# Final rule
-all: dirs ../../../obj/ts/$(TC)/zap.vcd
-	echo "Log/VCD file is available at ../../../obj/ts/$(TC)/zap.log and ../../../obj/ts/$(TC)/zap.vcd"
-	gtkwave ../../../obj/ts/$(TC)/zap.vcd &
+# Rule to execute command.
+all: dirs ../../../obj/ts/$(TC)/Vzap_test
+	cd ../../../obj/ts/$(TC) && ./Vzap_test $(TC).bin 2>&1 | tee -a ../../../obj/ts/$(TC)/zap.log
+	echo "Generated log file 'obj/ts/$(TC)/zap.log' and waveform file 'obj/ts/$(TC)/zap.vcd'"
 
 #########################################
 # PHONY declared targets.
