@@ -7,7 +7,7 @@ LinkedIn: www.linkedin.com/in/revanth-kamaraj-178662113
          krevanth ~ git version 2.36.1
          -----------------------------
          Project   : ZAP
-         Author(s) : 426  Revanth Kamaraj(krevanth)   <revanth91kamaraj@gmail.com>
+         Author(s) : 437  Revanth Kamaraj(krevanth)   <revanth91kamaraj@gmail.com>
                        1  Erez Binyamin(ErezBinyamin) <ezbn2532@gmail.com>
 
          Repo      : https://github.com/krevanth/ZAP.git
@@ -34,15 +34,17 @@ LinkedIn: www.linkedin.com/in/revanth-kamaraj-178662113
 If your distro does not provide Verilator >= 4.x, you should use docker. Assuming you are part of docker group, simply do:
 
 ```bash
-make -f docker.mk
+make -f docker.mk [TC=<test_name>]
 ```
 
 If your distro does provide Verilator >= 4.x, you simply need to install the required packages on your system: verilator, 
 gcc, arm-none-eabi-gcc, perl, gtkwave, gdb, openocd, make. Once installed, simply do:
 
 ```bash
-make -f make.mk
+make -f make.mk [TC=<test_name>]
 ```
+The test name is simply the folder name in src/ts. If you omit specifying TC, all the tests will be run.
+
 ### 1. Contributors
 
 Except where otherwise noted, the ZAP processor and its source code is Copyright Revanth Kamaraj(krevanth). The proper 
