@@ -35,6 +35,7 @@ char mem [65536]; // 64KB buffer.
 FILE *ptr;
 
 int main(int argc, char** argv, char** env) {
+    srand((unsigned int)time(0));
     const std::unique_ptr<VerilatedContext> contextp{new VerilatedContext};
 
     contextp->debug(0);
