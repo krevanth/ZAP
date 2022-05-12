@@ -1,8 +1,14 @@
 SUBDIRS := $(wildcard */.)
+CORES   := $(shell getconf _NPROCESSORS_ONLN)
 
+ifdef TC
+all:
+	cd $(TC) && $(MAKE) TC=$(TC) -j $(CORES)
+else
 all: $(SUBDIRS)
 $(SUBDIRS):
-	$(MAKE) -C $@
+	cd $@ && $(MAKE) -j $(CORES)
+endif
 
 clean:
 	rm -rfv ../../obj/
