@@ -441,9 +441,9 @@ begin:blk1
                         
                         /* Update tag. Remove dirty bit. */
                         o_cache_tag_wr_en                      = 1'd1; // Implicitly sets valid (redundant).
-                        o_cache_tag[`ZAP_CACHE_TAG__TAG]           = cache_tag[`ZAP_CACHE_TAG__TAG]; // Preserve.
+                        o_cache_tag[`ZAP_CACHE_TAG__TAG]       = cache_tag[`ZAP_CACHE_TAG__TAG]; // Preserve.
                         o_cache_tag_dirty                      = 1'd0;
-                        o_cache_tag[`ZAP_CACHE_TAG__PA]            = cache_tag[`ZAP_CACHE_TAG__PA]; // Preserve.
+                        o_cache_tag[`ZAP_CACHE_TAG__PA]        = cache_tag[`ZAP_CACHE_TAG__PA]; // Preserve.
                 end 
         end
 
@@ -493,8 +493,8 @@ begin:blk1
 
                         /* Update tag. Remove dirty and set valid */
                         o_cache_tag_wr_en                       = 1'd1; // Implicitly sets valid.
-                        o_cache_tag[`ZAP_CACHE_TAG__TAG]            = address[`ZAP_VA__CACHE_TAG];
-                        o_cache_tag[`ZAP_CACHE_TAG__PA]             = phy_addr[31:$clog2(CACHE_LINE)];
+                        o_cache_tag[`ZAP_CACHE_TAG__TAG]        = address[`ZAP_VA__CACHE_TAG];
+                        o_cache_tag[`ZAP_CACHE_TAG__PA]         = phy_addr[31:$clog2(CACHE_LINE)];
                         o_cache_tag_dirty                       = !wr ? 1'd0 : 1'd1; // BUG FIX.
 
                         /* Move to idle state */
