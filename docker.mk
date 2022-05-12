@@ -24,6 +24,7 @@
 # // -----------------------------------------------------------------------------
 
 IMAGE_TAG=local/zap
+CORES    =$(shell getconf _NPROCESSORS_ONLN)
 
 .PHONY: all
 .PHONY: clean
@@ -31,7 +32,11 @@ IMAGE_TAG=local/zap
 all: .image_build test
 
 test:
-	docker run -it -v `pwd`:`pwd` $(IMAGE_TAG) make -j -C `pwd`/src/ts
+ifdef TC
+	docker run -it -v `pwd`:`pwd` $(IMAGE_TAG) $(MAKE) TC=$(TC) -j $(CORES) -C `pwd`/src/ts
+else
+	docker run -it -v `pwd`:`pwd` $(IMAGE_TAG) $(MAKE) -j $(CORES) -C `pwd`/src/ts
+endif
 
 .image_build: Dockerfile
 	docker build --no-cache --rm --tag $(IMAGE_TAG) .
