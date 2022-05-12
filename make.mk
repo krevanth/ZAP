@@ -26,8 +26,15 @@
 .PHONY: all
 .PHONY: clean
 
+PWD   = $(shell pwd)
+CORES = $(shell getconf _NPROCESSORS_ONLN)
+
 all:
-	make -j -C `pwd`/src/ts
+ifdef TC
+	cd $(PWD)/src/ts && $(MAKE) TC=$(TC) -j $(CORES)
+else
+	cd $(PWD)/src/ts && $(MAKE) -j $(CORES)
+endif
 
 clean:
 	rm -rfv obj/
