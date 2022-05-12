@@ -31,18 +31,28 @@
 // 
 
 module zap_test (
-        i_clk,
-        i_reset,
-        i_hold,
-        o_sim_ok,
-        o_sim_err
+        input  wire            i_clk, 
+        input  wire            i_reset,
+        output reg             o_sim_ok = 1'd0,
+        output reg             o_sim_err = 1'd0,
+        
+        output reg             o_wb_stb, 
+        output reg             o_wb_cyc,
+        output reg     [31:0]  o_wb_adr,
+        output reg     [3:0]   o_wb_sel,
+        output reg             o_wb_we,
+        output reg     [31:0]  o_wb_dat,
+        input  wire            i_wb_ack,
+        input  wire    [31:0]  i_wb_dat,
+
+        input  wire    [7:0]   i_mem [65536-1:0]
 );
 
-input  wire       i_clk; 
-input  wire       i_reset;
-input  wire       i_hold;
-output reg        o_sim_ok = 1'd0;
-output reg        o_sim_err = 1'd0;
+initial
+begin
+        $dumpfile(`VCD_FILE_PATH);
+        $dumpvars;
+end
 
 parameter RAM_SIZE                      = 32768;
 parameter DATA_SECTION_TLB_ENTRIES      = 4;
@@ -58,32 +68,21 @@ parameter CODE_CACHE_SIZE               = 1024;
 parameter FIFO_DEPTH                    = 4;
 parameter BP_ENTRIES                    = 1024;
 parameter STORE_BUFFER_DEPTH            = 32;
+localparam STRING_LENGTH                = 12;
 
-reg [1:0]       i_uart = 2'b11;
-reg [1:0]       o_uart;
-integer         i;
-reg [3:0]       clk_ctr = 4'd0;
-wire            w_wb_stb;
-wire            w_wb_cyc;
-wire [31:0]     w_wb_dat_to_ram;
-wire [31:0]     w_wb_adr;
-wire [3:0]      w_wb_sel;
-wire            w_wb_we;
-wire            w_wb_ack;
-wire [31:0]     w_wb_dat_from_ram;
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// UART RX related
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-localparam STRING_LENGTH = 12;
-reg [STRING_LENGTH*8-1:0] uart_string = " HELLO WORLD ";
-reg [6:0]     uart_ctr    = 6'd10;
-reg [31:0]    btrace      = 32'd0;
+reg [1:0]                  i_uart = 2'b11;
+reg [1:0]                  o_uart;
+reg [31:0]                 i;
+reg [3:0]                  clk_ctr = 4'd0;
+reg [STRING_LENGTH*8-1:0]  uart_string = " HELLO WORLD ";
+reg [6:0]                  uart_ctr    = 6'd10;
+reg [31:0]                 btrace      = 32'd0;
+reg [31:0]                 mem [65536/4-1:0]; // 16K words.
 
 // Divided clocks.
-bit             clk_2, clk_4, clk_8, clk_16;
+reg clk_2 = 1'd0, clk_4 = 1'd0, clk_8 = 1'd0, clk_16 = 1'd0;
 
+// Digital clock dividers.
 always @ ( posedge i_clk )
         clk_2 = clk_2 + 1;
 
@@ -96,7 +95,7 @@ always @ ( posedge clk_4 )
 always @ ( posedge clk_8 )
         clk_16 = clk_16 + 1;
 
-// Send data on UART0.
+// UART data into the core.
 always @ ( posedge clk_16 )
 begin
         if ( uart_ctr <= 8 )
@@ -119,14 +118,16 @@ begin
         end
 end
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// UART TX related
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Create memory for easy analysis.
+always @ (*)
+begin
+        for(int i=0;i<65536;i=i+4) 
+                mem[i/4] = {i_mem[i+3], i_mem[i+2], i_mem[i+1], i_mem[i]};
+end
 
+// UART TX related. Data out of core.
 uart_tx_dumper u_uart_tx_dumper_dev0 ( .i_clk(i_clk), .i_line(o_uart[0]) );
 uart_tx_dumper u_uart_tx_dumper_dev1 ( .i_clk(i_clk), .i_line(o_uart[1]) );
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // DUT
 chip_top #(
@@ -153,28 +154,14 @@ chip_top #(
         .UART1_TXD(o_uart[1]),
         .I_IRQ    (28'd0),
         .I_FIQ    (1'd0),
-        .O_WB_STB (w_wb_stb),
-        .O_WB_CYC (w_wb_cyc),
-        .O_WB_DAT (w_wb_dat_to_ram),
-        .O_WB_ADR (w_wb_adr),
-        .O_WB_SEL (w_wb_sel),
-        .O_WB_WE  (w_wb_we),
-        .I_WB_ACK (w_wb_ack),
-        .I_WB_DAT (w_wb_dat_from_ram)
-);
-
-// RAM
-ram #(.SIZE_IN_BYTES(RAM_SIZE)) u_ram (
-        .i_clk(i_clk),
-        .i_hold(i_hold),
-        .i_wb_stb (w_wb_stb),
-        .i_wb_cyc (w_wb_cyc),
-        .i_wb_dat (w_wb_dat_to_ram),
-        .i_wb_adr (w_wb_adr),
-        .i_wb_sel (w_wb_sel),
-        .i_wb_we  (w_wb_we),
-        .o_wb_ack (w_wb_ack),
-        .o_wb_dat (w_wb_dat_from_ram)
+        .O_WB_STB (o_wb_stb),
+        .O_WB_CYC (o_wb_cyc),
+        .O_WB_DAT (o_wb_dat),
+        .O_WB_ADR (o_wb_adr),
+        .O_WB_SEL (o_wb_sel),
+        .O_WB_WE  (o_wb_we),
+        .I_WB_ACK (i_wb_ack),
+        .I_WB_DAT (i_wb_dat)
 );
 
 integer sim_ctr = 0;
@@ -182,24 +169,16 @@ integer sim_ctr = 0;
 always @ ( posedge i_clk )
 begin
         sim_ctr <= sim_ctr + 1;
-end
 
-initial
-begin
-        $dumpfile(`VCD_FILE_PATH);
-        $dumpvars;
-end
-
-always @ ( posedge i_clk )
-begin
         if ( sim_ctr == `MAX_CLOCK_CYCLES )        
         begin
                 o_sim_ok <= 1'd1;
-               `include "zap_check.vh" 
+
+                `include "zap_check.vh"
         end
 end
 
-// Bring out registers.
+// Expose the CPU registers.
 wire [31:0] r0   =  `REG_HIER.mem[0]; 
 wire [31:0] r1   =  `REG_HIER.mem[1];
 wire [31:0] r2   =  `REG_HIER.mem[2];
@@ -241,8 +220,7 @@ wire [31:0] r37  =  `REG_HIER.mem[37];
 wire [31:0] r38  =  `REG_HIER.mem[38];
 wire [31:0] r39  =  `REG_HIER.mem[39];
 
-endmodule // zap_tb
-
+endmodule
 
 module chip_top #(
 
@@ -505,81 +483,12 @@ vic #(.SOURCES(32)) u_vic (
         .o_wb_dat(data_wb_din_vic), // To core.
         .o_wb_ack(data_wb_ack_vic),
         .i_irq({I_IRQ, timer_irq[1], uart_irq[1], timer_irq[0], uart_irq[0]}), // Concatenate 32 interrupt sources.
-        .o_irq(global_irq)                                                   // Interrupt out
+        .o_irq(global_irq)                                                     // Interrupt out
 );
 
 endmodule // chip_top
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-module ram #(parameter SIZE_IN_BYTES = 4096)  (
-
-input wire                   i_clk,
-input wire                   i_hold,
-input wire                   i_wb_cyc,
-input wire                   i_wb_stb,
-input wire [31:0]            i_wb_adr,
-input wire [31:0]            i_wb_dat,
-input wire  [3:0]            i_wb_sel,
-input wire                   i_wb_we,
-output reg [31:0]            o_wb_dat = 32'd0,
-output reg                   o_wb_ack = 1'd0
-
-);
-
-reg [31:0] ram [SIZE_IN_BYTES/4 -1:0];
-
-// Initialize the RAM with the generated image.
-initial
-begin:blk1
-        integer i;
-        integer j;
-        reg [7:0] mem [SIZE_IN_BYTES-1:0];
-
-        j = 0;
-
-        for ( i=0;i<SIZE_IN_BYTES;i=i+1)
-        begin
-                mem[i] = 8'd0;
-        end
-
-        `include `MEMORY_IMAGE
-
-        for (i=0;i<SIZE_IN_BYTES/4;i=i+1)
-        begin
-                ram[i] = {mem[j+3], mem[j+2], mem[j+1], mem[j]};
-                j = j + 4;
-
-        end
-end
-
-// Wishbone RAM.
-// Models a variable delay RAM.
-always @ ( negedge i_clk )
-begin
-        if ( !i_wb_we && i_wb_cyc && i_wb_stb && !i_hold )
-        begin
-                o_wb_ack         <= 1'd1;
-                o_wb_dat         <= ram [ i_wb_adr >> 2 ];
-        end
-        else if ( i_wb_we && i_wb_cyc && i_wb_stb && !i_hold )
-        begin
-                o_wb_ack         <= 1'd1;
-                o_wb_dat         <= 'dx;
-
-                if ( i_wb_sel[0] ) ram [ i_wb_adr >> 2 ][7:0]   <= i_wb_dat[7:0];
-                if ( i_wb_sel[1] ) ram [ i_wb_adr >> 2 ][15:8]  <= i_wb_dat[15:8];
-                if ( i_wb_sel[2] ) ram [ i_wb_adr >> 2 ][23:16] <= i_wb_dat[23:16];
-                if ( i_wb_sel[3] ) ram [ i_wb_adr >> 2 ][31:24] <= i_wb_dat[31:24];
-        end
-        else
-        begin
-                o_wb_ack    <= 1'd0;
-                o_wb_dat    <= 'dx;
-        end
-end
-
-endmodule // ram
 
 module timer #(
 
@@ -688,7 +597,6 @@ begin
                                 case(i_wb_adr)
                                 `DEVEN: // DEVEN
                                 begin
-                                        $display($time, " - %m :: Writing register DEVEN...");
                                         if ( i_wb_sel[0] ) DEVEN[7:0]   <= i_wb_dat >> 0; 
                                         if ( i_wb_sel[1] ) DEVEN[15:8]  <= i_wb_dat >> 8; 
                                         if ( i_wb_sel[2] ) DEVEN[23:16] <= i_wb_dat >> 16; 
@@ -697,7 +605,6 @@ begin
 
                                 `DEVPR: // DEVPR
                                 begin
-                                        $display($time, " - %m :: Writing register DEVPR...");
                                         if ( i_wb_sel[0] ) DEVPR[7:0]   <= i_wb_dat >> 0; 
                                         if ( i_wb_sel[1] ) DEVPR[15:8]  <= i_wb_dat >> 8; 
                                         if ( i_wb_sel[2] ) DEVPR[23:16] <= i_wb_dat >> 16; 
@@ -707,7 +614,6 @@ begin
 
                                 `DEVAK: // DEVAK
                                 begin
-                                        $display($time, " - %m :: Writing register DEVAK...");
                                         if ( i_wb_sel[0] ) DEVPR[7:0]   <= i_wb_dat >> 0; 
                                         if ( i_wb_sel[1] ) DEVPR[15:8]  <= i_wb_dat >> 8; 
                                         if ( i_wb_sel[2] ) DEVPR[23:16] <= i_wb_dat >> 16; 
@@ -716,11 +622,16 @@ begin
 
                                 `DEVST: // DEVST
                                 begin
-                                        $display($time, " - %m :: Writing register DEVST...");
                                         if ( i_wb_sel[0] ) DEVST[7:0]   <= i_wb_dat >> 0; 
                                         if ( i_wb_sel[1] ) DEVST[15:8]  <= i_wb_dat >> 8; 
                                         if ( i_wb_sel[2] ) DEVST[23:16] <= i_wb_dat >> 16; 
                                         if ( i_wb_sel[3] ) DEVST[31:24] <= i_wb_dat >> 24;    
+                                end
+
+                                default:
+                                begin
+                                        $display($time, " Error : Illegal register write in %m.");
+                                        $finish;
                                 end
 
                                 endcase
@@ -735,6 +646,11 @@ begin
                                 `DEVPR: o_wb_dat <= DEVPR;
                                 `DEVAK: o_wb_dat <= done;
                                 `DEVST: o_wb_dat <= 32'd0;
+                               default: 
+                                        begin
+                                                $display($time, " Error : Illegal register read in %m.");
+                                                $finish;
+                                        end
                                 endcase
 
                                 wbstate <= WBACK;
@@ -770,7 +686,6 @@ begin
                 begin
                         if ( start ) 
                         begin
-                                $display($time," - %m :: Timer started counting...");
                                 state <= COUNTING;
                         end
                 end
@@ -781,7 +696,6 @@ begin
 
                         if ( ctr == finalval ) 
                         begin
-                                $display($time, " - %m :: Timer done counting...");
                                 state <= DONE;
                         end                                
                 end
@@ -792,14 +706,12 @@ begin
 
                         if ( start ) 
                         begin
-                                $display($time, " - %m :: Timer got START from DONE state...");
                                 done  <= 0;
                                 state <= COUNTING;
                                 ctr   <= 0;
                         end
                         else if ( clr ) // Acknowledge. 
                         begin
-                                $display($time, " - %m :: Timer got done in ACK state...");
                                 done  <= 0;
                                 state <= IDLE;
                                 ctr   <= 0;
@@ -915,7 +827,6 @@ begin
 
                                 `INT_MASK: // INT_MASK
                                 begin
-                                        $display($time, " - %m :: Writing to INT_MASK register...");
                                         if ( i_wb_sel[0] ) INT_MASK[7:0]   <= i_wb_dat >> 0; 
                                         if ( i_wb_sel[1] ) INT_MASK[15:8]  <= i_wb_dat >> 8; 
                                         if ( i_wb_sel[2] ) INT_MASK[23:16] <= i_wb_dat >> 16; 
@@ -927,14 +838,17 @@ begin
                                 begin: blk22
                                         integer i;
 
-                                        $display($time, " - %m :: Writing to INT_CLEAR register...");
                                         if ( i_wb_sel[0] ) for(i=0; i <=7;i=i+1) if ( i_wb_dat[i] ) INT_STATUS[i] <= 1'd0; 
                                         if ( i_wb_sel[1] ) for(i=8; i<=15;i=i+1) if ( i_wb_dat[i] ) INT_STATUS[i] <= 1'd0; 
                                         if ( i_wb_sel[2] ) for(i=16;i<=23;i=i+1) if ( i_wb_dat[i] ) INT_STATUS[i] <= 1'd0; 
                                         if ( i_wb_sel[3] ) for(i=24;i<=31;i=i+1) if ( i_wb_dat[i] ) INT_STATUS[i] <= 1'd0; 
                                 end
 
-                                default: $display($time, " - %m :: Warning: Attemting to write to illgal register...");
+                                default: 
+                                begin
+                                        $display($time, " Error : Attemting to write to illegal register in %m");
+                                        $finish;
+                                end
 
                                 endcase
 
@@ -949,8 +863,8 @@ begin
 
                                 default:                
                                 begin
-                                        $display($time, " - %m :: Warning: Attempting to read from illegal register. Will return 0...");
-                                        o_wb_dat <= 0;
+                                        $display($time, " Error : Attempting to read from illegal register in %m.");
+                                        $finish;
                                 end
                                 endcase
 
