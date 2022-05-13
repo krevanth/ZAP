@@ -89,7 +89,8 @@ int main(int argc, char** argv, char** env) {
 
                 if ( end_nxt ) 
                 {
-                        printf("%sError: Ending simulation.%s", KRED, KNRM);
+                        printf("%s\nError: Ending simulation due to error. LOG = obj/ts/%s/zap.log VCD = obj/ts/%s/zap.vcd\n%s", KRED, argv[2], argv[2], KNRM);
+                        zap_test->final();
                         return end_nxt;
                 }
         }
@@ -108,7 +109,7 @@ int main(int argc, char** argv, char** env) {
 
             if ( seq && (!zap_test->o_wb_cyc || !zap_test->o_wb_stb) ) 
             {
-                printf("Error: WB_CYC/STB going low in the middle of a burst.");
+                printf("Error: WB_CYC/STB going low in the middle of a burst.\n");
                 end_nxt = 3;
             }
 
@@ -147,13 +148,13 @@ int main(int argc, char** argv, char** env) {
                             {
                                 if ( zap_test->o_wb_adr != saved_adr + 4 ) 
                                 {
-                                        printf("Error: Burst addresses not sequential. Rec=%x Exp=%x", zap_test->o_wb_adr, saved_adr + 4);
+                                        printf("Error: Burst addresses not sequential. Rec=%x Exp=%x\n", zap_test->o_wb_adr, saved_adr + 4);
                                         end_nxt = 4;
                                 }
 
                                 if ( zap_test->o_wb_we != saved_we )
                                 {
-                                        printf("Error: Burst does not hold sense constant. Exp=%x Rec=%x", saved_we, zap_test->o_wb_we);
+                                        printf("Error: Burst does not hold sense constant. Exp=%x Rec=%x\n", saved_we, zap_test->o_wb_we);
                                         end_nxt = 5;
                                 }
                             }
@@ -175,26 +176,39 @@ int main(int argc, char** argv, char** env) {
                     zap_test->i_wb_ack = 0;
                     zap_test->i_wb_dat = rand();
             }
-        }
 
-        for(int j=0;j<65536;j++)
-        {
-                zap_test->i_mem[j] = mem[j];
-        }
+            // Print UART output on line 0 and line 1.
 
-        if ( zap_test->o_sim_err && !zap_test->i_reset ) 
-        {
-                printf("%sError: Simulation failed!\n%s", KRED, KNRM);
-                zap_test->final();
-                return 6;
-        } 
-        else if ( zap_test->o_sim_ok && !zap_test->i_reset )
-        {
-                printf("%sOK: Simulation passed!\n%s", KGRN, KNRM);
-                zap_test->final();
-                return 0;
-        }
-    }
+            if ( zap_test->UART_SR_DAV_0 )
+            {
+                printf("%c", zap_test->UART_SR_0);
+            }
+
+           if ( zap_test->UART_SR_DAV_1 )
+           {
+                printf("%c", zap_test->UART_SR_1);
+           }        
+
+            // Run memory checks and register checks.
+
+            for(int j=0;j<65536;j++)
+            {
+                    zap_test->i_mem[j] = mem[j];
+            }
+
+            if ( zap_test->o_sim_err && !zap_test->i_reset ) 
+            {
+                    printf("Error : Register/memory mismatch.\n");
+                    end_nxt = 6;
+            } 
+            else if ( zap_test->o_sim_ok && !zap_test->i_reset )
+            {
+                    printf("%sOK : Simulation passed!\n%s", KGRN, KNRM);
+                    zap_test->final();
+                    return 0;
+            }
+        } // rising edge of clock
+    } // while
 
     zap_test->final();
     printf("%sError: Simulation failed!\n%s", KRED, KNRM);
