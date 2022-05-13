@@ -42,6 +42,7 @@ module zap_test (
         output reg     [3:0]   o_wb_sel,
         output reg             o_wb_we,
         output reg     [31:0]  o_wb_dat,
+        output reg      [2:0]  o_wb_cti,
         input  wire            i_wb_ack,
         input  wire    [31:0]  i_wb_dat,
 
@@ -161,7 +162,8 @@ chip_top #(
         .O_WB_SEL (o_wb_sel),
         .O_WB_WE  (o_wb_we),
         .I_WB_ACK (i_wb_ack),
-        .I_WB_DAT (i_wb_dat)
+        .I_WB_DAT (i_wb_dat),
+        .O_WB_CTI(o_wb_cti)
 );
 
 integer sim_ctr = 0;
@@ -265,6 +267,7 @@ parameter STORE_BUFFER_DEPTH            = 32
         output wire [31:0]  O_WB_ADR,
         output wire [3:0]   O_WB_SEL,
         output wire         O_WB_WE,
+        output wire [2:0]   O_WB_CTI,
         input  wire         I_WB_ACK,
         input  wire [31:0]  I_WB_DAT
 );
@@ -313,6 +316,7 @@ assign        O_WB_ADR        = data_wb_adr;
 assign        O_WB_WE         = data_wb_we;
 assign        O_WB_DAT        = data_wb_dout;
 assign        O_WB_SEL        = data_wb_sel;
+assign        O_WB_CTI        = data_wb_cti;
 
 // Wishbone fabric.
 always @*
