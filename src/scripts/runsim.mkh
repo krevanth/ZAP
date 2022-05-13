@@ -80,7 +80,7 @@ SCRIPT_FILES := $(wildcard ../../scripts/*)
 
 # Rule to execute command.
 all: dirs ../../../obj/ts/$(TC)/Vzap_test
-	cd ../../../obj/ts/$(TC) && ./Vzap_test $(TC).bin 2>&1 | tee -a ../../../obj/ts/$(TC)/zap.log
+	cd ../../../obj/ts/$(TC) && ./Vzap_test $(TC).bin $(TC) 2>&1 | tee -a ../../../obj/ts/$(TC)/zap.log
 	echo "Generated log file 'obj/ts/$(TC)/zap.log' and waveform file 'obj/ts/$(TC)/zap.vcd'"
 
 #########################################
