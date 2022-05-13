@@ -403,8 +403,8 @@ zap_wb_merger u_zap_wb_merger (
 
 );
 
-zap_wb_adapter #(.DEPTH(STORE_BUFFER_DEPTH), .BURST_LEN(CODE_CACHE_LINE < DATA_CACHE_LINE ? CODE_CACHE_LINE : 
-                                                                                            DATA_CACHE_LINE))
+zap_wb_adapter 
+#(.DEPTH(STORE_BUFFER_DEPTH), .BURST_LEN(CODE_CACHE_LINE < DATA_CACHE_LINE ? CODE_CACHE_LINE/4 : DATA_CACHE_LINE/4))
 u_zap_wb_adapter (
 .i_clk(i_clk),
 .i_reset(i_reset),
