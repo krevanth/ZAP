@@ -58,7 +58,8 @@ Credit to Erez Binyamin (https://https://github.com/ErezBinyamin/) for adding Do
 
 ZAP is a Verilog processor core that can execute ARM&reg;v5TE binaries. Note that ZAP is ***NOT*** an ARM clone. 
 ZAP is a completely different implementation and unique superpipelined microarchitecture built from scratch with the 
-aim of providing maximum performance for typical FPGA/ASIC targets.
+aim of providing maximum performance for typical FPGA/ASIC targets. Cache and MMU should be enabled as soon as possible
+to enable good performance.
 
 ZAP can run binaries compiled for legacy ARM cores (ARMv5TE ISA) and provides full software compatibility including 
 architecturally exposed CPU modes, short instruction support, FCSE, cache, MMU, TLBs and the CP15 interface layer for 
