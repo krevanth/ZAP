@@ -136,7 +136,7 @@ die "Error: Failed to obtain number of processing cores." if system("getconf _NP
 my $C = `getconf _NPROCESSORS_ONLN`; chomp $C;
 
 my $cmd = 
-"verilator -Wno-lint --cc --exe  --build $ZAP_HOME/src/testbench/zap_test.cpp --Mdir $ZAP_HOME/obj/ts/$TEST --top zap_test $IVL_OPTIONS --trace --x-assign unique --x-initial unique --trace-threads 1 --threads $C -j --error-limit 1 -O3";
+"verilator -Wno-lint --cc --exe  --build $ZAP_HOME/src/testbench/zap_test.cpp --Mdir $ZAP_HOME/obj/ts/$TEST --top zap_test $IVL_OPTIONS --trace --x-assign unique --x-initial unique --threads $C -j $C --error-limit 1 -O3";
 
 die "Error: Failed to build executable." if system("$cmd");
 
