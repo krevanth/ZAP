@@ -33,9 +33,9 @@ all: .image_build test
 
 test:
 ifdef TC
-	docker run -it -v `pwd`:`pwd` $(IMAGE_TAG) $(MAKE) TC=$(TC) -j $(CORES) -C `pwd`/src/ts
+	docker run -it -v `pwd`:`pwd` $(IMAGE_TAG) $(MAKE) TC=$(TC) -C `pwd`/src/ts
 else
-	docker run -it -v `pwd`:`pwd` $(IMAGE_TAG) $(MAKE) -j $(CORES) -C `pwd`/src/ts
+	docker run -it -v `pwd`:`pwd` $(IMAGE_TAG) $(MAKE) -C `pwd`/src/ts
 endif
 
 .image_build: Dockerfile
