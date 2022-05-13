@@ -34,6 +34,11 @@
 char mem [65536]; // 64KB buffer.
 FILE *ptr;
 
+unsigned int seq;
+unsigned int saved_we;
+unsigned int saved_adr;
+unsigned int end_nxt;
+
 int main(int argc, char** argv, char** env) {
     srand((unsigned int)time(0));
     const std::unique_ptr<VerilatedContext> contextp{new VerilatedContext};
@@ -51,13 +56,13 @@ int main(int argc, char** argv, char** env) {
     else
     {
         printf("Failed to get binary file.");
-        return 4;
+        return 1;
     }
 
     if ( ptr == NULL ) 
     {
         printf("Failed to open file %s", argv[0]);
-        return 3;
+        return 2;
     }
 
     fread(mem, 1, sizeof(mem), ptr);    
@@ -74,7 +79,15 @@ int main(int argc, char** argv, char** env) {
 
         zap_test->eval();
 
-        if (zap_test->i_clk) 
+        if(!zap_test->i_clk)
+        {
+                if ( end_nxt ) 
+                {
+                        printf("Error: Ending simulation.");
+                        return end_nxt;
+                }
+        }
+        else if (zap_test->i_clk) 
         {
             if ( contextp->time() < RESET_CYCLES ) 
             {
@@ -85,8 +98,14 @@ int main(int argc, char** argv, char** env) {
                 zap_test->i_reset = 0;  
             }
 
+            if ( seq && (!zap_test->o_wb_cyc || !zap_test->o_wb_stb) ) 
+            {
+                printf("Error: WB_CYC/STB going low in the middle of a burst.");
+                end_nxt = 3;
+            }
+
             // Simulate a Wishbone RAM.
-            if ( zap_test->o_wb_cyc && zap_test->o_wb_stb ) 
+            if ( zap_test->o_wb_cyc && zap_test->o_wb_stb && !zap_test -> i_reset ) 
             {
                     if ( rand() & 0x1 )
                     {
@@ -115,6 +134,32 @@ int main(int argc, char** argv, char** env) {
                                     if ( zap_test->o_wb_sel & 4 ) mem [ ((zap_test->o_wb_adr >> 2)*4 + 2) & 0xFFFF ] = (zap_test->o_wb_dat >> (8 * 2)) & 0xFF;
                                     if ( zap_test->o_wb_sel & 8 ) mem [ ((zap_test->o_wb_adr >> 2)*4 + 3) & 0xFFFF ] = (zap_test->o_wb_dat >> (8 * 3)) & 0xFF;
                             }
+
+                            if ( seq && zap_test->i_wb_ack ) 
+                            {
+                                if ( zap_test->o_wb_adr != saved_adr + 4 ) 
+                                {
+                                        printf("Error: Burst addresses not sequential. Rec=%x Exp=%x", zap_test->o_wb_adr, saved_adr + 4);
+                                        end_nxt = 4;
+                                }
+
+                                if ( zap_test->o_wb_we != saved_we )
+                                {
+                                        printf("Error: Burst does not hold sense constant. Exp=%x Rec=%x", saved_we, zap_test->o_wb_we);
+                                        end_nxt = 5;
+                                }
+                            }
+                    }
+
+                    if ( zap_test->o_wb_cti == 2 && zap_test->i_wb_ack ) 
+                    {
+                        seq       = 1;
+                        saved_adr = zap_test->o_wb_adr;
+                        saved_we  = zap_test->o_wb_we;
+                    }
+                    else
+                    {
+                        seq      = 0;
                     }
             }
             else
@@ -129,13 +174,13 @@ int main(int argc, char** argv, char** env) {
                 zap_test->i_mem[j] = mem[j];
         }
 
-        if ( zap_test->o_sim_err ) 
+        if ( zap_test->o_sim_err && !zap_test->i_reset ) 
         {
                 printf("%sError: Simulation failed!\n%s", KRED, KNRM);
                 zap_test->final();
-                return 1;
+                return 6;
         } 
-        else if ( zap_test->o_sim_ok )
+        else if ( zap_test->o_sim_ok && !zap_test->i_reset )
         {
                 printf("%sOK: Simulation passed!\n%s", KGRN, KNRM);
                 zap_test->final();
@@ -145,5 +190,5 @@ int main(int argc, char** argv, char** env) {
 
     zap_test->final();
     printf("%sError: Simulation failed!\n%s", KRED, KNRM);
-    return 2;
+    return 7;
 }
