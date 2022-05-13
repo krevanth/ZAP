@@ -28,7 +28,10 @@
 
 
 
-module zap_wb_adapter #(parameter DEPTH = 32) (
+module zap_wb_adapter #(
+        parameter DEPTH     = 32,
+        parameter BURST_LEN = 4
+) (
 
 // Clock.
 input logic                   i_clk,
@@ -76,12 +79,12 @@ logic  [31:0] dff, dnxt;
 logic  ack;        // ACK write channel.
 logic  ack_ff;     // Read channel.
 
-localparam IDLE = 0;
-localparam PRPR_RD_SINGLE = 1;
-localparam PRPR_RD_BURST = 2;
-localparam WRITE = 3;
-localparam WAIT1 = 5;
-localparam WAIT2 = 6;
+localparam IDLE             = 0;
+localparam PRPR_RD_SINGLE   = 1;
+localparam PRPR_RD_BURST    = 2;
+localparam WRITE            = 3;
+localparam WAIT1            = 5;
+localparam WAIT2            = 6;
 localparam NUMBER_OF_STATES = 7;
 
 logic [$clog2(NUMBER_OF_STATES)-1:0] state_ff, state_nxt;
@@ -170,8 +173,6 @@ begin
         end
 end
 
-localparam BURST_LEN = 4;
-
 // OR from flop and mealy FSM output.
 always_comb O_WB_ACK = ack_ff | ack;
 
@@ -236,7 +237,7 @@ begin:blk1
 
                 if ( ctr_ff == BURST_LEN * 4 )
                 begin
-                        ctr_nxt = 0;
+                        ctr_nxt   = 0;
                         state_nxt = WAIT2; // FIFO prep done.
                 end
                 else if ( !w_full )
