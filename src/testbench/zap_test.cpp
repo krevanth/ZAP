@@ -41,6 +41,10 @@ unsigned int end_nxt;
 
 int main(int argc, char** argv, char** env) {
     srand((unsigned int)time(0));
+
+    seq      = 0;
+    end_nxt  = 0; 
+
     const std::unique_ptr<VerilatedContext> contextp{new VerilatedContext};
 
     contextp->debug(0);
@@ -81,14 +85,18 @@ int main(int argc, char** argv, char** env) {
 
         if(!zap_test->i_clk)
         {
+                // End simulation on falling edge of clock.                
+
                 if ( end_nxt ) 
                 {
-                        printf("Error: Ending simulation.");
+                        printf("%sError: Ending simulation.%s", KRED, KNRM);
                         return end_nxt;
                 }
         }
         else if (zap_test->i_clk) 
         {
+            // Operate everything on rising edge of clock.
+
             if ( contextp->time() < RESET_CYCLES ) 
             {
                 zap_test->i_reset = 1;  
