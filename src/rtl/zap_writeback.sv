@@ -237,7 +237,7 @@ begin: blk1
                 wa1                     = PHY_ABT_R14;
                 wa2                     = PHY_ABT_SPSR;
                 wdata2                  = cpsr_ff;
-                cpsr_nxt[`ZAP_CPSR_MODE]    = ABT;
+                cpsr_nxt[`ZAP_CPSR_MODE] = ABT;
 
                 chmod ();
         end
@@ -251,7 +251,7 @@ begin: blk1
                 wa1                     = PHY_FIQ_R14;
                 wa2                     = PHY_FIQ_SPSR;
                 wdata2                  = cpsr_ff;
-                cpsr_nxt[`ZAP_CPSR_MODE]    = FIQ;
+                cpsr_nxt[`ZAP_CPSR_MODE] = FIQ;
                 cpsr_nxt[F]             = 1'd1;
 
                 chmod ();
@@ -265,7 +265,7 @@ begin: blk1
                 wa1                     = PHY_IRQ_R14;
                 wa2                     = PHY_IRQ_SPSR;
                 wdata2                  = cpsr_ff;
-                cpsr_nxt[`ZAP_CPSR_MODE]    = IRQ;
+                cpsr_nxt[`ZAP_CPSR_MODE] = IRQ;
                 // Returns do LR - 4 to get back to the same instruction.
 
                 chmod ();
@@ -294,7 +294,7 @@ begin: blk1
                 wa1                     = PHY_SVC_R14;
                 wa2                     = PHY_SVC_SPSR;
                 wdata2                  = cpsr_ff;
-                cpsr_nxt[`ZAP_CPSR_MODE]    = SVC;
+                cpsr_nxt[`ZAP_CPSR_MODE] = SVC;
 
                 chmod ();
         end
@@ -308,7 +308,7 @@ begin: blk1
                 wa1                     = PHY_UND_R14;
                 wa2                     = PHY_UND_SPSR;
                 wdata2                  = cpsr_ff;
-                cpsr_nxt[`ZAP_CPSR_MODE]    = UND;
+                cpsr_nxt[`ZAP_CPSR_MODE] = UND;
 
                 chmod ();
         end
@@ -340,6 +340,7 @@ begin: blk1
                 begin
                         pc_shelve (i_wr_data_1);
                         o_clear_from_writeback  = 1'd1;
+                        cpsr_nxt[T]             = i_wr_data_1[0]; // Switch A/T state.
                 end
         end
 
