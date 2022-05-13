@@ -62,8 +62,13 @@ logic               empty, nempty;
 logic               full, nfull;
 logic [PTR_WDT-1:0] wptr_nxt;
 logic [WIDTH-1:0]   mem [DEPTH-1:0]; 
+logic               sel_ff;
+logic [WIDTH-1:0]   bram_ff;         
+logic [WIDTH-1:0]   dt_ff;
+logic               unused;
 
 // Assigns
+assign unused  = |{FWFT, 1'd1};
 assign o_empty = empty;
 assign o_full  = full;
 assign o_empty_n = nempty;
@@ -72,45 +77,25 @@ assign o_full_n_nxt = i_reset ? 1 :
                       !( ( wptr_nxt[PTR_WDT-2:0] == rptr_nxt[PTR_WDT-2:0] ) &&
                        ( wptr_nxt != rptr_nxt ) );
 
-
 // FIFO write logic.
 always_ff @ (posedge i_clk)
         if ( i_wr_en && !o_full )
                 mem[wptr_ff[PTR_WDT-2:0]] <= i_data;
 
 // FIFO read logic
-generate
-        if ( FWFT == 1 )
-        begin
-                logic               sel_ff;
-                logic [WIDTH-1:0]   bram_ff;         
-                logic [WIDTH-1:0]   dt_ff;
+// Retimed output data compared to normal FIFO.
+always_ff @ (posedge i_clk) 
+begin
+         dt_ff <= i_data;
+        sel_ff <= ( i_wr_en && (wptr_ff == rptr_nxt) );
+       bram_ff <= mem[rptr_nxt[PTR_WDT-2:0]];
+end
 
-                // Retimed output data compared to normal FIFO.
-                always_ff @ (posedge i_clk) 
-                begin
-                         dt_ff <= i_data;
-                        sel_ff <= ( i_wr_en && (wptr_ff == rptr_nxt) );
-                       bram_ff <= mem[rptr_nxt[PTR_WDT-2:0]];
-                end
-        
-                // Output signal steering MUX.
-                always_comb
-                begin
-                        o_data = sel_ff ? dt_ff : bram_ff;
-                end
-        end
-        else
-        begin
-                always_ff @ (posedge i_clk)
-                begin
-                        if ( i_ack && nempty ) // Read request and not empty.
-                        begin
-                                o_data <= mem [ rptr_ff[PTR_WDT-2:0] ];
-                        end
-                end
-        end
-endgenerate
+// Output signal steering MUX.
+always_comb
+begin
+        o_data = sel_ff ? dt_ff : bram_ff;
+end
 
 // Flip-flop update.
 always_ff @ (posedge i_clk)
@@ -131,8 +116,6 @@ begin
 end
 
 endmodule // zap_sync_fifo
-
-
 
 // ----------------------------------------------------------------------------
 // EOF
