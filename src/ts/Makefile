@@ -3,11 +3,11 @@ CORES   := $(shell getconf _NPROCESSORS_ONLN)
 
 ifdef TC
 all:
-	cd $(TC) && $(MAKE) TC=$(TC) -j $(CORES)
+	cd $(TC) && $(MAKE) TC=$(TC)
 else
 all: $(SUBDIRS)
 $(SUBDIRS):
-	cd $@ && $(MAKE) -j $(CORES)
+	cd $@ && $(MAKE)
 endif
 
 clean:
