@@ -31,9 +31,9 @@ CORES = $(shell getconf _NPROCESSORS_ONLN)
 
 all:
 ifdef TC
-	cd $(PWD)/src/ts && $(MAKE) TC=$(TC) -j $(CORES)
+	cd $(PWD)/src/ts && $(MAKE) TC=$(TC) 
 else
-	cd $(PWD)/src/ts && $(MAKE) -j $(CORES)
+	cd $(PWD)/src/ts && $(MAKE) 
 endif
 
 clean:
