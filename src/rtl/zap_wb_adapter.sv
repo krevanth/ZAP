@@ -64,36 +64,32 @@ input logic                   i_wb_ack
 `include "zap_defines.svh"
 `include "zap_localparams.svh"
 
-logic  fsm_write_en;
-logic  [69:0] fsm_write_data;
-logic  w_eob;
-logic  w_full;
-logic  unused;
-logic  w_emp;
-logic  o_wb_stb_nxt;
-logic  o_wb_cyc_nxt;
-logic  emp_nxt;
-logic  emp_ff;
-logic  [31:0] ctr_nxt, ctr_ff;
-logic  [31:0] dff, dnxt;
-logic  ack;        // ACK write channel.
-logic  ack_ff;     // Read channel.
+logic           fsm_write_en;
+logic  [69:0]   fsm_write_data;
+logic           w_eob;
+logic           w_full;
+logic           w_emp;
+logic  [31:0]   ctr_nxt, ctr_ff;
+logic  [31:0]   dff, dnxt;
+logic  [31:0]   adr_buf_nxt, adr_buf_ff;
+logic           ack;        // ACK write channel.
+logic           ack_ff;     // Read channel.
 
 localparam IDLE             = 0;
 localparam PRPR_RD_SINGLE   = 1;
 localparam PRPR_RD_BURST    = 2;
 localparam WRITE            = 3;
-localparam WAIT1            = 5;
-localparam WAIT2            = 6;
-localparam NUMBER_OF_STATES = 7;
+localparam WAIT1            = 4;
+localparam WAIT2            = 5;
+localparam NUMBER_OF_STATES = 6;
 
 logic [$clog2(NUMBER_OF_STATES)-1:0] state_ff, state_nxt;
 
-zap_sync_fifo #(.WIDTH(32'd70), .DEPTH(DEPTH), .FWFT(32'd0)) U_STORE_FIFO (
+zap_sync_fifo #(.WIDTH(32'd70), .DEPTH(DEPTH), .FWFT(32'd1)) U_STORE_FIFO (
 .i_clk          (i_clk),
 .i_reset        (i_reset),
-.i_ack          ((i_wb_ack && o_wb_stb) || emp_ff),
-.i_wr_en        (fsm_write_en),
+.i_ack          (i_wb_ack && !w_emp),
+.i_wr_en        (fsm_write_en && !w_full),
 .i_data         (fsm_write_data),
 .o_data         ({o_wb_sel, o_wb_dat, o_wb_adr, w_eob, o_wb_we}),
 .o_empty        (w_emp),
@@ -106,35 +102,12 @@ zap_sync_fifo #(.WIDTH(32'd70), .DEPTH(DEPTH), .FWFT(32'd0)) U_STORE_FIFO (
 /* verilator lint_on PINCONNECTEMPTY */
 );
 
-assign unused = |{I_WB_CYC};
-
-// FIFO pipeline register and nxt state logic.
+// FIFO output is basically registered.
 always_comb
 begin
-        o_wb_cti     = {w_eob, 1'd1, w_eob};
-        emp_nxt      = emp_ff;
-        o_wb_stb_nxt = o_wb_stb;
-        o_wb_cyc_nxt = o_wb_cyc;
-
-        if ( i_reset ) 
-        begin
-                emp_nxt      = 1'd1;
-                o_wb_stb_nxt = 1'd0;
-                o_wb_cyc_nxt = 1'd0;
-        end
-        else if ( emp_ff || (i_wb_ack && o_wb_stb) ) 
-        begin
-                emp_nxt      = w_emp;
-                o_wb_stb_nxt = !w_emp;
-                o_wb_cyc_nxt = !w_emp;
-        end
-end
-
-always_ff @ (posedge i_clk)
-begin
-        emp_ff   <= emp_nxt;
-        o_wb_stb <= o_wb_stb_nxt;
-        o_wb_cyc <= o_wb_cyc_nxt;
+        o_wb_stb = !w_emp;
+        o_wb_cyc = !w_emp;
+        o_wb_cti = {w_eob, 1'd1, w_eob};
 end
 
 // Flip flop clocking block.
@@ -145,12 +118,14 @@ begin
                 state_ff <= IDLE;
                 ctr_ff   <= 0;
                 dff      <= 0;
+                adr_buf_ff<= 32'd0;
         end
         else
         begin
                 state_ff <= state_nxt;
                 ctr_ff   <= ctr_nxt;
                 dff      <= dnxt;
+                adr_buf_ff<=adr_buf_nxt;
         end
 end
 
@@ -159,11 +134,12 @@ always_ff @ (posedge i_clk)
 begin
         if ( i_reset )
         begin
-                ack_ff  <= 1'd0;
-                O_WB_DAT <= 0;
+                ack_ff   <= 1'd0;
+                O_WB_DAT <= 32'd0;
         end
-        else if ( !o_wb_we && o_wb_cyc && o_wb_stb && i_wb_ack )
+        else if ( !o_wb_we && o_wb_cyc && o_wb_stb && i_wb_ack ) // Read on wishbone.
         begin
+                // Send ACK on next cycle.
                 ack_ff   <= 1'd1;
                 O_WB_DAT <= i_wb_dat;
         end
@@ -173,39 +149,39 @@ begin
         end
 end
 
-// OR from flop and mealy FSM output.
+// ACK from read | ACK from write.
 always_comb O_WB_ACK = ack_ff | ack;
 
 // State machine.
 always_comb
 begin:blk1
-        logic [31:0] adr;
+        state_nxt      = state_ff;
+        ctr_nxt        = ctr_ff;
+        ack            = 1'd0;
+        dnxt           = dff;
+        fsm_write_en   = 1'd0;
+        fsm_write_data = 70'd0;
+        adr_buf_nxt    = adr_buf_ff;
 
-        adr = 0;
-        state_nxt = state_ff;
-        ctr_nxt = ctr_ff;
-        ack = 0;
-        dnxt = dff;
-        fsm_write_en = 0;
-        fsm_write_data = 0;
+        case ( state_ff )
 
-        case(state_ff)
         IDLE:
         begin
-                ctr_nxt = 0;
-                dnxt = 0;
+                ctr_nxt = 32'd0;
+                dnxt    = 32'd0;
 
-                if ( I_WB_STB && I_WB_WE && !o_wb_stb ) // Wishbone write request 
+                if ( I_WB_STB && I_WB_CYC && I_WB_WE && !o_wb_stb ) // Wishbone write request 
                 begin
                         // Simply buffer stores into the FIFO.
                         state_nxt = WRITE;
                 end   
-                else if ( I_WB_STB && !I_WB_WE && !o_wb_stb ) // Wishbone read request
+                else if ( I_WB_STB && I_WB_CYC && !I_WB_WE && !o_wb_stb ) // Wishbone read request
                 begin
                         // Write a set of reads into the FIFO.
-                        if ( I_WB_CTI == CTI_BURST ) // Burst of 4 words. Each word is 4 byte.
+                        if ( I_WB_CTI == CTI_BURST ) // Burst of BURST_LEN words. Each word is 4 byte.
                         begin
-                                state_nxt = PRPR_RD_BURST;
+                                state_nxt   = PRPR_RD_BURST;
+                                adr_buf_nxt = I_WB_ADR;
                         end
                         else // Single.
                         begin
@@ -218,51 +194,58 @@ begin:blk1
         begin
                 if ( !w_full )
                 begin
-                        state_nxt = WAIT1;
-                        fsm_write_en = 1'd1;
-                        fsm_write_data = {      I_WB_SEL, 
+                        state_nxt      = WAIT1;
+                        fsm_write_en   = 1'd1;
+                        fsm_write_data = {      
+                                                I_WB_SEL, 
                                                 I_WB_DAT, 
-                                                I_WB_ADR, 
+                                                I_WB_ADR & ~32'h3, 
                                                 I_WB_CTI != CTI_BURST ? 1'd1 : 1'd0, 
-                                                1'd0};
+                                                1'd0
+                                         };
                 end
         end
 
         PRPR_RD_BURST: // Write burst read requests into the FIFO.
         begin
                 if ( O_WB_ACK )
-                begin
-                        dnxt = dff + 1'd1;
-                end
+                        dnxt = dff + 32'd1;
+                else
+                        dnxt = dff;
 
-                if ( ctr_ff == BURST_LEN * 4 )
+                if ( ctr_ff == BURST_LEN )
                 begin
                         ctr_nxt   = 0;
                         state_nxt = WAIT2; // FIFO prep done.
                 end
                 else if ( !w_full )
                 begin
-                        adr = {I_WB_ADR[31:4], 4'd0} + ctr_ff; // Ignore lower 4-bits.
+                        fsm_write_en   = 1'd1;
+                        fsm_write_data = 
+                        {I_WB_SEL, 
+                         32'd0,    
+                         (adr_buf_ff & ~32'h3) + (ctr_ff << 32'd2),
+                         ctr_ff == BURST_LEN - 1 ? 1'd1 : 1'd0, 
+                         1'd0};
 
-                        fsm_write_en = 1'd1;
-                        fsm_write_data = {      I_WB_SEL, 
-                                                I_WB_DAT, 
-                                                adr, 
-                                                ctr_ff == 12 ? 1'd1 : 1'd0, 
-                                                1'd0 };
-                        ctr_nxt = ctr_ff + 4;
+                        ctr_nxt = ctr_ff + 32'd1;
                 end                
         end
 
         WRITE:
         begin
-                // As long as requests exist, write them out to the FIFO.
+                // As long as write burst requests exist, write them out to the FIFO.
                 if ( I_WB_STB && I_WB_WE )
                 begin
                         if ( !w_full )
                         begin
                                 fsm_write_en    = 1'd1;
-                                fsm_write_data  =  {I_WB_SEL, I_WB_DAT, I_WB_ADR, I_WB_CTI != CTI_BURST ? 1'd1 : 1'd0, 1'd1};
+                                fsm_write_data  =  
+                                {I_WB_SEL, 
+                                 I_WB_DAT, 
+                                 I_WB_ADR & ~32'h3, 
+                                 I_WB_CTI != CTI_BURST ? 1'd1 : 1'd0, 
+                                 1'd1};
                                 ack = 1'd1;
                         end
                 end
@@ -275,22 +258,22 @@ begin:blk1
         WAIT1: // Wait for single read to complete.
         begin
                 if ( O_WB_ACK )
-                begin
                         state_nxt = IDLE;
-                end
+                else
+                        state_nxt = state_ff;
         end
 
         WAIT2: // Wait for burst reads to complete.
         begin
                 if ( O_WB_ACK )
-                begin
                         dnxt = dff + 1;
-                end
+                else
+                        dnxt = dff;
 
                 if ( dff == BURST_LEN && !o_wb_stb )
-                begin
                         state_nxt = IDLE;
-                end
+                else
+                        state_nxt = state_ff;
         end
 
         endcase
