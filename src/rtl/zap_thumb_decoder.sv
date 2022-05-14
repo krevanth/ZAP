@@ -105,6 +105,10 @@ begin
                 begin
                         decode_bx();
                 end
+                else if ( i_instruction[15:0] ==? T_BKPT ) // T_BKPT
+                begin
+                        decode_bkpt();
+                end
                 else casez ( i_instruction[15:0] )
                         T_BLX1                  : decode_blx1();
                         T_BRANCH_COND           : decode_conditional_branch(); 
@@ -130,6 +134,14 @@ begin
                 endcase 
         end
 end
+
+///////////////////////////////////////////////////////////////////////////////
+
+function void decode_bkpt();
+begin: decodeBkPt
+        o_instruction[31:0] = BKPT;
+end
+endfunction
 
 ///////////////////////////////////////////////////////////////////////////////
 
