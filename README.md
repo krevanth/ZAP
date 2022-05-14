@@ -7,7 +7,11 @@ LinkedIn: www.linkedin.com/in/revanth-kamaraj-178662113
          krevanth ~ git version 2.36.1
          -----------------------------
          Project   : ZAP
+<<<<<<< HEAD
          Author(s) : 503  Revanth Kamaraj(krevanth)   <revanth91kamaraj@gmail.com>
+=======
+         Author(s) : 467  Revanth Kamaraj(krevanth)   <revanth91kamaraj@gmail.com>
+>>>>>>> 6c27a61 (updated readme)
                        1  Erez Binyamin(ErezBinyamin) <ezbn2532@gmail.com>
 
          Repo      : https://github.com/krevanth/ZAP.git
