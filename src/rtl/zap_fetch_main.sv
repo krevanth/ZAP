@@ -144,7 +144,7 @@ begin
         else if ( i_stall_from_issue )           begin end // Save state.
         else if ( i_stall_from_decode)           begin end // Save state.
         else if ( i_clear_from_decode )          clear_unit;
-        else if ( i_code_stall )                 begin end
+        else if ( i_code_stall )                 begin end // Save state.
 
         // If unit is sleeping.
         else if ( sleep_ff ) 
@@ -167,6 +167,12 @@ begin
                 o_valid         <= 1'd1;
                 o_instr_abort   <= i_instr_abort;
 
+                // BKPT instruction in ARM mode cause prefetch abort.
+                if ( (i_cpsr_ff_t == 1'd0) && (i_instruction ==? BKPT) )
+                begin
+                        o_instr_abort <= 1'd1; 
+                end
+
                 // Put unit to sleep on an abort.
                 sleep_ff        <= i_instr_abort;
 
@@ -183,6 +189,15 @@ begin
                 // Instruction. If 16-bit aligned address, move data from
                 // cache by 16-bit to focus on the instruction.
                 o_instruction <= i_pc_ff[1] ? i_instruction >> 16 : i_instruction;
+
+                // Detect breakpoint in thumb state too.
+                if ( i_cpsr_ff_t )
+                begin
+                        if ( i_pc_ff[1] && i_instruction[31:16] ==? T_BKPT )
+                                o_instr_abort <= 1'd1;
+                        else if ( !i_pc_ff[1] && i_instruction[15:0] ==? T_BKPT )
+                                o_instr_abort <= 1'd1;
+                end
         end
         else
         begin
