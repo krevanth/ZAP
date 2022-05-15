@@ -126,11 +126,11 @@ logic                             mask_ff, mask_nxt;
 logic [31:0]                      pc_del_ff, pc_del_nxt;
 logic                             arm_mode;
 
-assign  arm_mode        = (cpsr_ff[T] == 1'd0) ? 1'd1 : 1'd0;
-assign  o_shelve        = shelve_ff; // Shelve the PC until it is needed.
-assign  o_pc            = pc_del_ff;
-assign  o_pc_nxt        = pc_ff;
-assign  o_cpsr_nxt      = cpsr_nxt;
+always_comb  arm_mode        = (cpsr_ff[T] == 1'd0) ? 1'd1 : 1'd0;
+always_comb  o_shelve        = shelve_ff; // Shelve the PC until it is needed.
+always_comb  o_pc            = pc_del_ff;
+always_comb  o_pc_nxt        = pc_ff;
+always_comb  o_cpsr_nxt      = cpsr_nxt;
 
 // ----------------------------------------------------------------------------
 // Register file
