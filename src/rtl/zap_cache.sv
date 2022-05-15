@@ -121,7 +121,7 @@ logic [1:0]                     state_ff, state_nxt;
 logic [31:0]                     cache_address;
 
 // Selection 2 of Wishbone CTI[2x3] is always on all CPU supported modes.
-assign wb_cti[2] = 3'd0;
+always_comb wb_cti[2] = 3'd0;
 
 // Basic cache FSM - serves as Master 0.
 zap_cache_fsm #(.CACHE_SIZE(CACHE_SIZE), .CACHE_LINE(CACHE_LINE)) u_zap_cache_fsm (
