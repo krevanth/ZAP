@@ -250,10 +250,10 @@ u_zap_decode_coproc
 
 ///////////////////////////////////////////////////////////////////////////////
 
-assign arm_instruction          = cp_instruction;
-assign arm_instruction_valid    = cp_instruction_valid;
-assign arm_irq                  = cp_irq;
-assign arm_fiq                  = cp_fiq;
+always_comb arm_instruction          = cp_instruction;
+always_comb arm_instruction_valid    = cp_instruction_valid;
+always_comb arm_irq                  = cp_irq;
+always_comb arm_fiq                  = cp_fiq;
 
 ///////////////////////////////////////////////////////////////////////////////
 
