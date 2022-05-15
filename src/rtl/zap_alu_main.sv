@@ -33,7 +33,6 @@
 module zap_alu_main #(
 
         parameter [31:0] PHY_REGS  = 32'd46, // Number of physical registers.
-        parameter [31:0] SHIFT_OPS = 32'd5,  // Number of shift operations.
         parameter [31:0] ALU_OPS   = 32'd32, // Number of arithmetic operations.
         parameter [31:0] FLAG_WDT  = 32'd32  // Width of active CPSR.
 )
@@ -195,7 +194,6 @@ module zap_alu_main #(
 localparam [1:0] _N  = 2'd3;
 localparam [1:0] _Z  = 2'd2;
 localparam [1:0] _C  = 2'd1;
-localparam [1:0] _V  = 2'd0;
 
 // Branch status.
 localparam [1:0] SNT = 2'd0;
@@ -253,7 +251,6 @@ logic                             cin;
 logic [32:0]                      sum;
 
 logic [31:0]                      tmp_flags, tmp_sum;
-logic                             unused;
 
 // Opcode.
 logic [$clog2   (ALU_OPS)-1:0]   opcode;
@@ -262,26 +259,24 @@ logic [$clog2   (ALU_OPS)-1:0]   opcode;
 // Assigns
 // -------------------------------------------------------------------------------
 
-assign unused = |{SHIFT_OPS, _V, 1'd1}; /* IGNORE */
-
-assign opcode = i_alu_operation_ff;
-assign sum    = {1'd0, op1} + {1'd0, op2} + {32'd0, cin};
-assign not_rm = ~rm;
-assign not_rn = ~rn;
+always_comb opcode = i_alu_operation_ff;
+always_comb sum    = {1'd0, op1} + {1'd0, op2} + {32'd0, cin};
+always_comb not_rm = ~rm;
+always_comb not_rn = ~rn;
 
 /*
    For memory stores, we must generate correct byte enables. This is done
    by examining access type inputs. For loads, always 1111 is generated.
    If there is neither a load or a store, the old value is preserved.
 */
-assign ben_nxt =                generate_ben (
+always_comb ben_nxt =                generate_ben (
                                                  i_mem_unsigned_byte_enable_ff, 
                                                  i_mem_signed_byte_enable_ff, 
                                                  i_mem_unsigned_halfword_enable_ff, 
                                                  i_mem_unsigned_halfword_enable_ff, 
                                                  mem_address_nxt[1:0]);
 
-assign mem_srcdest_value_nxt =  duplicate (
+always_comb mem_srcdest_value_nxt =  duplicate (
                                                  i_mem_unsigned_byte_enable_ff, 
                                                  i_mem_signed_byte_enable_ff, 
                                                  i_mem_unsigned_halfword_enable_ff, 
@@ -551,8 +546,6 @@ begin: alu_result
          */
         else if ( opcode == {1'd0, FMOV} || opcode == {1'd0, MMOV} )
         begin: fmov_mmov
-                integer i;
-
                 // Read entire CPSR or SPSR.
                 tmp_sum = opcode == {1'd0, FMOV} ? flags_ff : i_mem_srcdest_value_ff;
 
@@ -560,7 +553,7 @@ begin: alu_result
                 exp_mask = {{8{rn[3]}},{8{rn[2]}},{8{rn[1]}},{8{rn[0]}}};
 
                 // Change only specific bits as specified by the mask.
-                for ( i=0;i<32;i=i+1 )
+                for ( int i=0;i<32;i++ )
                 begin
                         if ( exp_mask[i] )
                                 tmp_sum[i] = rm[i];
@@ -788,24 +781,24 @@ end
 // These are adder connections. Data processing and FMOV use these.
 always_comb
 begin: adder_ip_mux
-        logic [$clog2   (ALU_OPS)-1:0] op;
-        logic [31:0] flags;
+        logic [$clog2(ALU_OPS)-1:0] op;
+        logic                       flag;
 
-        flags = {28'd0, flags_ff[31:28]};
-        op    = i_alu_operation_ff;
+        flag       = flags_ff[C];
+        op         = i_alu_operation_ff;
 
         case ( op )
        {1'd0, FMOV}: begin              op1 = i_pc_plus_8_ff ; op2 = ~32'd4 ; cin =   1'd1;              end
         {2'd0, ADD}, 
         {1'd0, OP_QADD}, 
         {1'd0, OP_QDADD}: begin         op1 = rn             ; op2 = rm     ; cin =   1'd0;              end
-        {2'd0, ADC}: begin              op1 = rn             ; op2 = rm     ; cin =   flags[{3'd0, _C}]; end
+        {2'd0, ADC}: begin              op1 = rn             ; op2 = rm     ; cin =   flag;              end
         {2'd0, SUB}, 
         {1'd0, OP_QSUB}, 
         {1'd0, OP_QDSUB}: begin         op1 = rn             ; op2 = not_rm ; cin =   1'd1;               end
         {2'd0, RSB}: begin              op1 = rm             ; op2 = not_rn ; cin =   1'd1;               end
-        {2'd0, SBC}: begin              op1 = rn             ; op2 = not_rm ; cin =   !flags[{3'd0, _C}]; end
-        {2'd0, RSC}: begin              op1 = rm             ; op2 = not_rn ; cin =   !flags[{3'd0, _C}]; end
+        {2'd0, SBC}: begin              op1 = rn             ; op2 = not_rm ; cin =   !flag;              end
+        {2'd0, RSC}: begin              op1 = rm             ; op2 = not_rn ; cin =   !flag;              end
 
         // Target is not written.
         {2'd0, CMP}: begin              op1 = rn             ; op2 = not_rm ; cin =   1'd1;               end 
@@ -862,7 +855,7 @@ begin: blk2
         // is not touched even if change is requested.
         if ( flag_upd ) // 0x0 for SAT_MOV.
         begin
-                // V is preserved since flags_out = flags assignment.
+                // V is preserved since flags_out = flags
                 flags_out[_C] = shift_carry;
 
                 if ( nozero )
