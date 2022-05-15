@@ -25,7 +25,7 @@
 #include <verilated.h>
 #include "Vzap_test.h"
 #include <stdio.h>
-
+#include <string.h>
 
 #define KNRM            "\x1B[0m"
 #define KRED            "\x1B[31m"
@@ -40,6 +40,13 @@ unsigned int seq;
 unsigned int saved_we;
 unsigned int saved_adr;
 unsigned int end_nxt;
+
+// Data to be expected on UART if the TC is named "uart"
+char word0[] = "HELLO WORLD"; 
+char word1[] = "";
+
+int uart0_ctr = 0;
+int uart1_ctr = 0;
 
 int main(int argc, char** argv, char** env) {
     srand((unsigned int)time(0));
@@ -184,11 +191,27 @@ int main(int argc, char** argv, char** env) {
             if ( zap_test->UART_SR_DAV_0 )
             {
                 printf("%c", zap_test->UART_SR_0);
+
+                if ( (zap_test->UART_SR_0 != word0[uart0_ctr]) || (uart0_ctr >= strlen(word0)) ) 
+                {
+                        printf("Error : UART character mismatch or Overflow. Rcvd=%c Exp=%c\n", zap_test->UART_SR_0, word0[uart0_ctr]);
+                        end_nxt = 7;
+                }
+
+                uart0_ctr++;
             }
 
            if ( zap_test->UART_SR_DAV_1 )
            {
                 printf("%c", zap_test->UART_SR_1);
+
+                if ( (zap_test->UART_SR_1 != word1[uart1_ctr]) || (uart1_ctr >= strlen(word1)) )
+                {
+                        printf("Error: UART 1 character mismatch or Overflow. Rcvd=%c Exp=%c\n", zap_test->UART_SR_1, word1[uart0_ctr]);
+                        end_nxt = 8;
+                }
+
+                uart1_ctr++;
            }        
 
             // Run memory checks and register checks.
@@ -205,9 +228,26 @@ int main(int argc, char** argv, char** env) {
             } 
             else if ( zap_test->o_sim_ok && !zap_test->i_reset )
             {
-                    printf("%sOK : Simulation passed!\n%s", KGRN, KNRM);
-                    zap_test->final();
-                    return 0;
+                        if ( strcmp(argv[2], "uart") != 0 ) 
+                        {
+                                printf("%sOK : Simulation passed!\n%s", KGRN, KNRM);
+                                zap_test->final();
+                                return 0;
+                        }
+                        else
+                        {
+                                if ( uart0_ctr == strlen(word0) && uart1_ctr == strlen(word1))
+                                {
+                                        printf("%sOK : Simulation passed!\n%s", KGRN, KNRM);
+                                        zap_test->final();
+                                        return 0;
+                                }
+                                else
+                                {
+                                        printf("Error : word[x] not printed correctly on UARTx.");
+                                        end_nxt = 9;
+                                } 
+                        }
             }
         } // rising edge of clock
     } // while
