@@ -100,10 +100,10 @@ logic  [31:0]  const_ff, const_nxt;        // For BLX - const reg.
 
 ////////////////////////////////////////////////////////////////////////////////
 
-assign {cc, id, pre_index, up, s_bit, writeback, load, base, reglist} = i_instruction[31:0];
-assign store = ~load;
-assign unused = |{pre_index};
-assign oc_offset = ones_counter(i_instruction[15:0]);
+always_comb {cc, id, pre_index, up, s_bit, writeback, load, base, reglist} = i_instruction[31:0];
+always_comb store = ~load;
+always_comb unused = |{pre_index};
+always_comb oc_offset = ones_counter(i_instruction[15:0]);
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -807,13 +807,12 @@ endtask
 function  [11:0] ones_counter (
         input [15:0]    i_word    // Register list.
 );
-integer i;
 logic [6:0] offset;
 begin
         offset[6:0] = 7'd0;
 
         // Counter number of ones. We can have up to 16 ones, 5-bits should be enough to hold 0 to 16.
-        for(i=0;i<16;i=i+1)
+        for(int i=0;i<16;i++)
                 offset[4:0] = offset[4:0] + {4'd0, i_word[i]};
                 
         // Since LDM and STM occur only on 4 byte regions, compute the

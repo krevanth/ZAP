@@ -75,7 +75,7 @@ function  [5:0] translate (
 begin
         translate = index; // Avoid latch inference.
 
-        // User/System mode assignments.
+        // User/System mode map.
         case ( index )
                       0:      translate = PHY_USR_R0; 
                       1:      translate = PHY_USR_R1;                            

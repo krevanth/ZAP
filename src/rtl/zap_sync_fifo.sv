@@ -68,12 +68,12 @@ logic [WIDTH-1:0]   dt_ff;
 logic               unused;
 
 // Assigns
-assign unused  = |{FWFT, 1'd1};
-assign o_empty = empty;
-assign o_full  = full;
-assign o_empty_n = nempty;
-assign o_full_n = nfull;
-assign o_full_n_nxt = i_reset ? 1 :
+always_comb unused  = |{FWFT, 1'd1};
+always_comb o_empty = empty;
+always_comb o_full  = full;
+always_comb o_empty_n = nempty;
+always_comb o_full_n = nfull;
+always_comb o_full_n_nxt = i_reset ? 1 :
                       !( ( wptr_nxt[PTR_WDT-2:0] == rptr_nxt[PTR_WDT-2:0] ) &&
                        ( wptr_nxt != rptr_nxt ) );
 

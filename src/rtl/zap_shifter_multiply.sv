@@ -83,9 +83,9 @@ logic         old_nozero_nxt, old_nozero_ff;
 logic         higher;
 logic         unused;
 
-assign unused = |{PHY_REGS};
+always_comb unused = |{PHY_REGS};
 
-assign higher = i_alu_operation_ff[0]          || 
+always_comb higher = i_alu_operation_ff[0]          || 
                 i_alu_operation_ff == SMLAL00H || 
                 i_alu_operation_ff == SMLAL01H ||
                 i_alu_operation_ff == SMLAL10H || 
@@ -98,7 +98,7 @@ logic signed [16:0] c;
 logic signed [16:0] d;
 
 // Signed products.
-logic signed [63:0] x_ff, x_nxt, y_ff, y_nxt;
+logic signed [63:0] x_ff, x_nxt;
 logic signed [33:0] xprod_ab, xprod_bc, xprod_ad, xprod_cd;
 logic signed [63:0] prod_ab, prod_bc, prod_ad, prod_cd;
 
@@ -242,7 +242,6 @@ begin
         state_nxt      = state_ff;
         x_nxt          = x_ff;        
         o_sat          = 1'd0;
-        y_nxt          = y_ff;
 
         case ( state_ff )
                 IDLE:
@@ -346,7 +345,6 @@ begin
         if ( i_reset )
         begin
                 x_ff          <= 64'd0;
-                y_ff          <= 64'd0;
                 state_ff      <= IDLE;
                 old_nozero_ff <= 1'd0;
         end
@@ -367,7 +365,6 @@ begin
         else
         begin
                 x_ff          <= x_nxt;
-                y_ff          <= y_nxt;
                 state_ff      <= state_nxt;
                 old_nozero_ff <= old_nozero_nxt;
         end

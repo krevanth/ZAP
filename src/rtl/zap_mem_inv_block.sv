@@ -63,8 +63,8 @@ logic [$clog2(DEPTH)-1:0] addr_r;
 logic en_r;
 
 
-assign addr_r = i_raddr;
-assign en_r   = i_ren;
+always_comb addr_r = i_raddr;
+always_comb en_r   = i_ren;
 
 
 // Block RAM.

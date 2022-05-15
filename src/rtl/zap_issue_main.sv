@@ -584,7 +584,7 @@ endfunction
 
 
 // Stall all previous stages if a lock occurs.
-assign  o_stall_from_issue = lock;
+always_comb  o_stall_from_issue = lock;
 
 always_comb
 begin

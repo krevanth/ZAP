@@ -849,7 +849,7 @@ begin
                                 o_shift_operation    = ROR_1; 
                                 // Differs in carry generation behavior.
                 end
-                default: // For lint. Default values assigned in function anyway.
+                default: // For lint. Default values set in function anyway.
                 begin
                 end
         endcase

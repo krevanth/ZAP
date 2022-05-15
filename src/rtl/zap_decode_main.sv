@@ -215,36 +215,36 @@ logic [$clog2(ARCH_REGS)-1:0]    mem_srcdest_index_nxt;
 // ----------------------------------------------------------------------------
 
 // Abort
-assign  o_abt_nxt = (i_abt || i_thumb_und) && i_instruction_valid;
+always_comb  o_abt_nxt = (i_abt || i_thumb_und) && i_instruction_valid;
 
 // IRQ and FIQ next state.
-assign  o_irq_nxt = i_irq & !i_cpsr_ff_i; // Pass only when mask is 0.
-assign  o_fiq_nxt = i_fiq & !i_cpsr_ff_f;  // Pass only when mask is 0.
+always_comb  o_irq_nxt = i_irq & !i_cpsr_ff_i; // Pass only when mask is 0.
+always_comb  o_fiq_nxt = i_fiq & !i_cpsr_ff_f;  // Pass only when mask is 0.
 
 //
 // This section translates the indices from the decode stage converts
 // into a physical index. This is needed because the decode.v module extracts
 // architectural register numbers.
 //
-assign  o_destination_index_nxt = // Always a register so no need for IMMED_EN. 
+always_comb  o_destination_index_nxt = // Always a register so no need for IMMED_EN. 
         translate ( {1'd0, destination_index_nxt}, i_cpsr_ff_mode );
         
-assign  o_alu_source_nxt = 
+always_comb  o_alu_source_nxt = 
         (alu_source_nxt[32] == IMMED_EN ) ? // Constant...?
         alu_source_nxt : // Pass constant on.
         {27'd0, translate ( alu_source_nxt[5:0], i_cpsr_ff_mode )}; // Translate index.
 
-assign  o_shift_source_nxt = 
+always_comb  o_shift_source_nxt = 
         (shift_source_nxt[32] == IMMED_EN ) ? // Constant...?
         shift_source_nxt : // Pass constant on.
         {27'd0, translate ( shift_source_nxt[5:0], i_cpsr_ff_mode )}; // Translate index.
 
-assign  o_shift_length_nxt =
+always_comb  o_shift_length_nxt =
         (shift_length_nxt[32] == IMMED_EN ) ? // Constant...?
         shift_length_nxt : // Pass constant on.
         {27'd0, translate ( shift_length_nxt[5:0], i_cpsr_ff_mode )}; // Translate index.
 
-assign  o_mem_srcdest_index_nxt = // Always a register so no need for IMMED_EN.       
+always_comb  o_mem_srcdest_index_nxt = // Always a register so no need for IMMED_EN.       
         translate ( {1'd0, mem_srcdest_index_nxt}, i_cpsr_ff_mode );
 
 

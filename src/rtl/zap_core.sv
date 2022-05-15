@@ -354,24 +354,25 @@ logic [64*8-1:0]                 memory_decompile;
 logic [64*8-1:0]                 rb_decompile;
 
 logic unused;
+logic [(8*8)-1:0] CPU_MODE; // Max 8 characters i.e. 64-bit string.
 
-assign unused = |{alu_address_nxt[1:0], rb_decompile, CPU_MODE, alu_cpsr_nxt[31:30], alu_cpsr_nxt[28:0],
+always_comb unused = |{alu_address_nxt[1:0], rb_decompile, CPU_MODE, alu_cpsr_nxt[31:30], alu_cpsr_nxt[28:0],
                  predecode_inst[39:36]};
 
 // ----------------------------------------------------------------------------
 
-assign o_cpsr                   = alu_flags_ff[`ZAP_CPSR_MODE];
-assign o_data_wb_adr            = {alu_address_ff[31:2], 2'd0};
-assign o_data_wb_adr_nxt        = {alu_address_nxt[31:2], 2'd0};
-assign o_instr_wb_we            = 1'd0;
-assign o_instr_wb_sel           = 4'b1111;
-assign reset                    = i_reset; 
-assign irq                      = i_irq;   
-assign fiq                      = i_fiq;   
-assign data_stall               = o_data_wb_stb && o_data_wb_cyc && !i_data_wb_ack;
-assign code_stall               = writeback_mask ? 1'd0 : ((!o_instr_wb_stb && !o_instr_wb_cyc) || !i_instr_wb_ack);
-assign instr_valid              = writeback_mask ? 1'd0 : (o_instr_wb_stb && o_instr_wb_cyc && i_instr_wb_ack & !shelve);
-assign pipeline_is_not_empty    = predecode_val                      ||     
+always_comb o_cpsr                   = alu_flags_ff[`ZAP_CPSR_MODE];
+always_comb o_data_wb_adr            = {alu_address_ff[31:2], 2'd0};
+always_comb o_data_wb_adr_nxt        = {alu_address_nxt[31:2], 2'd0};
+always_comb o_instr_wb_we            = 1'd0;
+always_comb o_instr_wb_sel           = 4'b1111;
+always_comb reset                    = i_reset; 
+always_comb irq                      = i_irq;   
+always_comb fiq                      = i_fiq;   
+always_comb data_stall               = o_data_wb_stb && o_data_wb_cyc && !i_data_wb_ack;
+always_comb code_stall               = writeback_mask ? 1'd0 : ((!o_instr_wb_stb && !o_instr_wb_cyc) || !i_instr_wb_ack);
+always_comb instr_valid              = writeback_mask ? 1'd0 : (o_instr_wb_stb && o_instr_wb_cyc && i_instr_wb_ack & !shelve);
+always_comb pipeline_is_not_empty    = predecode_val                      ||     
                                   (decode_condition_code    != NV)   ||
                                   (issue_condition_code_ff  != NV)   ||
                                   (shifter_condition_code_ff!= NV)   ||
@@ -460,8 +461,8 @@ zap_fifo #( .WDT(67), .DEPTH(FIFO_DEPTH) ) U_ZAP_FIFO (
         .o_wb_cyc                       (w_instr_wb_cyc)
 );
 
-assign o_instr_wb_stb = writeback_mask ? 1'd0 : w_instr_wb_stb;
-assign o_instr_wb_cyc = writeback_mask ? 1'd0 : w_instr_wb_cyc;
+always_comb o_instr_wb_stb = writeback_mask ? 1'd0 : w_instr_wb_stb;
+always_comb o_instr_wb_cyc = writeback_mask ? 1'd0 : w_instr_wb_cyc;
 
 // =========================
 // COMPRESSED DECODER STAGE
@@ -872,7 +873,6 @@ u_zap_shifter_main
 
 zap_alu_main #(
         .PHY_REGS(PHY_REGS),
-        .SHIFT_OPS(SHIFT_OPS),
         .ALU_OPS(ALU_OPS) 
 )
 u_zap_alu_main
@@ -1169,8 +1169,6 @@ zap_cp15_cb u_zap_cp15_cb (
         .i_dcache_clean_done    (i_dcache_clean_done),
         .i_icache_clean_done    (i_icache_clean_done)
 );
-
-logic [(8*8)-1:0] CPU_MODE; // Max 8 characters i.e. 64-bit string.
 
 always_comb
 case(o_cpsr[`ZAP_CPSR_MODE])

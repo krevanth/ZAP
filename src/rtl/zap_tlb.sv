@@ -78,7 +78,7 @@ input  logic             i_wb_ack
 
 // ----------------------------------------------------------------------------
 
-assign o_wb_dat_nxt = 32'd0;
+always_comb o_wb_dat_nxt = 32'd0;
 
 `include "zap_localparams.svh"
 `include "zap_defines.svh"
@@ -110,43 +110,43 @@ function [31:0] max ( input [31:0] a, b, c, d );
 endfunction 
 
 generate 
-        if      ( 10+$clog2(FPAGE_TLB_ENTRIES) == 11 ) assign u0 = i_address_nxt[11];    
-        else                                           assign u0 = 1'd0;
+        if      ( 10+$clog2(FPAGE_TLB_ENTRIES) == 11 ) always_comb u0 = i_address_nxt[11];    
+        else                                           always_comb u0 = 1'd0;
 
-        if      ( 12+$clog2(SPAGE_TLB_ENTRIES) == 13 ) assign u1 = i_address_nxt[13]; 
-        else if ( 12+$clog2(SPAGE_TLB_ENTRIES) == 14 ) assign u1 = i_address_nxt[14]; 
-        else if ( 12+$clog2(SPAGE_TLB_ENTRIES) == 15 ) assign u1 = i_address_nxt[15]; 
-        else                                           assign u1 = 1'd0;
+        if      ( 12+$clog2(SPAGE_TLB_ENTRIES) == 13 ) always_comb u1 = i_address_nxt[13]; 
+        else if ( 12+$clog2(SPAGE_TLB_ENTRIES) == 14 ) always_comb u1 = i_address_nxt[14]; 
+        else if ( 12+$clog2(SPAGE_TLB_ENTRIES) == 15 ) always_comb u1 = i_address_nxt[15]; 
+        else                                           always_comb u1 = 1'd0;
 
-        if      ( 16+$clog2(LPAGE_TLB_ENTRIES) == 17 ) assign u2 = i_address_nxt[17]; 
-        else if ( 16+$clog2(LPAGE_TLB_ENTRIES) == 18 ) assign u2 = i_address_nxt[18]; 
-        else if ( 16+$clog2(LPAGE_TLB_ENTRIES) == 19 ) assign u2 = i_address_nxt[19]; 
-        else                                           assign u2 = 1'd0;
+        if      ( 16+$clog2(LPAGE_TLB_ENTRIES) == 17 ) always_comb u2 = i_address_nxt[17]; 
+        else if ( 16+$clog2(LPAGE_TLB_ENTRIES) == 18 ) always_comb u2 = i_address_nxt[18]; 
+        else if ( 16+$clog2(LPAGE_TLB_ENTRIES) == 19 ) always_comb u2 = i_address_nxt[19]; 
+        else                                           always_comb u2 = 1'd0;
 
-        if      ( 10+$clog2(FPAGE_TLB_ENTRIES) == 11 ) assign u3 = tlb_address[11]; 
-        else                                           assign u3 = 1'd0;
+        if      ( 10+$clog2(FPAGE_TLB_ENTRIES) == 11 ) always_comb u3 = tlb_address[11]; 
+        else                                           always_comb u3 = 1'd0;
 
-        if      ( 12+$clog2(SPAGE_TLB_ENTRIES) == 13 ) assign u4 = tlb_address[13]; 
-        else if ( 12+$clog2(SPAGE_TLB_ENTRIES) == 14 ) assign u4 = tlb_address[14]; 
-        else if ( 12+$clog2(SPAGE_TLB_ENTRIES) == 15 ) assign u4 = tlb_address[15]; 
-        else                                           assign u4 = 1'd0;
+        if      ( 12+$clog2(SPAGE_TLB_ENTRIES) == 13 ) always_comb u4 = tlb_address[13]; 
+        else if ( 12+$clog2(SPAGE_TLB_ENTRIES) == 14 ) always_comb u4 = tlb_address[14]; 
+        else if ( 12+$clog2(SPAGE_TLB_ENTRIES) == 15 ) always_comb u4 = tlb_address[15]; 
+        else                                           always_comb u4 = 1'd0;
 
-        if      ( 16+$clog2(LPAGE_TLB_ENTRIES) == 17 ) assign u5 = tlb_address[17]; 
-        else if ( 16+$clog2(LPAGE_TLB_ENTRIES) == 18 ) assign u5 = tlb_address[18]; 
-        else if ( 16+$clog2(LPAGE_TLB_ENTRIES) == 19 ) assign u5 = tlb_address[19];
-        else                                           assign u5 = 1'd0;
+        if      ( 16+$clog2(LPAGE_TLB_ENTRIES) == 17 ) always_comb u5 = tlb_address[17]; 
+        else if ( 16+$clog2(LPAGE_TLB_ENTRIES) == 18 ) always_comb u5 = tlb_address[18]; 
+        else if ( 16+$clog2(LPAGE_TLB_ENTRIES) == 19 ) always_comb u5 = tlb_address[19];
+        else                                           always_comb u5 = 1'd0;
 endgenerate 
 
 // -----------------------------------------------------------------------------
 
-parameter W = max (    
+localparam W = max (    
         20+$clog2(SECTION_TLB_ENTRIES),
         16+$clog2(LPAGE_TLB_ENTRIES),
         12+$clog2(SPAGE_TLB_ENTRIES),
         10+$clog2(FPAGE_TLB_ENTRIES)
 );
 
-assign unused = |{i_address_nxt[9:0], tlb_address[9:0], i_address_nxt[31:W], tlb_address[31:W], u0, u1, u2, u3, u4, u5};
+always_comb unused = |{i_address_nxt[9:0], tlb_address[9:0], i_address_nxt[31:W], tlb_address[31:W], u0, u1, u2, u3, u4, u5};
 
 // ----------------------------------------------------------------------------
 
