@@ -106,7 +106,6 @@ logic                                      tag_ram_clean;
 logic [1:0]                                state_ff, state_nxt;
 logic [$clog2(NUMBER_OF_DIRTY_BLOCKS):0]   blk_ctr_ff, blk_ctr_nxt;
 logic [$clog2(CACHE_LINE/4):0]             adr_ctr_ff, adr_ctr_nxt;
-genvar                                     i;
 
 logic                                      unused;
 logic [BLK_CTR_PAD-1:0]                    dummy;
@@ -115,13 +114,13 @@ logic                                      unused_0;
 logic                                      cache_unused0;
 logic                                      cache_unused1;
 
-assign cache_unused0 = |{i_address[31: $clog2(CACHE_LINE)+$clog2(CACHE_SIZE/CACHE_LINE)], i_address[$clog2(CACHE_LINE)-1:0]};
-assign cache_unused1 = |{i_address_nxt[31: $clog2(CACHE_LINE)+$clog2(CACHE_SIZE/CACHE_LINE)], i_address_nxt[$clog2(CACHE_LINE)-1:0]};
-assign        unused = |{dummy, line_dummy, i_wb_dat, unused_0, cache_unused0, cache_unused1};
+always_comb cache_unused0 = |{i_address[31: $clog2(CACHE_LINE)+$clog2(CACHE_SIZE/CACHE_LINE)], i_address[$clog2(CACHE_LINE)-1:0]};
+always_comb cache_unused1 = |{i_address_nxt[31: $clog2(CACHE_LINE)+$clog2(CACHE_SIZE/CACHE_LINE)], i_address_nxt[$clog2(CACHE_LINE)-1:0]};
+always_comb        unused = |{dummy, line_dummy, i_wb_dat, unused_0, cache_unused0, cache_unused1};
 
 // ----------------------------------------------------------------------------
 
-for(i=0;i<CACHE_LINE;i=i+1)
+for(genvar i=0;i<CACHE_LINE;i++)
 begin
         zap_ram_simple #(.WIDTH(8), .DEPTH(CACHE_SIZE/CACHE_LINE)) u_zap_ram_simple_data_ram (
                 .i_clk(i_clk),
@@ -338,12 +337,11 @@ end
 
 // Priority encoder.
 function  [4:0] pri_enc_1 ( input [CACHE_SIZE/CACHE_LINE-1:0] in );
-integer j;
 begin: priEncFn
                 pri_enc_1 = 5'b11111;
 
                 // Run a backward loop.
-                for(j=CACHE_SIZE/CACHE_LINE-1;j>=0;j=j-1)
+                for(int j=CACHE_SIZE/CACHE_LINE-1;j>=0;j--)
                 begin
                         if ( in[j] == 1'd1 )
                                 pri_enc_1[4:0] = j[4:0];
