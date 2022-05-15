@@ -100,10 +100,10 @@ localparam  [1:0]    WT      =       2'b10; // Weakly Taken.
 localparam  [1:0]    ST      =       2'b11; // Strongly Taken.
 
 // Predict non branches as not taken...
-assign o_taken    = o_instruction[28:26] == 3'b101 ? taken_v : SNT;
+always_comb o_taken    = o_instruction[28:26] == 3'b101 ? taken_v : SNT;
 
 // Unused
-assign unused = |{i_pc_from_alu[0], i_pc_from_alu[31:$clog2(BP_ENTRIES)+1]};
+always_comb unused = |{i_pc_from_alu[0], i_pc_from_alu[31:$clog2(BP_ENTRIES)+1]};
 
 // ----------------------------------------------------------------------------
 
