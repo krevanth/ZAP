@@ -80,10 +80,12 @@ reg [1:0]                  i_uart = 2'b11;
 reg [1:0]                  o_uart;
 reg [31:0]                 i;
 reg [3:0]                  clk_ctr = 4'd0;
-reg [STRING_LENGTH*8-1:0]  uart_string = " HELLO WORLD ";
+reg [STRING_LENGTH*8-1:0]  uart_string = "DLROW OLLEH ";
 reg [6:0]                  uart_ctr    = 6'd10;
 reg [31:0]                 btrace      = 32'd0;
 reg [31:0]                 mem [65536/4-1:0]; // 16K words.
+reg                        uart_done = 1'd0;
+reg [8:0]                  uart_init_done = 8'd0;
 
 // Divided clocks.
 reg clk_2 = 1'd0, clk_4 = 1'd0, clk_8 = 1'd0, clk_16 = 1'd0;
@@ -101,8 +103,14 @@ always @ ( posedge clk_4 )
 always @ ( posedge clk_8 )
         clk_16 = clk_16 + 1;
 
-// UART data into the core.
 always @ ( posedge clk_16 )
+begin
+        if ( !(&uart_init_done) )
+                uart_init_done <= uart_init_done + 1;
+end
+
+// UART data into the core.
+always @ ( posedge clk_16 ) if ( !uart_done && (&uart_init_done) )
 begin
         if ( uart_ctr <= 8 )
         begin
@@ -120,7 +128,12 @@ begin
                 i_uart[0] <= 1'd1;
 
                 if ( &uart_ctr )
+                begin
                         btrace <= (btrace == STRING_LENGTH - 1) ? 0 : btrace + 1;
+
+                        if ( btrace == STRING_LENGTH - 1 )
+                                uart_done <= 1;
+                end
         end
 end
 
