@@ -52,7 +52,7 @@ logic clear, rd_en;
 logic [WDT-1:0] instr;
 logic valid;
 
-assign o_wb_cyc = o_wb_stb;
+always_comb o_wb_cyc = o_wb_stb;
 
 always_comb
 begin
