@@ -26,10 +26,12 @@
 #include "Vzap_test.h"
 #include <stdio.h>
 
+
 #define KNRM            "\x1B[0m"
 #define KRED            "\x1B[31m"
 #define KGRN            "\x1B[32m"
 #define RESET_CYCLES    10
+
 
 char mem [65536]; // 64KB buffer.
 FILE *ptr;
