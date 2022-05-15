@@ -527,7 +527,7 @@ module zap_decompile #(parameter [31:0] INS_WDT = 32'd36) (
 `else 
 
                         logic  unused;
-                        assign unused = |{1'd1, i_instruction, i_dav, INS_WDT};
+                        always_comb unused = |{1'd1, i_instruction, i_dav, INS_WDT};
                         always_comb o_decompile = {32'd512{unused}}; // In synthesis mode.
 
 `endif
