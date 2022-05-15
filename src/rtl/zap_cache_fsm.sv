@@ -147,7 +147,6 @@ logic                                     cache_inv_req_nxt,
                                           cache_inv_req_ff;
 logic [$clog2(CACHE_LINE/4):0]            adr_ctr_ff, adr_ctr_nxt; // Needs to take on 0,1,2,3, ... CACHE_LINE/4
 logic                                     rhit, whit;              // For debug only.
-integer                                   i;
 
 /* From/to processor */
 logic    [31:0]                           address;      
@@ -165,15 +164,15 @@ logic                                     UNUSED_1B, UNUSED_2B, unused;
 // ----------------------------------------------------------------------------
 
 /* Unused */
-assign unused = |{rhit, whit, UNUSED_1B, UNUSED_2B, phy_addr[$clog2(CACHE_LINE)-1:0]};
+always_comb unused = |{rhit, whit, UNUSED_1B, UNUSED_2B, phy_addr[$clog2(CACHE_LINE)-1:0]};
 
 /* Tie flops to the output */
 always_comb o_cache_clean_req = cache_clean_req_ff; // Tie req flop to output.
 always_comb o_cache_inv_req   = cache_inv_req_ff;   // Tie inv flop to output.
 
 /* Alias */
-assign cache_cmp   = (i_cache_tag[`ZAP_CACHE_TAG__TAG] == i_address[`ZAP_VA__CACHE_TAG]);
-assign cache_dirty = i_cache_tag_dirty;
+always_comb cache_cmp   = (i_cache_tag[`ZAP_CACHE_TAG__TAG] == i_address[`ZAP_VA__CACHE_TAG]);
+always_comb cache_dirty = i_cache_tag_dirty;
 
 /* Buffers */
 always_ff @ ( posedge i_clk ) if ( state_ff == IDLE ) address         <= i_address ;
@@ -219,7 +218,7 @@ end
 
 always_ff @ ( posedge i_clk )
 begin
-        for(i=0;i<CACHE_LINE/4;i=i+1)
+        for(int i=0;i<CACHE_LINE/4;i++)
                 buf_ff[i] <= buf_nxt[i];
 end
 
@@ -256,7 +255,7 @@ begin:blk1
         o_err2                  = 0;
         o_address               = address;
 
-        for(i=0;i<CACHE_LINE/4;i=i+1)
+        for(int i=0;i<CACHE_LINE/4;i++)
                 buf_nxt[i] = buf_ff[i];
 
         rhit                     = 0;
@@ -486,7 +485,7 @@ begin:blk1
 
                         o_cache_line = 0;
 
-                        for(i=0;i<CACHE_LINE/4;i=i+1)                        
+                        for(int i=0;i<CACHE_LINE/4;i++)                        
                                 o_cache_line = o_cache_line | ({{LINE_PAD{1'd0}},buf_nxt[i][31:0]} << (32 * i)); 
 
                         o_cache_line_ben  = {CACHE_LINE{1'd1}};
