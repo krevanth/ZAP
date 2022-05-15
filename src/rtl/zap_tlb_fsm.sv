@@ -120,26 +120,26 @@ logic [31:0] address;
 // ----------------------------------------------------------------------------
 
 /* Tie output flops to ports. */
-assign o_wb_cyc         = wb_cyc_ff;
-assign o_wb_stb         = wb_stb_ff;
-assign o_wb_adr         = wb_adr_ff;
+always_comb o_wb_cyc         = wb_cyc_ff;
+always_comb o_wb_stb         = wb_stb_ff;
+always_comb o_wb_adr         = wb_adr_ff;
 
-assign o_wb_cyc_nxt     = wb_cyc_nxt;
-assign o_wb_stb_nxt     = wb_stb_nxt;
-assign o_wb_adr_nxt     = wb_adr_nxt;
+always_comb o_wb_cyc_nxt     = wb_cyc_nxt;
+always_comb o_wb_stb_nxt     = wb_stb_nxt;
+always_comb o_wb_adr_nxt     = wb_adr_nxt;
 
 logic [3:0] wb_sel_nxt, wb_sel_ff;
 
 /* Tied PORTS */
-assign o_wb_wen = 1'd0;
-assign o_wb_sel = wb_sel_ff;
-assign o_wb_sel_nxt = wb_sel_nxt;
+always_comb o_wb_wen = 1'd0;
+always_comb o_wb_sel = wb_sel_ff;
+always_comb o_wb_sel_nxt = wb_sel_nxt;
 
 logic [31:0] dff, dnxt; /* Wishbone memory buffer. */
 
 logic unused;
 
-assign unused = |{i_baddr[13:0]}; // UNUSED.
+always_comb unused = |{i_baddr[13:0]}; // UNUSED.
 
 always_ff @ ( posedge i_clk ) if ( state_ff == IDLE ) address <= i_address;
 
