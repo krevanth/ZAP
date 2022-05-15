@@ -245,7 +245,7 @@ begin
         end
         else
         begin
-                // Default assignments.
+                // Default values.
                 o_itlb_inv      <= 1'd0;
                 o_dtlb_inv      <= 1'd0;
                 o_dcache_inv    <= 1'd0;
@@ -504,7 +504,7 @@ begin
                 end
                 endcase
 
-                // Default assignments. These bits are unchangeable.
+                // Default values. These bits are unchangeable.
                 generate_r0;
 
                 r[1][1]         <= 1'd1;
@@ -535,14 +535,14 @@ logic [31:0] r5;
 logic [31:0] r6;
 logic unused;
 
-assign r0 = r[0];
-assign r1 = r[1];
-assign r2 = r[2];
-assign r3 = r[3];
-assign r4 = r[4];
-assign r5 = r[5];
-assign r6 = r[6];
-assign unused = |{r0, r1, r2, r3, r4, r5, r6, i_cpsr[27:5], i_icache_clean_done};
+always_comb r0 = r[0];
+always_comb r1 = r[1];
+always_comb r2 = r[2];
+always_comb r3 = r[3];
+always_comb r4 = r[4];
+always_comb r5 = r[5];
+always_comb r6 = r[6];
+always_comb unused = |{r0, r1, r2, r3, r4, r5, r6, i_cpsr[27:5], i_icache_clean_done};
 
 endmodule
 
