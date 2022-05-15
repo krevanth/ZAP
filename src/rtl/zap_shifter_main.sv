@@ -361,7 +361,28 @@ begin
 
         // If we issue a multiply.
         if ( i_alu_operation_ff == {1'd0, UMLALL} || i_alu_operation_ff == {1'd0, UMLALH} || 
-             i_alu_operation_ff == {1'd0, SMLALL} || i_alu_operation_ff == {1'd0, SMLALH} )
+             i_alu_operation_ff == {1'd0, SMLALL} || i_alu_operation_ff == {1'd0, SMLALH} ||
+             i_alu_operation_ff == SMULW0     || 
+             i_alu_operation_ff == SMULW1     || 
+             i_alu_operation_ff == SMUL00     || 
+             i_alu_operation_ff == SMUL01     || 
+             i_alu_operation_ff == SMUL10     || 
+             i_alu_operation_ff == SMUL11     || 
+             i_alu_operation_ff == SMLA00     ||        
+             i_alu_operation_ff == SMLA01     ||
+             i_alu_operation_ff == SMLA10     ||
+             i_alu_operation_ff == SMLA11     ||
+             i_alu_operation_ff == SMLAW0     ||
+             i_alu_operation_ff == SMLAW1     ||
+             i_alu_operation_ff == SMLAL00L   ||
+             i_alu_operation_ff == SMLAL01L   ||
+             i_alu_operation_ff == SMLAL10L   ||
+             i_alu_operation_ff == SMLAL11L   ||
+             i_alu_operation_ff == SMLAL00H   ||
+             i_alu_operation_ff == SMLAL01H   ||
+             i_alu_operation_ff == SMLAL10H   ||
+             i_alu_operation_ff == SMLAL11H  
+        )
         begin
                 // Get result from multiplier.
                 rm              = mult_out;

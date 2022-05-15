@@ -571,7 +571,7 @@ begin: tskLDecodeMultDsp
                 o_alu_operation     = instruction[6:5] == 2'b00 ? SMLA00 :
                                       instruction[6:5] == 2'b01 ? SMLA01 :
                                       instruction[6:5] == 2'b10 ? SMLA10 : 
-                                                                    SMLA11;
+                                                                  SMLA11 ;
                                        
 
                 o_mem_srcdest_index = RAZ_REGISTER; // rh.
@@ -596,10 +596,10 @@ begin: tskLDecodeMultDsp
 
         endcase
 
-        if ( instruction[`ZAP_OPCODE_EXTEND] == 1'd0 ) // Low request.
+        if ( instruction[`ZAP_OPCODE_EXTEND] == 1'd0 && i_instruction[31:0] ==? SMLALxy ) // Low request.
         begin
                         o_destination_index = {1'd0, instruction[15:12]}; // Low register.
-                        o_alu_operation[0]  = 1'd0;                 // Request low operation.
+                        o_alu_operation[0]  = 1'd0;                       // Request low operation.
 
                         o_alu_operation     = 
                                       instruction[6:5] == 2'b00 ? SMLAL00L :

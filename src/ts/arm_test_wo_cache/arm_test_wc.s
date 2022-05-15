@@ -1297,6 +1297,17 @@ test_mul:
         mlas r4, r1, r2, r3
         bmi fail
 @       bvc fail                        @ on a real ARM, V flag is not updated ?
+        add r0, #1
+
+        @ Test 3 - SMALTB test.
+        mov r1, #0x20000001
+        mov r2, r1
+        mov r3, #0x4
+        smlatb r4, r1, r2, r3
+        mov r5, #0x2000
+        add r5, #4
+        cmp r4, r5
+        bne fail
 
         mov r0, #0
         bx lr
