@@ -73,7 +73,9 @@ logic [11:0] offset_w;  // Previous offset.
 ///////////////////////////////////////////////////////////////////////////////
 
 always_comb
+begin
         offset_w = i_offset;
+end
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -89,19 +91,19 @@ begin
 
         if ( i_cpsr_ff_t && i_instruction_valid ) // compressed mode enable
         begin
-                if ( i_instruction[15:8] == T_SWI[15:8] ) // Software interrupt.
+                if ( i_instruction[15:0] ==? T_SWI ) // Software interrupt.
                 begin
                         decode_swi();
                 end
-                else if ( i_instruction[15:11] == T_ADD_SUB_LO[15:11] ) // ADD/SUB Lo.
+                else if ( i_instruction[15:0] ==? T_ADD_SUB_LO ) // ADD/SUB Lo.
                 begin
                         decode_add_sub_lo();
                 end
-                else if ( i_instruction[15:7] == T_BLX2[15:7] ) // T_BLX2
+                else if ( i_instruction[15:0] ==? T_BLX2 ) // T_BLX2
                 begin
                         decode_blx2();
                 end
-                else if ( i_instruction[15:7] == T_BX[15:7] ) // T_BX
+                else if ( i_instruction[15:0] ==? T_BX ) // T_BX
                 begin
                         decode_bx();
                 end
