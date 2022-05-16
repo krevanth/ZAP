@@ -108,7 +108,7 @@ test:
 clean:
 	rm -rf .image_build
 	docker image rmi -f $(TAG)
-	rm -rf obj/$(TC)
+	rm -rf obj
 
 endif # DOCKER
 
