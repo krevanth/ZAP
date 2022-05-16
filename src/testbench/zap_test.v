@@ -56,7 +56,7 @@ module zap_test (
 
 initial
 begin
-        $dumpfile(`VCD_FILE_PATH);
+        $dumpfile("zap.vcd");
         $dumpvars;
 end
 
