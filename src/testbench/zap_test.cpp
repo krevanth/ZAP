@@ -98,7 +98,7 @@ int main(int argc, char** argv, char** env) {
 
                 if ( end_nxt ) 
                 {
-                        printf("%s\nError: Ending simulation due to error. LOG = obj/ts/%s/zap.log VCD = obj/ts/%s/zap.vcd\n%s", KRED, argv[2], argv[2], KNRM);
+                        printf("%s\nError: Ending simulation due to error. Waves are here : obj/ts/%s/zap.vcd\n%s", KRED, argv[2], KNRM);
                         zap_test->final();
                         return end_nxt;
                 }

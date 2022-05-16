@@ -21,6 +21,8 @@
 # // --                                                                         --
 # // -----------------------------------------------------------------------------
 
+.PHONY: lint
+
 lint:
 	../src/scripts/checkver && verilator -sv --error-limit 1 --top-module zap_top --lint-only -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN -Wwarn-IMPERFECTSCH --report-unoptflat --clk i_clk ../src/rtl/*.sv -I../src/rtl/ && echo "Lint OK"
 

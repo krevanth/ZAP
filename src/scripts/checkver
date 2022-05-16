@@ -1,18 +1,13 @@
 #!/usr/bin/perl -w
-
-use strict;
-use warnings;
-
-
-die "ERROR: Verilator not found on your system. Exiting." if system("verilator --version");
-
-my $x = `verilator --version`;
-chomp $x;
-
+die "Error: Verilator not found on your system. Exiting." if system("verilator --version");
+$x = `verilator --version`;
 $x =~ m/Verilator (.*?) .*$/;
-my $version = $1;
-print "Got verilator version $1\n";
+print "Got version $1\n";
 
-die "ERROR: Unsupported verilator version. Older version of verilator have bugs that make it incompatible with the ZAP core. You will need at least 4.x. Exiting."  if ( $version < 4 );
+if ( $1 < 4 ) {
+        die "Error: Unsupported verilator version.";
+} else {
+        print "Verilator version IS supported.\n";
+}
 
 exit 0;

@@ -1,54 +1,49 @@
-![logo](./misc/ZAP.png)
+![logo](ZAP.png)
 
-**&copy; 2016-2022 Revanth Kamaraj (krevanth) \<revanth91kamaraj@gmail.com\>**
+**&copy; 2016-2022 Revanth Kamaraj (krevanth)**
+
+GMail   : revanth91kamaraj@gmail.com
 
 LinkedIn: www.linkedin.com/in/revanth-kamaraj-178662113
 
-         krevanth ~ git version 2.36.1
-         -----------------------------
-         Project   : ZAP
-         Author(s) : 513  Revanth Kamaraj(krevanth)   <revanth91kamaraj@gmail.com>
-                       1  Erez Binyamin(ErezBinyamin) <ezbn2532@gmail.com>
+```text
+COPYRIGHT (C) 2016-2022 REVANTH KAMARAJ(KREVANTH) <revanth91kamaraj@gmail.com> 
 
-         Repo      : https://github.com/krevanth/ZAP.git
-         License   : GPL-2.0-only
+THIS PROGRAM IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR MODIFY
+IT UNDER THE TERMS OF THE GNU GENERAL PUBLIC LICENSE AS PUBLISHED BY
+THE FREE SOFTWARE FOUNDATION; EITHER VERSION 2 OF THE LICENSE, OR
+(AT YOUR OPTION) ANY LATER VERSION.
 
-         COPYRIGHT (C) 2016-2022 REVANTH KAMARAJ(KREVANTH)
-         
-         THIS PROGRAM IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR MODIFY
-         IT UNDER THE TERMS OF THE GNU GENERAL PUBLIC LICENSE AS PUBLISHED BY
-         THE FREE SOFTWARE FOUNDATION; EITHER VERSION 2 OF THE LICENSE, OR
-         (AT YOUR OPTION) ANY LATER VERSION.
-        
-         THIS PROGRAM IS DISTRIBUTED IN THE HOPE THAT IT WILL BE USEFUL,
-         BUT WITHOUT ANY WARRANTY; WITHOUT EVEN THE IMPLIED WARRANTY OF
-         MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.  SEE THE
-         GNU GENERAL PUBLIC LICENSE FOR MORE DETAILS.
-         
-         YOU SHOULD HAVE RECEIVED A COPY OF THE GNU GENERAL PUBLIC LICENSE ALONG
-         WITH THIS PROGRAM; IF NOT, WRITE TO THE FREE SOFTWARE FOUNDATION, INC.,
-         51 FRANKLIN STREET, FIFTH FLOOR, BOSTON, MA 02110-1301 USA.
+THIS PROGRAM IS DISTRIBUTED IN THE HOPE THAT IT WILL BE USEFUL,
+BUT WITHOUT ANY WARRANTY; WITHOUT EVEN THE IMPLIED WARRANTY OF
+MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.  SEE THE
+GNU GENERAL PUBLIC LICENSE FOR MORE DETAILS.
+
+YOU SHOULD HAVE RECEIVED A COPY OF THE GNU GENERAL PUBLIC LICENSE ALONG
+WITH THIS PROGRAM; IF NOT, WRITE TO THE FREE SOFTWARE FOUNDATION, INC.,
+51 FRANKLIN STREET, FIFTH FLOOR, BOSTON, MA 02110-1301 USA.
+```
                                                 
-### HOW TO RUN
+### 0. Getting Started
 
-If your distro does not provide Verilator >= 4.x, you should use docker. Assuming you are part of docker group, simply do:
-
-```bash
-make -f docker.mk [TC=<test_name>]
-```
-
-If your distro does provide Verilator >= 4.x, you simply need to install the required packages on your system: verilator, 
-gcc, arm-none-eabi-gcc, perl, gtkwave, gdb, openocd, make. Once installed, simply do:
+If your distro does not provide Verilator >= 4.x, you should use docker by passing -DDOCKER. If your distro does provide
+Verilator >= 4.x, run the command without -DDOCKER. See the Dockerfile for the packages that are required to be 
+installed.
 
 ```bash
-make -f make.mk [TC=<test_name>]
+make TC=<test_name> [-DDOCKER]
 ```
-The test name is simply the folder name in src/ts. If you omit specifying TC, all the tests will be run.
+
+Test names can be found by performing:
+
+```bash
+ls src/ts
+```
 
 ### 1. Contributors
 
-Except where otherwise noted, the ZAP processor and its source code is Copyright Revanth Kamaraj(krevanth). The proper 
-notices are in the head of each file. 
+Except where otherwise noted, the ZAP processor and its source code is **Copyright Revanth Kamaraj(krevanth)**. The 
+proper notices are in the head of each file. 
 
 Credit to Bharat Mulagondla (bharathmulagondla) (https://github.com/bharathmulagondla) for finding bugs in TLB logic.
 
@@ -70,7 +65,7 @@ cache and MMU control. The software compatibility allows ZAP to boot full operat
 ### 3. Microarchitecture and Implementation 
 
 #### 3.1. Superpipelined Microarchitecture 
-![Pipeline Overview](./misc/pipeline.svg)
+![Pipeline Overview](pipeline.svg)
 
  * Please note that the processor is *not* an ARM clone but a completely different RTL and unique microarchitecture design, microarchitected by me from scratch, in synthesizable SV.
  * Design is fully synchronous to rising edge of clock. Design is built around posedge driven flip-flops and memory blocks. Design uses a single clock.
@@ -140,7 +135,7 @@ Please refer to the arch spec for CP15 CSR requirements.
 ### 5. Usage
 
  * To use the ZAP processor in your project:
-   * Add all the files *.v in src/rtl/ to your project.
+   * Add all the files *.sv in src/rtl/ to your project.
    * Add src/rtl/ to your tools search path to allow it to pick up Verilog headers.
    * Instantiate the top level CPU module, zap_top, in your SOC.
      * The processor provides a Wishbone B3 bus. It is recommended that you use it in registered feedback cycle mode.
@@ -213,15 +208,23 @@ make -f make.mk
 ### 5.5. Test Environment Description
  * Let the variable $test_name hold the name of the test. 
  * See the src/ts directory for some basic tests pre-installed. 
- * Available test names include: factorial (tests cache, MMU, interrupts), arm_test (Modified test suite that is derived from the ARM4U project), thumb_test (Very basic test), uart (Loopback test). 
  * New tests can be added using these as starting templates.
  * Please note that these will be run on the sample TB SOC platform (chip_top) that consist of the ZAP processor, 2 x UARTs, a VIC and a timer. See src/testbench/testbench.v for more information.
- * Tests will produce appropriate logs and wave files in the obj/src/ts/$test_name folder.
+ * Tests will produce wave files in the obj/src/ts/$test_name/zap.vcd.
  * Each time a test is run, a lint is performed on the SV RTL code using Verilator.
  * Verilator is used to run simulations.
  * Each TC has a Config.cfg. This is a Perl hash that must be edited to meet requirements.
 
 #### Config.cfg format
+
+Note that the registers in the REG_CHECK are indexed registers. To find those, please do:
+
+```bash
+cat src/rtl/zap_localparams.svh | grep PHY
+```
+
+For example, if a check requires a certain value of R13 in IRQ mode, the hash will mention the register number as r25.
+
 ```text 
 %Config = ( 
         # CPU configuration.
