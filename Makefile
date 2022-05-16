@@ -7,7 +7,7 @@
 
 PWD          := $(shell pwd)
 TAG           = latest
-CMD           = $(MAKE) MAKE_TC=1
+CMD           = $(MAKE) MAKE_TC=1 TC=$(TC)
 SHELL        := /bin/bash -o pipefail
 ARCH         := armv5te
 C_FILES      := $(wildcard src/ts/$(TC)/*.c)
@@ -99,7 +99,7 @@ else
 all: .image_build test
 
 test:
-	docker run -it -v `pwd`:`pwd` $(TAG) $(CMD)
+	docker run -it -v `pwd`:`pwd` -w `pwd` $(TAG) $(CMD)
 
 .image_build: Dockerfile
 	docker build -f Dockerfile --no-cache --rm --tag $(TAG) .
