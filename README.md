@@ -26,12 +26,12 @@ WITH THIS PROGRAM; IF NOT, WRITE TO THE FREE SOFTWARE FOUNDATION, INC.,
                                                 
 ### 0. Getting Started
 
-If your distro does not provide Verilator >= 4.x, you should use docker by passing -DDOCKER. If your distro does provide
-Verilator >= 4.x, run the command without -DDOCKER. See the Dockerfile for the packages that are required to be 
+If your distro does not provide Verilator >= 4.x, you should use docker by passing DOCKER=1. If your distro does provide
+Verilator >= 4.x, run the command without DOCKER=1. See the Dockerfile for the packages that are required to be 
 installed.
 
 ```bash
-make TC=<test_name> [-DDOCKER]
+make TC=<test_name> [DOCKER=1]
 ```
 
 Test names can be found by performing:
