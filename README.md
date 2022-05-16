@@ -30,8 +30,15 @@ If your distro does not provide Verilator >= 4.x, you should use docker by passi
 Verilator >= 4.x, run the command without DOCKER=1. See the Dockerfile for the packages that are required to be 
 installed.
 
+To use with docker:
+
 ```bash
 make TC=<test_name> [DOCKER=1]
+```
+To use without docker:
+
+```bash
+make TC=<test_name>
 ```
 
 Test names can be found by performing:
