@@ -23,6 +23,26 @@
 
 #include "uart.h"
 
+void irq_handler () 
+{
+       // Wait for space to be available.
+       while ( !UARTTransmitEmpty() );
+
+       // Write character
+       UARTWriteByte ( UARTGetChar() );
+                 
+       // Clear interrupt pending register in VIC.
+       *VIC_INT_CLEAR = 0xffffffff;
+}
+
+int main(void)
+{
+        // Just bringup the UART TX and RX - enable interrupts and exit.
+        UARTInit();
+        UARTEnableRXInterrupt();
+        return 0;
+}
+
 /* Sets up rate as 1 baud = 16 CPU clocks. Also resets TX and RX logic */
 void UARTInit()
 {
