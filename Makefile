@@ -32,8 +32,19 @@ all:
 	echo "No TC value passed. TC is not defined. Exiting..."
 	exit 1
 
+ifndef DOCKER
+
 clean:
 	rm -rf obj
+
+else
+
+clean:
+	rm -rf .image_build
+	docker image rmi -f $(TAG)
+	rm -rf obj
+
+endif
 
 else
 
@@ -108,7 +119,7 @@ test:
 clean:
 	rm -rf .image_build
 	docker image rmi -f $(TAG)
-	rm -rf obj/$(TC)
+	rm -rf obj
 
 endif # DOCKER
 
