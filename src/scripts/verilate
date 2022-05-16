@@ -27,8 +27,8 @@
 use strict;
 use warnings;
 
-my %Config                      = do "./Config.cfg";
-my $ZAP_HOME                    = "../../../";
+my $TEST                        = $ARGV[0]; 
+my %Config                      = do "./src/ts/$TEST/Config.cfg";
 my $RAM_SIZE                    = $Config{'EXT_RAM_SIZE'}; 
 my $DEBUG_EN                    = $Config{'DEBUG_EN'};
 my $DUMP_SIZE                   = $Config{'DUMP_SIZE'};
@@ -48,15 +48,12 @@ my $FIFO                        = $Config{'INSTR_FIFO_DEPTH'};
 my $SBUF_DEPTH                  = $Config{'STORE_BUFFER_DEPTH'};
 my $REG_HIER                    = "u_chip_top.u_zap_top.u_zap_core.u_zap_writeback.u_zap_register_file";
 my $SEED                        = $Config{'SEED'} == -1 ? int rand (0xffffffff) : $Config{'SEED'};
-my $SCRATCH                     = "$ZAP_HOME/obj/ts/$ARGV[0]"; 
-my $TEST                        = $ARGV[0]; 
-my $VCD_PATH                    = "$SCRATCH/zap.vcd";
-my $PROG_PATH                   = "$SCRATCH/zap_mem.v";
+my $SCRATCH                     = "obj/ts/$ARGV[0]"; 
 
-my $IVL_OPTIONS  = " -I$ZAP_HOME/src/rtl ";
-   $IVL_OPTIONS .= "   $ZAP_HOME/src/rtl/*.sv ";
-   $IVL_OPTIONS .= " -I$ZAP_HOME/obj/ts/$TEST ";
-   $IVL_OPTIONS .= "  $ZAP_HOME/src/testbench/*.v "; 
+my $IVL_OPTIONS  = " -Isrc/rtl ";
+   $IVL_OPTIONS .= "   src/rtl/*.sv ";
+   $IVL_OPTIONS .= " -Iobj/ts/$TEST ";
+   $IVL_OPTIONS .= "   src/testbench/*.v "; 
    $IVL_OPTIONS .= " -GRAM_SIZE=$RAM_SIZE ";
    $IVL_OPTIONS .= " -GSTORE_BUFFER_DEPTH=$SBUF_DEPTH ";
    $IVL_OPTIONS .= " -GBP_ENTRIES=$BP ";
@@ -71,24 +68,14 @@ my $IVL_OPTIONS  = " -I$ZAP_HOME/src/rtl ";
    $IVL_OPTIONS .= " -GCODE_CACHE_SIZE=$CODE_CACHE_SIZE ";
    $IVL_OPTIONS .= " +define+MAX_CLOCK_CYCLES=$MAX_CLOCK_CYCLES ";
    $IVL_OPTIONS .= " +define+SEED=$SEED ";
-   $IVL_OPTIONS .= " +define+MEMORY_IMAGE=\\\"$PROG_PATH\\\" ";
-   $IVL_OPTIONS .= " +define+VCD_FILE_PATH=\\\"$VCD_PATH\\\" "; 
    $IVL_OPTIONS .= " +define+IRQ_EN "      if ( $IRQ_EN    );
    $IVL_OPTIONS .= " +define+FIQ_EN "      if ( $FIQ_EN    );                       
    $IVL_OPTIONS .= " +define+DEBUG_EN "    if ( $DEBUG_EN  );
    $IVL_OPTIONS .= " +define+REG_HIER=$REG_HIER ";
 
-#######################################################################################################################
-# Check Verilator version.
-#######################################################################################################################
+die "ERROR: Verilator check failed." if system("src/scripts/checkver");
 
-die "ERROR: Verilator check failed." if system("../../scripts/checkver");
-
-#######################################################################################################################
-# Create checker assertion verilog include file.
-#######################################################################################################################
-
-open(HH, ">$ZAP_HOME/obj/ts/$TEST/zap_check.vh") or die "Could not write to $ZAP_HOME/obj/ts/$TEST/zap_check.vh";
+open(HH, ">obj/ts/$TEST/zap_check.vh") or die "Could not write to obj/ts/$TEST/zap_check.vh";
 
 my $RAM_HIER = "zap_test.mem";
 my $X = $Config{'FINAL_CHECK'}; 
@@ -127,17 +114,14 @@ foreach(keys (%$X)) {
          "\n";
 }
 
-#######################################################################################################################
-# Execute verilator
-#######################################################################################################################
-
 die "Error: Failed to obtain number of processing cores." if system("getconf _NPROCESSORS_ONLN");
 
 my $C = `getconf _NPROCESSORS_ONLN`; chomp $C;
 
 my $cmd = 
-"verilator -Wno-lint --cc --exe  --build $ZAP_HOME/src/testbench/zap_test.cpp --Mdir $ZAP_HOME/obj/ts/$TEST --top zap_test $IVL_OPTIONS --trace --x-assign unique --x-initial unique --threads $C -j $C --error-limit 1 -O3";
+"verilator -Wno-lint --cc --exe  --build ../../../src/testbench/zap_test.cpp --Mdir obj/ts/$TEST --top zap_test $IVL_OPTIONS --trace --x-assign unique --x-initial unique --threads $C -j $C --error-limit 1 -O3";
 
+print $cmd;
 die "Error: Failed to build executable." if system("$cmd");
 
 exit 0;
