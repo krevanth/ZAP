@@ -141,7 +141,7 @@ end
 
 function void decode_bkpt();
 begin: decodeBkPt
-        o_instruction[31:0] = BKPT;
+        o_instruction[31:0] = 32'b1110_00010010_0000_0000_0000_0111_0000;
 end
 endfunction
 

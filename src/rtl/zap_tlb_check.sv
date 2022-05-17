@@ -117,7 +117,7 @@ begin:blk1
 
         if ( i_mmu_en && (i_rd|i_wr) ) // MMU enabled.
         begin
-                if ( (i_sptlb_rdata[`ZAP_SPAGE_TLB__TAG] == i_va[`ZAP_VA__SPAGE_TAG]) && i_sptlb_rdav )
+                unique if ( (i_sptlb_rdata[`ZAP_SPAGE_TLB__TAG] == i_va[`ZAP_VA__SPAGE_TAG]) && i_sptlb_rdav )
                 begin
                         // Entry found in small page TLB.
                         o_fsr = get_fsr
