@@ -311,12 +311,6 @@ begin:blk1
                                 begin
                                         if ( i_rd ) /* Read request. */
                                         begin  
-                                                /* 
-                                                 * Accelerate performance 
-                                                 * Read throughput at 80MHz
-                                                 * clock is 80M operations per 
-                                                 * second (Hit).
-                                                 */
                                                 rhit    = 1'd1;
                                                 o_ack   = 1'd1;
                                         end
@@ -325,12 +319,6 @@ begin:blk1
                                                 o_ack        = 1'd1;
                                                 whit         = 1'd1;
 
-                                                /* 
-                                                 * Each write to cache takes
-                                                 * 3 cycles. Write throuput at
-                                                 * 80MHz is 26.6M operations per
-                                                 * second (Hit).
-                                                 */
                                                 o_cache_line = 
                                                 {(CACHE_LINE/4){i_din}};
   
@@ -339,11 +327,11 @@ begin:blk1
                                                         i_ben ); 
 
                                                 /* Write to tag and also write out physical address. */
-                                                o_cache_tag_wr_en               = 1'd1;
-                                                o_cache_tag[`ZAP_CACHE_TAG__TAG]    = i_address[`ZAP_VA__CACHE_TAG]; 
-                                                o_cache_tag_dirty               = 1'd1;
-                                                o_cache_tag[`ZAP_CACHE_TAG__PA]     = i_phy_addr[31 : $clog2(CACHE_LINE)]; 
-                                                o_address                       = i_address;
+                                                o_cache_tag_wr_en                = 1'd1;
+                                                o_cache_tag[`ZAP_CACHE_TAG__TAG] = i_address[`ZAP_VA__CACHE_TAG]; 
+                                                o_cache_tag_dirty                = 1'd1;
+                                                o_cache_tag[`ZAP_CACHE_TAG__PA]  = i_phy_addr[31 : $clog2(CACHE_LINE)]; 
+                                                o_address                        = i_address;
                                         end
                                 end
 

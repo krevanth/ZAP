@@ -49,6 +49,14 @@ module zap_decompile #(parameter [31:0] INS_WDT = 32'd36) (
                                         begin
                                                 o_decompile = "IGNORE";                                                        
                                         end
+                                        else if ( i_instruction ==? BLX1 )
+                                        begin
+                                                $sformat(o_decompile, "BLX1 H=%b %x", i_instruction[24], i_instruction[23:0]);
+                                        end
+                                        else if ( i_instruction ==? BLX2 )
+                                        begin
+                                                $sformat(o_decompile, "BLX2 r%d", i_instruction[3:0]);
+                                        end
                                         else if ( i_instruction[27:24] == 4'b1110 && i_instruction[4] ) 
                                         begin
                                                 if ( i_instruction[20] )  // Register <- CPSR

@@ -32,6 +32,11 @@ ldr r0, =myThumbFunction+1
 mov lr, pc
 bx r0 // Jump to Thumb code
 ldr r0, =R0_FINAL_VALUE
+
+ldr r0,= myThumbFunction+1
+blx r0
+ldr r0, =R0_FINAL_VALUE
+
 here: b here
 
 .thumb_func

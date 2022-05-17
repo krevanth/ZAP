@@ -26,7 +26,8 @@
 // --   restored abort model. Start instruction carries interrupt information --  
 // --   so this cannot  block interrupts if there is a sequence of these.     --  
 // --                                                                         --          
-// --  Also handles SWAP instruction.                                         --  
+// --  Also handles SWAP instruction but without atomicity preserving.        --  
+// --  The SWAP implementation is meant for SW compatibility and not for MP   --
 // --                                                                         --  
 // --  SWAP steps:                                                            --  
 // --  - Read data from [Rn] into DUMMY. - LDR DUMMY0, [Rn]                   --  
@@ -388,7 +389,7 @@ begin:blk_a
                                 // This makes LR have the value
                                 // PC+8-4=PC+4 which is the address of
                                 // the next instruction. This is in ARM mode.
-                                o_instruction[31:0]           = {AL, 2'b00, 1'b1, SUB, 1'd0, 4'd14, 4'd15, 12'd4};
+                                o_instruction[31:0]           = {AL, 2'b00, 1'b1, SUB, 1'd0, 4'd15, 4'd14, 12'd4};
 
                                 // In Thumb mode, we must generate PC+4-2. Modify it.
                                 if ( i_cpsr_t ) 
@@ -413,7 +414,7 @@ begin:blk_a
                                 // to store the next instruction address in
                                 // LR. This is in ARM mode.
                                 o_instruction[31:0]     = 
-                                {i_instruction[31:28], 2'b00, 1'b1, SUB, 1'd0, 4'd14, 4'd15, 12'd4};
+                                {i_instruction[31:28], 2'b00, 1'b1, SUB, 1'd0, 4'd15, 4'd14, 12'd4};
 
                                 // In Thumb mode, we need to remove 2 from PC
                                 // instead of 4. Modify it.
@@ -463,9 +464,7 @@ begin:blk_a
                                 o_irq = i_irq;
                                 o_fiq = i_fiq;
                         end
-                        else if ( i_instruction[27:23] == 5'b00010 && 
-                                  i_instruction[21:20] == 2'b00 && 
-                                  i_instruction[11:4] == 8'b0000_1001 && i_instruction_valid ) // SWAP
+                        else if ( i_instruction[31:0] ==? SWAP && i_instruction_valid ) // SWAP
                         begin
                                 o_irq = i_irq;
                                 o_fiq = i_fiq;
@@ -484,8 +483,9 @@ begin:blk_a
                                 o_instruction_valid = 1'd1;      
                                 o_stall_from_decode = 1'd1;  
                         end
-                        else if ( i_instruction[27:23] == 5'd1 && 
-                                  i_instruction[7:4] == 4'b1001 && i_instruction_valid )
+                        else if ( i_instruction[27:23] == 5'd1    && 
+                                  i_instruction[7:4]   == 4'b1001 && 
+                                  i_instruction_valid )
                         begin
                                  // LMULT
                                  state_nxt           = LMULT_BUSY;
