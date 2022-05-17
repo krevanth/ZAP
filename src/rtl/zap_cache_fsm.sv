@@ -249,7 +249,13 @@ begin:blk1
         o_cache_tag_wr_en       = 0;
         o_cache_line            = 0;
         o_cache_line_ben        = 0;
-        o_dat                   = 0;
+
+        // Output data port.
+        if ( state_ff == UNCACHEABLE )
+                o_dat           = i_wb_dat;
+        else
+                o_dat           = adapt_cache_data(i_address[$clog2(CACHE_LINE)-1:2], 
+                                                   i_cache_line);
         o_ack                   = 0;
         o_err                   = 0;
         o_err2                  = 0;
@@ -311,10 +317,6 @@ begin:blk1
                                                  * clock is 80M operations per 
                                                  * second (Hit).
                                                  */
-                                                o_dat   = adapt_cache_data(
-                                                          i_address[$clog2(CACHE_LINE)-1:2], 
-                                                          i_cache_line); 
-
                                                 rhit    = 1'd1;
                                                 o_ack   = 1'd1;
                                         end
@@ -402,7 +404,6 @@ begin:blk1
         begin
                 if ( i_wb_ack )
                 begin
-                        o_dat           = i_wb_dat;
                         o_ack           = 1'd1;
                         state_nxt       = IDLE;
 

@@ -152,7 +152,15 @@ logic [31:0]     d_wb_adr;
 logic [2:0]      d_wb_cti;
 logic            d_wb_ack;
 
-logic            icache_err2, dcache_err2;
+logic           icache_err2, dcache_err2;
+
+logic           s_reset, s_fiq, s_irq;
+
+zap_dual_rank_synchronizer #(.WIDTH(3)) u_sync (
+        .i_clk(i_clk),
+        .in({i_reset, i_fiq, i_irq}),
+        .out({s_reset, s_fiq, s_irq})
+);
 
 zap_core #(
         .BP_ENTRIES(BP_ENTRIES),
@@ -161,7 +169,7 @@ zap_core #(
 (
 // Clock and reset.
 .i_clk                  (i_clk),
-.i_reset                (i_reset),
+.i_reset                (s_reset),
 
 // Code related.
 .o_instr_wb_adr         (cpu_iaddr),
@@ -200,8 +208,8 @@ zap_core #(
 .i_data_wb_dat          (dc_data),
 
 // Interrupts.
-.i_fiq                  (i_fiq),
-.i_irq                  (i_irq),
+.i_fiq                  (s_fiq),
+.i_irq                  (s_irq),
 
 // MMU/cache is present.
 .o_mem_translate        (cpu_mem_translate),
@@ -256,7 +264,7 @@ zap_cache #(
 )
 u_data_cache (
 .i_clk                  (i_clk),
-.i_reset                (i_reset),
+.i_reset                (s_reset),
 .i_address              (cpu_daddr     + ({24'd0, cpu_pid[7:0]} << 32'd25)),
 .i_address_nxt          (cpu_daddr_nxt + ({24'd0, cpu_pid[7:0]} << 32'd25)),
 
@@ -316,7 +324,7 @@ zap_cache #(
 ) 
 u_code_cache (
 .i_clk              (i_clk),
-.i_reset            (i_reset),
+.i_reset            (s_reset),
 .i_address          ((cpu_iaddr     & 32'hFFFF_FFFC) + ({24'd0, cpu_pid[7:0]} << 32'd25)), // Cut off lower 2 bits.
 .i_address_nxt      ((cpu_iaddr_nxt & 32'hFFFF_FFFC) + ({24'd0, cpu_pid[7:0]} << 32'd25)), // Cut off lower 2 bits.
 
@@ -372,7 +380,7 @@ u_code_cache (
 zap_wb_merger u_zap_wb_merger (
 
 .i_clk(i_clk),
-.i_reset(i_reset),
+.i_reset(s_reset),
 
 .i_c_wb_stb(c_wb_stb),
 .i_c_wb_cyc(c_wb_cyc),
@@ -407,7 +415,7 @@ zap_wb_adapter
 #(.DEPTH(STORE_BUFFER_DEPTH), .BURST_LEN(CODE_CACHE_LINE < DATA_CACHE_LINE ? CODE_CACHE_LINE/4 : DATA_CACHE_LINE/4))
 u_zap_wb_adapter (
 .i_clk(i_clk),
-.i_reset(i_reset),
+.i_reset(s_reset),
 
 .I_WB_CYC(wb_cyc),
 .I_WB_STB(wb_stb),

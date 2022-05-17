@@ -183,9 +183,9 @@ git clone https://github.com/krevanth/ZAP.git
 |        Dir    | Size     | Port               | Description                                                                                   | Synchronous to       |
 |---------------|----------|--------------------|-----------------------------------------------------------------------------------------------|----------------------|
 |        input  | 1        |  i_clk             |  Clock. All logic is clocked on the rising edge of this signal.                               |  --                  |
-|        input  | 1        |  i_reset           |  Reset. Synchronous active high reset.                                                        | Rising edge of i_clk |
-|        input  | 1        |  i_irq             |  Interrupt. Level Sensitive.                                                                  | Rising edge of i_clk | 
-|        input  | 1        |  i_fiq             |  Fast Interrupt. Level Sensitive.                                                             | Rising edge of i_clk |
+|        input  | 1        |  i_reset           |  Active high global reset signal. Should be atleast 1 clock cycle wide. Internally synced.    |  --                  |
+|        input  | 1        |  i_irq             |  Interrupt. Level Sensitive. Signal is internally synced.                                     |  --                  | 
+|        input  | 1        |  i_fiq             |  Fast Interrupt. Level Sensitive. Signal is internally synced.                                |  --                  |
 |        output | 1        |  o_wb_cyc          |  Wishbone CYC signal.                                                                         | Rising edge of i_clk |
 |        output | 1        |  o_wb_stb          |  WIshbone STB signal.                                                                         | Rising edge of i_clk |
 |        output | [31:0]   |  o_wb_adr          |  Wishbone address signal.                                                                     | Rising edge of i_clk |
