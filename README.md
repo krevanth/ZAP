@@ -27,8 +27,9 @@ WITH THIS PROGRAM; IF NOT, WRITE TO THE FREE SOFTWARE FOUNDATION, INC.,
 ### 0. Running Simulations
 
 ```bash
-make 
+make [TC=test_name] 
 ```
+See src/ts for a list of test names. 
 
 ### 1. Contributors
 
@@ -182,9 +183,7 @@ git clone https://github.com/krevanth/ZAP.git
 
 #### 5.4. Running Provded Tests
 
-```bash
-make
-```
+See Section 0 of this document.
 
 ### 5.5. Test Environment Description
 

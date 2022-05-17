@@ -56,7 +56,11 @@ DLOAD        := 'FROM archlinux:latest\nRUN  pacman -Syyu --noconfirm arm-none-e
 # Run all tests. Default goal.
 all:
 	docker image ls | grep $(TAG) || echo -e $(DLOAD) | docker build --no-cache --rm --tag $(TAG) -
-	for var in $(TEST); do docker run --tty --volume `pwd`:`pwd` --workdir `pwd` $(TAG) $(MAKE) runsim TC=$$var; done;
+ifndef TC
+	for var in $(TEST); do docker run --interactive --tty --volume `pwd`:`pwd` --workdir `pwd` $(TAG) $(MAKE) runsim TC=$$var; done;
+else
+	docker run --interactive --tty --volume `pwd`:`pwd` --workdir `pwd` $(TAG) $(MAKE) runsim TC=$(TC)
+endif
 
 # Remove runsim objects
 clean: 

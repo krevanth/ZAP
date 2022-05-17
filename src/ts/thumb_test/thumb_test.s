@@ -42,7 +42,8 @@ here: b here
 .thumb_func
 myThumbFunction:
 
-# Initialize registers.
+# Test MOV
+
 mov r0, #10
 mov r1, #10
 mov r2, #10
@@ -57,16 +58,25 @@ mov r7, #10
 # r0 = 20
 # r1 = 20
 # r2 = 20
+
 add r0, r1
 add r1, r2
 add r2, r3
 
-# r6 = 20
-# r5 = 30
 # r4 = 40
+# r5 = 30
+
 add r6, r7
 add r5, r6
 add r4, r5
+
+# Test shift
+
+# r6 = 40
+# r7 = 1
+
+mov r7, #1
+lsl r6, r7
 
 # Return back.
 bx lr
