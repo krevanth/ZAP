@@ -26,8 +26,6 @@ WITH THIS PROGRAM; IF NOT, WRITE TO THE FREE SOFTWARE FOUNDATION, INC.,
                                                 
 ### 0. Running Simulations
 
-Assuming you have permissions to run Docker at your site, simple type in the command:
-
 ```bash
 make 
 ```
@@ -134,7 +132,7 @@ Please refer to the arch spec for CP15 CSR requirements.
      * Interrupts should be routed from the appropriate VIC. Interrupts are level sensitive and should be synchronous to the CPU clock.
      * Wire up clock and reset as required.
 
-### 5.1. Installation (GIT)
+### 5.1. Installation
 
 To get the files of the ZAP processor, please execute:
 
@@ -184,30 +182,21 @@ git clone https://github.com/krevanth/ZAP.git
 
 #### 5.4. Running Provded Tests
 
-If your distro does not provide Verilator >= 4.x, you should use docker. Assuming you are part of docker group, simply do:
-
 ```bash
-make -f docker.mk
-```
-
-If your distro does provide Verilator >= 4.x, you simply need to install the required packages on your system: verilator, 
-gcc, arm-none-eabi-gcc, perl, gtkwave, gdb, openocd, make. Once installed, simply do:
-
-```bash
-make -f make.mk
+make
 ```
 
 ### 5.5. Test Environment Description
- * Let the variable $test_name hold the name of the test. 
+
  * See the src/ts directory for some basic tests pre-installed. 
- * New tests can be added using these as starting templates.
- * Please note that these will be run on the sample TB SOC platform (chip_top) that consist of the ZAP processor, 2 x UARTs, a VIC and a timer. See src/testbench/testbench.v for more information.
- * Tests will produce wave files in the obj/src/ts/$test_name/zap.vcd.
+ * Please note that these will be run on the sample TB SOC platform.
+   * See src/testbench/testbench.v for more information.
+ * Tests will produce wave files in the obj/src/ts/<test_name>/zap.vcd.
  * Each time a test is run, a lint is performed on the SV RTL code using Verilator.
- * Verilator is used to run simulations.
+ * Verilator is used to compile the project. 
  * Each TC has a Config.cfg. This is a Perl hash that must be edited to meet requirements.
 
-#### Config.cfg format
+#### 5.5.1. Config.cfg format
 
 Note that the registers in the REG_CHECK are indexed registers. To find those, please do:
 
