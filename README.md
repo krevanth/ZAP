@@ -24,27 +24,12 @@ WITH THIS PROGRAM; IF NOT, WRITE TO THE FREE SOFTWARE FOUNDATION, INC.,
 51 FRANKLIN STREET, FIFTH FLOOR, BOSTON, MA 02110-1301 USA.
 ```
                                                 
-### 0. Getting Started
+### 0. Running Simulations
 
-If your distro does not provide Verilator >= 4.x, you should use docker by passing DOCKER=1. If your distro does provide
-Verilator >= 4.x, run the command without DOCKER=1. See the Dockerfile for the packages that are required to be 
-installed.
-
-To use with docker:
+Assuming you have permissions to run Docker at your site, simple type in the command:
 
 ```bash
-make TC=<test_name> [DOCKER=1]
-```
-To use without docker:
-
-```bash
-make TC=<test_name>
-```
-
-Test names can be found by performing:
-
-```bash
-ls src/ts
+make 
 ```
 
 ### 1. Contributors
@@ -54,7 +39,7 @@ proper notices are in the head of each file.
 
 Credit to Bharat Mulagondla (bharathmulagondla) (https://github.com/bharathmulagondla) for finding bugs in TLB logic.
 
-Credit to Erez Binyamin (https://https://github.com/ErezBinyamin/) for adding Docker images.
+Credit to Erez Binyamin (https://https://github.com/ErezBinyamin/) for adding Docker support for simulation.
 
 ### 2. Introduction 
 

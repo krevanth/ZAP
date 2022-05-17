@@ -1,6 +1,6 @@
 # // -----------------------------------------------------------------------------
 # // --                                                                         --
-# // --                   (C) 2016-2022 Revanth Kamaraj (krevanth)              --
+# // --             (C) 2016-2022 Revanth Kamaraj (krevanth)                    --
 # // --                                                                         -- 
 # // -- --------------------------------------------------------------------------
 # // --                                                                         --
@@ -20,19 +20,15 @@
 # // -- 02110-1301, USA.                                                        --
 # // --                                                                         --
 # // -----------------------------------------------------------------------------
-# // Thanks to Erez Binyamin for adding Docker support.                         --
-# // -----------------------------------------------------------------------------
-
-.DEFAULT_GOAL = all
 
 .PHONY: all
 .PHONY: clean
+.PHONY: reset
 .PHONY: c2asm
 .PHONY: dirs
 
 PWD          := $(shell pwd)
-TAG           = latest
-CMD           = $(MAKE) MAKE_TC=1 TC=$(TC)
+TAG          := archlinux/zap
 SHELL        := /bin/bash -o pipefail
 ARCH         := armv5te
 C_FILES      := $(wildcard src/ts/$(TC)/*.c)
@@ -50,30 +46,27 @@ OB           := arm-none-eabi-objcopy
 CPU_FILES    := $(wildcard src/rtl/*)
 TB_FILES     := $(wildcard src/testbench/*)
 SCRIPT_FILES := $(wildcard scripts/*)
+TEST         := $(shell find src/ts/* -type d -exec basename {} \; | xargs echo)
+DLOAD        := 'FROM archlinux:latest\nRUN  pacman -Syyu --noconfirm arm-none-eabi-gcc arm-none-eabi-binutils gcc make perl verilator'
 
-ifndef TC
+########################################## User Accessible Targets ####################################################
 
+.DEFAULT_GOAL = all
+
+# Run all tests. Default goal.
 all:
-	echo "No TC value passed. TC is not defined. Exiting..."
-	exit 1
+	docker image ls | grep $(TAG) || echo -e $(DLOAD) | docker build --no-cache --rm --tag $(TAG) -
+	for var in $(TEST); do docker run --tty --volume `pwd`:`pwd` --workdir `pwd` $(TAG) $(MAKE) runsim TC=$$var; done;
 
-ifndef DOCKER
+# Remove runsim objects
+clean: 
+	docker image ls | grep $(TAG) && docker run --interactive --tty --volume `pwd`:`pwd` --workdir `pwd` $(TAG) rm -rfv obj/
 
-clean:
-	rm -rf obj
+# Remove docker image.
+reset: clean 
+	docker image ls | grep $(TAG) && docker image rmi --force $(TAG)
 
-else
-
-clean:
-	rm -rf .image_build
-	docker image rmi -f $(TAG)
-	rm -rf obj
-
-endif
-
-else
-
-ifdef MAKE_TC
+############################################ Internal Targets #########################################################
 
 # Compile S files to OBJ.
 obj/ts/$(TC)/a.o: $(S_FILES)
@@ -100,54 +93,25 @@ obj/ts/$(TC)/Vzap_test: $(CPU_FILES) $(TB_FILES) $(SCRIPT_FILES) src/ts/$(TC)/Co
 	./src/scripts/verilate $(TC) 
 
 # Rule to execute command.
-all: dirs obj/ts/$(TC)/Vzap_test
+runsim: dirs obj/ts/$(TC)/Vzap_test
+ifdef TC
 	cd obj/ts/$(TC) && ./Vzap_test $(TC).bin $(TC)
 	echo "Generated waveform file 'obj/ts/$(TC)/zap.vcd'"
+else
+	echo "TC value not passed in make command."
+	exit 1
+endif
 
 # Create test directory.
 dirs:
 	mkdir -p obj/ts/$(TC)/
 	touch obj/ts/$(TC)/
 
-# Clean OBJ directory.
-clean: 
-	mkdir -p obj/ts/$(TC)/
-	rm -fv  obj/ts/$(TC)/*
-
 # Make C to ASM.
 c2asm:
 	$(CC) -S $(CFLAGS) $(X) -o obj/ts/$(TC)/$(X).asm
 
+# Print internal variables.
 print-%  : ; @echo $* = $($*)
 
-else
-
-ifndef DOCKER
-
-all:
-	$(CMD)
-
-clean:
-	rm -rf obj/$(TC)
-
-else
-
-all: .image_build test
-
-test:
-	docker run -it -v `pwd`:`pwd` -w `pwd` $(TAG) $(CMD)
-
-.image_build: Dockerfile
-	docker build -f Dockerfile --no-cache --rm --tag $(TAG) .
-	touch .image_build
-
-clean:
-	rm -rf .image_build
-	docker image rmi -f $(TAG)
-	rm -rf obj
-
-endif # DOCKER
-
-endif # MAKE_TC
-
-endif # TC
+#######################################################################################################################
