@@ -28,7 +28,9 @@ void main (void)
         char *x = (char *)2000;
         float *y = (float*) 2004;
         x[0] = 5;
-        x[1] = fact(x[0]);    
+        x[1] = fact(x[0]);   
+        x[2] = 255;
+        x[3] = 255;
         *y = 3.14;           
 }
 

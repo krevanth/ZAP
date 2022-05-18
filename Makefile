@@ -21,11 +21,7 @@
 # // --                                                                         --
 # // -----------------------------------------------------------------------------
 
-.PHONY: all
-.PHONY: clean
-.PHONY: reset
-.PHONY: c2asm
-.PHONY: dirs
+.PHONY: test clean reset lint runlint c2asm dirs runsim
 
 PWD          := $(shell pwd)
 TAG          := archlinux/zap
@@ -47,28 +43,44 @@ CPU_FILES    := $(wildcard src/rtl/*)
 TB_FILES     := $(wildcard src/testbench/*)
 SCRIPT_FILES := $(wildcard scripts/*)
 TEST         := $(shell find src/ts/* -type d -exec basename {} \; | xargs echo)
-DLOAD        := 'FROM archlinux:latest\nRUN  pacman -Syyu --noconfirm arm-none-eabi-gcc arm-none-eabi-binutils gcc make perl verilator'
+DLOAD        := "FROM archlinux:latest\nRUN  pacman -Syyu --noconfirm arm-none-eabi-gcc arm-none-eabi-binutils gcc \
+                 make perl verilator"
 
 ########################################## User Accessible Targets ####################################################
 
-.DEFAULT_GOAL = all
+.DEFAULT_GOAL = test
 
 # Run all tests. Default goal.
-all:
+test:
+	docker info
+	$(MAKE) lint
 	docker image ls | grep $(TAG) || echo -e $(DLOAD) | docker build --no-cache --rm --tag $(TAG) -
 ifndef TC
-	for var in $(TEST); do docker run --interactive --tty --volume `pwd`:`pwd` --workdir `pwd` $(TAG) $(MAKE) runsim TC=$$var; done;
+	for var in $(TEST);                                                                                       \
+                do                                                                                                \
+                        docker run --interactive --tty --volume `pwd`:`pwd` --workdir `pwd` $(TAG) $(MAKE) runsim \
+                        TC=$$var;                                                                                 \
+                done;
 else
 	docker run --interactive --tty --volume `pwd`:`pwd` --workdir `pwd` $(TAG) $(MAKE) runsim TC=$(TC)
 endif
 
 # Remove runsim objects
 clean: 
-	docker image ls | grep $(TAG) && docker run --interactive --tty --volume `pwd`:`pwd` --workdir `pwd` $(TAG) rm -rfv obj/
+	docker info
+	docker image ls | grep $(TAG) && docker run --interactive --tty --volume `pwd`:`pwd` --workdir `pwd` $(TAG) \
+        rm -rfv obj/
 
 # Remove docker image.
-reset: clean 
+reset: clean
+	docker info 
 	docker image ls | grep $(TAG) && docker image rmi --force $(TAG)
+
+# Lint
+lint:
+	docker info
+	docker image ls | grep $(TAG) || echo -e $(DLOAD) | docker build --no-cache --rm --tag $(TAG) -
+	docker run --interactive --tty --volume `pwd`:`pwd` --workdir `pwd` $(TAG) $(MAKE) runlint
 
 ############################################ Internal Targets #########################################################
 
@@ -88,13 +100,15 @@ obj/ts/$(TC)/$(TC).elf: $(LD_FILE) obj/ts/$(TC)/a.o obj/ts/$(TC)/c.o
 obj/ts/$(TC)/$(TC).bin: obj/ts/$(TC)/$(TC).elf
 	$(OB) $(OFLAGS) obj/ts/$(TC)/$(TC).elf obj/ts/$(TC)/$(TC).bin
 
-# Lint
-lint:
-	cd lint && $(MAKE)
-
-# Rule to lint and verilate.
-obj/ts/$(TC)/Vzap_test: $(CPU_FILES) $(TB_FILES) $(SCRIPT_FILES) src/ts/$(TC)/Config.cfg obj/ts/$(TC)/$(TC).bin lint 
+# Rule to verilate.
+obj/ts/$(TC)/Vzap_test: $(CPU_FILES) $(TB_FILES) $(SCRIPT_FILES) src/ts/$(TC)/Config.cfg obj/ts/$(TC)/$(TC).bin
 	scripts/verilate $(TC) 
+
+# Rule to lint.
+runlint:
+	verilator --lint-only -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
+        -Wwarn-IMPERFECTSCH --report-unoptflat --clk i_clk --top-module zap_top src/rtl/*.sv -Isrc/rtl/ &&        \
+        echo "Lint OK"
 
 # Rule to execute command.
 runsim: dirs obj/ts/$(TC)/Vzap_test

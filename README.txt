@@ -1,5 +1,5 @@
-                                        THE ZAP PROCESSOR
-                                        By Revanth Kamaraj
+                          THE ZAP PROCESSOR
+                          By Revanth Kamaraj
 
 Copyright (C) 2016-2022 Revanth Kamaraj (krevanth) <revanth91kamaraj@gmail.com> 
 
@@ -27,7 +27,18 @@ Running Simulations
 
 > make [TC=test_name] 
 
-See src/ts for a list of test names. 
+See src/ts for a list of test names. Not providing a testname will run all
+tests.
+
+NOTE: The project environment requires Docker.
+
+===============================================================================
+Running Lint
+===============================================================================
+
+> make lint
+
+NOTE: The project environment requires Docker.
 
 ===============================================================================
 Contributors
@@ -141,7 +152,8 @@ Usage
         );
 
     
-   * The processor provides a Wishbone B3 bus. It is recommended that you use it in registered feedback cycle mode.
+   * The processor provides a Wishbone B3 bus. It is recommended that you use 
+     it in registered feedback cycle mode.
    * Interrupts are level sensitive and are internally synced to clock.
 
 CPU Top Level Configuration:

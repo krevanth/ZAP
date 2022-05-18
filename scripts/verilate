@@ -68,8 +68,6 @@ my $IVL_OPTIONS  = " -Isrc/rtl ";
    $IVL_OPTIONS .= " +define+DEBUG_EN "    if ( $DEBUG_EN  );
    $IVL_OPTIONS .= " +define+REG_HIER=$REG_HIER ";
 
-die "ERROR: Verilator check failed." if system("scripts/checkver");
-
 open(HH, ">obj/ts/$TEST/zap_check.vh") or die "Could not write to obj/ts/$TEST/zap_check.vh";
 
 my $RAM_HIER = "zap_test.mem";
@@ -114,7 +112,7 @@ die "Error: Failed to obtain number of processing cores." if system("getconf _NP
 my $C = `getconf _NPROCESSORS_ONLN`; chomp $C;
 
 my $cmd = 
-"verilator -Wno-lint --cc --exe  --build ../../../src/testbench/zap_test.cpp --Mdir obj/ts/$TEST --top zap_test $IVL_OPTIONS --trace --x-assign unique --x-initial unique --threads $C -j $C --error-limit 1 -O3";
+"verilator -Wno-lint --cc --exe  --build ../../../src/testbench/zap_test.cpp --Mdir obj/ts/$TEST --top zap_test $IVL_OPTIONS --trace --x-assign unique --x-initial unique -j $C --error-limit 1 -O3";
 
 print $cmd;
 die "Error: Failed to build executable." if system("$cmd");
