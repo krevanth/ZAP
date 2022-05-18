@@ -1,11 +1,12 @@
 ===============================================================================
 
                         THE ZAP PROCESSOR 
-          By Revanth Kamaraj <revanth91kamaraj@gmail.com>
-
+                      github.com/krevanth/ZAP
+            By Revanth Kamaraj <revanth91kamaraj@gmail.com>
+                      
 Please reach me at :
 EMail Address    : revanth91kamaraj@gmail.com
-GitHub Username  : github.com/krevanth
+GitHub Username  : github.com/krevanth 
 LinkedIn Profile : linkedin.com/in/revanth-kamaraj-178662113
 
 ===============================================================================
@@ -75,6 +76,8 @@ Usage
 ===============================================================================
 
  * To use the ZAP processor in your project:
+   * Get the project files:
+     > git clone https://github.com/krevanth/ZAP.git
    * Add all the *.sv files in src/rtl/ to your project.
    * Add src/rtl/ to your tool's search path to allow it to pick up SV headers.
    * Instantiate the ZAP processor in your project using this template:
@@ -163,8 +166,8 @@ CPU Top Level IO Interface
 Project Environment
 ===============================================================================
 
-The project environment requires Docker to be installed at your site. I would
-like to thank Erez Binyamin for their support.
+The project environment requires Docker to be installed at your site. I 
+(Revanth Kamaraj) would like to thank Erez Binyamin for their support.
 
 -------------------------------------------------------------------------------
 Running/Creating TCs
