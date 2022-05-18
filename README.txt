@@ -1,25 +1,23 @@
-                          THE ZAP PROCESSOR
-                          By Revanth Kamaraj
+                       THE ZAP PROCESSOR
+           By Revanth Kamaraj <revanth91kamaraj@gmail.com>
 
-Copyright (C) 2016-2022 Revanth Kamaraj (krevanth) <revanth91kamaraj@gmail.com> 
+ZAP is a superpipelined ARMv5TE compatible (ARM DDI 0100E, Ref [1]) processor.
 
-Please reach me at:
-GMail   : revanth91kamaraj@gmail.com
-LinkedIn: www.linkedin.com/in/revanth-kamaraj-178662113
+Copyright (C) 2016-2022  Revanth Kamaraj (GitHub Username: krevanth) <revanth91kamaraj@gmail.com>
 
-THIS PROGRAM IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR MODIFY
-IT UNDER THE TERMS OF THE GNU GENERAL PUBLIC LICENSE AS PUBLISHED BY
-THE FREE SOFTWARE FOUNDATION; EITHER VERSION 2 OF THE LICENSE, OR
-(AT YOUR OPTION) ANY LATER VERSION.
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
 
-THIS PROGRAM IS DISTRIBUTED IN THE HOPE THAT IT WILL BE USEFUL,
-BUT WITHOUT ANY WARRANTY; WITHOUT EVEN THE IMPLIED WARRANTY OF
-MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.  SEE THE
-GNU GENERAL PUBLIC LICENSE FOR MORE DETAILS.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 
-YOU SHOULD HAVE RECEIVED A COPY OF THE GNU GENERAL PUBLIC LICENSE ALONG
-WITH THIS PROGRAM; IF NOT, WRITE TO THE FREE SOFTWARE FOUNDATION, INC.,
-51 FRANKLIN STREET, FIFTH FLOOR, BOSTON, MA 02110-1301 USA.
+You should have received a copy of the GNU General Public License along
+with this program; if not, write to the Free Software Foundation, Inc.,
+51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ===============================================================================
 Running Simulations
@@ -45,11 +43,14 @@ Contributors
 ===============================================================================
 
 Except where otherwise noted, the ZAP processor and its source code is 
-Copyright (C) Revanth Kamaraj (krevanth). The proper notices are in the head of 
-each file. 
+Copyright (C) Revanth Kamaraj (GitHub Username: krevanth), that's me. 
+The proper notices are in the head of each file. You can contact me at 
+<revanth91kamaraj@gmail.com> and my LinkedIn URL is 
+<www.linkedin.com/in/revanth-kamaraj-178662113>.
 
-Credit to Bharat Mulagondla (bharathmulagondla) for finding bugs in TLB logic. 
-Credit to Erez Binyamin (ErezBinyamin) for adding Docker support.
+Credit to Bharat Mulagondla (GitHub Username: bharathmulagondla) for finding 
+bugs in TLB logic. Credit to Erez Binyamin (GitHub Username: ErezBinyamin) 
+for adding Docker support.
 
 ===============================================================================
 Introduction 
@@ -259,11 +260,12 @@ See Section 0 of this document.
                                                # verilog_address => verilog_value.
 
 ===============================================================================
-FPGA Timing and Device Utilization on 7a35t-ftg256-2L 
+Timing and Resource Utilization 
 ===============================================================================
 
 Synthesis has been run with Vivado 2021.2 (64-Bit).
 Design uses default parameters with -mode out_of_context for synthesis.
+Resources refer to 7 series FPGA.
 
 +----------+------+---------------------+
 | Ref Name | Used | Functional Category |
@@ -287,15 +289,15 @@ Design uses default parameters with -mode out_of_context for synthesis.
 | RAMB18E1 |    1 |        Block Memory |
 +----------+------+---------------------+
 
-+-------+-------------+
-| Clock |    Fmax     | 
-+-------+-------------+
-| i_clk |   103MHz    |
-+-------+-------------+
++-------+-------------+-----------------+
+| Clock |    Fmax     |     Part        |
++-------+-------------+-----------------+
+| i_clk |   103MHz    | 7a35t-ftg256-2L |
++-------+-------------+-----------------+
 
 ===============================================================================
 References
 ===============================================================================
 
-* ARM Architecture Specification (ARM DDI 0100E)
+[1] ARM Architecture Specification (ARM DDI 0100E)
 
