@@ -105,7 +105,7 @@ obj/ts/$(TC)/Vzap_test: $(CPU_FILES) $(TB_FILES) $(SCRIPT_FILES) src/ts/$(TC)/Co
 	$(info ********************************)
 	$(info BUILDING SIMULATION ENV         )
 	$(info ********************************)
-	perl verwrap.pl $(TC) 
+	perl src/ts/verwrap.pl $(TC) 
 
 # Rule to lint.
 runlint:
