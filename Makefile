@@ -102,7 +102,7 @@ obj/ts/$(TC)/$(TC).bin: obj/ts/$(TC)/$(TC).elf
 
 # Rule to verilate.
 obj/ts/$(TC)/Vzap_test: $(CPU_FILES) $(TB_FILES) $(SCRIPT_FILES) src/ts/$(TC)/Config.cfg obj/ts/$(TC)/$(TC).bin
-	perl vwrap.pl $(TC) 
+	perl verwrap.pl $(TC) 
 
 # Rule to lint.
 runlint:
