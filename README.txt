@@ -21,7 +21,6 @@ GNU GENERAL PUBLIC LICENSE FOR MORE DETAILS.
 YOU SHOULD HAVE RECEIVED A COPY OF THE GNU GENERAL PUBLIC LICENSE ALONG
 WITH THIS PROGRAM; IF NOT, WRITE TO THE FREE SOFTWARE FOUNDATION, INC.,
 51 FRANKLIN STREET, FIFTH FLOOR, BOSTON, MA 02110-1301 USA.
-```
 
 ===============================================================================
 0. Running Simulations
@@ -151,42 +150,42 @@ Please refer to the ARM DDI 0100E specification for CP15 CSR requirements.
 
 5.1. CPU Top Level Configuration
 
-| Parameter                | Default| Description                                                                               |
-|--------------------------|--------|-------------------------------------------------------------------------------------------|
-| BP_ENTRIES               |  1024  | Branch Predictor Settings. Predictor RAM depth. Must be 2^n and > 2                       |
-| FIFO_DEPTH               |  4     | Command FIFO depth. Must be 2^n and > 2                                                   |
-| STORE_BUFFER_DEPTH       |  16    | Depth of the store buffer. Must be 2^n and > 2                                            |
-| DATA_SECTION_TLB_ENTRIES |  4     | Data Cache/MMU Configuration. Section TLB entries. Must be 2^n (n > 0)                    |
-| DATA_LPAGE_TLB_ENTRIES   |  8     | Data Cache/MMU Configuration. Large page TLB entries. Must be 2^n (n > 0)                 |
-| DATA_SPAGE_TLB_ENTRIES   |  16    | Data Cache/MMU Configuration. Small page TLB entries. Must be 2^n (n > 0)                 |
-| DATA_FPAGE_TLB_ENTRIES   |  32    | Data Cache/MMU Configuration. Tiny page TLB entries. Must be 2^n (n > 0)                  |
-| DATA_CACHE_SIZE          |  4096  | Data Cache/MMU Configuration. Cache size in bytes. Must be at least 256B and 2^n          |
-| CODE_SECTION_TLB_ENTRIES |  4     | Instruction Cache/MMU Configuration. Section TLB entries. Must be 2^n (n > 0)             |
-| CODE_LPAGE_TLB_ENTRIES   |  8     | Instruction Cache/MMU Configuration. Large page TLB entries. Must be 2^n (n > 0)          |
-| CODE_SPAGE_TLB_ENTRIES   |  16    | Instruction Cache/MMU Configuration. Small page TLB entries. Must be 2^n (n > 0)          |
-| CODE_FPAGE_TLB_ENTRIES   |  32    | Instruction Cache/MMU Configuration. Tiny page TLB entries. Must be 2^n (n > 0)           |
-| CODE_CACHE_SIZE          |  4096  | Instruction Cache/MMU Configuration. Cache size in bytes. Must be at least 256B and 2^n   |
-| DATA_CACHE_LINE          |  64    | Cache Line for Data (Bytes). Keep 2^n and >= 16 Bytes                                     |
-| CODE_CACHE_LINE          |  64    | Cache Line for Code (Bytes). Keep 2^n and >= 16 Bytes                                     |
+| Parameter                | Default| Description                                                                 |
+|--------------------------|--------|-----------------------------------------------------------------------------|
+| BP_ENTRIES               |  1024  | Branch Predictor Settings. Predictor RAM depth. Must be 2^n and > 2         |
+| FIFO_DEPTH               |  4     | Command FIFO depth. Must be 2^n and > 2                                     |
+| STORE_BUFFER_DEPTH       |  16    | Depth of the store buffer. Must be 2^n and > 2                              |
+| DATA_SECTION_TLB_ENTRIES |  4     | Section TLB entries. Must be 2^n (n > 0)                                    |
+| DATA_LPAGE_TLB_ENTRIES   |  8     | Large page TLB entries. Must be 2^n (n > 0)                                 |
+| DATA_SPAGE_TLB_ENTRIES   |  16    | Small page TLB entries. Must be 2^n (n > 0)                                 |
+| DATA_FPAGE_TLB_ENTRIES   |  32    | Tiny page TLB entries. Must be 2^n (n > 0)                                  |
+| DATA_CACHE_SIZE          |  4096  | Cache size in bytes. Must be at least 256B and 2^n                          |
+| CODE_SECTION_TLB_ENTRIES |  4     | Section TLB entries. Must be 2^n (n > 0)                                    |
+| CODE_LPAGE_TLB_ENTRIES   |  8     | Large page TLB entries. Must be 2^n (n > 0)                                 |
+| CODE_SPAGE_TLB_ENTRIES   |  16    | Small page TLB entries. Must be 2^n (n > 0)                                 |
+| CODE_FPAGE_TLB_ENTRIES   |  32    | Tiny page TLB entries. Must be 2^n (n > 0)                                  |
+| CODE_CACHE_SIZE          |  4096  | Cache size in bytes. Must be at least 256B and 2^n                          |
+| DATA_CACHE_LINE          |  64    | Cache Line for Data (Bytes). Keep 2^n and >= 16 Bytes                       |
+| CODE_CACHE_LINE          |  64    | Cache Line for Code (Bytes). Keep 2^n and >= 16 Bytes                       |
 
 5.2. CPU Top Level IO Interface 
  
-| Size  | Port       | Description                                                                                   | Synchronous to       |
-|-------|------------|-----------------------------------------------------------------------------------------------|----------------------|
-| 1     |  i_clk     |  Clock. All logic is clocked on the rising edge of this signal.                               |  --                  |
-| 1     |  i_reset   |  Active high global reset signal. Should be atleast 1 clock cycle wide. Internally synced.    |  --                  |
-| 1     |  i_irq     |  Interrupt. Level Sensitive. Signal is internally synced.                                     |  --                  | 
-| 1     |  i_fiq     |  Fast Interrupt. Level Sensitive. Signal is internally synced.                                |  --                  |
-| 1     |  o_wb_cyc  |  Wishbone CYC signal.                                                                         | Rising edge of i_clk |
-| 1     |  o_wb_stb  |  WIshbone STB signal.                                                                         | Rising edge of i_clk |
-| [31:0]|  o_wb_adr  |  Wishbone address signal.                                                                     | Rising edge of i_clk |
-| 1     |  o_wb_we   |  Wishbone write enable signal.                                                                | Rising edge of i_clk |
-| [31:0]|  o_wb_dat  |  Wishbone data output signal.                                                                 | Rising edge of i_clk |
-| [3:0] |  o_wb_sel  |  Wishbone byte select signal.                                                                 | Rising edge of i_clk |
-| [2:0] |  o_wb_cti  |  Wishbone Cycle Type Indicator (Supported modes: Incrementing Burst, End of Burst)            | Rising edge of i_clk |
-| [1:0] |  o_wb_bte  |  Wishbone Burst Type Indicator (Supported modes: Linear)                                      | Rising edge of i_clk |
-| 1     |  i_wb_ack  |  Wishbone ack signal. Recommended to use Wishbone registered feedback cycles.                 | Rising edge of i_clk |
-| [31:0]|  i_wb_dat  |  Wishbone data input signal.                                                                  | Rising edge of i_clk |
+| Size  | Port       | Description                                                                                   | 
+|-------|------------|-----------------------------------------------------------------------------------------------|
+| 1     |  i_clk     |  Clock. All logic is clocked on the rising edge of this signal.                               | 
+| 1     |  i_reset   |  Active high global reset signal. Should be atleast 1 clock cycle wide. Internally synced.    | 
+| 1     |  i_irq     |  Interrupt. Level Sensitive. Signal is internally synced.                                     |  
+| 1     |  i_fiq     |  Fast Interrupt. Level Sensitive. Signal is internally synced.                                | 
+| 1     |  o_wb_cyc  |  Wishbone CYC signal.                                                                         | 
+| 1     |  o_wb_stb  |  WIshbone STB signal.                                                                         | 
+| [31:0]|  o_wb_adr  |  Wishbone address signal.                                                                     | 
+| 1     |  o_wb_we   |  Wishbone write enable signal.                                                                | 
+| [31:0]|  o_wb_dat  |  Wishbone data output signal.                                                                 | 
+| [3:0] |  o_wb_sel  |  Wishbone byte select signal.                                                                 | 
+| [2:0] |  o_wb_cti  |  Wishbone Cycle Type Indicator (Supported modes: Incrementing Burst, End of Burst)            | 
+| [1:0] |  o_wb_bte  |  Wishbone Burst Type Indicator (Supported modes: Linear)                                      | 
+| 1     |  i_wb_ack  |  Wishbone ack signal. Recommended to use Wishbone registered feedback cycles.                 | 
+| [31:0]|  i_wb_dat  |  Wishbone data input signal.                                                                  | 
 
 5.4. Running Provded Tests
 
