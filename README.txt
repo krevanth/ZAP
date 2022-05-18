@@ -1,27 +1,12 @@
-                      THE ZAP PROCESSOR 
-        By Revanth Kamaraj <revanth91kamaraj@gmail.com>
+===============================================================================
 
-Please reach me at:
-GMail   : revanth91kamaraj@gmail.com
-LinkedIn: www.linkedin.com/in/revanth-kamaraj-178662113
+                        THE ZAP PROCESSOR 
+          By Revanth Kamaraj <revanth91kamaraj@gmail.com>
 
-ZAP is a superpipelined ARMv5TE compatible (ARM DDI 0100E, Ref [1]) processor.
-
-Copyright (C) 2016-2022  Revanth Kamaraj (GitHub Username: krevanth) <revanth91kamaraj@gmail.com>
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License along
-with this program; if not, write to the Free Software Foundation, Inc.,
-51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+Please reach me at :
+EMail Address    : revanth91kamaraj@gmail.com
+GitHub Username  : github.com/krevanth
+LinkedIn Profile : linkedin.com/in/revanth-kamaraj-178662113
 
 ===============================================================================
 Introduction 
@@ -40,25 +25,25 @@ layer for cache and MMU control. The software compatibility allows ZAP to boot
 full operating systems like Linux. 
 
 ===============================================================================
-ZAP Superpipeline
+ZAP Superpipeline (12 Stage)
 ===============================================================================
 
-┌───────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                              DUAL FORWARDING, COMMUNICATION AND SYNCHRONIZATION BUS                       │
-└────┬─────────┬──────────┬───────┬────────┬──────────┬───────┬────────┬───────┬───────┬────────┬───────┬───┘
-     │         │          │       │        │          │       │        │       │       │        │       │
-┌────┴────┬────┴───┬──────┴──┬────┴───┬────┴────┬─────┴──┬────┴───┬────┴───┬───┴───┬───┴────┬───┴───┬───┴───┐
-│         │        │         │        │         │        │        │        │       │        │       │       │
-│ I-MMU   │        │         │        │         │        │        │ MUL/MAC│       │ MEM    │       │       │
-│ FETCH 1 │ FETCH 2│  FIFO   │ DECOMP │ UOP GEN │ DECODE │ ISSUE 1│ ISSUE 2│ ALU   │ DCACHE │ WRBACK│ REGF  │     
-│ I-CACHE │        │         │        │         │        │ REG RD │ REG RD │       │ D-MMU  │       │       │
-│         │        │         │        │         │        │        │ SHIFTER│       │        │       │       │
-└─────┬───┴────────┴─────────┴────────┴─────────┴────────┴────────┴────────┴───────┴────┬───┴───────┴───────┘
-      │                                                                                 │
-      │                                                                                 │
- ┌────┴─────────────────────────────────────────────────────────────────────────────────┴──────────────────┐
- │                                               WISHBONE ADAPTER                                          │
- └─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────────┐
+│          DUAL FORWARDING, COMMUNICATION AND SYNCHRONIZATION BUS            │
+└───┬──────┬──────┬────┬──────┬───────┬─────┬──────┬──────┬───┬─────┬──────┬─┘
+    │      │      │    │      │       │     │      │      │   │     │      │
+┌───┴──┬───┴──┬───┴┬───┴──┬───┴──┬────┴─┬───┴──┬───┴───┬──┴┬──┴──┬──┴───┬──┴─┐
+│      │      │    │      │      │      │      │       │   │     │      │    │
+│I-MMU │      │    │      │      │      │      │MUL/MAC│   │MEM  │      │    │
+│FETCH1│FETCH2│FIFO│DECOMP│UOPGEN│DECODE│ISSUE1│ISSUE 2│ALU│D-$  │WRBACK│REGF│     
+│I-$   │      │    │      │      │      │REGRD │REG RD │   │D-MMU│      │    │
+│      │      │    │      │      │      │      │SHIFTER│   │     │      │    │
+└────┬─┴──────┴────┴──────┴──────┴──────┴──────┴───────┴───┴───┬─┴──────┴────┘
+     │                                                         │
+     │                                                         │
+┌────┴─────────────────────────────────────────────────────────┴──────────────┐
+│                              WISHBONE ADAPTER                               │
+└─────────────────────────────────────────────────────────────────────────────┘
 
 ===============================================================================
 Coprocessor 15 CSRs
@@ -133,52 +118,53 @@ CPU Top Level Configuration:
 Note that all parameters should be 2^n. Cache size should be multiple of line
 size.
 
-+--------------------------+--------+-------------------------------------+
-| Parameter                | Default| Description                         |
-+--------------------------+--------+-------------------------------------+
-| BP_ENTRIES               |  1024  | Predictor RAM depth.                |
-| FIFO_DEPTH               |  4     | Command FIFO depth.                 |
-| STORE_BUFFER_DEPTH       |  16    | Depth of the store buffer.          |
-| DATA_SECTION_TLB_ENTRIES |  4     | Section TLB entries.                |
-| DATA_LPAGE_TLB_ENTRIES   |  8     | Large page TLB entries.             |
-| DATA_SPAGE_TLB_ENTRIES   |  16    | Small page TLB entries.             |
-| DATA_FPAGE_TLB_ENTRIES   |  32    | Tiny page TLB entries.              |
-| DATA_CACHE_SIZE          |  4096  | Cache size in bytes.                |
-| CODE_SECTION_TLB_ENTRIES |  4     | Section TLB entries.                |
-| CODE_LPAGE_TLB_ENTRIES   |  8     | Large page TLB entries.             |
-| CODE_SPAGE_TLB_ENTRIES   |  16    | Small page TLB entries.             |
-| CODE_FPAGE_TLB_ENTRIES   |  32    | Tiny page TLB entries.              |
-| CODE_CACHE_SIZE          |  4096  | Cache size in bytes.                |
-| DATA_CACHE_LINE          |  64    | Cache Line for Data (B). Keep > 4   |
-| CODE_CACHE_LINE          |  64    | Cache Line for Code (B). Keep > 4   |
-+--------------------------+--------+-------------------------------------+
++--------------------------+--------+-----------------------------------------+
+| Parameter                | Default| Description                             |
++--------------------------+--------+-----------------------------------------+
+| BP_ENTRIES               |  1024  | Predictor RAM depth.                    |
+| FIFO_DEPTH               |  4     | Command FIFO depth.                     |
+| STORE_BUFFER_DEPTH       |  16    | Depth of the store buffer.              |
+| DATA_SECTION_TLB_ENTRIES |  2     | Section TLB entries.                    |
+| DATA_LPAGE_TLB_ENTRIES   |  2     | Large page TLB entries.                 |
+| DATA_SPAGE_TLB_ENTRIES   |  32    | Small page TLB entries.                 |
+| DATA_FPAGE_TLB_ENTRIES   |  2     | Tiny page TLB entries.                  |
+| DATA_CACHE_SIZE          |  4096  | Cache size in bytes.                    |
+| CODE_SECTION_TLB_ENTRIES |  2     | Section TLB entries.                    |
+| CODE_LPAGE_TLB_ENTRIES   |  2     | Large page TLB entries.                 |
+| CODE_SPAGE_TLB_ENTRIES   |  32    | Small page TLB entries.                 |
+| CODE_FPAGE_TLB_ENTRIES   |  2     | Tiny page TLB entries.                  |
+| CODE_CACHE_SIZE          |  4096  | Cache size in bytes.                    |
+| DATA_CACHE_LINE          |  64    | Cache Line for Data (B). Keep > 4       |
+| CODE_CACHE_LINE          |  64    | Cache Line for Code (B). Keep > 4       |
++--------------------------+--------+-----------------------------------------+
 
 CPU Top Level IO Interface 
 
-+----------+-----------------------------------------------------------------+ 
-| Port     | Description                                                     | 
-|----------|-----------------------------------------------------------------|
-|i_clk     |  Clock. All logic is clocked on the rising edge of this signal. | 
-|i_reset   |  Active high global reset signal. Assert for >= 1 clock cycle.  | 
-|i_irq     |  Interrupt. Level Sensitive. Signal is internally synced.       |  
-|i_fiq     |  Fast Interrupt. Level Sensitive. Signal is internally synced.  | 
-|o_wb_cyc  |  Wishbone CYC signal.                                           | 
-|o_wb_stb  |  WIshbone STB signal.                                           | 
-|o_wb_adr  |  Wishbone address signal. (32)                                  | 
-|o_wb_we   |  Wishbone write enable signal.                                  | 
-|o_wb_dat  |  Wishbone data output signal. (32)                              | 
-|o_wb_sel  |  Wishbone byte select signal. (4)                               | 
-|o_wb_cti  |  Wishbone CTI (Classic, Incrementing Burst, EOB) (3)            | 
-|o_wb_bte  |  Wishbone BTE (Linear) (2)                                      | 
-|i_wb_ack  |  Wishbone ack signal. Wishbone registered cycles recommended.   | 
-|i_wb_dat  |  Wishbone data input signal. (32)                               | 
-+----------+-----------------------------------------------------------------+
++----------+------------------------------------------------------------------+ 
+| Port     | Description                                                      | 
+|----------|------------------------------------------------------------------|
+|i_clk     |  Clock. All logic is clocked on the rising edge of this signal.  | 
+|i_reset   |  Active high global reset signal. Assert for >= 1 clock cycle.   | 
+|i_irq     |  Interrupt. Level Sensitive. Signal is internally synced.        |  
+|i_fiq     |  Fast Interrupt. Level Sensitive. Signal is internally synced.   | 
+|o_wb_cyc  |  Wishbone CYC signal.                                            | 
+|o_wb_stb  |  WIshbone STB signal.                                            | 
+|o_wb_adr  |  Wishbone address signal. (32)                                   | 
+|o_wb_we   |  Wishbone write enable signal.                                   | 
+|o_wb_dat  |  Wishbone data output signal. (32)                               | 
+|o_wb_sel  |  Wishbone byte select signal. (4)                                | 
+|o_wb_cti  |  Wishbone CTI (Classic, Incrementing Burst, EOB) (3)             | 
+|o_wb_bte  |  Wishbone BTE (Linear) (2)                                       | 
+|i_wb_ack  |  Wishbone ack signal. Wishbone registered cycles recommended.    | 
+|i_wb_dat  |  Wishbone data input signal. (32)                                | 
++----------+------------------------------------------------------------------+
 
 ===============================================================================
 Project Environment
 ===============================================================================
 
-The project environment requires Docker to be installed at your site.
+The project environment requires Docker to be installed at your site. I would
+like to thank Erez Binyamin for their support.
 
 -------------------------------------------------------------------------------
 Running/Creating TCs
@@ -208,8 +194,8 @@ Adding TCs:
 
    > cat src/rtl/zap_localparams.svh | grep PHY
 
-   For example, if a check requires a certain value of R13 in IRQ mode, the hash 
-   will mention the register number as r25.
+   For example, if a check requires a certain value of R13 in IRQ mode, the
+   hash will mention the register number as r25.
  * Here is a sample Config.cfg:
         %Config = ( 
                 # CPU configuration.
@@ -243,10 +229,12 @@ Adding TCs:
                 FINAL_CHECK                 => {"32'h100" => "32'd4", 
                                                 "32'h104" => "32'h12345678",
                                                 "32'h66" =>  "32'h4"}   
-                                               # Make this an anonymous hash with 
-                                               # entries like 
-                                               # Base address of 32-bit word => 32-bit verilog_value.
-                                               # The script compares 4 bytes at once.
+                                               # Make this an anonymous hash
+                                               # with entries like 
+                                               # Base address of 32-bit word => 
+                                               # 32-bit verilog_value. The 
+                                               # script compares 4 bytes at 
+                                               # once.
 
 
 -------------------------------------------------------------------------------
@@ -259,9 +247,9 @@ Running RTL Lint
 Timing and Resource Utilization 
 ===============================================================================
 
-Synthesis has been run with Vivado 2021.2 (64-Bit).
-Design uses default parameters with -mode out_of_context for synthesis.
-Resources refer to 7 series FPGA.
+Synthesis has been run with Vivado 2021.2 (64-Bit). Design uses default 
+parameters with -mode out_of_context for synthesis. Resources refer to 7 series 
+FPGA.
 
 +----------+------+---------------------+
 | Ref Name | Used | Functional Category |
@@ -298,15 +286,22 @@ References
 [1] ARM Architecture Specification (ARM DDI 0100E)
 
 ===============================================================================
-Contributors
+License
 ===============================================================================
 
-Except where otherwise noted, the ZAP processor and its source code is 
-Copyright (C) Revanth Kamaraj (GitHub Username: krevanth). The proper notices 
-are in the head of each file. You can contact me at <revanth91kamaraj@gmail.com> 
-and my LinkedIn URL is <www.linkedin.com/in/revanth-kamaraj-178662113>.
+Copyright (C) 2016-2022  Revanth Kamaraj
 
-Credit to Bharat Mulagondla (GitHub Username: bharathmulagondla) for finding 
-bugs in TLB logic. Credit to Erez Binyamin (GitHub Username: ErezBinyamin) 
-for adding Docker support.
+This program is free software; you can redistribute it and/or modify it under 
+the terms of the GNU General Public License as published by the Free Software 
+Foundation; either version 2 of the License, or (at your option) any later 
+version.
 
+This program is distributed in the hope that it will be useful, but WITHOUT ANY 
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with 
+this program; if not, write to the Free Software Foundation, Inc., 51 Franklin 
+Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+===============================================================================                                                 

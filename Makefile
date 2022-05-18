@@ -48,6 +48,8 @@ DLOAD        := "FROM archlinux:latest\nRUN  pacman -Syyu --noconfirm arm-none-e
 
 ########################################## User Accessible Targets ####################################################
 
+# Thanks to Erez Binyamin for Docker support patches.
+
 .DEFAULT_GOAL = test
 
 # Run all tests. Default goal.
