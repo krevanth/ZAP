@@ -1,6 +1,6 @@
-                         THE ZAP PROCESSOR
+THE ZAP PROCESSOR
 
-(C) 2016-2022 Revanth Kamaraj (krevanth)**
+(C) 2016-2022 Revanth Kamaraj (krevanth)
 
 Please reach me at:
 GMail   : revanth91kamaraj@gmail.com
