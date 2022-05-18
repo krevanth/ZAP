@@ -102,10 +102,16 @@ obj/ts/$(TC)/$(TC).bin: obj/ts/$(TC)/$(TC).elf
 
 # Rule to verilate.
 obj/ts/$(TC)/Vzap_test: $(CPU_FILES) $(TB_FILES) $(SCRIPT_FILES) src/ts/$(TC)/Config.cfg obj/ts/$(TC)/$(TC).bin
+	$(info ********************************)
+	$(info BUILDING SIMULATION ENV         )
+	$(info ********************************)
 	perl verwrap.pl $(TC) 
 
 # Rule to lint.
 runlint:
+	$(info *******************************)
+	$(info RUNNING LINT CHECKS ON RTL     )
+	$(info *******************************)
 	verilator --lint-only -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
         -Wwarn-IMPERFECTSCH --report-unoptflat --clk i_clk --top-module zap_top src/rtl/*.sv -Isrc/rtl/ &&        \
         echo "Lint OK"
@@ -113,6 +119,9 @@ runlint:
 # Rule to execute command.
 runsim: dirs obj/ts/$(TC)/Vzap_test
 ifdef TC
+	$(info ******************************)
+	$(info RUNNING SIMULATION            )
+	$(info ******************************)        
 	cd obj/ts/$(TC) && ./Vzap_test $(TC).bin $(TC)
 	echo "Generated waveform file 'obj/ts/$(TC)/zap.vcd'"
 else
