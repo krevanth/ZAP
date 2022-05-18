@@ -94,7 +94,7 @@ lint:
 
 # Rule to lint and verilate.
 obj/ts/$(TC)/Vzap_test: $(CPU_FILES) $(TB_FILES) $(SCRIPT_FILES) src/ts/$(TC)/Config.cfg obj/ts/$(TC)/$(TC).bin lint 
-	./src/scripts/verilate $(TC) 
+	scripts/verilate $(TC) 
 
 # Rule to execute command.
 runsim: dirs obj/ts/$(TC)/Vzap_test
