@@ -1,6 +1,6 @@
 # // -----------------------------------------------------------------------------
 # // --                                                                         --
-# // --                   (C) 2016-2022 Revanth Kamaraj (krevanth)              --
+# // --             (C) 2016-2022 Revanth Kamaraj (krevanth)                    --
 # // --                                                                         -- 
 # // -- --------------------------------------------------------------------------
 # // --                                                                         --
@@ -20,19 +20,11 @@
 # // -- 02110-1301, USA.                                                        --
 # // --                                                                         --
 # // -----------------------------------------------------------------------------
-# // Thanks to Erez Binyamin for adding Docker support.                         --
-# // -----------------------------------------------------------------------------
 
-.DEFAULT_GOAL = all
-
-.PHONY: all
-.PHONY: clean
-.PHONY: c2asm
-.PHONY: dirs
+.PHONY: test clean reset lint runlint c2asm dirs runsim
 
 PWD          := $(shell pwd)
-TAG           = latest
-CMD           = $(MAKE) MAKE_TC=1 TC=$(TC)
+TAG          := archlinux/zap
 SHELL        := /bin/bash -o pipefail
 ARCH         := armv5te
 C_FILES      := $(wildcard src/ts/$(TC)/*.c)
@@ -50,30 +42,47 @@ OB           := arm-none-eabi-objcopy
 CPU_FILES    := $(wildcard src/rtl/*)
 TB_FILES     := $(wildcard src/testbench/*)
 SCRIPT_FILES := $(wildcard scripts/*)
+TEST         := $(shell find src/ts/* -type d -exec basename {} \; | xargs echo)
+DLOAD        := "FROM archlinux:latest\nRUN  pacman -Syyu --noconfirm arm-none-eabi-gcc arm-none-eabi-binutils gcc \
+                 make perl verilator"
 
+########################################## User Accessible Targets ####################################################
+
+.DEFAULT_GOAL = test
+
+# Run all tests. Default goal.
+test:
+	docker info
+	$(MAKE) lint
+	docker image ls | grep $(TAG) || echo -e $(DLOAD) | docker build --no-cache --rm --tag $(TAG) -
 ifndef TC
-
-all:
-	echo "No TC value passed. TC is not defined. Exiting..."
-	exit 1
-
-ifndef DOCKER
-
-clean:
-	rm -rf obj
-
+	for var in $(TEST);                                                                                       \
+                do                                                                                                \
+                        docker run --interactive --tty --volume `pwd`:`pwd` --workdir `pwd` $(TAG) $(MAKE) runsim \
+                        TC=$$var;                                                                                 \
+                done;
 else
-
-clean:
-	rm -rf .image_build
-	docker image rmi -f $(TAG)
-	rm -rf obj
-
+	docker run --interactive --tty --volume `pwd`:`pwd` --workdir `pwd` $(TAG) $(MAKE) runsim TC=$(TC)
 endif
 
-else
+# Remove runsim objects
+clean: 
+	docker info
+	docker image ls | grep $(TAG) && docker run --interactive --tty --volume `pwd`:`pwd` --workdir `pwd` $(TAG) \
+        rm -rfv obj/
 
-ifdef MAKE_TC
+# Remove docker image.
+reset: clean
+	docker info 
+	docker image ls | grep $(TAG) && docker image rmi --force $(TAG)
+
+# Lint
+lint:
+	docker info
+	docker image ls | grep $(TAG) || echo -e $(DLOAD) | docker build --no-cache --rm --tag $(TAG) -
+	docker run --interactive --tty --volume `pwd`:`pwd` --workdir `pwd` $(TAG) $(MAKE) runlint
+
+############################################ Internal Targets #########################################################
 
 # Compile S files to OBJ.
 obj/ts/$(TC)/a.o: $(S_FILES)
@@ -91,63 +100,36 @@ obj/ts/$(TC)/$(TC).elf: $(LD_FILE) obj/ts/$(TC)/a.o obj/ts/$(TC)/c.o
 obj/ts/$(TC)/$(TC).bin: obj/ts/$(TC)/$(TC).elf
 	$(OB) $(OFLAGS) obj/ts/$(TC)/$(TC).elf obj/ts/$(TC)/$(TC).bin
 
-# Lint
-lint:
-	cd lint && $(MAKE)
+# Rule to verilate.
+obj/ts/$(TC)/Vzap_test: $(CPU_FILES) $(TB_FILES) $(SCRIPT_FILES) src/ts/$(TC)/Config.cfg obj/ts/$(TC)/$(TC).bin
+	scripts/verilate $(TC) 
 
-# Rule to lint and verilate.
-obj/ts/$(TC)/Vzap_test: $(CPU_FILES) $(TB_FILES) $(SCRIPT_FILES) src/ts/$(TC)/Config.cfg obj/ts/$(TC)/$(TC).bin lint 
-	./src/scripts/verilate $(TC) 
+# Rule to lint.
+runlint:
+	verilator --lint-only -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
+        -Wwarn-IMPERFECTSCH --report-unoptflat --clk i_clk --top-module zap_top src/rtl/*.sv -Isrc/rtl/ &&        \
+        echo "Lint OK"
 
 # Rule to execute command.
-all: dirs obj/ts/$(TC)/Vzap_test
+runsim: dirs obj/ts/$(TC)/Vzap_test
+ifdef TC
 	cd obj/ts/$(TC) && ./Vzap_test $(TC).bin $(TC)
 	echo "Generated waveform file 'obj/ts/$(TC)/zap.vcd'"
+else
+	echo "TC value not passed in make command."
+	exit 1
+endif
 
 # Create test directory.
 dirs:
 	mkdir -p obj/ts/$(TC)/
 	touch obj/ts/$(TC)/
 
-# Clean OBJ directory.
-clean: 
-	mkdir -p obj/ts/$(TC)/
-	rm -fv  obj/ts/$(TC)/*
-
 # Make C to ASM.
 c2asm:
 	$(CC) -S $(CFLAGS) $(X) -o obj/ts/$(TC)/$(X).asm
 
+# Print internal variables.
 print-%  : ; @echo $* = $($*)
 
-else
-
-ifndef DOCKER
-
-all:
-	$(CMD)
-
-clean:
-	rm -rf obj/$(TC)
-
-else
-
-all: .image_build test
-
-test:
-	docker run -it -v `pwd`:`pwd` -w `pwd` $(TAG) $(CMD)
-
-.image_build: Dockerfile
-	docker build -f Dockerfile --no-cache --rm --tag $(TAG) .
-	touch .image_build
-
-clean:
-	rm -rf .image_build
-	docker image rmi -f $(TAG)
-	rm -rf obj
-
-endif # DOCKER
-
-endif # MAKE_TC
-
-endif # TC
+#######################################################################################################################
