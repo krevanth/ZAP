@@ -113,26 +113,26 @@ generate
         if      ( 10+$clog2(FPAGE_TLB_ENTRIES) == 11 ) always_comb u0 = i_address_nxt[11];    
         else                                           always_comb u0 = 1'd0;
 
-        if      ( 12+$clog2(SPAGE_TLB_ENTRIES) == 13 ) always_comb u1 = i_address_nxt[13]; 
-        else if ( 12+$clog2(SPAGE_TLB_ENTRIES) == 14 ) always_comb u1 = i_address_nxt[14]; 
+        if      ( 12+$clog2(SPAGE_TLB_ENTRIES) == 13 ) always_comb u1 = |i_address_nxt[15:13]; 
+        else if ( 12+$clog2(SPAGE_TLB_ENTRIES) == 14 ) always_comb u1 = |i_address_nxt[15:14]; 
         else if ( 12+$clog2(SPAGE_TLB_ENTRIES) == 15 ) always_comb u1 = i_address_nxt[15]; 
         else                                           always_comb u1 = 1'd0;
 
-        if      ( 16+$clog2(LPAGE_TLB_ENTRIES) == 17 ) always_comb u2 = i_address_nxt[17]; 
-        else if ( 16+$clog2(LPAGE_TLB_ENTRIES) == 18 ) always_comb u2 = i_address_nxt[18]; 
+        if      ( 16+$clog2(LPAGE_TLB_ENTRIES) == 17 ) always_comb u2 = |i_address_nxt[19:17]; 
+        else if ( 16+$clog2(LPAGE_TLB_ENTRIES) == 18 ) always_comb u2 = |i_address_nxt[19:18]; 
         else if ( 16+$clog2(LPAGE_TLB_ENTRIES) == 19 ) always_comb u2 = i_address_nxt[19]; 
         else                                           always_comb u2 = 1'd0;
 
         if      ( 10+$clog2(FPAGE_TLB_ENTRIES) == 11 ) always_comb u3 = tlb_address[11]; 
         else                                           always_comb u3 = 1'd0;
 
-        if      ( 12+$clog2(SPAGE_TLB_ENTRIES) == 13 ) always_comb u4 = tlb_address[13]; 
-        else if ( 12+$clog2(SPAGE_TLB_ENTRIES) == 14 ) always_comb u4 = tlb_address[14]; 
+        if      ( 12+$clog2(SPAGE_TLB_ENTRIES) == 13 ) always_comb u4 = |tlb_address[15:13]; 
+        else if ( 12+$clog2(SPAGE_TLB_ENTRIES) == 14 ) always_comb u4 = |tlb_address[15:14]; 
         else if ( 12+$clog2(SPAGE_TLB_ENTRIES) == 15 ) always_comb u4 = tlb_address[15]; 
         else                                           always_comb u4 = 1'd0;
 
-        if      ( 16+$clog2(LPAGE_TLB_ENTRIES) == 17 ) always_comb u5 = tlb_address[17]; 
-        else if ( 16+$clog2(LPAGE_TLB_ENTRIES) == 18 ) always_comb u5 = tlb_address[18]; 
+        if      ( 16+$clog2(LPAGE_TLB_ENTRIES) == 17 ) always_comb u5 = |tlb_address[19:17]; 
+        else if ( 16+$clog2(LPAGE_TLB_ENTRIES) == 18 ) always_comb u5 = |tlb_address[19:18]; 
         else if ( 16+$clog2(LPAGE_TLB_ENTRIES) == 19 ) always_comb u5 = tlb_address[19];
         else                                           always_comb u5 = 1'd0;
 endgenerate 
