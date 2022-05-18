@@ -1,13 +1,13 @@
 ===============================================================================
 
                         THE ZAP PROCESSOR 
-                      github.com/krevanth/ZAP
+                  https://github.com/krevanth/ZAP
             By Revanth Kamaraj <revanth91kamaraj@gmail.com>
                       
 Please reach me at :
 EMail Address    : revanth91kamaraj@gmail.com
-GitHub Username  : github.com/krevanth 
-LinkedIn Profile : linkedin.com/in/revanth-kamaraj-178662113
+GitHub Profile   : https://github.com/krevanth 
+LinkedIn Profile : https://linkedin.com/in/revanth-kamaraj-178662113
 
 ===============================================================================
 Introduction 
