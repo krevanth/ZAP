@@ -1,5 +1,9 @@
-                       THE ZAP PROCESSOR
-           By Revanth Kamaraj <revanth91kamaraj@gmail.com>
+                      THE ZAP PROCESSOR 
+        By Revanth Kamaraj <revanth91kamaraj@gmail.com>
+
+Please reach me at:
+GMail   : revanth91kamaraj@gmail.com
+LinkedIn: www.linkedin.com/in/revanth-kamaraj-178662113
 
 ZAP is a superpipelined ARMv5TE compatible (ARM DDI 0100E, Ref [1]) processor.
 
@@ -18,38 +22,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along
 with this program; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-
-===============================================================================
-Running Simulations
-===============================================================================
-
-> make [TC=test_name] 
-
-See src/ts for a list of test names. Not providing a testname will run all
-tests.
-
-NOTE: The project environment requires Docker.
-
-===============================================================================
-Running Lint
-===============================================================================
-
-> make lint
-
-NOTE: The project environment requires Docker.
-
-===============================================================================
-Contributors
-===============================================================================
-
-Except where otherwise noted, the ZAP processor and its source code is 
-Copyright (C) Revanth Kamaraj (GitHub Username: krevanth). The proper notices 
-are in the head of each file. You can contact me at <revanth91kamaraj@gmail.com> 
-and my LinkedIn URL is <www.linkedin.com/in/revanth-kamaraj-178662113>.
-
-Credit to Bharat Mulagondla (GitHub Username: bharathmulagondla) for finding 
-bugs in TLB logic. Credit to Erez Binyamin (GitHub Username: ErezBinyamin) 
-for adding Docker support.
 
 ===============================================================================
 Introduction 
@@ -203,18 +175,34 @@ CPU Top Level IO Interface
 +----------+-----------------------------------------------------------------+
 
 ===============================================================================
-Running Provded Tests
+Project Environment
 ===============================================================================
 
-See Section 0 of this document.
+The project environment requires Docker to be installed at your site.
 
- * See the src/ts directory for some basic tests pre-installed. 
+-------------------------------------------------------------------------------
+Running/Creating TCs
+-------------------------------------------------------------------------------
+
+To run all/a specific TC, do:
+
+> make [TC=test_name] 
+
+See src/ts for a list of test names. Not providing a testname will run all
+tests.
+
+To remove existing object/simulation files, do:
+
+> make clean
+
+Adding TCs:
+
+ * Create a folder src/ts/TEST_NAME
  * Please note that these will be run on the sample TB SOC platform.
    * See src/testbench/testbench.v for more information.
  * Tests will produce wave files in the obj/src/ts/<test_name>/zap.vcd.
- * Each time a test is run, a lint is performed on the SV RTL code using Verilator.
- * Verilator is used to compile the project. 
- * Each TC has a Config.cfg. This is a Perl hash that must be edited to meet 
+ * Add a C file (.c), an assembly file (.s) and a linker script (.ld).
+ * Create a Config.cfg. This is a Perl hash that must be edited to meet 
    requirements. Note that the registers in the REG_CHECK are indexed 
    registers. To find those, please do:
 
@@ -253,10 +241,19 @@ See Section 0 of this document.
                                                # entries like "r10" => "32'h0". 
         
                 FINAL_CHECK                 => {"32'h100" => "32'd4", 
-                                                "32'h66" => "32'h4"}   
+                                                "32'h104" => "32'h12345678",
+                                                "32'h66" =>  "32'h4"}   
                                                # Make this an anonymous hash with 
                                                # entries like 
-                                               # verilog_address => verilog_value.
+                                               # Base address of 32-bit word => 32-bit verilog_value.
+                                               # The script compares 4 bytes at once.
+
+
+-------------------------------------------------------------------------------
+Running RTL Lint
+-------------------------------------------------------------------------------
+
+> make lint
 
 ===============================================================================
 Timing and Resource Utilization 
@@ -299,4 +296,17 @@ References
 ===============================================================================
 
 [1] ARM Architecture Specification (ARM DDI 0100E)
+
+===============================================================================
+Contributors
+===============================================================================
+
+Except where otherwise noted, the ZAP processor and its source code is 
+Copyright (C) Revanth Kamaraj (GitHub Username: krevanth). The proper notices 
+are in the head of each file. You can contact me at <revanth91kamaraj@gmail.com> 
+and my LinkedIn URL is <www.linkedin.com/in/revanth-kamaraj-178662113>.
+
+Credit to Bharat Mulagondla (GitHub Username: bharathmulagondla) for finding 
+bugs in TLB logic. Credit to Erez Binyamin (GitHub Username: ErezBinyamin) 
+for adding Docker support.
 
