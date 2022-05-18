@@ -43,10 +43,9 @@ Contributors
 ===============================================================================
 
 Except where otherwise noted, the ZAP processor and its source code is 
-Copyright (C) Revanth Kamaraj (GitHub Username: krevanth), that's me. 
-The proper notices are in the head of each file. You can contact me at 
-<revanth91kamaraj@gmail.com> and my LinkedIn URL is 
-<www.linkedin.com/in/revanth-kamaraj-178662113>.
+Copyright (C) Revanth Kamaraj (GitHub Username: krevanth). The proper notices 
+are in the head of each file. You can contact me at <revanth91kamaraj@gmail.com> 
+and my LinkedIn URL is <www.linkedin.com/in/revanth-kamaraj-178662113>.
 
 Credit to Bharat Mulagondla (GitHub Username: bharathmulagondla) for finding 
 bugs in TLB logic. Credit to Erez Binyamin (GitHub Username: ErezBinyamin) 
