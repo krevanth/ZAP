@@ -23,7 +23,7 @@ performance.
 ZAP provides full software compatibility including architecturally exposed CPU 
 modes, short instruction support, FCSE, cache, MMU, TLBs and the CP15 interface 
 layer for cache and MMU control. The software compatibility allows ZAP to boot 
-full operating systems like Linux. 
+full operating systems like Linux. All caches and TL buffers are direct mapped. 
 
 ===============================================================================
 ZAP Superpipeline (12 Stage)
