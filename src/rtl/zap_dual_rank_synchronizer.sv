@@ -21,7 +21,15 @@
 // --                                                                         --
 // -----------------------------------------------------------------------------
 
-module zap_dual_rank_synchronizer #(parameter WIDTH=1) (input logic i_clk, input logic [WIDTH-1:0] in, output logic [WIDTH-1:0] out);
+module zap_dual_rank_synchronizer 
+#(
+        parameter WIDTH=1
+) 
+(
+        input logic i_clk, 
+        input logic [WIDTH-1:0] in, 
+        output logic [WIDTH-1:0] out
+);
 
 logic [WIDTH-1:0] meta;
 
@@ -29,3 +37,4 @@ always @ ( posedge i_clk )  meta <= in;
 always @ ( posedge i_clk )  out  <= meta;
 
 endmodule
+
