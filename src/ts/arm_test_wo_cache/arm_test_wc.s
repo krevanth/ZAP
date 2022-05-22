@@ -35,7 +35,7 @@
 
 _Reset:
    b disable_cache
- 
+
 // ------------------------------
 // CONSTANT POOL
 // ------------------------------
@@ -45,7 +45,7 @@ _Reset:
 .word 0xFFF00002
 .word 4101 
 .word 0x7fffffff
-
+.word 0xffffffff
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 enable_cache:
@@ -205,21 +205,26 @@ fail13:
         bl test_rti
 passed:
         mvn  r0, #0
-        mvn  r1, #0
-        mvn  r2, #0
-        mvn  r3, #0
-        mvn  r4, #0
-        mvn  r5, #0
-        mvn  r6, #0
-        mvn  r7, #0
-        mvn  r8, #0
-        mvn  r9, #0
-        mvn r10, #0
-        mvn r11, #0
-        mvn r12, #0
-        mvn r13, #0
-        mvn r14, #0
-        b passed
+        mov  r1, r0
+        mov  r2, r0
+        mov  r3, r0
+        mov  r4, r0
+        mov  r5, r0
+        mov  r6, r0
+        mov  r7, r0
+
+        mov  r0, #0x18
+        ldr  r8, [r0]
+        mov  r9, r8
+        mov r10, r8
+        mov r11, r8
+        mov r12, r8
+        mov r13, r8
+        mov r14, r8
+        mvn  r0, #0
+
+passed_here:
+        b passed_here
 
         @ test sat
 test_sat:

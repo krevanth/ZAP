@@ -31,8 +31,6 @@
 // --                                                                       --
 // ---------------------------------------------------------------------------
 
-
-
 module zap_issue_main
 #(
         // Parameters.
@@ -181,10 +179,6 @@ module zap_issue_main
         input logic                              i_shifter_mem_load_ff,//1 if load.
         input logic                              i_alu_mem_load_ff,
         input logic                              i_memory_mem_load_ff,
-
-        // Memory accelerator values for loads. External memory bys is
-        // connected to this.
-        input logic  [31:0]                      i_memory_mem_srcdest_value_ff,   
 
         // ARM to compressed switch.
         input logic                              i_switch_ff,
@@ -371,13 +365,10 @@ begin
                                 i_memory_destination_index_ff[5:0], 
                                 i_memory_destination_value_ff,
                                 i_memory_dav_ff, 
-                                i_memory_mem_srcdest_index_ff[5:0], 
-                                i_memory_mem_load_ff, 
                                 i_rd_data_0, 
                                 i_rd_data_1, 
                                 i_rd_data_2, 
                                 i_rd_data_3, 
-                                i_memory_mem_srcdest_value_ff, 
                                 i_cpu_mode, 
                                 i_pc_plus_8_ff 
         );
@@ -395,13 +386,10 @@ begin
                                 i_memory_destination_index_ff[5:0], 
                                 i_memory_destination_value_ff,
                                 i_memory_dav_ff, 
-                                i_memory_mem_srcdest_index_ff[5:0], 
-                                i_memory_mem_load_ff,
                                 i_rd_data_0, 
                                 i_rd_data_1, 
                                 i_rd_data_2, 
                                 i_rd_data_3, 
-                                i_memory_mem_srcdest_value_ff, 
                                 i_cpu_mode, 
                                 i_pc_plus_8_ff 
         );
@@ -418,13 +406,10 @@ begin
                                 i_memory_destination_index_ff[5:0],
                                 i_memory_destination_value_ff, 
                                 i_memory_dav_ff, 
-                                i_memory_mem_srcdest_index_ff[5:0], 
-                                i_memory_mem_load_ff,
                                 i_rd_data_0, 
                                 i_rd_data_1, 
                                 i_rd_data_2, 
                                 i_rd_data_3, 
-                                i_memory_mem_srcdest_value_ff, 
                                 i_cpu_mode, 
                                 i_pc_plus_8_ff 
         );
@@ -442,13 +427,10 @@ begin
                                 i_memory_destination_index_ff[5:0],
                                 i_memory_destination_value_ff, 
                                 i_memory_dav_ff, 
-                                i_memory_mem_srcdest_index_ff[5:0], 
-                                i_memory_mem_load_ff,
                                 i_rd_data_0, 
                                 i_rd_data_1, 
                                 i_rd_data_2, 
                                 i_rd_data_3, 
-                                i_memory_mem_srcdest_value_ff, 
                                 i_cpu_mode, 
                                 i_pc_plus_8_ff    
         ); 
@@ -503,21 +485,11 @@ function [31:0] get_register_value (
         // Memory stage valid.
         input                           memory_dav_ff,                      
 
-        // Memory stage srcdest index. The srcdest is basically the data
-        // register index.
-        input [$clog2(PHY_REGS)-1:0]    memory_mem_srcdest_index_ff,      
-
-        // Memory load instruction in memory stage.    
-        input                           memory_mem_load_ff,               
-
         // Data read from register file.
         input [31:0]                    rd_data_0, 
         input [31:0]                    rd_data_1, 
         input [31:0]                    rd_data_2, 
         input [31:0]                    rd_data_3, 
-
-        // Data from memsrcdest
-        input [31:0]                    memory_mem_srcdest_value_ff, 
 
         // CPU mode and PC.
         input [31:0]                    cpu_mode, 
@@ -559,15 +531,6 @@ begin
         begin 
                         get =    memory_destination_value_ff;
         end
-        // Match in memory stage (value).
-        // The memory accelerator. If the required stuff is present in the memory unit, short circuit.
-        else if ( !index[32]                                        && 
-                   index[5:0] ==   memory_mem_srcdest_index_ff[5:0] && 
-                   memory_mem_load_ff                               && 
-                   memory_dav_ff )
-        begin
-                get =   memory_mem_srcdest_value_ff;
-        end
         else    // Index not found in the pipeline, fallback to register access.                     
         begin                        
                 case ( rd_port )
@@ -602,7 +565,11 @@ begin
                         i_shifter_mem_load_ff, 
                         i_alu_mem_srcdest_index_ff, 
                         i_alu_dav_ff, 
-                        i_alu_mem_load_ff ) 
+                        i_alu_mem_load_ff,
+                        i_memory_mem_srcdest_index_ff,
+                        i_memory_mem_load_ff,
+                        i_memory_dav_ff
+                        ) 
                         || 
                         determine_load_lock 
                         ( 
@@ -615,7 +582,11 @@ begin
                         i_shifter_mem_load_ff, 
                         i_alu_mem_srcdest_index_ff, 
                         i_alu_dav_ff, 
-                        i_alu_mem_load_ff ) 
+                        i_alu_mem_load_ff, 
+                        i_memory_mem_srcdest_index_ff,
+                        i_memory_mem_load_ff,
+                        i_memory_dav_ff
+                        ) 
                         ||
                         determine_load_lock 
                         ( i_shift_length_ff, 
@@ -627,7 +598,11 @@ begin
                         i_shifter_mem_load_ff, 
                         i_alu_mem_srcdest_index_ff, 
                         i_alu_dav_ff, 
-                        i_alu_mem_load_ff )
+                        i_alu_mem_load_ff, 
+                        i_memory_mem_srcdest_index_ff,
+                        i_memory_mem_load_ff,
+                        i_memory_dav_ff
+                        ) 
                         ||
                         determine_load_lock
                         ( {27'd0, i_mem_srcdest_index_ff}, 
@@ -639,7 +614,11 @@ begin
                         i_shifter_mem_load_ff, 
                         i_alu_mem_srcdest_index_ff, 
                         i_alu_dav_ff, 
-                        i_alu_mem_load_ff );
+                        i_alu_mem_load_ff, 
+                        i_memory_mem_srcdest_index_ff,
+                        i_memory_mem_load_ff,
+                        i_memory_dav_ff
+                        );
 
         // A shift lock occurs if the current instruction requires a shift amount as a register
         // other than LSL #0 or RORI if the operands are right on the output of this
@@ -758,7 +737,10 @@ input                           alu_dav_nxt,
 input                           shifter_mem_load_ff,
 input  [$clog2(PHY_REGS)-1:0]   alu_mem_srcdest_index_ff,
 input                           alu_dav_ff,
-input                           alu_mem_load_ff
+input                           alu_mem_load_ff,
+input  [$clog2(PHY_REGS)-1:0]   memory_mem_srcdest_index_ff,
+input                           memory_mem_load_ff,
+input                           memory_dav_ff
 );
 begin
         determine_load_lock = 1'd0;
@@ -776,13 +758,16 @@ begin
         ( 
                 ( index[5:0] == mem_srcdest_index_ff          && 
                   condition_code_ff != NV                     && 
-                  mem_load_ff )                               ||
+                  mem_load_ff )                               || // ISSUE
                 ( index[5:0] == shifter_mem_srcdest_index_ff  && 
                    alu_dav_nxt                                &&
-                   shifter_mem_load_ff )                      ||
+                   shifter_mem_load_ff )                      || // SHIFT
                 (  index[5:0] == alu_mem_srcdest_index_ff     && 
                    alu_dav_ff                                 && 
-                   alu_mem_load_ff )       
+                   alu_mem_load_ff )                          || // ALU
+                (  index[5:0] == memory_mem_srcdest_index_ff  &&
+                   memory_mem_load_ff                         &&
+                   memory_dav_ff   )                             // Memory
         )
         begin
                 determine_load_lock = 1'd1;
