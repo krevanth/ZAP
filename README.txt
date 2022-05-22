@@ -102,10 +102,10 @@ Usage
                   .o_wb_cyc                (),
                   .o_wb_stb                (),
                   .o_wb_adr                (),
-                  .o_wb_we                 (,
+                  .o_wb_we                 (),
                   .o_wb_cti                (),
                   .i_wb_dat                (),
-                  .o_wb_dat                (t),
+                  .o_wb_dat                (),
                   .i_wb_ack                (),
                   .o_wb_sel                (),
                   .o_wb_bte                ()             
