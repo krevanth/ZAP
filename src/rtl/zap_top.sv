@@ -238,14 +238,6 @@ zap_core #(
 // Data IF nxt.
 .o_data_wb_adr_nxt      (cpu_daddr_nxt), // Data addr nxt. Used to drive address of data tag RAM.
 
-/* verilator lint_off PINCONNECTEMPTY */
-.o_data_wb_we_nxt       (),
-.o_data_wb_cyc_nxt      (),
-.o_data_wb_stb_nxt      (), 
-.o_data_wb_dat_nxt      (),
-.o_data_wb_sel_nxt      (),
-/* verilator lint_on PINCONNECTEMPTY */
-
 // Code access prpr.
 .o_instr_wb_adr_nxt     (cpu_iaddr_nxt), // PC addr nxt. Drives read address of code tag RAM.
 

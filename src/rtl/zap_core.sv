@@ -59,11 +59,6 @@ output logic [31:0]                      o_data_wb_dat,
 output logic  [3:0]                      o_data_wb_sel,                  
 
 // Next state stuff for Wishbone data.
-output logic                             o_data_wb_we_nxt,
-output logic                             o_data_wb_cyc_nxt,
-output logic                             o_data_wb_stb_nxt,
-output logic [31:0]                      o_data_wb_dat_nxt,
-output logic  [3:0]                      o_data_wb_sel_nxt,    
 output logic [31:0]                      o_data_wb_adr_nxt,
 
 // Force user view.
@@ -967,14 +962,7 @@ u_zap_alu_main
          .o_mem_signed_halfword_enable_ff  (alu_shalf_ff),        
          .o_mem_unsigned_halfword_enable_ff(alu_uhalf_ff),      
          .o_mem_translate_ff               (o_mem_translate),
-        
-        .o_address_nxt ( alu_address_nxt ),
-
-        .o_data_wb_we_nxt  (o_data_wb_we_nxt),
-        .o_data_wb_cyc_nxt (o_data_wb_cyc_nxt),
-        .o_data_wb_stb_nxt (o_data_wb_stb_nxt),
-        .o_data_wb_dat_nxt (o_data_wb_dat_nxt),
-        .o_data_wb_sel_nxt (o_data_wb_sel_nxt),
+         .o_address_nxt                    (alu_address_nxt),
 
         .o_data_wb_we_ff   (o_data_wb_we),
         .o_data_wb_cyc_ff  (o_data_wb_cyc),
