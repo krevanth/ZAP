@@ -126,8 +126,6 @@ begin
                 .i_clk(i_clk),
 
                 .i_wr_en(i_cache_line_ben[i]),
-                .i_rd_en(1'd1),
-
                 .i_wr_data(i_cache_line   [i*8+7:i*8]),
                 .o_rd_data(o_cache_line   [i*8+7:i*8]),
 
@@ -140,8 +138,6 @@ zap_ram_simple #(.WIDTH(`ZAP_CACHE_TAG_WDT), .DEPTH(CACHE_SIZE/CACHE_LINE)) u_za
         .i_clk(i_clk),
 
         .i_wr_en(tag_ram_wr_en),
-        .i_rd_en(1'd1),
-
         .i_wr_data(tag_ram_wr_data),
         .o_rd_data(o_cache_tag),
 

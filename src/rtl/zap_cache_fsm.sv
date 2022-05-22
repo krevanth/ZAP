@@ -303,7 +303,19 @@ begin:blk1
                 end
                 else if ( i_rd || i_wr )
                 begin
-                        if ( i_cacheable && i_cache_en )
+                        if ( !i_cache_en )
+                        begin
+                                state_nxt       = UNCACHEABLE;
+                                o_ack           = 1'd0; /* Wait...*/
+                                o_wb_stb_nxt    = 1'd1;
+                                o_wb_cyc_nxt    = 1'd1;
+                                o_wb_adr_nxt    = i_phy_addr;
+                                o_wb_dat_nxt    = i_din;
+                                o_wb_wen_nxt    = i_wr;
+                                o_wb_sel_nxt    = i_ben; 
+                                o_wb_cti_nxt    = CTI_CLASSIC;
+                        end
+                        else if ( i_cacheable )
                         begin
                                 case ({cache_cmp,i_cache_tag_valid})
 

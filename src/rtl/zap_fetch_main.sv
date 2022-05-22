@@ -215,7 +215,7 @@ end
 // updated. Each entry in the RAM corresponds to a virtual memory address
 // whether or not it be a legit branch or not. 
 //
-zap_ram_simple
+zap_ram_simple_nopipe
 #(.DEPTH(BP_ENTRIES), .WIDTH(2)) u_br_ram
 (
         .i_clk(i_clk),

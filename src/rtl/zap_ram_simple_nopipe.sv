@@ -21,11 +21,12 @@
 // --                                                                         --
 // -----------------------------------------------------------------------------
 // --                                                                         -- 
-// -- This is a pipelined memory macro for high performance.                  --
+// --  Synthesizes to standard 1R + 1W block RAM. The read and write addresses--
+// --  may be specified separately. Only for FPGA.                            --
 // --                                                                         --
 // -----------------------------------------------------------------------------
 
-module zap_ram_simple #(
+module zap_ram_simple_nopipe #(
         parameter WIDTH = 32,
         parameter DEPTH = 32
 )
@@ -34,6 +35,7 @@ module zap_ram_simple #(
 
         // Write and read enable.
         input logic                          i_wr_en,
+        input logic                          i_rd_en,
 
         // Write data and address.
         input logic [WIDTH-1:0]              i_wr_data,
@@ -44,48 +46,44 @@ module zap_ram_simple #(
         output logic [WIDTH-1:0]             o_rd_data
 );
 
-// ----------------------------------------------------------------------------
-// Stage 1
-// ----------------------------------------------------------------------------
-
 // Memory array.
 logic [WIDTH-1:0] mem [DEPTH-1:0];
 
 // Hazard detection.
-logic [WIDTH-1:0]         mem_data_st1;
-logic [WIDTH-1:0]         buffer_st1;
-logic                     sel_st1;
-logic [$clog2(DEPTH)-1:0] rd_addr_st1;
-logic [WIDTH-1:0]         rd_data_st1;
+logic [WIDTH-1:0] mem_data;
+logic [WIDTH-1:0] buffer;
+logic             sel;
 
 // Hazard Detection Logic
 always_ff @ ( posedge i_clk )
 begin
-        if ( i_wr_addr == i_rd_addr && i_wr_en )
-                sel_st1 <= 1'd1;
+        if ( i_wr_addr == i_rd_addr && i_wr_en && i_rd_en )
+                sel <= 1'd1;
         else
-                sel_st1 <= 1'd0;                
+                sel <= 1'd0;                
 end
 
 // Buffer update logic.
 always_ff @ ( posedge i_clk )
 begin
-        if ( i_wr_addr == i_rd_addr && i_wr_en )
-                buffer_st1 <= i_wr_data;
+        if ( i_wr_addr == i_rd_addr && i_wr_en && i_rd_en )
+                buffer <= i_wr_data;
 end
-
-// Read address buffer logic.
-always_ff @ (posedge i_clk)
-begin
-        rd_addr_st1 <= i_rd_addr;
-end
-
-// ----------------------------------------------------------------------------
 
 // Read logic.
 always_ff @ (posedge i_clk)
 begin
-        mem_data_st1 <= mem [ i_rd_addr ];
+        if ( i_rd_en )
+                mem_data <= mem [ i_rd_addr ];
+end
+
+// Output logic.
+always_comb
+begin
+        if ( sel )
+                o_rd_data = buffer;
+        else
+                o_rd_data = mem_data;
 end
 
 // Write logic.
@@ -93,29 +91,6 @@ always_ff @ (posedge i_clk)
 begin
         if ( i_wr_en )  
                 mem [ i_wr_addr ] <= i_wr_data;
-end
-
-// ----------------------------------------------------------------------------
-
-// Output logic.
-always_comb
-begin
-        if ( sel_st1 )
-                rd_data_st1 = buffer_st1;
-        else
-                rd_data_st1 = mem_data_st1;
-end
-
-// ----------------------------------------------------------------------------
-// Stage 2
-// ----------------------------------------------------------------------------
-
-always_ff @ ( posedge i_clk )
-begin
-        if ( i_wr_addr == rd_addr_st1 && i_wr_en )
-                o_rd_data <= i_wr_data ;
-        else
-                o_rd_data <= rd_data_st1;
 end
 
 endmodule // zap_ram_simple.v

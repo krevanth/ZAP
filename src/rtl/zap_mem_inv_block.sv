@@ -40,7 +40,6 @@ module zap_mem_inv_block #(
 
         // Write and read enable.
         input logic                           i_wen, 
-        input logic                           i_ren,
 
         // Invalidate entries in 1 cycle.
         input logic                           i_inv,
@@ -58,27 +57,17 @@ module zap_mem_inv_block #(
 // Flops
 logic [DEPTH-1:0] dav_ff;
 
-// Nets
-logic [$clog2(DEPTH)-1:0] addr_r;
-logic en_r;
-
-
-always_comb addr_r = i_raddr;
-always_comb en_r   = i_ren;
-
-
 // Block RAM.
 zap_ram_simple #(.WIDTH(WIDTH), .DEPTH(DEPTH)) u_ram_simple (
         .i_clk     ( i_clk ),
 
         .i_wr_en   ( i_wen ),
-        .i_rd_en   ( en_r ),
 
         .i_wr_data ( i_wdata ),
         .o_rd_data ( o_rdata ),
 
         .i_wr_addr ( i_waddr ),
-        .i_rd_addr ( addr_r )
+        .i_rd_addr ( i_raddr )
 );
 
 
@@ -95,8 +84,7 @@ begin: flip_flops
                 if ( i_wen )
                         dav_ff [ i_waddr ] <= 1'd1;
 
-                if ( en_r )
-                        o_rdav <= dav_ff [ addr_r ]; 
+                o_rdav <= dav_ff [ i_raddr ]; 
         end
 end
 

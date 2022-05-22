@@ -157,7 +157,6 @@ u_section_tlb (
 
 .i_wdata        (setlb_wdata),
 .i_wen          (setlb_wen),
-.i_ren          (1'd1),
 
 .i_inv          (i_inv | !i_mmu_en),
 
@@ -177,7 +176,6 @@ u_lpage_tlb   (
 
 .i_wdata        (lptlb_wdata),
 .i_wen          (lptlb_wen),
-.i_ren          (1'd1),
 
 .i_inv          (i_inv | !i_mmu_en),
 
@@ -197,7 +195,6 @@ u_spage_tlb   (
 
 .i_wdata        (sptlb_wdata),
 .i_wen          (sptlb_wen),
-.i_ren          (1'd1),
 
 .i_inv          (i_inv | !i_mmu_en),
 
@@ -217,7 +214,6 @@ u_fpage_tlb (
 
 .i_wdata        (fptlb_wdata),
 .i_wen          (fptlb_wen),
-.i_ren          (1'd1),
 
 .i_inv          (i_inv | !i_mmu_en),
 

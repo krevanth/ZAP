@@ -65,6 +65,9 @@ parameter FPAGE_TLB_ENTRIES   = 8;
 `include "zap_localparams.svh"
 `include "zap_defines.svh"
 
+localparam APSR_BAD = 1'd0;
+localparam APSR_OK  = 1'd1;
+
 input logic                              i_mmu_en;       // MMU enable.
 
 input logic [31:0]                       i_va;           // Virtual address.
@@ -115,7 +118,7 @@ begin:blk1
         o_walk      = 0;        // Walk disabled.
         o_cacheable = 0;        // Uncacheable.
 
-        if ( i_mmu_en && (i_rd|i_wr) ) // MMU enabled.
+        if ( i_mmu_en && (i_rd || i_wr) ) // MMU enabled and R/W operation.
         begin
                 unique if ( (i_sptlb_rdata[`ZAP_SPAGE_TLB__TAG] == i_va[`ZAP_VA__SPAGE_TAG]) && i_sptlb_rdav )
                 begin
@@ -132,9 +135,7 @@ begin:blk1
                                 {CONST_0_SP, i_sptlb_rdata}
                         ) ;
 
-                        o_phy_addr = {i_sptlb_rdata[`ZAP_SPAGE_TLB__BASE], 
-                                      i_va[11:0]};
-
+                        o_phy_addr = {i_sptlb_rdata[`ZAP_SPAGE_TLB__BASE], i_va[11:0]};
                         {dummy, o_cacheable} = i_sptlb_rdata[`ZAP_SECTION_TLB__CB] >> 1;
 
                 end
@@ -153,9 +154,7 @@ begin:blk1
                                 {CONST_0_LP, i_lptlb_rdata}
                         ) ;
 
-                        o_phy_addr = {i_lptlb_rdata[`ZAP_LPAGE_TLB__BASE],
-                                        i_va[15:0]};
-
+                        o_phy_addr = {i_lptlb_rdata[`ZAP_LPAGE_TLB__BASE], i_va[15:0]};
                         {dummy, o_cacheable} = i_lptlb_rdata[`ZAP_LPAGE_TLB__CB] >> 1;
                 end
                 else if ( (i_setlb_rdata[`ZAP_SECTION_TLB__TAG] == i_va[`ZAP_VA__SECTION_TAG]) && i_setlb_rdav )
@@ -173,9 +172,7 @@ begin:blk1
                                 {CONST_0_SE, i_setlb_rdata}
                         ) ;
 
-                        o_phy_addr = {i_setlb_rdata[`ZAP_SECTION_TLB__BASE],
-                                        i_va[19:0]};
-
+                        o_phy_addr = {i_setlb_rdata[`ZAP_SECTION_TLB__BASE], i_va[19:0]};
                         {dummy, o_cacheable} = i_setlb_rdata[`ZAP_SECTION_TLB__CB] >> 1;
                 end
                 else if( (i_fptlb_rdata[`ZAP_FPAGE_TLB__TAG] == i_va[`ZAP_VA__FPAGE_TAG]) && i_fptlb_rdav )
@@ -185,7 +182,6 @@ begin:blk1
                         (
                                 1'd0, 1'd0, 1'd0, 1'd1,
                                 2'd0,                    
-
                                 i_cpsr[`ZAP_CPSR_MODE] == USR,
                                 i_rd,
                                 i_wr,
@@ -230,7 +226,7 @@ begin
 
         // Get AP and DAC.
 
-        if ( section ) // section.
+        unique if ( section ) // section.
         begin
                         apsr[3:2]  = (tlb  [ `ZAP_SECTION_TLB__AP ]);
                 {dummy,  dac[1:0]} = (dac_reg >> (tlb  [ `ZAP_SECTION_TLB__DAC_SEL ] << 1));
@@ -251,26 +247,37 @@ begin
                 {dummy,  dac[1:0]}      = (dac_reg >> (tlb  [ `ZAP_LPAGE_TLB__DAC_SEL ] << 1));
         end
 
-        // Concat AP and SR bits.
+        // Concat AP and SR bits finally.
         apsr[1:0]  = sr[1:0];
 
         case(dac)
 
-        DAC_MANAGER: get_fsr = 0; // No fault.
+        DAC_MANAGER: 
+        begin
+                get_fsr = '0; // No fault.
+        end                
 
-        DAC_CLIENT : get_fsr = is_apsr_ok ( user, rd, wr, apsr ) ? 0 : 
-        (
-         section ? {tlb[`ZAP_SECTION_TLB__DAC_SEL], FSR_SECTION_PERMISSION_FAULT}:
-         spage   ? {tlb[`ZAP_SPAGE_TLB__DAC_SEL]  , FSR_PAGE_PERMISSION_FAULT   }:
-         fpage   ? {tlb[`ZAP_FPAGE_TLB__DAC_SEL]  , FSR_PAGE_PERMISSION_FAULT   }:
-                   {tlb[`ZAP_LPAGE_TLB__DAC_SEL]  , FSR_PAGE_PERMISSION_FAULT   }
-        );
- 
-        default    : get_fsr = 
-        section ?    {tlb[`ZAP_SECTION_TLB__DAC_SEL], FSR_SECTION_DOMAIN_FAULT} :
-        spage   ?    {tlb[`ZAP_SPAGE_TLB__DAC_SEL],   FSR_PAGE_DOMAIN_FAULT   } :
-        fpage   ?    {tlb[`ZAP_FPAGE_TLB__DAC_SEL],   FSR_PAGE_DOMAIN_FAULT   } :
-                     {tlb[`ZAP_LPAGE_TLB__DAC_SEL],   FSR_PAGE_DOMAIN_FAULT   } ;
+        DAC_CLIENT: 
+                if ( is_apsr_ok ( user, rd, wr, apsr ) == APSR_OK )
+                begin
+                        get_fsr = '0; // No fault.
+                end
+                else
+                begin
+                        unique if ( section )  get_fsr = {tlb[`ZAP_SECTION_TLB__DAC_SEL], FSR_SECTION_PERMISSION_FAULT};
+                          else if ( spage   )  get_fsr = {tlb[`ZAP_SPAGE_TLB__DAC_SEL]  , FSR_PAGE_PERMISSION_FAULT   };
+                          else if ( fpage   )  get_fsr = {tlb[`ZAP_FPAGE_TLB__DAC_SEL]  , FSR_PAGE_PERMISSION_FAULT   };
+                          else if ( lpage   )  get_fsr = {tlb[`ZAP_LPAGE_TLB__DAC_SEL]  , FSR_PAGE_PERMISSION_FAULT   };
+                end
+
+        default: 
+        begin 
+                unique if  ( section )  get_fsr = {tlb[`ZAP_SECTION_TLB__DAC_SEL], FSR_SECTION_DOMAIN_FAULT};
+                  else if  ( spage   )  get_fsr = {tlb[`ZAP_SPAGE_TLB__DAC_SEL],   FSR_PAGE_DOMAIN_FAULT   };
+                  else if  ( fpage   )  get_fsr = {tlb[`ZAP_FPAGE_TLB__DAC_SEL],   FSR_PAGE_DOMAIN_FAULT   };
+                  else if  ( lpage   )  get_fsr = {tlb[`ZAP_LPAGE_TLB__DAC_SEL],   FSR_PAGE_DOMAIN_FAULT   };
+        end
+
         endcase
 end
 
@@ -284,9 +291,6 @@ endfunction
 // Returns 0 for failure, 1 for okay.
 // Checks AP and SR bits.
 //
-
-localparam APSR_BAD = 1'd0;
-localparam APSR_OK  = 1'd1;
 
 function  is_apsr_ok ( input user, input rd, input wr, input [3:0] apsr);
 logic x;
@@ -309,8 +313,6 @@ end
 endfunction
 
 endmodule // zap_tlb_check.v
-
-
 
 // ----------------------------------------------------------------------------
 // EOF
