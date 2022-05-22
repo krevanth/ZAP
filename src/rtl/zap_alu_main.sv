@@ -166,16 +166,11 @@ module zap_alu_main #(
         // Wishbone signal outputs.
         // -------------------------------------------------------------
 
-        output logic                              o_data_wb_we_nxt,
-        output logic                              o_data_wb_cyc_nxt,
-        output logic                              o_data_wb_stb_nxt,
-        output logic [31:0]                       o_data_wb_dat_nxt,
-        output logic [3:0]                        o_data_wb_sel_nxt,
         output logic                              o_data_wb_we_ff,
         output logic                              o_data_wb_cyc_ff,
         output logic                              o_data_wb_stb_ff,
         output logic [31:0]                       o_data_wb_dat_ff,
-        output logic [3:0]                        o_data_wb_sel_ff
+        output logic [3:0]                        o_data_wb_sel_ff 
 );
 
 // ----------------------------------------------------------------------------
@@ -254,6 +249,13 @@ logic [31:0]                      tmp_flags, tmp_sum;
 
 // Opcode.
 logic [$clog2   (ALU_OPS)-1:0]   opcode;
+
+// Output regs NXT pins.
+logic                            o_data_wb_we_nxt;
+logic                            o_data_wb_cyc_nxt;
+logic                            o_data_wb_stb_nxt;
+logic [31:0]                     o_data_wb_dat_nxt;
+logic [3:0]                      o_data_wb_sel_nxt;
 
 // -------------------------------------------------------------------------------
 // Assigns
