@@ -1,6 +1,6 @@
 ===============================================================================
 
-                        THE ZAP PROCESSOR 
+  ZAP : A SUPERPIPELINED ARM PROCESSOR WITH CACHE AND MMU (ARMv5TE COMPLIANT)
                   https://github.com/krevanth/ZAP
             By Revanth Kamaraj <revanth91kamaraj@gmail.com>
                       
@@ -29,22 +29,22 @@ full operating systems like Linux. All caches and TL buffers are direct mapped.
 ZAP Superpipeline (13 Stage)
 ===============================================================================
 
-┌────────────────────────────────────────────────────────────────────────-----─-┐
-│          DUAL FORWARDING, COMMUNICATION AND SYNCHRONIZATION BUS               │
-└───┬──────┬──────┬────┬──────┬───────┬─────┬──────┬──────┬───┬───┬─────┬-----─┬┘
-    │      │      │    │      │       │     │      │      │   │   │     │      │
-┌───┴──┬───┴──┬───┴┬───┴──┬───┴──┬────┴─┬───┴──┬───┴───┬──┴┬──┴┬──┴──┬──┴───┬──┴─┐
-│      │      │    │      │      │      │      │       │   │   │     │      │    │
-│I-MMU │      │    │      │      │      │      │MUL/MAC│   │   │MEM  │      │    │
-│FETCH1│FETCH2│FIFO│DECOMP│UOPGEN│DECODE│ISSUE1│ISSUE 2│ALU│PST│D-$  │WRBACK│REGF│     
-│I-$   │      │    │      │      │      │REGRD │REG RD │   │   │D-MMU│      │    │
-│      │      │    │      │      │      │      │SHIFTER│   │   │     │      │    │
-└────┬─┴──────┴────┴──────┴──────┴──────┴──────┴───────┴───┴───┴───┬─┴──────┴────┘
+┌───────────────────────────────────────────────────────────────────────────-┐
+│          DUAL FORWARDING, COMMUNICATION AND SYNCHRONIZATION BUS            │
+└───┬──────┬──────┬────┬──────┬───────┬─────┬──────┬──────┬───┬───┬────┬────┬┘
+    │      │      │    │      │       │     │      │      │   │   │    │    │
+┌───┴──┬───┴──┬───┴┬───┴──┬───┴──┬────┴─┬───┴──┬───┴───┬──┴┬──┴┬──┴──┬─┴─┬──┴─┐
+│      │      │    │      │      │      │      │       │   │   │     │   │    │
+│I-MMU │      │    │      │      │      │      │MUL/MAC│   │   │MEM  │   │    │
+│FETCH1│FETCH2│FIFO│DECOMP│UOPGEN│DECODE│ISSUE1│ISSUE 2│ALU│PST│D-$  │WBK│REGF│     
+│I-$   │      │    │      │      │      │REGRD │REG RD │   │   │D-MMU│   │    │
+│      │      │    │      │      │      │      │SHIFTER│   │   │     │   │    │
+└────┬─┴──────┴────┴──────┴──────┴──────┴──────┴───────┴───┴───┴───┬─┴───┴────┘
      │                                                             │
      │                                                             │
-┌────┴─────────────────────────────────────────────────────────-----──────────────┐
-│                              WISHBONE ADAPTER                                   │
-└──────────────────────────────────────────────────────────────----───────────────┘
+┌────┴─────────────────────────────────────────────────────────-───┴──────────┐
+│                              WISHBONE ADAPTER                               │
+└──────────────────────────────────────────────────────────────-──────────────┘
 
 ===============================================================================
 Coprocessor 15 CSRs
@@ -252,29 +252,29 @@ Timing and Resource Utilization
 
 Synthesis has been run with Vivado 2021.2 (64-Bit). Design uses default 
 parameters with -mode out_of_context for synthesis. Resources refer to 7 series 
-FPGA.
+FPGA. Synthesis has been run with the highest speed grade.
 
-+----------+------+---------------------+
-| Ref Name | Used | Functional Category |
-+----------+------+---------------------+
-| LUT6     | 7985 |                 LUT |
-| LUT5     | 3858 |                 LUT |
-| LUT4     | 1951 |                 LUT |
-| LUT3     | 1537 |                 LUT |
-| RAMD64E  | 1536 |  Distributed Memory |
-| MUXF7    |  904 |               MuxFx |
-| LUT2     |  591 |                 LUT |
-| RAMD32   |  516 |  Distributed Memory |
-| MUXF8    |  264 |               MuxFx |
-| RAMS32   |  170 |  Distributed Memory |
-| CARRY4   |  158 |          CarryLogic |
-| LUT1     |  104 |                 LUT |
-| FDRE     | 9223 |       Flop with CLR |
-| FDSE     |   26 |       Flop with SET |
-| DSP48E1  |    4 |    Block Arithmetic |
-| RAMB36E1 |    2 |        Block Memory |
-| RAMB18E1 |    1 |        Block Memory |
-+----------+------+---------------------+
++----------+-------+---------------------+
+| Ref Name |  Used | Functional Category |
++----------+-------+---------------------+
+| FDRE     | 11371 |     Flop with reset |
+| FDSE     |    28 |       Flop with set |
+| LUT6     |  9977 |                 LUT |
+| LUT5     |  2421 |                 LUT |
+| LUT4     |  1866 |                 LUT |
+| RAMD64E  |  1536 |  Distributed Memory |
+| MUXF7    |  1106 |               MuxFx |
+| LUT3     |   996 |                 LUT |
+| LUT2     |   708 |                 LUT |
+| RAMD32   |   348 |  Distributed Memory |
+| LUT1     |   197 |                 LUT |
+| CARRY4   |   158 |          CarryLogic |
+| MUXF8    |   150 |               MuxFx |
+| RAMS32   |   114 |  Distributed Memory |
+| RAMB36E1 |     5 |        Block Memory |
+| DSP48E1  |     4 |    Block Arithmetic |
+| RAMB18E1 |     1 |        Block Memory |
++----------+-------+---------------------+
 
 +-------+-------------+-----------------+
 | Clock |    Fmax     |     Part        |
