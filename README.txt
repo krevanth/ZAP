@@ -1,6 +1,4 @@
-===============================================================================
-
-  ZAP : A SUPERPIPELINED ARM PROCESSOR WITH CACHE AND MMU (ARMv5TE COMPLIANT)
+ZAP : A HIGH PERFORMANCE SUPERPIPELINED ARM PROCESSOR (v5TE) WITH CACHE AND MMU
                   https://github.com/krevanth/ZAP
             By Revanth Kamaraj <revanth91kamaraj@gmail.com>
                       
@@ -10,47 +8,120 @@ GitHub Profile   : https://github.com/krevanth
 LinkedIn Profile : https://linkedin.com/in/revanth-kamaraj-178662113
 
 ===============================================================================
-Introduction 
+1. About The ZAP Processor
 ===============================================================================
 
-ZAP is a synthesizable SystemVerilog processor core that can execute ARMv5TE 
-binaries. Note that ZAP is ***NOT*** an ARM clone. ZAP is a completely 
-different implementation and unique superpipelined microarchitecture built from 
-scratch with the aim of providing maximum performance for typical FPGA/ASIC 
-targets. Cache and MMU should be enabled as soon as possible to enable good 
-performance.
+The ZAP processor is a scalar 14-stage high performance synthesizable 32-bit 
+soft processor core that is fully compatible with the older ARMv5TE ISA 
+(reference [1]). The processor also features an architecturally compliant 
+(CP15 controllable) cache and MMU.
 
 ZAP provides full software compatibility including architecturally exposed CPU 
 modes, short instruction support, FCSE, cache, MMU, TLBs and the CP15 interface 
 layer for cache and MMU control. The software compatibility allows ZAP to boot 
 full operating systems like Linux. All caches and TL buffers are direct mapped. 
 
-===============================================================================
-ZAP Superpipeline (13 Stage)
-===============================================================================
+The ZAP implements the ARMv5TE ISA and hence supports the two standard 
+instruction sets:
+ * The 32-bit ARM instruction set.
+ * The 16-bit Thumb instruction set.
 
-┌───────────────────────────────────────────────────────────────────────────-┐
-│          DUAL FORWARDING, COMMUNICATION AND SYNCHRONIZATION BUS            │
-└───┬──────┬──────┬────┬──────┬───────┬─────┬──────┬──────┬───┬───┬────┬────┬┘
-    │      │      │    │      │       │     │      │      │   │   │    │    │
-┌───┴──┬───┴──┬───┴┬───┴──┬───┴──┬────┴─┬───┴──┬───┴───┬──┴┬──┴┬──┴──┬─┴─┬──┴─┐
-│      │      │    │      │      │      │      │       │   │   │     │   │    │
-│I-MMU │      │    │      │      │      │      │MUL/MAC│   │   │MEM  │   │    │
-│FETCH1│FETCH2│FIFO│DECOMP│UOPGEN│DECODE│ISSUE1│ISSUE 2│ALU│PST│D-$  │WBK│REGF│     
-│I-$   │      │    │      │      │      │REGRD │REG RD │   │   │D-MMU│   │    │
-│      │      │    │      │      │      │      │SHIFTER│   │   │     │   │    │
-└────┬─┴──────┴────┴──────┴──────┴──────┴──────┴───────┴───┴───┴───┬─┴───┴────┘
-     │                                                             │
-     │                                                             │
-┌────┴─────────────────────────────────────────────────────────-───┴──────────┐
-│                              WISHBONE ADAPTER                               │
-└──────────────────────────────────────────────────────────────-──────────────┘
+-------------------------------------------------------------------------------
+1.1. ZAP Superpipelined Microarchitecture (14 Stage)
+-------------------------------------------------------------------------------
 
-===============================================================================
-Coprocessor 15 CSRs
-===============================================================================
+ZAP uses a 14 stage execution pipeline to increase the speed of the flow of 
+instructions to the processor. The 14 stage pipeline consists of Address 
+Generator, Cache Access, Memory, Fetch, Instruction Buffer, Thumb Decoder, 
+Pre-Decoder, Decoder, Issue, Shift, Execute, Cache Access, Memory and 
+Writeback.
 
-Please refer to the ARM DDI 0100E specification for CP15 CSR requirements. 
+> To maintain compatibility with the ARMv5TE standard, reading the program 
+counter (PC) will return PC + 8 when read.
+
+During normal operation:
+
+* One instruction is writing out one or two results to the register bank.
+  * In case of LDR/STR with writeback, two results are being written to the
+    register bank in a single cycle. 
+  * All other instructions write out one result to the register bank per cycle.
+* The previous instruction is accessing the cache/TLB RAM.
+* The previous instruction is accessing the cache/TLB RAM.
+* The previous instruction is performing arithmetic, logic or memory address 
+  generation operations. This stage also confirms or rejects the branch 
+  predictor's decisions.
+* The previous instruction is performing a correction, shift or multiply/MAC 
+  operation.
+* The previous instruction is performing a register or pipeline read.
+* The previous instruction is being decoded.
+* The previous instruction is being sequenced to micro-ops (possibly). 
+    * Most of the time, 1 ARM instruction = 1 micro-op.
+    * The only ARM instructions requiring more than 1 micro-op generation are 
+      BLX, LDM, STM, SWAP and LONG MULTIPLY (They generate a 32-bit result per 
+      micro-op). 
+    * All other ARM instruction decode to just a single micro-op.
+    * This stage also causes branches predicted as taken to be actually 
+      executed. The latency for a successfully predicted taken branch is 
+      6 cycles.
+* The previous instruction is being being decompressed. This is only required 
+  in the Thumb state, else the stage simply passes the instructions on. 
+* The previous instruction is popped off the instruction buffer.
+* The previous instruction is pushed onto the instruction buffer. Branches are 
+  predicted using a bimodal predictor (if applicable).
+* The previous instruction is accessing the cache/TLB RAM.
+* The previous instruction is accessing the cache/TLB RAM.
+* The previous instruction's fetch address is being generated.
+
+The deep pipeline, although uses more resources, allows the ZAP to run at 
+high clock speeds (130MHz @ xc7a35t256g-3 FPGA).
+
+The ZAP pipeline has an efficient automatic dual forwarding network with 
+interlock detection hardware. This is done automatically and no software 
+intervention is required. This complex feedback logic guarantees that almost 
+all micro-ops/instructions execute at a rate of 1 every cycle.
+
+The only times a pipeline stalls is when:
+
+* An instruction uses a register that is a data (not pointer) destination for a 
+  load instruction within 5 cycles (assuming a load hit).
+* An instruction uses a register that is a destination for multiply/MAC within
+  5 (short) or 6 (long) cycles.
+* Two back to back instructions require non-zero shift and the second 
+  instruction's operand overlaps with the first instruction's destination.
+
+This snippet of code takes 5 cycles to execute:
+        ADD R1, R2, R2 LSL #10 (1 cycle)
+        ADD R1, R1, R1 LSL #20 (2 cycles)
+        ADD R3, R4, R5, LSR #3 (1 cycles)
+        ADD R3, R3, R3 (1 cycles)
+
+This snippet of code takes only 4 cycles:
+        ADD R1, R2, R2, R2 (1 cycle)
+        ADD R1, R1, R1 LSL #2 (1 cycle)
+        ADD R3, R4, R5 LSR #3 (1 cycle)
+        ADD R3, R3, R3 (1 cycle)
+
+The ZAP can execute LDR/STR with writeback in a single cycle. This is possible
+as the ZAP uses a register file with two write ports.
+
+-------------------------------------------------------------------------------
+1.2. Bus Interface
+-------------------------------------------------------------------------------
+
+ZAP uses a Von Neumann memory model and features a common 32-bit Wishbone B3 
+bus. The processor can generate byte, halfword or word accesses. The processor 
+uses CTI and BTE signals to allow the bus to function more efficiently. 
+Registered feedback mode is supported for higher performance. Note that 
+multiprocessing is not readily supported and hence, SWAP instructions do not 
+actually perform locked transfers.
+
+-------------------------------------------------------------------------------
+1.4. Cache, MMU and CP15 Commands
+-------------------------------------------------------------------------------
+
+Please refer to ref [1] for CP15 CSR architectural requirements. The ZAP
+implements the following software accessinble registers within its CP15
+coprocessor.
 
  * Register 1: Cache and MMU control.
  * Register 2: Translation Base.
@@ -71,9 +142,55 @@ Please refer to the ARM DDI 0100E specification for CP15 CSR requirements.
      * CASE_CLEAN_AND_FLUSH_D_CACHE      = 7'b000_1110
  * Register 13: FCSE Register.
 
-===============================================================================
-Usage
-===============================================================================
+-------------------------------------------------------------------------------
+1.5. CPU Top Level Configuration
+-------------------------------------------------------------------------------
+
+Note that all parameters should be 2^n. Cache size should be multiple of line
+size.
+
++--------------------------+--------+-----------------------------------------+
+| Parameter                | Default| Description                             |
++--------------------------+--------+-----------------------------------------+
+| BP_ENTRIES               |  1024  | Predictor RAM depth.                    |
+| FIFO_DEPTH               |  4     | Command FIFO depth.                     |
+| STORE_BUFFER_DEPTH       |  16    | Depth of the store buffer.              |
+| DATA_SECTION_TLB_ENTRIES |  2     | Section TLB entries.                    |
+| DATA_LPAGE_TLB_ENTRIES   |  2     | Large page TLB entries.                 |
+| DATA_SPAGE_TLB_ENTRIES   |  32    | Small page TLB entries.                 |
+| DATA_FPAGE_TLB_ENTRIES   |  2     | Tiny page TLB entries.                  |
+| DATA_CACHE_SIZE          |  4096  | Cache size in bytes.                    |
+| CODE_SECTION_TLB_ENTRIES |  2     | Section TLB entries.                    |
+| CODE_LPAGE_TLB_ENTRIES   |  2     | Large page TLB entries.                 |
+| CODE_SPAGE_TLB_ENTRIES   |  32    | Small page TLB entries.                 |
+| CODE_FPAGE_TLB_ENTRIES   |  2     | Tiny page TLB entries.                  |
+| CODE_CACHE_SIZE          |  4096  | Cache size in bytes.                    |
+| DATA_CACHE_LINE          |  64    | Cache Line for Data (B). Keep > 4       |
+| CODE_CACHE_LINE          |  64    | Cache Line for Code (B). Keep > 4       |
++--------------------------+--------+-----------------------------------------+
+
+-------------------------------------------------------------------------------
+1.6. CPU Top Level IO Interface 
+-------------------------------------------------------------------------------
+
++----------+------------------------------------------------------------------+ 
+| Port     | Description                                                      | 
+|----------|------------------------------------------------------------------|
+|i_clk     |  Clock. All logic is clocked on the rising edge of this signal.  | 
+|i_reset   |  Active high global reset signal. Assert for >= 1 clock cycle.   | 
+|i_irq     |  Interrupt. Level Sensitive. Signal is internally synced.        |  
+|i_fiq     |  Fast Interrupt. Level Sensitive. Signal is internally synced.   | 
+|o_wb_cyc  |  Wishbone CYC signal.                                            | 
+|o_wb_stb  |  WIshbone STB signal.                                            | 
+|o_wb_adr  |  Wishbone address signal. (32)                                   | 
+|o_wb_we   |  Wishbone write enable signal.                                   | 
+|o_wb_dat  |  Wishbone data output signal. (32)                               | 
+|o_wb_sel  |  Wishbone byte select signal. (4)                                | 
+|o_wb_cti  |  Wishbone CTI (Classic, Incrementing Burst, EOB) (3)             | 
+|o_wb_bte  |  Wishbone BTE (Linear) (2)                                       | 
+|i_wb_ack  |  Wishbone ack signal. Wishbone registered cycles recommended.    | 
+|i_wb_dat  |  Wishbone data input signal. (32)                                | 
++----------+------------------------------------------------------------------+
 
  * To use the ZAP processor in your project:
    * Get the project files:
@@ -116,61 +233,16 @@ Usage
      it in registered feedback cycle mode.
    * Interrupts are level sensitive and are internally synced to clock.
 
-CPU Top Level Configuration:
-
-Note that all parameters should be 2^n. Cache size should be multiple of line
-size.
-
-+--------------------------+--------+-----------------------------------------+
-| Parameter                | Default| Description                             |
-+--------------------------+--------+-----------------------------------------+
-| BP_ENTRIES               |  1024  | Predictor RAM depth.                    |
-| FIFO_DEPTH               |  4     | Command FIFO depth.                     |
-| STORE_BUFFER_DEPTH       |  16    | Depth of the store buffer.              |
-| DATA_SECTION_TLB_ENTRIES |  2     | Section TLB entries.                    |
-| DATA_LPAGE_TLB_ENTRIES   |  2     | Large page TLB entries.                 |
-| DATA_SPAGE_TLB_ENTRIES   |  32    | Small page TLB entries.                 |
-| DATA_FPAGE_TLB_ENTRIES   |  2     | Tiny page TLB entries.                  |
-| DATA_CACHE_SIZE          |  4096  | Cache size in bytes.                    |
-| CODE_SECTION_TLB_ENTRIES |  2     | Section TLB entries.                    |
-| CODE_LPAGE_TLB_ENTRIES   |  2     | Large page TLB entries.                 |
-| CODE_SPAGE_TLB_ENTRIES   |  32    | Small page TLB entries.                 |
-| CODE_FPAGE_TLB_ENTRIES   |  2     | Tiny page TLB entries.                  |
-| CODE_CACHE_SIZE          |  4096  | Cache size in bytes.                    |
-| DATA_CACHE_LINE          |  64    | Cache Line for Data (B). Keep > 4       |
-| CODE_CACHE_LINE          |  64    | Cache Line for Code (B). Keep > 4       |
-+--------------------------+--------+-----------------------------------------+
-
-CPU Top Level IO Interface 
-
-+----------+------------------------------------------------------------------+ 
-| Port     | Description                                                      | 
-|----------|------------------------------------------------------------------|
-|i_clk     |  Clock. All logic is clocked on the rising edge of this signal.  | 
-|i_reset   |  Active high global reset signal. Assert for >= 1 clock cycle.   | 
-|i_irq     |  Interrupt. Level Sensitive. Signal is internally synced.        |  
-|i_fiq     |  Fast Interrupt. Level Sensitive. Signal is internally synced.   | 
-|o_wb_cyc  |  Wishbone CYC signal.                                            | 
-|o_wb_stb  |  WIshbone STB signal.                                            | 
-|o_wb_adr  |  Wishbone address signal. (32)                                   | 
-|o_wb_we   |  Wishbone write enable signal.                                   | 
-|o_wb_dat  |  Wishbone data output signal. (32)                               | 
-|o_wb_sel  |  Wishbone byte select signal. (4)                                | 
-|o_wb_cti  |  Wishbone CTI (Classic, Incrementing Burst, EOB) (3)             | 
-|o_wb_bte  |  Wishbone BTE (Linear) (2)                                       | 
-|i_wb_ack  |  Wishbone ack signal. Wishbone registered cycles recommended.    | 
-|i_wb_dat  |  Wishbone data input signal. (32)                                | 
-+----------+------------------------------------------------------------------+
-
 ===============================================================================
-Project Environment
+3. Project Environment
 ===============================================================================
 
 The project environment requires Docker to be installed at your site. I 
-(Revanth Kamaraj) would like to thank Erez Binyamin for their support.
+(Revanth Kamaraj) would like to thank Erez Binyamin for adding Docker support
+to allow the core to be used more widely.
 
 -------------------------------------------------------------------------------
-Running/Creating TCs
+3.1. Running TCs
 -------------------------------------------------------------------------------
 
 To run all/a specific TC, do:
@@ -184,7 +256,9 @@ To remove existing object/simulation files, do:
 
 > make clean
 
-Adding TCs:
+-------------------------------------------------------------------------------
+3.2. Adding TCs
+-------------------------------------------------------------------------------
 
  * Create a folder src/ts/TEST_NAME
  * Please note that these will be run on the sample TB SOC platform.
@@ -241,13 +315,14 @@ Adding TCs:
 
 
 -------------------------------------------------------------------------------
-Running RTL Lint
+3.3. Running RTL Lint
 -------------------------------------------------------------------------------
 
+To run RTL lint, simply do:
 > make lint
 
 ===============================================================================
-Timing and Resource Utilization 
+4. Timing and Resource Utilization 
 ===============================================================================
 
 Synthesis has been run with Vivado 2021.2 (64-Bit). Design uses default 
@@ -283,13 +358,13 @@ FPGA. Synthesis has been run with the highest speed grade.
 +-------+-------------+-----------------+
 
 ===============================================================================
-References
+5. References
 ===============================================================================
 
 [1] ARM Architecture Specification (ARM DDI 0100E)
 
 ===============================================================================
-License
+6. License
 ===============================================================================
 
 Copyright (C) 2016-2022  Revanth Kamaraj
@@ -307,4 +382,3 @@ You should have received a copy of the GNU General Public License along with
 this program; if not, write to the Free Software Foundation, Inc., 51 Franklin 
 Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-===============================================================================                                                 
