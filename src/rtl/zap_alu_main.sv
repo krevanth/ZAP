@@ -151,15 +151,12 @@ module zap_alu_main #(
 
         output logic  [$clog2   (PHY_REGS)-1:0]   o_mem_srcdest_index_ff,                 // LD/ST data register.
         output logic                              o_mem_load_ff,                          // LD/ST load indicator.
-        output logic                              o_mem_store_ff,                         // LD/ST store indicator.
         output logic [31:0]                       o_mem_address_ff,                       // LD/ST address to access.
         output logic                              o_mem_unsigned_byte_enable_ff,          // uint8_t
         output logic                              o_mem_signed_byte_enable_ff,            // int8_t
         output logic                              o_mem_signed_halfword_enable_ff,        // int16_t
         output logic                              o_mem_unsigned_halfword_enable_ff,      // uint16_t
-        output logic [31:0]                       o_mem_srcdest_value_ff,                 // LD/ST value to store.
         output logic                              o_mem_translate_ff,                     // LD/ST force user view of memory.
-        output logic [3:0]                        o_ben_ff,                               // LD/ST byte enables (only for STore instructions).
         output logic  [31:0]                      o_address_nxt,                          // D pin of address register to drive TAG RAMs.
 
         // -------------------------------------------------------------
@@ -388,25 +385,14 @@ begin
                 // Load or store must come up only if an actual LDR/STR is
                 // detected.
                 o_mem_load_ff                    <= o_dav_nxt ? i_mem_load_ff : 1'd0;                    
-                o_mem_store_ff                   <= o_dav_nxt ? i_mem_store_ff: 1'd0;                   
 
                 o_mem_unsigned_byte_enable_ff    <= i_mem_unsigned_byte_enable_ff;    
                 o_mem_signed_byte_enable_ff      <= i_mem_signed_byte_enable_ff;      
                 o_mem_signed_halfword_enable_ff  <= i_mem_signed_halfword_enable_ff;  
                 o_mem_unsigned_halfword_enable_ff<= i_mem_unsigned_halfword_enable_ff;
                 o_mem_translate_ff               <= i_mem_translate_ff;  
-
-                //
-                // The value to store will have to be duplicated for easier
-                // memory controller design. See the duplicate() function.
-                //
-                o_mem_srcdest_value_ff           <= mem_srcdest_value_nxt; 
-
                 sleep_ff                         <= sleep_nxt;
                 o_und_ff                         <= i_und_ff;
-
-                // Generating byte enables based on the data type and address.
-                o_ben_ff                         <= ben_nxt;
 
                 // For debug
                 o_decompile                     <= i_decompile;
@@ -890,7 +876,6 @@ begin
                 o_und_ff                         <= 0;
                 sleep_ff                         <= 0;
                 o_mem_load_ff                    <= 0;
-                o_mem_store_ff                   <= 0;
 end
 endtask
 
@@ -991,14 +976,11 @@ begin
                 o_mem_srcdest_index_ff           <= 0; 
                 o_mem_srcdest_index_ff           <= 0; 
                 o_mem_load_ff                    <= 0; 
-                o_mem_store_ff                   <= 0; 
                 o_mem_unsigned_byte_enable_ff    <= 0; 
                 o_mem_signed_byte_enable_ff      <= 0; 
                 o_mem_signed_halfword_enable_ff  <= 0; 
                 o_mem_unsigned_halfword_enable_ff<= 0; 
                 o_mem_translate_ff               <= 0; 
-                o_mem_srcdest_value_ff           <= 0; 
-                o_ben_ff                         <= 0; 
                 o_decompile                      <= 0; 
 end
 endtask

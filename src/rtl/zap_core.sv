@@ -314,7 +314,32 @@ logic                            alu_ubyte_ff;
 logic                            alu_shalf_ff;
 logic                            alu_uhalf_ff;
 logic [31:0]                     alu_address_ff;
+logic                            alu_mem_translate_ff;
 logic [31:0]                     alu_address_nxt;
+logic                            alu_data_wb_we;
+logic                            alu_data_wb_cyc;
+logic                            alu_data_wb_stb;
+logic [31:0]                     alu_data_wb_dat;
+logic [3:0]                      alu_data_wb_sel;
+
+// Post ALU
+logic [31:0]                     postalu_alu_result_ff;
+logic                            postalu_abt_ff;
+logic                            postalu_irq_ff;
+logic                            postalu_fiq_ff;
+logic                            postalu_swi_ff;
+logic                            postalu_dav_ff;
+logic [31:0]                     postalu_pc_plus_8_ff;
+logic [$clog2(PHY_REGS)-1:0]     postalu_destination_index_ff;
+logic [FLAG_WDT-1:0]             postalu_flags_ff;
+logic [$clog2(PHY_REGS)-1:0]     postalu_mem_srcdest_index_ff;
+logic                            postalu_mem_load_ff;
+logic                            postalu_und_ff;
+logic                            postalu_sbyte_ff;
+logic                            postalu_ubyte_ff;
+logic                            postalu_shalf_ff;
+logic                            postalu_uhalf_ff;
+logic [31:0]                     postalu_address_ff;
 
 // Memory
 logic [31:0]                     memory_alu_result_ff;
@@ -345,6 +370,7 @@ logic [64*8-1:0]                 decode_decompile;
 logic [64*8-1:0]                 issue_decompile;
 logic [64*8-1:0]                 shifter_decompile;
 logic [64*8-1:0]                 alu_decompile;
+logic [64*8-1:0]                 postalu_decompile;
 logic [64*8-1:0]                 memory_decompile; 
 logic [64*8-1:0]                 rb_decompile;
 
@@ -352,12 +378,12 @@ logic unused;
 logic [(8*8)-1:0] CPU_MODE; // Max 8 characters i.e. 64-bit string.
 
 always_comb unused = |{alu_address_nxt[1:0], rb_decompile, CPU_MODE, alu_cpsr_nxt[31:30], alu_cpsr_nxt[28:0],
-                 predecode_inst[39:36]};
+                       predecode_inst[39:36]};
 
 // ----------------------------------------------------------------------------
 
 always_comb o_cpsr                   = alu_flags_ff[`ZAP_CPSR_MODE];
-always_comb o_data_wb_adr            = {alu_address_ff[31:2], 2'd0};
+always_comb o_data_wb_adr            = {postalu_address_ff[31:2], 2'd0};
 always_comb o_data_wb_adr_nxt        = {alu_address_nxt[31:2], 2'd0};
 always_comb o_instr_wb_we            = 1'd0;
 always_comb o_instr_wb_sel           = 4'b1111;
@@ -365,8 +391,10 @@ always_comb reset                    = i_reset;
 always_comb irq                      = i_irq;   
 always_comb fiq                      = i_fiq;   
 always_comb data_stall               = o_data_wb_stb && o_data_wb_cyc && !i_data_wb_ack;
-always_comb code_stall               = writeback_mask ? 1'd0 : ((!o_instr_wb_stb && !o_instr_wb_cyc) || !i_instr_wb_ack);
-always_comb instr_valid              = writeback_mask ? 1'd0 : (o_instr_wb_stb && o_instr_wb_cyc && i_instr_wb_ack & !shelve);
+always_comb code_stall               = writeback_mask ? 1'd0 : ((!o_instr_wb_stb && !o_instr_wb_cyc) || 
+                                       !i_instr_wb_ack);
+always_comb instr_valid              = writeback_mask ? 1'd0 : (o_instr_wb_stb && o_instr_wb_cyc && 
+                                       i_instr_wb_ack & !shelve);
 always_comb pipeline_is_not_empty    = predecode_val                      ||     
                                   (decode_condition_code    != NV)   ||
                                   (issue_condition_code_ff  != NV)   ||
@@ -711,6 +739,11 @@ u_zap_issue_main
         .i_shifter_mem_load_ff          (shifter_mem_load_ff),
         .i_alu_mem_load_ff              (alu_mem_load_ff),
         .i_memory_mem_load_ff           (memory_mem_load_ff),
+        .i_postalu_destination_index_ff (postalu_destination_index_ff), // ADDED
+        .i_postalu_dav_ff               (postalu_dav_ff), // ADDED
+        .i_postalu_destination_value_ff (postalu_alu_result_ff), // ADDED
+        .i_postalu_mem_srcdest_index_ff (postalu_mem_srcdest_index_ff), // ADDED
+        .i_postalu_mem_load_ff          (postalu_mem_load_ff), // ADDED
 
         // Switch indicator.
         .i_switch_ff                    (decode_switch_ff),
@@ -871,19 +904,12 @@ zap_alu_main #(
 )
 u_zap_alu_main
 (
-        .i_decompile                    (shifter_decompile),
-        .o_decompile                    (alu_decompile),
-
-        .i_taken_ff                     (shifter_taken_ff),
-        .o_confirm_from_alu             (confirm_from_alu),
-
-        .i_pc_ff                        (shifter_pc_ff),
-
-        .i_und_ff                       (shifter_und_ff),
-        .o_und_ff                       (alu_und_ff),
-
-        .i_nozero_ff                    ( shifter_nozero_ff ),
-
+         .i_decompile                    (shifter_decompile),
+         .i_taken_ff                     (shifter_taken_ff),
+         .o_confirm_from_alu             (confirm_from_alu),
+         .i_pc_ff                        (shifter_pc_ff),
+         .i_und_ff                       (shifter_und_ff),
+         .i_nozero_ff                    ( shifter_nozero_ff ),
          .i_clk                          (i_clk),
          .i_reset                        (reset),
          .i_clear_from_writeback         (clear_from_writeback),   
@@ -891,21 +917,17 @@ u_zap_alu_main
          .i_cpsr_nxt                     (cpsr_nxt), 
          .i_flag_update_ff               (shifter_flag_update_ff),
          .i_switch_ff                    (shifter_switch_ff),
-
          .i_force32align_ff              (shifter_force32_ff),
-
          .i_mem_srcdest_value_ff        (shifter_mem_srcdest_value_ff),
          .i_alu_source_value_ff         (shifter_alu_source_value_ff), 
          .i_shifted_source_value_ff     (shifter_shifted_source_value_ff),
          .i_shift_carry_ff              (shifter_shift_carry_ff),
          .i_shift_sat_ff                (shifter_shift_sat_ff),
          .i_pc_plus_8_ff                (shifter_pc_plus_8_ff),
-
          .i_abt_ff                      (shifter_abt_ff), 
          .i_irq_ff                      (shifter_irq_ff), 
          .i_fiq_ff                      (shifter_fiq_ff), 
          .i_swi_ff                      (shifter_swi_ff),
-
          .i_mem_srcdest_index_ff        (shifter_mem_srcdest_index_ff),     
          .i_mem_load_ff                 (shifter_mem_load_ff),                     
          .i_mem_store_ff                (shifter_mem_store_ff),                         
@@ -915,60 +937,110 @@ u_zap_alu_main
          .i_mem_signed_halfword_enable_ff(shifter_mem_signed_halfword_enable_ff),        
          .i_mem_unsigned_halfword_enable_ff(shifter_mem_unsigned_halfword_enable_ff),      
          .i_mem_translate_ff            (shifter_mem_translate_ff),  
-
          .i_condition_code_ff           (shifter_condition_code_ff),
          .i_destination_index_ff        (shifter_destination_index_ff),
          .i_alu_operation_ff            (shifter_alu_operation_ff),  // {OP,S}
-
          .i_data_mem_fault              (i_data_wb_err | i_dcache_err2),
-
          .o_alu_result_nxt              (alu_alu_result_nxt),
-
-         .o_alu_result_ff               (alu_alu_result_ff),
-
-         .o_abt_ff                      (alu_abt_ff),
-         .o_irq_ff                      (alu_irq_ff),
-         .o_fiq_ff                      (alu_fiq_ff),
-         .o_swi_ff                      (alu_swi_ff),
-
-         .o_dav_ff                      (alu_dav_ff),
-         .o_dav_nxt                     (alu_dav_nxt),
-
-         .o_pc_plus_8_ff                (alu_pc_plus_8_ff),
-
-         // Data access address. Ignore [1:0].
-         .o_mem_address_ff              (alu_address_ff),    
-         .o_clear_from_alu              (clear_from_alu),
+         .o_address_nxt                 (alu_address_nxt),
          .o_pc_from_alu                 (pc_from_alu),
-         .o_destination_index_ff        (alu_destination_index_ff),
-         .o_flags_ff                    (alu_flags_ff),       // Output flags.
          .o_flags_nxt                   (alu_cpsr_nxt),
+         .o_clear_from_alu              (clear_from_alu),
 
+         .o_decompile                      (alu_decompile),             
+         .o_alu_result_ff                  (alu_alu_result_ff),         
+         .o_und_ff                         (alu_und_ff),                
+         .o_abt_ff                         (alu_abt_ff),
+         .o_irq_ff                         (alu_irq_ff),
+         .o_fiq_ff                         (alu_fiq_ff),
+         .o_swi_ff                         (alu_swi_ff),
+         .o_dav_ff                         (alu_dav_ff),
+         .o_dav_nxt                        (alu_dav_nxt),
+         .o_pc_plus_8_ff                   (alu_pc_plus_8_ff),
+         .o_mem_address_ff                 (alu_address_ff),    
+         .o_destination_index_ff           (alu_destination_index_ff),
+         .o_flags_ff                       (alu_flags_ff),       
          .o_mem_srcdest_index_ff           (alu_mem_srcdest_index_ff),     
          .o_mem_load_ff                    (alu_mem_load_ff),                     
-
-        /* verilator lint_off PINCONNECTEMPTY */
-
-         .o_mem_store_ff                   (), 
-         .o_ben_ff                         (), 
-         .o_mem_srcdest_value_ff           (), 
-
-        /* verilator lint_on PINCONNECTEMPTY */
-
- 
          .o_mem_unsigned_byte_enable_ff    (alu_ubyte_ff),     
          .o_mem_signed_byte_enable_ff      (alu_sbyte_ff),       
          .o_mem_signed_halfword_enable_ff  (alu_shalf_ff),        
          .o_mem_unsigned_halfword_enable_ff(alu_uhalf_ff),      
+         .o_mem_translate_ff               (alu_mem_translate_ff),           // Must go to post ALU.
+
+         .o_data_wb_we_ff                  (alu_data_wb_we),
+         .o_data_wb_cyc_ff                 (alu_data_wb_cyc),
+         .o_data_wb_stb_ff                 (alu_data_wb_stb),
+         .o_data_wb_dat_ff                 (alu_data_wb_dat),
+         .o_data_wb_sel_ff                 (alu_data_wb_sel)
+
+);
+
+// ====================
+// POST ALU
+// ====================
+
+zap_postalu_main #(
+        .PHY_REGS(PHY_REGS),
+        .FLAG_WDT(FLAG_WDT)
+) u_zap_postalu_main (
+         .i_clk                            (i_clk),
+         .i_reset                          (i_reset),
+         .i_data_stall                     (data_stall),
+         .i_clear_from_writeback           (clear_from_writeback),
+         .i_data_mem_fault                 (i_data_wb_err | i_dcache_err2),
+
+         .i_decompile                      (alu_decompile),             
+         .i_alu_result_ff                  (alu_alu_result_ff),         
+         .i_und_ff                         (alu_und_ff),                
+         .i_abt_ff                         (alu_abt_ff),
+         .i_irq_ff                         (alu_irq_ff),
+         .i_fiq_ff                         (alu_fiq_ff),
+         .i_swi_ff                         (alu_swi_ff),
+         .i_dav_ff                         (alu_dav_ff),
+         .i_pc_plus_8_ff                   (alu_pc_plus_8_ff),
+         .i_mem_address_ff                 (alu_address_ff),    
+         .i_destination_index_ff           (alu_destination_index_ff),
+         .i_flags_ff                       (alu_flags_ff),       
+         .i_mem_srcdest_index_ff           (alu_mem_srcdest_index_ff),     
+         .i_mem_load_ff                    (alu_mem_load_ff),                     
+         .i_mem_unsigned_byte_enable_ff    (alu_ubyte_ff),     
+         .i_mem_signed_byte_enable_ff      (alu_sbyte_ff),       
+         .i_mem_signed_halfword_enable_ff  (alu_shalf_ff),        
+         .i_mem_unsigned_halfword_enable_ff(alu_uhalf_ff),      
+         .i_mem_translate_ff               (alu_mem_translate_ff),
+
+         .i_data_wb_we_ff                  (alu_data_wb_we),
+         .i_data_wb_cyc_ff                 (alu_data_wb_cyc),
+         .i_data_wb_stb_ff                 (alu_data_wb_stb),
+         .i_data_wb_dat_ff                 (alu_data_wb_dat),
+         .i_data_wb_sel_ff                 (alu_data_wb_sel),
+
+         .o_decompile                      (postalu_decompile),             
+         .o_alu_result_ff                  (postalu_alu_result_ff),         
+         .o_und_ff                         (postalu_und_ff),                
+         .o_abt_ff                         (postalu_abt_ff),
+         .o_irq_ff                         (postalu_irq_ff),
+         .o_fiq_ff                         (postalu_fiq_ff),
+         .o_swi_ff                         (postalu_swi_ff),
+         .o_dav_ff                         (postalu_dav_ff),
+         .o_pc_plus_8_ff                   (postalu_pc_plus_8_ff),
+         .o_mem_address_ff                 (postalu_address_ff),    
+         .o_destination_index_ff           (postalu_destination_index_ff),
+         .o_flags_ff                       (postalu_flags_ff),       
+         .o_mem_srcdest_index_ff           (postalu_mem_srcdest_index_ff),     
+         .o_mem_load_ff                    (postalu_mem_load_ff),                     
+         .o_mem_unsigned_byte_enable_ff    (postalu_ubyte_ff),     
+         .o_mem_signed_byte_enable_ff      (postalu_sbyte_ff),       
+         .o_mem_signed_halfword_enable_ff  (postalu_shalf_ff),        
+         .o_mem_unsigned_halfword_enable_ff(postalu_uhalf_ff),      
          .o_mem_translate_ff               (o_mem_translate),
-         .o_address_nxt                    (alu_address_nxt),
 
-        .o_data_wb_we_ff   (o_data_wb_we),
-        .o_data_wb_cyc_ff  (o_data_wb_cyc),
-        .o_data_wb_stb_ff  (o_data_wb_stb),
-        .o_data_wb_dat_ff  (o_data_wb_dat),
-        .o_data_wb_sel_ff  (o_data_wb_sel)
-
+         .o_data_wb_we_ff                  (o_data_wb_we),
+         .o_data_wb_cyc_ff                 (o_data_wb_cyc),
+         .o_data_wb_stb_ff                 (o_data_wb_stb),
+         .o_data_wb_dat_ff                 (o_data_wb_dat),
+         .o_data_wb_sel_ff                 (o_data_wb_sel)
 );
 
 // ====================
@@ -980,48 +1052,37 @@ zap_memory_main #(
 )
 u_zap_memory_main
 (
-        .i_decompile                    (alu_decompile),
         .o_decompile                    (memory_decompile),
-
-        .i_und_ff                       (alu_und_ff),
         .o_und_ff                       (memory_und_ff),
 
-        .i_mem_address_ff               (alu_address_ff[1:0]),
-
-        
+       
         .i_clk                          (i_clk),                      
         .i_reset                        (reset),
-
-        .i_sbyte_ff                     (alu_sbyte_ff),     // Signed byte.
-        .i_ubyte_ff                     (alu_ubyte_ff),     // Unsigned byte.
-        .i_shalf_ff                     (alu_shalf_ff),     // Signed half word.
-        .i_uhalf_ff                     (alu_uhalf_ff),     // Unsigned half word.
-        
         .i_clear_from_writeback         (clear_from_writeback),
         .i_data_stall                   (data_stall),
-        .i_alu_result_ff                (alu_alu_result_ff),
-        .i_flags_ff                     (alu_flags_ff), 
-        
-        .i_mem_load_ff                  (alu_mem_load_ff),
 
-        .i_mem_rd_data                 (i_data_wb_dat),// From memory.
+        .i_decompile                    (postalu_decompile),
+        .i_alu_result_ff                (postalu_alu_result_ff),
+        .i_und_ff                       (postalu_und_ff),
+        .i_mem_address_ff               (postalu_address_ff[1:0]),
+        .i_sbyte_ff                     (postalu_sbyte_ff),     // Signed byte.
+        .i_ubyte_ff                     (postalu_ubyte_ff),     // Unsigned byte.
+        .i_shalf_ff                     (postalu_shalf_ff),     // Signed half word.
+        .i_uhalf_ff                     (postalu_uhalf_ff),     // Unsigned half word.
+        .i_flags_ff                     (postalu_flags_ff), 
+        .i_mem_load_ff                  (postalu_mem_load_ff),
+        .i_dav_ff                       (postalu_dav_ff),
+        .i_pc_plus_8_ff                 (postalu_pc_plus_8_ff),
+        .i_destination_index_ff         (postalu_destination_index_ff),
+        .i_irq_ff                       (postalu_irq_ff),
+        .i_fiq_ff                       (postalu_fiq_ff),
+        .i_instr_abort_ff               (postalu_abt_ff),
+        .i_swi_ff                       (postalu_swi_ff),
+        .i_mem_srcdest_index_ff         (postalu_mem_srcdest_index_ff), 
 
+        .i_mem_rd_data                  (i_data_wb_dat),// From memory.
         .i_mem_fault                    ({i_dcache_err2, i_data_wb_err}),      // From cache.
         .o_mem_fault                    (memory_data_abt_ff[1:0]),         
-
-
-        .i_dav_ff                       (alu_dav_ff),
-        .i_pc_plus_8_ff                 (alu_pc_plus_8_ff),
-         
-        .i_destination_index_ff         (alu_destination_index_ff),
-         
-        .i_irq_ff                       (alu_irq_ff),
-        .i_fiq_ff                       (alu_fiq_ff),
-        .i_instr_abort_ff               (alu_abt_ff),
-        .i_swi_ff                       (alu_swi_ff),
-        
-        // Used to speed up loads. 
-        .i_mem_srcdest_index_ff         (alu_mem_srcdest_index_ff), 
 
         // Can come in handy since this is reused for several other things.
         .i_mem_srcdest_value_ff         (o_data_wb_dat),                        
@@ -1041,9 +1102,7 @@ u_zap_memory_main
         .o_instr_abort_ff               (memory_instr_abort_ff),
          
         .o_mem_load_ff                  (memory_mem_load_ff),
-
-
-        .o_mem_rd_data                 (memory_mem_rd_data)
+        .o_mem_rd_data                  (memory_mem_rd_data)
 );
 
 // ==================
