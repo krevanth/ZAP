@@ -88,6 +88,7 @@ localparam IDLE                         = 0;
 localparam CACHE_CLEAN_GET_ADDRESS      = 1;
 localparam CACHE_CLEAN_WRITE            = 2;
 localparam CACHE_INV                    = 3;
+localparam CACHE_CLEAN_WRITE_PRE        = 4;
 
 localparam BLK_CTR_PAD = 32 - $clog2(NUMBER_OF_DIRTY_BLOCKS) - 1;
 localparam ADR_CTR_PAD = 32 - $clog2(CACHE_LINE/4) - 1;
@@ -100,12 +101,14 @@ logic [(CACHE_SIZE/CACHE_LINE)-1:0]        valid;
 logic [`ZAP_CACHE_TAG_WDT-1:0]             tag_ram_wr_data;
 logic                                      tag_ram_wr_en;
 logic [$clog2(CACHE_SIZE/CACHE_LINE)-1:0]  tag_ram_wr_addr;
-logic [$clog2(CACHE_SIZE/CACHE_LINE)-1:0]  tag_ram_rd_addr;
+logic [$clog2(CACHE_SIZE/CACHE_LINE)-1:0]  tag_ram_rd_addr, tag_ram_rd_addr_del;
 logic                                      tag_ram_clear;
 logic                                      tag_ram_clean;
-logic [1:0]                                state_ff, state_nxt;
+logic [2:0]                                state_ff, state_nxt;
 logic [$clog2(NUMBER_OF_DIRTY_BLOCKS):0]   blk_ctr_ff, blk_ctr_nxt;
 logic [$clog2(CACHE_LINE/4):0]             adr_ctr_ff, adr_ctr_nxt;
+logic                                      cache_tag_dirty;
+logic                                      cache_tag_valid;
 
 logic                                      unused;
 logic [BLK_CTR_PAD-1:0]                    dummy;
@@ -149,24 +152,51 @@ zap_ram_simple #(.WIDTH(`ZAP_CACHE_TAG_WDT), .DEPTH(CACHE_SIZE/CACHE_LINE)) u_za
 
 always_ff @ (posedge i_clk)
 begin
-        o_cache_tag_dirty <= dirty [ tag_ram_rd_addr ];
-
-        if ( i_reset )
-                dirty <= 0;
-        else if ( tag_ram_wr_en )
-                dirty [ tag_ram_wr_addr ]   <= i_cache_tag_dirty;
-        else if ( tag_ram_clean )
-                dirty[tag_ram_rd_addr] <= 1'd0;// BUG FIX dirty_nxt;
+        tag_ram_rd_addr_del <= tag_ram_rd_addr;
 end
 
 always_ff @ (posedge i_clk)
 begin
-        o_cache_tag_valid <= valid [ tag_ram_rd_addr ];
+        o_cache_tag_dirty <= cache_tag_dirty;
+        cache_tag_dirty   <= tag_ram_rd_addr == tag_ram_wr_addr && tag_ram_wr_en ? i_cache_tag_dirty : dirty [ tag_ram_rd_addr ];
+
+        if ( i_reset )
+        begin
+                dirty <= 0;
+        end
+        else if ( tag_ram_wr_en )
+        begin
+                dirty [ tag_ram_wr_addr ]   <= i_cache_tag_dirty;
+                
+                if ( tag_ram_wr_addr == tag_ram_rd_addr_del )
+                begin
+                        o_cache_tag_dirty <= i_cache_tag_dirty;
+                end
+        end
+        else if ( tag_ram_clean )
+        begin
+                dirty[tag_ram_rd_addr] <= 1'd0;
+        end
+end
+
+always_ff @ (posedge i_clk)
+begin
+        o_cache_tag_valid <= cache_tag_valid;
+        cache_tag_valid   <= tag_ram_rd_addr == tag_ram_wr_addr && tag_ram_wr_en ? 1'd1 : valid [ tag_ram_rd_addr ];
 
         if ( tag_ram_clear || !i_cache_en || i_reset )
+        begin
                 valid <= 0;
+        end
         else if ( tag_ram_wr_en )
+        begin
                 valid [ tag_ram_wr_addr ]   <= 1'd1;
+
+                if ( tag_ram_wr_addr == tag_ram_rd_addr_del )
+                begin
+                        o_cache_tag_valid <= 1'd1;
+                end
+        end
 end
 
 // ----------------------------------------------------------------------------
@@ -249,14 +279,14 @@ begin:blk1
                 if ( i_cache_clean_req )
                 begin
                         tag_ram_wr_en = 0;
-                        blk_ctr_nxt = 0;
+                        blk_ctr_nxt   = 0;
 
-                        state_nxt = CACHE_CLEAN_GET_ADDRESS;
+                        state_nxt     = CACHE_CLEAN_GET_ADDRESS;
                 end
                 else if ( i_cache_inv_req )
                 begin
                         tag_ram_wr_en = 0;
-                        state_nxt = CACHE_INV;
+                        state_nxt     = CACHE_INV;
                 end
         end        
 
@@ -277,17 +307,23 @@ begin:blk1
                 end
                 else
                 begin
-
                         // Go to state.
-                        state_nxt = CACHE_CLEAN_WRITE;
+                        state_nxt = CACHE_CLEAN_WRITE_PRE;
                 end
 
                 adr_ctr_nxt     = 0; // Initialize address counter.
         end
 
+        CACHE_CLEAN_WRITE_PRE: // Since RAM is pipelined.
+        begin
+                tag_ram_rd_addr = get_tag_ram_rd_addr (blk_ctr_ff, dirty);
+                state_nxt       = CACHE_CLEAN_WRITE;
+        end
+
         CACHE_CLEAN_WRITE:
         begin
                 tag_ram_rd_addr = get_tag_ram_rd_addr (blk_ctr_ff , dirty);
+
                 adr_ctr_nxt = adr_ctr_ff + ((i_wb_ack && o_wb_stb_ff) ? 
                               {{(ZERO_WDT-1){1'd0}}, 1'd1} : 
                               {ZERO_WDT{1'd0}});
@@ -307,6 +343,7 @@ begin:blk1
                 begin
                         shamt = {{(ADR_CTR_PAD-5){1'd0}}, adr_ctr_nxt, 5'd0};
                         {line_dummy, data}  = o_cache_line >> shamt;
+
                         pa    = {o_cache_tag[`ZAP_CACHE_TAG__PA], {$clog2(CACHE_LINE){1'd0}}};
 
                         // Perform a Wishbone write using Physical Address.
@@ -321,8 +358,8 @@ begin:blk1
 
         CACHE_INV:
         begin
-                tag_ram_clear = 1'd1;
-                state_nxt     = IDLE;
+                tag_ram_clear    = 1'd1;
+                state_nxt        = IDLE;
                 o_cache_inv_done = 1'd1;
         end
         

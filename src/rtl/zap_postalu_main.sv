@@ -141,7 +141,8 @@ begin
                 o_swi_ff                         <= 'd0;
                 o_und_ff                         <= 'd0;
                 sleep_ff                         <= 'd0;
-                o_mem_load_ff                    <= 'd0;
+                o_data_wb_cyc_ff                 <= 'd0;
+                o_data_wb_stb_ff                 <= 'd0;
         end
         else if ( !i_data_stall )
         begin
@@ -159,6 +160,8 @@ begin
                         o_und_ff                         <= 'd0;
                         sleep_ff                         <= 'd0;
                         o_mem_load_ff                    <= 'd0;
+                        o_data_wb_cyc_ff                 <= 'd0;
+                        o_data_wb_stb_ff                 <= 'd0;
                 end
                 else
                 begin
