@@ -81,12 +81,13 @@ interlock detection hardware. This is done automatically and no software
 intervention is required. This complex feedback logic guarantees that almost 
 all micro-ops/instructions execute at a rate of 1 every cycle.
 
-The only times a pipeline stalls is when:
+The only times a pipeline stalls is when (assume 100% cache hit rate):
 
 * An instruction uses a register that is a data (not pointer) destination for a 
   load instruction within 5 cycles (assuming a load hit).
-* An instruction uses a register that is a destination for multiply/MAC within
-  5 (short) or 6 (long) cycles.
+* The pipeline is executing a multiply/MAC instruction (4 cycles(short)/5 cycles(long)). 
+  * An instruction that uses a register that is a destination for multiply/MAC adds +1 to 
+    the multiply/MAC operation's latency.
 * Two back to back instructions require non-zero shift and the second 
   instruction's operand overlaps with the first instruction's destination.
 
