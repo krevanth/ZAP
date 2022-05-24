@@ -31,6 +31,7 @@ module zap_ram_simple #(
 )
 (
         input logic                          i_clk,
+        input logic                          i_clken,
 
         // Write and read enable.
         input logic                          i_wr_en,
@@ -59,7 +60,7 @@ logic [$clog2(DEPTH)-1:0] rd_addr_st1;
 logic [WIDTH-1:0]         rd_data_st1;
 
 // Hazard Detection Logic
-always_ff @ ( posedge i_clk )
+always_ff @ ( posedge i_clk ) if ( i_clken )
 begin
         if ( i_wr_addr == i_rd_addr && i_wr_en )
                 sel_st1 <= 1'd1;
@@ -68,7 +69,7 @@ begin
 end
 
 // Buffer update logic.
-always_ff @ ( posedge i_clk )
+always_ff @ ( posedge i_clk ) if ( i_clken )
 begin
         if ( i_wr_addr == i_rd_addr && i_wr_en )
                 buffer_st1 <= i_wr_data;
@@ -83,13 +84,13 @@ end
 // ----------------------------------------------------------------------------
 
 // Read logic.
-always_ff @ (posedge i_clk)
+always_ff @ (posedge i_clk) if ( i_clken )
 begin
         mem_data_st1 <= mem [ i_rd_addr ];
 end
 
 // Write logic.
-always_ff @ (posedge i_clk)
+always_ff @ (posedge i_clk) if ( i_clken )
 begin
         if ( i_wr_en )  
                 mem [ i_wr_addr ] <= i_wr_data;
@@ -110,7 +111,7 @@ end
 // Stage 2
 // ----------------------------------------------------------------------------
 
-always_ff @ ( posedge i_clk )
+always_ff @ ( posedge i_clk ) if ( i_clken )
 begin
         if ( i_wr_addr == rd_addr_st1 && i_wr_en )
                 o_rd_data <= i_wr_data ;

@@ -97,6 +97,7 @@ input   logic    [31:0]            i_far,
 input   logic                      i_fault,
 input   logic                      i_cacheable,
 input   logic                      i_busy,
+output  logic                      o_hold,
 
 /* Memory access ports, both NXT and FF. Usually you'll be connecting NXT ports */
 output  logic             o_wb_cyc_ff, o_wb_cyc_nxt,
@@ -249,6 +250,7 @@ begin:blk1
         o_cache_tag_wr_en       = 0;
         o_cache_line            = 0;
         o_cache_line_ben        = 0;
+        o_hold                  = 1'd0;
 
         // Output data port.
         if ( state_ff == UNCACHEABLE )
@@ -396,15 +398,19 @@ begin:blk1
                                 o_wb_wen_nxt    = i_wr;
                                 o_wb_sel_nxt    = i_ben; 
                                 o_wb_cti_nxt    = CTI_CLASSIC;
+                                o_hold          = 1'd1;
                         end                        
                 end
         end
 
         UNCACHEABLE: /* Uncacheable reads and writes definitely go through this. */
         begin
+                o_hold = 1'd1;
+
                 if ( i_wb_ack )
                 begin
                         o_ack           = 1'd1;
+                        o_hold          = 1'd0;
                         state_nxt       = IDLE;
 
                         kill_access ();

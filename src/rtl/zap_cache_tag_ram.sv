@@ -45,6 +45,7 @@ input   logic                            i_clk,
 input   logic                            i_reset,
 input   logic    [31:0]                  i_address_nxt,
 input   logic    [31:0]                  i_address,
+input   logic                            i_hold,
 input   logic                            i_cache_en,
 input   logic    [CACHE_LINE*8-1:0]      i_cache_line,
 input   logic    [CACHE_LINE-1:0]        i_cache_line_ben,
@@ -127,6 +128,7 @@ for(genvar i=0;i<CACHE_LINE;i++)
 begin
         zap_ram_simple #(.WIDTH(8), .DEPTH(CACHE_SIZE/CACHE_LINE)) u_zap_ram_simple_data_ram (
                 .i_clk(i_clk),
+                .i_clken(!i_hold),                 
 
                 .i_wr_en(i_cache_line_ben[i]),
                 .i_wr_data(i_cache_line   [i*8+7:i*8]),
@@ -139,6 +141,7 @@ end
 
 zap_ram_simple #(.WIDTH(`ZAP_CACHE_TAG_WDT), .DEPTH(CACHE_SIZE/CACHE_LINE)) u_zap_ram_simple_tag (
         .i_clk(i_clk),
+        .i_clken(!i_hold),
 
         .i_wr_en(tag_ram_wr_en),
         .i_wr_data(tag_ram_wr_data),
@@ -152,49 +155,58 @@ zap_ram_simple #(.WIDTH(`ZAP_CACHE_TAG_WDT), .DEPTH(CACHE_SIZE/CACHE_LINE)) u_za
 
 always_ff @ (posedge i_clk)
 begin
-        tag_ram_rd_addr_del <= tag_ram_rd_addr;
+        if ( !i_hold )
+        begin
+                tag_ram_rd_addr_del <= tag_ram_rd_addr;
+        end
 end
 
 always_ff @ (posedge i_clk)
 begin
-        o_cache_tag_dirty <= cache_tag_dirty;
-        cache_tag_dirty   <= tag_ram_rd_addr == tag_ram_wr_addr && tag_ram_wr_en ? i_cache_tag_dirty : dirty [ tag_ram_rd_addr ];
+        if ( !i_hold )
+        begin
+                o_cache_tag_dirty <= cache_tag_dirty;
+                cache_tag_dirty   <= tag_ram_rd_addr == tag_ram_wr_addr && tag_ram_wr_en ? i_cache_tag_dirty : dirty [ tag_ram_rd_addr ];
 
-        if ( i_reset )
-        begin
-                dirty <= 0;
-        end
-        else if ( tag_ram_wr_en )
-        begin
-                dirty [ tag_ram_wr_addr ]   <= i_cache_tag_dirty;
-                
-                if ( tag_ram_wr_addr == tag_ram_rd_addr_del )
+                if ( i_reset )
                 begin
-                        o_cache_tag_dirty <= i_cache_tag_dirty;
+                        dirty <= 0;
+                end
+                else if ( tag_ram_wr_en )
+                begin
+                        dirty [ tag_ram_wr_addr ]   <= i_cache_tag_dirty;
+                        
+                        if ( tag_ram_wr_addr == tag_ram_rd_addr_del )
+                        begin
+                                o_cache_tag_dirty <= i_cache_tag_dirty;
+                        end
+                end
+                else if ( tag_ram_clean )
+                begin
+                        dirty[tag_ram_rd_addr] <= 1'd0;
                 end
         end
-        else if ( tag_ram_clean )
-        begin
-                dirty[tag_ram_rd_addr] <= 1'd0;
-        end
 end
 
 always_ff @ (posedge i_clk)
 begin
-        o_cache_tag_valid <= cache_tag_valid;
-        cache_tag_valid   <= tag_ram_rd_addr == tag_ram_wr_addr && tag_ram_wr_en ? 1'd1 : valid [ tag_ram_rd_addr ];
-
-        if ( tag_ram_clear || !i_cache_en || i_reset )
+        if ( !i_hold )
         begin
-                valid <= 0;
-        end
-        else if ( tag_ram_wr_en )
-        begin
-                valid [ tag_ram_wr_addr ]   <= 1'd1;
+                o_cache_tag_valid <= cache_tag_valid;
+                cache_tag_valid   <= tag_ram_rd_addr == tag_ram_wr_addr && tag_ram_wr_en ? 1'd1 : valid [ tag_ram_rd_addr ];
 
-                if ( tag_ram_wr_addr == tag_ram_rd_addr_del )
+                if ( tag_ram_clear || !i_cache_en || i_reset )
                 begin
-                        o_cache_tag_valid <= 1'd1;
+                        valid <= 0;
+                end
+                else if ( tag_ram_wr_en )
+                begin
+                        valid [ tag_ram_wr_addr ]   <= 1'd1;
+
+                        if ( tag_ram_wr_addr == tag_ram_rd_addr_del )
+                        begin
+                                o_cache_tag_valid <= 1'd1;
+                        end
                 end
         end
 end

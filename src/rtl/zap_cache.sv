@@ -116,9 +116,10 @@ logic                            tr_cache_tag_valid;
 logic                            tr_cache_tag_dirty, cf_cache_tag_dirty;
 logic                            cf_cache_clean_req, cf_cache_inv_req;
 logic                            tr_cache_inv_done, tr_cache_clean_done;
-logic [2:0]                     wb_ack;
-logic [1:0]                     state_ff, state_nxt;
+logic [2:0]                      wb_ack;
+logic [1:0]                      state_ff, state_nxt;
 logic [31:0]                     cache_address;
+logic                            hold;
 
 // Selection 2 of Wishbone CTI[2x3] is always on all CPU supported modes.
 always_comb wb_cti[2] = 3'd0;
@@ -164,6 +165,7 @@ zap_cache_fsm #(.CACHE_SIZE(CACHE_SIZE), .CACHE_LINE(CACHE_LINE)) u_zap_cache_fs
         .o_err2                 (o_err2),
         .o_address              (cache_address),
         .o_wb_cyc_nxt           (wb_cyc[0]),
+        .o_hold                 (hold),
 
         /* verilator lint_off PINCONNECTEMPTY */
         .o_wb_cyc_ff            (),
@@ -191,6 +193,7 @@ zap_cache_tag_ram #(.CACHE_SIZE(CACHE_SIZE), .CACHE_LINE(CACHE_LINE)) u_zap_cach
         .i_reset                (i_reset),
         .i_address_nxt          (i_address_nxt),
         .i_address              (cache_address),
+        .i_hold                 (hold),
         .i_cache_en             (i_cache_en),
         .i_cache_line           (cf_cache_line),
         .o_cache_line           (tr_cache_line),
@@ -239,6 +242,7 @@ u_zap_tlb (
         .i_reset        (i_reset),
         .i_address      (i_address),
         .i_address_nxt  (i_address_nxt),
+        .i_hold         (hold),
         .i_rd           (i_rd),
         .i_wr           (i_wr),
         .i_cpsr         (i_cpsr),

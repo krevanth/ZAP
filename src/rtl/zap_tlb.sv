@@ -46,6 +46,9 @@ input   logic    [31:0]  i_address_nxt,
 input   logic            i_rd,
 input   logic            i_wr,
 
+// Hold input
+input   logic            i_hold,
+
 // CPSR, SR, DAC register.
 input   logic    [`ZAP_CPSR_MODE] i_cpsr,
 input   logic    [1:0]   i_sr,
@@ -154,6 +157,7 @@ zap_mem_inv_block #(.WIDTH(`ZAP_SECTION_TLB_WDT), .DEPTH(SECTION_TLB_ENTRIES))
 u_section_tlb (
 .i_clk          (i_clk),
 .i_reset        (i_reset),
+.i_clken        (!i_hold),
 
 .i_wdata        (setlb_wdata),
 .i_wen          (setlb_wen),
@@ -173,6 +177,7 @@ zap_mem_inv_block #(.WIDTH(`ZAP_LPAGE_TLB_WDT), .DEPTH(LPAGE_TLB_ENTRIES))
 u_lpage_tlb   (
 .i_clk          (i_clk),
 .i_reset        (i_reset),
+.i_clken        (!i_hold),
 
 .i_wdata        (lptlb_wdata),
 .i_wen          (lptlb_wen),
@@ -192,6 +197,7 @@ zap_mem_inv_block #(.WIDTH(`ZAP_SPAGE_TLB_WDT), .DEPTH(SPAGE_TLB_ENTRIES))
 u_spage_tlb   (
 .i_clk          (i_clk),
 .i_reset        (i_reset),
+.i_clken        (!i_hold),
 
 .i_wdata        (sptlb_wdata),
 .i_wen          (sptlb_wen),
@@ -211,6 +217,7 @@ zap_mem_inv_block #(.WIDTH(`ZAP_FPAGE_TLB_WDT), .DEPTH(FPAGE_TLB_ENTRIES))
 u_fpage_tlb (
 .i_clk          (i_clk),
 .i_reset        (i_reset),
+.i_clken        (!i_hold),
 
 .i_wdata        (fptlb_wdata),
 .i_wen          (fptlb_wen),

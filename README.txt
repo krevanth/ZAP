@@ -1,4 +1,4 @@
-ZAP : A HIGH PERFORMANCE SUPERPIPELINED ARM PROCESSOR (v5TE) WITH CACHE AND MMU
+ ZAP: A HIGH PERFORMANCE 15-STAGE PIPE ARM PROCESSOR (v5TE) WITH CACHE AND MMU
                   https://github.com/krevanth/ZAP
             By Revanth Kamaraj <revanth91kamaraj@gmail.com>
                       
@@ -11,7 +11,7 @@ LinkedIn Profile : https://linkedin.com/in/revanth-kamaraj-178662113
 1. About The ZAP Processor
 ===============================================================================
 
-The ZAP processor is a scalar 14-stage high performance synthesizable 32-bit 
+The ZAP processor is a scalar 15-stage high performance synthesizable 32-bit 
 soft processor core that is fully compatible with the older ARMv5TE ISA 
 (reference [1]). The processor also features an architecturally compliant 
 (CP15 controllable) cache and MMU.
@@ -27,10 +27,10 @@ instruction sets:
  * The 16-bit Thumb instruction set.
 
 -------------------------------------------------------------------------------
-1.1. ZAP Superpipelined Microarchitecture (14 Stage)
+1.1. ZAP Superpipelined Microarchitecture (15 Stage)
 -------------------------------------------------------------------------------
 
-ZAP uses a 14 stage execution pipeline to increase the speed of the flow of 
+ZAP uses a 15 stage execution pipeline to increase the speed of the flow of 
 instructions to the processor. The 14 stage pipeline consists of Address 
 Generator, Cache Access, Memory, Fetch, Instruction Buffer, Thumb Decoder, 
 Pre-Decoder, Decoder, Issue, Shift, Execute, Cache Access, Memory and 
@@ -45,16 +45,17 @@ During normal operation:
   * In case of LDR/STR with writeback, two results are being written to the
     register bank in a single cycle. 
   * All other instructions write out one result to the register bank per cycle.
-* The previous instruction is accessing the cache/TLB RAM.
-* The previous instruction is accessing the cache/TLB RAM.
-* The previous instruction is performing arithmetic, logic or memory address 
+* The instruction before that is accessing the cache/TLB RAM.
+* The instruction before that is accessing the cache/TLB RAM.
+* The instruction before that is accessing the cache/TLB RAM.
+* The instruction before that is performing arithmetic, logic or memory address 
   generation operations. This stage also confirms or rejects the branch 
   predictor's decisions.
-* The previous instruction is performing a correction, shift or multiply/MAC 
+* The instruction before that is performing a correction, shift or multiply/MAC 
   operation.
-* The previous instruction is performing a register or pipeline read.
-* The previous instruction is being decoded.
-* The previous instruction is being sequenced to micro-ops (possibly). 
+* The instruction before that is performing a register or pipeline read.
+* The instruction before that is being decoded.
+* The instruction before that is being sequenced to micro-ops (possibly). 
     * Most of the time, 1 ARM instruction = 1 micro-op.
     * The only ARM instructions requiring more than 1 micro-op generation are 
       BLX, LDM, STM, SWAP and LONG MULTIPLY (They generate a 32-bit result per 
@@ -63,17 +64,17 @@ During normal operation:
     * This stage also causes branches predicted as taken to be actually 
       executed. The latency for a successfully predicted taken branch is 
       6 cycles.
-* The previous instruction is being being decompressed. This is only required 
+* The instruction before that is being being decompressed. This is only req. 
   in the Thumb state, else the stage simply passes the instructions on. 
-* The previous instruction is popped off the instruction buffer.
-* The previous instruction is pushed onto the instruction buffer. Branches are 
-  predicted using a bimodal predictor (if applicable).
-* The previous instruction is accessing the cache/TLB RAM.
-* The previous instruction is accessing the cache/TLB RAM.
-* The previous instruction's fetch address is being generated.
+* The instruction before that is popped off the instruction buffer.
+* The instruction before that is pushed onto the instruction buffer. Branches  
+  are predicted using a bimodal predictor (if applicable).
+* The instruction before that is accessing the cache/TLB RAM.
+* The instruction before that is accessing the cache/TLB RAM.
+* The instruction before that is accessing the cache/TLB RAM.
 
 The deep pipeline, although uses more resources, allows the ZAP to run at 
-high clock speeds (130MHz @ xc7a35t256g-3 FPGA).
+high clock speeds (120MHz @ xc7a35t256g-3 FPGA).
 
 The ZAP pipeline has an efficient automatic dual forwarding network with 
 interlock detection hardware. This is done automatically and no software 
@@ -327,7 +328,8 @@ To run RTL lint, simply do:
 
 Synthesis has been run with Vivado 2021.2 (64-Bit). Design uses default 
 parameters with -mode out_of_context for synthesis. Resources refer to 7 series 
-FPGA. Synthesis has been run with the highest speed grade.
+FPGA. Synthesis has been run with the highest speed grade with synthesis set
+to "PerformanceOptimized" mode.
 
 +----------+-------+---------------------+
 | Ref Name |  Used | Functional Category |
@@ -354,7 +356,7 @@ FPGA. Synthesis has been run with the highest speed grade.
 +-------+-------------+-----------------+
 | Clock |    Fmax     |     Part        |
 +-------+-------------+-----------------+
-| i_clk |   130MHz    | 7a35t-ftg256-3  |
+| i_clk |   120MHz    | 7a35t-ftg256-3  |
 +-------+-------------+-----------------+
 
 ===============================================================================

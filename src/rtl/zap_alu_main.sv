@@ -157,7 +157,6 @@ module zap_alu_main #(
         output logic                              o_mem_signed_halfword_enable_ff,        // int16_t
         output logic                              o_mem_unsigned_halfword_enable_ff,      // uint16_t
         output logic                              o_mem_translate_ff,                     // LD/ST force user view of memory.
-        output logic  [31:0]                      o_address_nxt,                          // D pin of address register to drive TAG RAMs.
 
         // -------------------------------------------------------------
         // Wishbone signal outputs.
@@ -413,7 +412,7 @@ begin
                 // Hold WB address on stall. This is the flop.
                 if ( !i_data_stall )
                 begin
-                        o_mem_address_ff  <= o_address_nxt; 
+                        o_mem_address_ff  <= mem_address_nxt; 
                 end
 end
 
@@ -429,7 +428,6 @@ begin
         o_data_wb_we_nxt  = o_data_wb_we_ff;
         o_data_wb_dat_nxt = o_data_wb_dat_ff;
         o_data_wb_sel_nxt = o_data_wb_sel_ff;
-        o_address_nxt     =  mem_address_nxt;
 
         if ( i_reset )  // Synchronous reset to only those flops that need it. 
         begin 

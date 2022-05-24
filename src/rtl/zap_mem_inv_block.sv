@@ -34,6 +34,7 @@ module zap_mem_inv_block #(
 
         input logic                           i_clk,
         input logic                           i_reset,
+        input logic                           i_clken,
 
         // Write data.
         input logic   [WIDTH-1:0]             i_wdata,
@@ -54,12 +55,16 @@ module zap_mem_inv_block #(
 );
 
 
-// Flops
-logic [DEPTH-1:0] dav_ff;
+logic [DEPTH-1:0]         dav_ff;
+logic                     rdav;
+logic                     rdav_st1;
+logic [$clog2(DEPTH)-1:0] raddr_del;
+logic                     sel_ff;
 
 // Block RAM.
 zap_ram_simple #(.WIDTH(WIDTH), .DEPTH(DEPTH)) u_ram_simple (
         .i_clk     ( i_clk ),
+        .i_clken   ( i_clken ),
 
         .i_wr_en   ( i_wen ),
 
@@ -70,24 +75,58 @@ zap_ram_simple #(.WIDTH(WIDTH), .DEPTH(DEPTH)) u_ram_simple (
         .i_rd_addr ( i_raddr )
 );
 
+// ----------------------------------------------------------------------------
+// Stage 1
+// ----------------------------------------------------------------------------
 
-// DAV flip-flop implementation.
 always_ff @ (posedge i_clk)
-begin: flip_flops
+begin
         if ( i_reset | i_inv )
-        begin
-               dav_ff <=  {DEPTH{1'd0}};
-               o_rdav <= 1'd0;
-        end
-        else
-        begin
-                if ( i_wen )
-                        dav_ff [ i_waddr ] <= 1'd1;
-
-                o_rdav <= dav_ff [ i_raddr ]; 
-        end
+               dav_ff <= {DEPTH{1'd0}};
+        else if ( i_wen && i_clken )
+              dav_ff [ i_waddr ] <= 1'd1;
 end
 
+always @ ( posedge i_clk )
+begin
+        if ( i_reset || i_inv )
+                rdav <= 1'd0;
+        else if ( i_clken )
+                rdav <= dav_ff [ i_raddr ];
+end
+
+always @ ( posedge i_clk )
+begin
+        if ( i_reset || i_inv )
+                sel_ff <= 1'd0;
+        else if ( i_clken )
+                sel_ff <= i_raddr == i_waddr && i_wen;
+end
+
+always_ff @ ( posedge i_clk )
+begin
+        if ( i_reset || i_inv )
+                raddr_del <= '0;
+        else if ( i_clken )
+                raddr_del <= i_raddr;
+end
+
+always_comb 
+begin
+        rdav_st1 = sel_ff ? 1'd1 : rdav;
+end
+
+// ----------------------------------------------------------------------------
+// Stage 2
+// ----------------------------------------------------------------------------
+
+always_ff @ ( posedge i_clk )
+begin
+        if ( i_reset || i_inv )
+                o_rdav <= 1'd0;
+        else if  ( i_clken )
+                o_rdav <= i_waddr == raddr_del && i_wen ? 1'd1 : rdav_st1;
+end
 
 endmodule // mem_inv_block.v
 
