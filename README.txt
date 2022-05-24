@@ -334,24 +334,25 @@ to "PerformanceOptimized" mode.
 +----------+-------+---------------------+
 | Ref Name |  Used | Functional Category |
 +----------+-------+---------------------+
-| FDRE     | 11371 |     Flop with reset |
-| FDSE     |    28 |       Flop with set |
-| LUT6     |  9977 |                 LUT |
-| LUT5     |  2421 |                 LUT |
-| LUT4     |  1866 |                 LUT |
+| FDRE     | 11596 |                Flop |
+| LUT6     |  9829 |                 LUT |
+| LUT5     |  2882 |                 LUT |
+| LUT4     |  2006 |                 LUT |
+| LUT3     |  1581 |                 LUT |
 | RAMD64E  |  1536 |  Distributed Memory |
-| MUXF7    |  1106 |               MuxFx |
-| LUT3     |   996 |                 LUT |
-| LUT2     |   708 |                 LUT |
+| MUXF7    |  1084 |               MuxFx |
+| LUT2     |   727 |                 LUT |
 | RAMD32   |   348 |  Distributed Memory |
-| LUT1     |   197 |                 LUT |
+| LUT1     |   233 |                 LUT |
 | CARRY4   |   158 |          CarryLogic |
-| MUXF8    |   150 |               MuxFx |
 | RAMS32   |   114 |  Distributed Memory |
+| MUXF8    |    91 |               MuxFx |
+| FDSE     |    28 |                Flop |
 | RAMB36E1 |     5 |        Block Memory |
 | DSP48E1  |     4 |    Block Arithmetic |
 | RAMB18E1 |     1 |        Block Memory |
 +----------+-------+---------------------+
+
 
 +-------+-------------+-----------------+
 | Clock |    Fmax     |     Part        |
