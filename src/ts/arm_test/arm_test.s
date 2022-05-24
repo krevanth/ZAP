@@ -49,7 +49,7 @@ _Reset:
 
 enable_cache:
    // Enable cache (Uses a single bit to enable both caches).
-   .set ENABLE_CACHE_CP_WORD, 4100
+   .set ENABLE_CP_WORD, 4100
    mov r0, #4
    ldr r1, [r0]
    mcr p15, 0, r1, c1, c1, 0

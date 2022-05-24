@@ -85,19 +85,20 @@ The only times a pipeline stalls is when (assume 100% cache hit rate):
 
 * An instruction uses a register that is a data (not pointer) destination for a 
   load instruction within 5 cycles (assuming a load hit).
-* The pipeline is executing a multiply/MAC instruction (4 cycles(short)/5 cycles(long)). 
-  * An instruction that uses a register that is a destination for multiply/MAC adds +1 to 
-    the multiply/MAC operation's latency.
+* The pipeline is executing a multiply/MAC instruction (4 cycles(short)/5 
+  cycles(long)). 
+  * An instruction that uses a register that is a destination for multiply/MAC 
+    adds +1 to the multiply/MAC operation's latency.
 * Two back to back instructions require non-zero shift and the second 
   instruction's operand overlaps with the first instruction's destination.
 
-This snippet of code takes 5 cycles to execute:
+This snippet of ARM code takes 5 cycles to execute:
         ADD R1, R2, R2 LSL #10 (1 cycle)
         ADD R1, R1, R1 LSL #20 (2 cycles)
         ADD R3, R4, R5, LSR #3 (1 cycles)
         ADD R3, R3, R3 (1 cycles)
 
-This snippet of code takes only 4 cycles:
+This snippet of ARM code takes only 4 cycles:
         ADD R1, R2, R2, R2 (1 cycle)
         ADD R1, R1, R1 LSL #2 (1 cycle)
         ADD R3, R4, R5 LSR #3 (1 cycle)
