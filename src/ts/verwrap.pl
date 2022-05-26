@@ -26,6 +26,7 @@ use strict;
 use warnings;
 
 my $TEST                        = $ARGV[0]; 
+my $HT                          = $ARGV[1];
 my %Config                      = do "./src/ts/$TEST/Config.cfg";
 my $DEBUG_EN                    = $Config{'DEBUG_EN'};
 my $DUMP_SIZE                   = $Config{'DUMP_SIZE'};
@@ -105,8 +106,21 @@ foreach(keys (%$X)) {
          "\n";
 }
 
+my $THREADS = `getconf _NPROCESSORS_ONLN`;
+chomp $THREADS;
+
+my $MAKE_THREADS = $THREADS + 1;
+
+if ( $HT == 1 ) 
+{
+        $HT = "-j $MAKE_THREADS --threads $THREADS";
+} else 
+{
+        $HT = "-j 1 --threads 1";
+}
+
 my $cmd = 
-"verilator -Wno-lint --cc --exe  --build ../../../src/testbench/zap_test.cpp --Mdir obj/ts/$TEST --top zap_test $IVL_OPTIONS --trace --x-assign unique --x-initial unique --error-limit 1 ";
+"verilator $HT -Wno-lint --cc --exe  --build ../../../src/testbench/zap_test.cpp --Mdir obj/ts/$TEST --top zap_test $IVL_OPTIONS --trace --x-assign unique --x-initial unique --error-limit 1 ";
 
 die "Error: Failed to build executable." if system("$cmd");
 

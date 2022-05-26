@@ -58,9 +58,9 @@ test:
 	$(MAKE) lint
 	docker image ls | grep $(TAG) || echo -e $(DLOAD) | docker build --no-cache --rm --tag $(TAG) -
 ifndef TC
-	for var in $(TEST); do $(MAKE) test TC=$$var || exit 10 ; done;
+	for var in $(TEST); do $(MAKE) test TC=$$var HT=1 || exit 10 ; done; 
 else
-	docker run --interactive --tty --volume `pwd`:`pwd` --workdir `pwd` $(TAG) $(MAKE) runsim TC=$(TC) || exit 10
+	docker run --interactive --tty --volume `pwd`:`pwd` --workdir `pwd` $(TAG) $(MAKE) runsim TC=$(TC) HT=1 || exit 10
 endif
 
 # Remove runsim objects
@@ -103,7 +103,7 @@ obj/ts/$(TC)/Vzap_test: $(CPU_FILES) $(TB_FILES) $(SCRIPT_FILES) src/ts/$(TC)/Co
 	$(info ********************************)
 	$(info BUILDING SIMULATION ENV         )
 	$(info ********************************)
-	perl src/ts/verwrap.pl $(TC)
+	perl src/ts/verwrap.pl $(TC) $(HT)
 
 # Rule to lint.
 runlint:
