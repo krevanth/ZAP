@@ -122,11 +122,12 @@ input   logic    [31:0]   i_wb_dat
 /* States */
 localparam IDLE                 = 0; /* Resting state. */
 localparam UNCACHEABLE          = 1; /* Uncacheable access. */
-localparam CLEAN_SINGLE         = 2; /* Ultimately cleans up cache line. Parent state */
-localparam FETCH_SINGLE         = 3; /* Ultimately validates cache line. Parent state */
-localparam INVALIDATE           = 4; /* Cache invalidate parent state */
-localparam CLEAN                = 5; /* Cache clean parent state */
-localparam NUMBER_OF_STATES     = 6; 
+localparam UNCACHEABLE_PREPARE  = 2; /* Prepare uncacheable access. */
+localparam CLEAN_SINGLE         = 3; /* Ultimately cleans up cache line. Parent state */
+localparam FETCH_SINGLE         = 4; /* Ultimately validates cache line. Parent state */
+localparam INVALIDATE           = 5; /* Cache invalidate parent state */
+localparam CLEAN                = 6; /* Cache clean parent state */
+localparam NUMBER_OF_STATES     = 7; 
 
 localparam ADR_PAD              = 32 - $clog2(CACHE_LINE/4) - 1;
 localparam ADR_PAD_MINUS_2      = ADR_PAD - 2;
@@ -389,22 +390,30 @@ begin:blk1
                         end
                         else /* Decidedly non cacheable. */
                         begin
-                                state_nxt       = UNCACHEABLE;
+                                state_nxt       = UNCACHEABLE_PREPARE;
                                 o_ack           = 1'd0; /* Wait...*/
-                                o_wb_stb_nxt    = 1'd1;
-                                o_wb_cyc_nxt    = 1'd1;
-                                o_wb_adr_nxt    = i_phy_addr;
-                                o_wb_dat_nxt    = i_din;
-                                o_wb_wen_nxt    = i_wr;
-                                o_wb_sel_nxt    = i_ben; 
-                                o_wb_cti_nxt    = CTI_CLASSIC;
                                 o_hold          = 1'd1;
                         end                        
                 end
         end
 
+        UNCACHEABLE_PREPARE:
+        begin
+                o_ack           = 1'd0;
+                o_hold          = 1'd1;
+                state_nxt       = UNCACHEABLE;
+                o_wb_stb_nxt    = 1'd1;
+                o_wb_cyc_nxt    = 1'd1;
+                o_wb_adr_nxt    = i_phy_addr;
+                o_wb_dat_nxt    = i_din;
+                o_wb_wen_nxt    = i_wr;
+                o_wb_sel_nxt    = i_ben; 
+                o_wb_cti_nxt    = CTI_CLASSIC;
+        end
+
         UNCACHEABLE: /* Uncacheable reads and writes definitely go through this. */
         begin
+                o_ack  = 1'd0;
                 o_hold = 1'd1;
 
                 if ( i_wb_ack )

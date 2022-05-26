@@ -99,11 +99,12 @@ input  logic                     i_wb_ack
 
 /* States */
 localparam IDLE                 = 0; /* Idle State */
-localparam FETCH_L1_DESC        = 1; /* Fetch L1 descriptor */
-localparam FETCH_L2_DESC        = 2; /* Fetch L2 descriptor */
-localparam FETCH_L1_DESC_0      = 3;
-localparam FETCH_L2_DESC_0      = 4;
-localparam NUMBER_OF_STATES     = 5; 
+localparam PRE_FETCH_L1_DESC_0  = 1; /* Trigger fetch */
+localparam FETCH_L1_DESC        = 2; /* Fetch L1 descriptor */
+localparam FETCH_L2_DESC        = 3; /* Fetch L2 descriptor */
+localparam FETCH_L1_DESC_0      = 4;
+localparam FETCH_L2_DESC_0      = 5;
+localparam NUMBER_OF_STATES     = 6; 
 
 // ----------------------------------------------------------------------------
 
@@ -183,18 +184,10 @@ begin: blk1
         begin
                 if ( i_mmu_en )
                 begin
-                        if ( i_walk )
+                        if ( i_walk ) /* Prepare to access the PTEs. */
                         begin
-                                o_busy = 1'd1;
-
-                                /*
-                                 * We need to page walk to get the page table.
-                                 * Call for access to L1 level page table.
-                                 */
-                                tsk_prpr_wb_rd({i_baddr[`ZAP_VA__TRANSLATION_BASE], 
-                                           i_address[`ZAP_VA__TABLE_INDEX], 2'd0});
-
-                                state_nxt = FETCH_L1_DESC_0;
+                                o_busy    = 1'd1;
+                                state_nxt = PRE_FETCH_L1_DESC_0;
                         end
                         else if ( i_fsr[3:0] != 4'b0000 ) /* Access Violation. */
                         begin
@@ -204,6 +197,20 @@ begin: blk1
                                 o_far   = i_far;
                         end
                 end
+        end
+
+        PRE_FETCH_L1_DESC_0:
+        begin
+                /* Connect this to the next state. */
+                o_busy    = 1'd1;
+                state_nxt = FETCH_L1_DESC_0;
+
+                /*
+                 * We need to page walk to get the page table.
+                 * Call for access to L1 level page table.
+                 */
+                tsk_prpr_wb_rd({i_baddr[`ZAP_VA__TRANSLATION_BASE], 
+                                address[`ZAP_VA__TABLE_INDEX], 2'd0});
         end
 
         FETCH_L1_DESC_0:

@@ -328,10 +328,14 @@ To run RTL lint, simply do:
 4. Timing and Resource Utilization 
 ===============================================================================
 
-Synthesis has been run with Vivado 2021.2 (64-Bit). Design uses default 
-parameters with -mode out_of_context for synthesis. Resources refer to 7 series 
-FPGA. Synthesis has been run with the highest speed grade with synthesis set
-to "PerformanceOptimized" mode.
+Synthesis has been run with Vivado 2021.2 (64-Bit). Synthesis has been run with 
+the following settings:
+
+* Speed Grade       : -3
+* Mode              : PerformanceOptimized
+* Retiming          : No 
+* Flatten Hierarchy : full
+* Mode              : out_of_context
 
 +----------+-------+---------------------+
 | Ref Name |  Used | Functional Category |

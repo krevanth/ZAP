@@ -230,7 +230,7 @@ zap_cache_tag_ram #(.CACHE_SIZE(CACHE_SIZE), .CACHE_LINE(CACHE_LINE)) u_zap_cach
         .i_wb_ack               (wb_ack[1])
 );
 
-// ZAP TLB control module. Includes TLB RAM inside.
+// ZAP TLB control module. Includes TLB RAM inside - Master 2.
 zap_tlb #(
         .LPAGE_TLB_ENTRIES      (LPAGE_TLB_ENTRIES),
         .SPAGE_TLB_ENTRIES      (SPAGE_TLB_ENTRIES),

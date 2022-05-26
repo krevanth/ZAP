@@ -356,13 +356,16 @@ begin:blk1
                         shamt = {{(ADR_CTR_PAD-5){1'd0}}, adr_ctr_nxt, 5'd0};
                         {line_dummy, data}  = o_cache_line >> shamt;
 
-                        pa    = {o_cache_tag[`ZAP_CACHE_TAG__PA], {$clog2(CACHE_LINE){1'd0}}};
+                        pa    = {o_cache_tag[`ZAP_CACHE_TAG__PA], 
+                                {$clog2(CACHE_LINE){1'd0}}};
 
                         // Perform a Wishbone write using Physical Address.
+                        // Uses WB burst protocol for higher efficency. 
                         wb_prpr_write(  
                         data, 
                         pa + ({{(ADR_CTR_PAD-2){1'd0}}, adr_ctr_nxt, 2'd0}), 
-                        ({{ADR_CTR_PAD{1'd0}},adr_ctr_nxt} != (CACHE_LINE/4)-1) ? CTI_BURST : CTI_EOB, 
+                        ({{ADR_CTR_PAD{1'd0}},adr_ctr_nxt} != (CACHE_LINE/4)-1) ? 
+                        CTI_BURST : CTI_EOB, 
                         4'b1111 
                         );
                 end

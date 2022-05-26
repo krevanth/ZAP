@@ -61,10 +61,11 @@ ifndef TC
 	for var in $(TEST);                                                                                       \
                 do                                                                                                \
                         docker run --interactive --tty --volume `pwd`:`pwd` --workdir `pwd` $(TAG) $(MAKE) runsim \
-                        TC=$$var;                                                                                 \
+                        TC=$$var; cat obj/ts/$(TC)/.passed;                                                       \
                 done;
 else
 	docker run --interactive --tty --volume `pwd`:`pwd` --workdir `pwd` $(TAG) $(MAKE) runsim TC=$(TC)
+	cat obj/ts/$(TC)/.passed && rm -rf obj/ts/$(TC)/.passed
 endif
 
 # Remove runsim objects
@@ -83,6 +84,7 @@ lint:
 	docker info
 	docker image ls | grep $(TAG) || echo -e $(DLOAD) | docker build --no-cache --rm --tag $(TAG) -
 	docker run --interactive --tty --volume `pwd`:`pwd` --workdir `pwd` $(TAG) $(MAKE) runlint
+	cat    obj/ts/$(TC)/.passed
 
 ############################################ Internal Targets #########################################################
 
@@ -104,19 +106,21 @@ obj/ts/$(TC)/$(TC).bin: obj/ts/$(TC)/$(TC).elf
 
 # Rule to verilate.
 obj/ts/$(TC)/Vzap_test: $(CPU_FILES) $(TB_FILES) $(SCRIPT_FILES) src/ts/$(TC)/Config.cfg obj/ts/$(TC)/$(TC).bin
+	rm -rf obj/ts/$(TC)/.passed
 	$(info ********************************)
 	$(info BUILDING SIMULATION ENV         )
 	$(info ********************************)
-	perl src/ts/verwrap.pl $(TC) 
+	perl src/ts/verwrap.pl $(TC) && touch obj/ts/$(TC)/.passed 
 
 # Rule to lint.
 runlint:
+	rm -rf obj/ts/$(TC)/.passed
 	$(info *******************************)
 	$(info RUNNING LINT CHECKS ON RTL     )
 	$(info *******************************)
 	verilator --lint-only -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
         -Wwarn-IMPERFECTSCH --report-unoptflat --clk i_clk --top-module zap_top src/rtl/*.sv -Isrc/rtl/ &&        \
-        echo "Lint OK"
+        echo "Lint OK" && touch obj/ts/$(TC)/.passed
 
 # Rule to execute command.
 runsim: dirs obj/ts/$(TC)/Vzap_test
