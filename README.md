@@ -1,6 +1,8 @@
-      ZAP : A HIGH PERFORMANCE ARM PROCESSOR (v5TE) WITH CACHE AND MMU
-                  https://github.com/krevanth/ZAP
-            By Revanth Kamaraj <revanth91kamaraj@gmail.com>
+```text
+                                     ZAP 
+A HIGH PERFORMANCE ARM PROCESSOR (v5TE) WITH CP15 COMPATIBLE CACHE AND MMU (140MHz ON 7-SERIES FPGA)
+                          https://github.com/krevanth/ZAP
+                    By Revanth Kamaraj <revanth91kamaraj@gmail.com>
                       
 Please reach me at :
 EMail Address    : revanth91kamaraj@gmail.com
@@ -624,4 +626,4 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along with 
 this program; if not, write to the Free Software Foundation, Inc., 51 Franklin 
 Street, Fifth Floor, Boston, MA 02110-1301 USA.
-
+```
