@@ -108,8 +108,8 @@ logic            cpu_mmu_en;
 logic [`ZAP_CPSR_MODE] cpu_cpsr;
 logic            cpu_mem_translate;
 
-logic [31:0]     cpu_daddr, cpu_daddr_nxt;
-logic [31:0]     cpu_iaddr, cpu_iaddr_nxt;
+logic [31:0]     cpu_daddr, cpu_daddr_nxt, cpu_daddr_check;
+logic [31:0]     cpu_iaddr, cpu_iaddr_nxt, cpu_iaddr_check;
 
 logic [7:0]      dc_fsr;
 logic [31:0]     dc_far;
@@ -153,6 +153,7 @@ logic [2:0]      d_wb_cti;
 logic            d_wb_ack;
 
 logic           icache_err2, dcache_err2;
+logic           cpu_dwe_check;
 
 logic           s_reset, s_fiq, s_irq;
 
@@ -237,9 +238,12 @@ zap_core #(
 
 // Data IF nxt.
 .o_data_wb_adr_nxt      (cpu_daddr_nxt), // Data addr nxt. Used to drive address of data tag RAM.
+.o_data_wb_adr_check    (cpu_daddr_check),
+.o_data_wb_we_check     (cpu_dwe_check),
 
 // Code access prpr.
 .o_instr_wb_adr_nxt     (cpu_iaddr_nxt), // PC addr nxt. Drives read address of code tag RAM.
+.o_instr_wb_adr_check   (cpu_iaddr_check),
 
 // CPSR
 .o_cpsr                 (cpu_cpsr[`ZAP_CPSR_MODE])  
@@ -259,6 +263,9 @@ u_data_cache (
 .i_reset                (s_reset),
 .i_address              (cpu_daddr     + ({24'd0, cpu_pid[7:0]} << 32'd25)),
 .i_address_nxt          (cpu_daddr_nxt + ({24'd0, cpu_pid[7:0]} << 32'd25)),
+
+.i_address_check        (cpu_daddr_check + ({24'd0, cpu_pid[7:0]} << 32'd25)),
+.i_wr_check             (cpu_dwe_check),
 
 .i_rd                   (!cpu_dc_we && cpu_dc_stb),
 .i_wr                   ( cpu_dc_we && cpu_dc_stb),
@@ -319,6 +326,9 @@ u_code_cache (
 .i_reset            (s_reset),
 .i_address          ((cpu_iaddr     & 32'hFFFF_FFFC) + ({24'd0, cpu_pid[7:0]} << 32'd25)), // Cut off lower 2 bits.
 .i_address_nxt      ((cpu_iaddr_nxt & 32'hFFFF_FFFC) + ({24'd0, cpu_pid[7:0]} << 32'd25)), // Cut off lower 2 bits.
+
+.i_address_check    ((cpu_iaddr_check & 32'hFFFF_FFFC) + ({24'd0, cpu_pid[7:0]} << 32'd25)),
+.i_wr_check         (1'd0),
 
 .i_rd              (cpu_instr_stb),
 .i_wr              (1'd0),

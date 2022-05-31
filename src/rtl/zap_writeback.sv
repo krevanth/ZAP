@@ -96,6 +96,7 @@ module zap_writeback #(
 
         // Program counter (dedicated port).
         output logic     [31:0]               o_pc,
+        output logic     [31:0]               o_pc_check,
         output logic     [31:0]               o_pc_nxt,
 
         // CPSR output
@@ -122,14 +123,16 @@ logic [31:0]                      wdata1, wdata2;
 logic                             wen;
 logic [31:0]                      pc_shelve_ff, pc_shelve_nxt;
 logic                             shelve_ff, shelve_nxt;
-logic [1:0]                       mask_ff, mask_nxt;
+logic [2:0]                       mask_ff, mask_nxt;
 logic [31:0]                      pc_del_ff, pc_del_nxt;
 logic [31:0]                      pc_del2_ff, pc_del2_nxt;
+logic [31:0]                      pc_del3_ff, pc_del3_nxt;
 logic                             arm_mode;
 
 always_comb  arm_mode        = (cpsr_ff[T] == 1'd0) ? 1'd1 : 1'd0;
 always_comb  o_shelve        = shelve_ff; // Shelve the PC until it is needed.
-always_comb  o_pc            = pc_del2_ff;
+always_comb  o_pc            = pc_del3_ff;
+always_comb  o_pc_check      = pc_del2_ff;
 always_comb  o_pc_nxt        = pc_ff;
 always_comb  o_cpsr_nxt      = cpsr_nxt;
 
@@ -168,8 +171,8 @@ zap_register_file u_zap_register_file
 always_comb
 begin: blk1
 
-        o_mask                   = (|mask_ff[1:0]) ? 1'd1 : 1'd0;
-        mask_nxt                 = mask_ff << 1;
+        o_mask                   = |mask_ff;
+        mask_nxt                 = mask_ff << 3'd1;
         shelve_nxt               = shelve_ff;
         pc_shelve_nxt            = pc_shelve_ff;
         wen                      = 1'd0;
@@ -182,6 +185,7 @@ begin: blk1
         cpsr_nxt                 = cpsr_ff;
         pc_del_nxt               = pc_del_ff;
         pc_del2_nxt              = pc_del2_ff;
+        pc_del3_nxt              = pc_del3_ff;
 
         // ------------------- Low priority PC control tree -------------------------------
         // Keep looking further down for more high priority logic that can modify the PC.
@@ -201,22 +205,24 @@ begin: blk1
                 pc_nxt      = pc_ff;
                 pc_del_nxt  = pc_del_ff;
                 pc_del2_nxt = pc_del2_ff;
+                pc_del3_nxt = pc_del3_ff;
         end
         else if ( shelve_ff )
         begin
                 pc_nxt     = pc_shelve_ff;
                 shelve_nxt = 1'd0;
-                mask_nxt   = 2'd1;
+                mask_nxt   = 3'd1;
         end
         else if ( i_clear_from_icache ) // Lowest priority.
         begin
-                pc_shelve (pc_del2_ff);
+                pc_shelve (pc_del3_ff);
         end
         else
         begin
                 pc_nxt      = pc_ff + (i_thumb ? 32'd2 : 32'd4);
                 pc_del_nxt  = pc_ff;
                 pc_del2_nxt = pc_del_ff;
+                pc_del3_nxt = pc_del2_ff;
         end
 
         // -------------- High priority PC control tree -------------------------
@@ -366,16 +372,17 @@ begin
                 pc_ff                      <= 32'd0;
                 pc_del_ff                  <= 32'd0;
                 pc_del2_ff                 <= 32'd0;
+                pc_del3_ff                 <= 32'd0;
 
                 // CPSR reset logic.
                 cpsr_ff                    <= 32'd0;
-                cpsr_ff[`ZAP_CPSR_MODE]        <= SVC;
+                cpsr_ff[`ZAP_CPSR_MODE]    <= SVC;
                 cpsr_ff[I]                 <= 1'd1; // Mask IRQ.
                 cpsr_ff[F]                 <= 1'd1; // Mask FIQ.
                 cpsr_ff[T]                 <= 1'd0; // Start CPU in ARM mode.
 
                 // Mask to 0.
-                mask_ff                    <= 0;
+                mask_ff                    <= 3'd0;
         end
         else
         begin
@@ -384,6 +391,7 @@ begin
                 pc_ff                     <= pc_nxt;
                 pc_del_ff                 <= pc_del_nxt;
                 pc_del2_ff                <= pc_del2_nxt;
+                pc_del3_ff                <= pc_del3_nxt;
                 cpsr_ff                   <= cpsr_nxt;
                 o_decompile               <= i_decompile;
                 o_copro_reg_rd_data_ff    <= o_rd_data_0;
@@ -403,8 +411,9 @@ begin
                 pc_nxt        = new_pc;
                 pc_del_nxt    = pc_ff;
                 pc_del2_nxt   = pc_del_ff;
+                pc_del3_nxt   = pc_del2_ff;
                 shelve_nxt    = 1'd0;
-                mask_nxt      = 2'd1; 
+                mask_nxt      = 3'd1; 
         end
         else
         begin
@@ -413,6 +422,7 @@ begin
                 pc_nxt        = pc_ff;
                 pc_del_nxt    = pc_del_ff;
                 pc_del2_nxt   = pc_del2_ff;
+                pc_del3_nxt   = pc_del3_ff;
         end
 end
 endfunction

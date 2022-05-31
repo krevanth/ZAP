@@ -142,6 +142,7 @@ module zap_issue_main
 
         // Flopped destination from the post ALU.
         input logic  [$clog2(PHY_REGS)-1:0]     i_postalu0_destination_index_ff, // ADDED+
+        input logic  [$clog2(PHY_REGS)-1:0]     i_postalu1_destination_index_ff, // ADDED++
         input logic  [$clog2(PHY_REGS)-1:0]     i_postalu_destination_index_ff, // ADDED
 
         // Flopped destination from the memory stage.
@@ -157,6 +158,7 @@ module zap_issue_main
         input logic                              i_alu_dav_nxt,            
         input logic                              i_alu_dav_ff,
         input logic                              i_postalu0_dav_ff, // ADDED+
+        input logic                              i_postalu1_dav_ff, // ADDED++
         input logic                              i_postalu_dav_ff, // ADDED
         input logic                              i_memory_dav_ff,
 
@@ -173,6 +175,7 @@ module zap_issue_main
 
         // PostALU result
         input logic  [31:0]                      i_postalu0_destination_value_ff, // ADDED+
+        input logic  [31:0]                      i_postalu1_destination_value_ff, // ADDED++
         input logic  [31:0]                      i_postalu_destination_value_ff, // ADDED
 
         // Result in the memory stage of the pipeline.
@@ -186,12 +189,14 @@ module zap_issue_main
         input logic  [5:0]                       i_shifter_mem_srcdest_index_ff,
         input logic  [5:0]                       i_alu_mem_srcdest_index_ff,
         input logic  [5:0]                       i_postalu0_mem_srcdest_index_ff, // ADDED+
+        input logic  [5:0]                       i_postalu1_mem_srcdest_index_ff, // ADDED++
         input logic  [5:0]                       i_postalu_mem_srcdest_index_ff, // ADDED
         input logic  [5:0]                       i_memory_mem_srcdest_index_ff,
 
         input logic                              i_shifter_mem_load_ff,//1 if load.
         input logic                              i_alu_mem_load_ff,
         input logic                              i_postalu0_mem_load_ff, // ADDED+
+        input logic                              i_postalu1_mem_load_ff, // ADDED++
         input logic                              i_postalu_mem_load_ff, // ADDED
         input logic                              i_memory_mem_load_ff,
 
@@ -382,12 +387,19 @@ begin
                                 i_alu_destination_value_ff, 
                                 i_alu_destination_index_ff[5:0], 
                                 i_alu_dav_ff,
+
                                 i_postalu0_destination_index_ff[5:0],
                                 i_postalu0_destination_value_ff, 
                                 i_postalu0_dav_ff,
+
+                                i_postalu1_destination_index_ff[5:0],
+                                i_postalu1_destination_value_ff, 
+                                i_postalu1_dav_ff,
+
                                 i_postalu_destination_index_ff[5:0],
                                 i_postalu_destination_value_ff, 
                                 i_postalu_dav_ff,
+
                                 i_memory_destination_index_ff[5:0], 
                                 i_memory_destination_value_ff,
                                 i_memory_dav_ff, 
@@ -409,12 +421,19 @@ begin
                                 i_alu_destination_value_ff,
                                 i_alu_destination_index_ff[5:0], 
                                 i_alu_dav_ff,
+
                                 i_postalu0_destination_index_ff[5:0],
                                 i_postalu0_destination_value_ff, 
                                 i_postalu0_dav_ff,
+
+                                i_postalu1_destination_index_ff[5:0],
+                                i_postalu1_destination_value_ff, 
+                                i_postalu1_dav_ff,
+
                                 i_postalu_destination_index_ff[5:0],
                                 i_postalu_destination_value_ff, 
                                 i_postalu_dav_ff,
+
                                 i_memory_destination_index_ff[5:0], 
                                 i_memory_destination_value_ff,
                                 i_memory_dav_ff, 
@@ -435,12 +454,19 @@ begin
                                 i_alu_destination_value_ff,
                                 i_alu_destination_index_ff[5:0], 
                                 i_alu_dav_ff,
+
                                 i_postalu0_destination_index_ff[5:0],
                                 i_postalu0_destination_value_ff, 
                                 i_postalu0_dav_ff,
+
+                                i_postalu1_destination_index_ff[5:0],
+                                i_postalu1_destination_value_ff, 
+                                i_postalu1_dav_ff,
+
                                 i_postalu_destination_index_ff[5:0],
                                 i_postalu_destination_value_ff, 
                                 i_postalu_dav_ff,
+
                                 i_memory_destination_index_ff[5:0],
                                 i_memory_destination_value_ff, 
                                 i_memory_dav_ff, 
@@ -462,12 +488,19 @@ begin
                                 i_alu_destination_value_ff,
                                 i_alu_destination_index_ff[5:0], 
                                 i_alu_dav_ff, 
+
                                 i_postalu0_destination_index_ff[5:0],
                                 i_postalu0_destination_value_ff, 
                                 i_postalu0_dav_ff,
+
+                                i_postalu1_destination_index_ff[5:0],
+                                i_postalu1_destination_value_ff, 
+                                i_postalu1_dav_ff,
+
                                 i_postalu_destination_index_ff[5:0],
                                 i_postalu_destination_value_ff, 
                                 i_postalu_dav_ff,
+
                                 i_memory_destination_index_ff[5:0],
                                 i_memory_destination_value_ff, 
                                 i_memory_dav_ff, 
@@ -526,6 +559,10 @@ function [31:0] get_register_value (
         input  [31:0]                   postalu0_destination_value_ff, 
         input                           postalu0_dav_ff,
 
+        input  [$clog2(PHY_REGS)-1:0]   postalu1_destination_index_ff,
+        input  [31:0]                   postalu1_destination_value_ff, 
+        input                           postalu1_dav_ff,
+
         input  [$clog2(PHY_REGS)-1:0]   postalu_destination_index_ff,
         input  [31:0]                   postalu_destination_value_ff, 
         input                           postalu_dav_ff,
@@ -581,6 +618,11 @@ begin
         begin
                         get = postalu0_destination_value_ff;
         end
+        // Match is in output of postALU1 stage.
+        else if ( index[5:0] == postalu1_destination_index_ff[5:0] && postalu1_dav_ff )
+        begin
+                        get = postalu1_destination_value_ff;
+        end
         // Match in output of postALU stage.
         else if   ( index[5:0] == postalu_destination_index_ff[5:0] && postalu_dav_ff )
         begin
@@ -629,6 +671,9 @@ begin
                         i_postalu0_mem_srcdest_index_ff,
                         i_postalu0_mem_load_ff,
                         i_postalu0_dav_ff,
+                        i_postalu1_mem_srcdest_index_ff,
+                        i_postalu1_mem_load_ff,
+                        i_postalu1_dav_ff,
                         i_postalu_mem_srcdest_index_ff,
                         i_postalu_mem_load_ff,
                         i_postalu_dav_ff,
@@ -652,6 +697,9 @@ begin
                         i_postalu0_mem_srcdest_index_ff,
                         i_postalu0_mem_load_ff,
                         i_postalu0_dav_ff,
+                        i_postalu1_mem_srcdest_index_ff,
+                        i_postalu1_mem_load_ff,
+                        i_postalu1_dav_ff,
                         i_postalu_mem_srcdest_index_ff,
                         i_postalu_mem_load_ff,
                         i_postalu_dav_ff,
@@ -674,6 +722,9 @@ begin
                         i_postalu0_mem_srcdest_index_ff,
                         i_postalu0_mem_load_ff,
                         i_postalu0_dav_ff,
+                        i_postalu1_mem_srcdest_index_ff,
+                        i_postalu1_mem_load_ff,
+                        i_postalu1_dav_ff,
                         i_postalu_mem_srcdest_index_ff,
                         i_postalu_mem_load_ff,
                         i_postalu_dav_ff,
@@ -696,6 +747,9 @@ begin
                         i_postalu0_mem_srcdest_index_ff,
                         i_postalu0_mem_load_ff,
                         i_postalu0_dav_ff,
+                        i_postalu1_mem_srcdest_index_ff,
+                        i_postalu1_mem_load_ff,
+                        i_postalu1_dav_ff,
                         i_postalu_mem_srcdest_index_ff,
                         i_postalu_mem_load_ff,
                         i_postalu_dav_ff,
@@ -825,6 +879,9 @@ input                           alu_mem_load_ff,
 input  [$clog2(PHY_REGS)-1:0]   postalu0_mem_srcdest_index_ff,
 input                           postalu0_mem_load_ff,
 input                           postalu0_dav_ff,
+input  [$clog2(PHY_REGS)-1:0]   postalu1_mem_srcdest_index_ff,
+input                           postalu1_mem_load_ff,
+input                           postalu1_dav_ff,
 input  [$clog2(PHY_REGS)-1:0]   postalu_mem_srcdest_index_ff,
 input                           postalu_mem_load_ff,
 input                           postalu_dav_ff,
@@ -857,7 +914,10 @@ begin
                    alu_mem_load_ff )                          || // ALU
                 (  index[5:0] == postalu0_mem_srcdest_index_ff&&
                    postalu0_dav_ff                            &&
-                   postalu0_mem_load_ff )                     || // Post ALU     
+                   postalu0_mem_load_ff )                     || // Post ALU0
+                (  index[5:0] == postalu1_mem_srcdest_index_ff&&
+                   postalu1_dav_ff                            &&
+                   postalu1_mem_load_ff )                     || // Post ALU1
                 (  index[5:0] == postalu_mem_srcdest_index_ff &&
                    postalu_dav_ff                             &&
                    postalu_mem_load_ff )                      || // Post ALU

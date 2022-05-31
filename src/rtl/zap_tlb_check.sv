@@ -21,13 +21,16 @@
 // --                                                                         --
 // -----------------------------------------------------------------------------
 // --                                                                         -- 
-// --  Examines TLB entries to authorize access. Purely combo logic.          --                     
+// --  Examines TLB entries to authorize access.                              --                     
 // --                                                                         --  
 // -----------------------------------------------------------------------------
 
 
 
 module zap_tlb_check (   // ZAP TLB Processing Logic.
+
+i_clk,          // Clock
+i_clkena,       // Clock enable.
 
 i_mmu_en,       // MMU enable.
 
@@ -41,7 +44,7 @@ i_cpsr,
 i_sr,
 i_dac_reg,
 
-// Data from TLB dist RAMs.
+// Data from TLB block RAMs.
 i_sptlb_rdata, i_sptlb_rdav,
 i_lptlb_rdata, i_lptlb_rdav,
 i_setlb_rdata, i_setlb_rdav,
@@ -67,6 +70,9 @@ parameter FPAGE_TLB_ENTRIES   = 8;
 
 localparam APSR_BAD = 1'd0;
 localparam APSR_OK  = 1'd1;
+
+input logic                              i_clk;          // Clock signal.
+input logic                              i_clkena;       // Clock enable.
 
 input logic                              i_mmu_en;       // MMU enable.
 
@@ -103,27 +109,27 @@ localparam [64 - `ZAP_LPAGE_TLB_WDT   - 1 : 0] CONST_0_LP = {(64 - `ZAP_LPAGE_TL
 localparam [64 - `ZAP_FPAGE_TLB_WDT   - 1 : 0] CONST_0_FP = {(64 - `ZAP_FPAGE_TLB_WDT  ){1'd0}};
 localparam [64 - `ZAP_SECTION_TLB_WDT - 1 : 0] CONST_0_SE = {(64 - `ZAP_SECTION_TLB_WDT){1'd0}};
 
-always_comb
+always @ ( posedge i_clk ) if ( i_clkena )
 begin:blk1
         logic dummy;       
         logic unused;
  
-        dummy  = 1'd0;
-        unused = |dummy;
+        dummy  <= 1'd0;
+        unused <= |dummy;
 
         // Default values. Taken for MMU disabled esp.
-        o_fsr       = 0;        // No fault.
-        o_far       = i_va;     // Fault address.
-        o_phy_addr  = i_va;     // VA = PA
-        o_walk      = 0;        // Walk disabled.
-        o_cacheable = 0;        // Uncacheable.
+        o_fsr       <= 0;        // No fault.
+        o_far       <= i_va;     // Fault address.
+        o_phy_addr  <= i_va;     // VA = PA
+        o_walk      <= 0;        // Walk disabled.
+        o_cacheable <= 0;        // Uncacheable.
 
         if ( i_mmu_en && (i_rd || i_wr) ) // MMU enabled and R/W operation.
         begin
                 unique if ( (i_sptlb_rdata[`ZAP_SPAGE_TLB__TAG] == i_va[`ZAP_VA__SPAGE_TAG]) && i_sptlb_rdav )
                 begin
                         // Entry found in small page TLB.
-                        o_fsr = get_fsr
+                        o_fsr <= get_fsr
                         (
                                 1'd0, 1'd1, 1'd0, 1'd0,         // Small page.
                                 i_va[`ZAP_VA__SPAGE_AP_SEL],
@@ -135,14 +141,14 @@ begin:blk1
                                 {CONST_0_SP, i_sptlb_rdata}
                         ) ;
 
-                        o_phy_addr = {i_sptlb_rdata[`ZAP_SPAGE_TLB__BASE], i_va[11:0]};
-                        {dummy, o_cacheable} = i_sptlb_rdata[`ZAP_SECTION_TLB__CB] >> 1;
+                        o_phy_addr <= {i_sptlb_rdata[`ZAP_SPAGE_TLB__BASE], i_va[11:0]};
+                        {dummy, o_cacheable} <= i_sptlb_rdata[`ZAP_SECTION_TLB__CB] >> 1;
 
                 end
                 else if ( (i_lptlb_rdata[`ZAP_LPAGE_TLB__TAG] == i_va[`ZAP_VA__LPAGE_TAG]) && i_lptlb_rdav )
                 begin
                         // Entry found in large page TLB.
-                        o_fsr = get_fsr
+                        o_fsr <= get_fsr
                         (
                                 1'd0, 1'd0, 1'd1, 1'd0,         // Large page.
                                 i_va[`ZAP_VA__LPAGE_AP_SEL],
@@ -154,13 +160,13 @@ begin:blk1
                                 {CONST_0_LP, i_lptlb_rdata}
                         ) ;
 
-                        o_phy_addr = {i_lptlb_rdata[`ZAP_LPAGE_TLB__BASE], i_va[15:0]};
-                        {dummy, o_cacheable} = i_lptlb_rdata[`ZAP_LPAGE_TLB__CB] >> 1;
+                        o_phy_addr <= {i_lptlb_rdata[`ZAP_LPAGE_TLB__BASE], i_va[15:0]};
+                        {dummy, o_cacheable} <= i_lptlb_rdata[`ZAP_LPAGE_TLB__CB] >> 1;
                 end
                 else if ( (i_setlb_rdata[`ZAP_SECTION_TLB__TAG] == i_va[`ZAP_VA__SECTION_TAG]) && i_setlb_rdav )
                 begin
                         // Entry found in section TLB.
-                        o_fsr = get_fsr
+                        o_fsr <= get_fsr
                         (
                                 1'd1, 1'd0, 1'd0, 1'd0,         // Section.
                                 2'd0,                           // DONT CARE. Sections do not further divisions in AP SEL.
@@ -172,13 +178,13 @@ begin:blk1
                                 {CONST_0_SE, i_setlb_rdata}
                         ) ;
 
-                        o_phy_addr = {i_setlb_rdata[`ZAP_SECTION_TLB__BASE], i_va[19:0]};
-                        {dummy, o_cacheable} = i_setlb_rdata[`ZAP_SECTION_TLB__CB] >> 1;
+                        o_phy_addr <= {i_setlb_rdata[`ZAP_SECTION_TLB__BASE], i_va[19:0]};
+                        {dummy, o_cacheable} <= i_setlb_rdata[`ZAP_SECTION_TLB__CB] >> 1;
                 end
                 else if( (i_fptlb_rdata[`ZAP_FPAGE_TLB__TAG] == i_va[`ZAP_VA__FPAGE_TAG]) && i_fptlb_rdav )
                 begin
                         // Entry found in fine page TLB.
-                        o_fsr = get_fsr
+                        o_fsr <= get_fsr
                         (
                                 1'd0, 1'd0, 1'd0, 1'd1,
                                 2'd0,                    
@@ -190,13 +196,13 @@ begin:blk1
                                 {CONST_0_FP, i_fptlb_rdata}
                         );
 
-                        o_phy_addr = {i_fptlb_rdata[`ZAP_FPAGE_TLB__BASE], i_va[9:0]};
-                        {dummy, o_cacheable} = i_fptlb_rdata[`ZAP_FPAGE_TLB__CB] >> 1;
+                        o_phy_addr <= {i_fptlb_rdata[`ZAP_FPAGE_TLB__BASE], i_va[9:0]};
+                        {dummy, o_cacheable} <= i_fptlb_rdata[`ZAP_FPAGE_TLB__CB] >> 1;
                 end
                 else
                 begin
                         // Trigger TLB walk.
-                        o_walk = 1'd1;
+                        o_walk <= 1'd1;
                 end
         end // Else MMU disabled.
 end

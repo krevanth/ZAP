@@ -42,6 +42,11 @@ module zap_ram_simple #(
 
         // Read address and data.
         input logic [$clog2(DEPTH)-1:0]      i_rd_addr,
+
+        // 2 cycle delayed read data.
+        output logic [WIDTH-1:0]             o_rd_data_pre,
+
+        // 3 cycle delayed read data.
         output logic [WIDTH-1:0]             o_rd_data
 );
 
@@ -56,8 +61,21 @@ logic [WIDTH-1:0] mem [DEPTH-1:0];
 logic [WIDTH-1:0]         mem_data_st1;
 logic [WIDTH-1:0]         buffer_st1;
 logic                     sel_st1;
-logic [$clog2(DEPTH)-1:0] rd_addr_st1;
+logic [$clog2(DEPTH)-1:0] rd_addr_st1, rd_addr_st2;
 logic [WIDTH-1:0]         rd_data_st1;
+
+// ----------------------------------------------------------------------------
+
+// Write logic.
+always_ff @ (posedge i_clk) if ( i_clken )
+begin
+        if ( i_wr_en )  
+                mem [ i_wr_addr ] <= i_wr_data;
+end
+
+// ----------------------------------------------------------------------------
+// Stage 1
+// ----------------------------------------------------------------------------
 
 // Hazard Detection Logic
 always_ff @ ( posedge i_clk ) if ( i_clken )
@@ -71,29 +89,14 @@ end
 // Buffer update logic.
 always_ff @ ( posedge i_clk ) if ( i_clken )
 begin
-        if ( i_wr_addr == i_rd_addr && i_wr_en )
-                buffer_st1 <= i_wr_data;
-end
-
-// Read address buffer logic.
-always_ff @ (posedge i_clk)
-begin
+        buffer_st1  <= i_wr_data;
         rd_addr_st1 <= i_rd_addr;
 end
 
-// ----------------------------------------------------------------------------
-
-// Read logic.
+// RAM Read logic.
 always_ff @ (posedge i_clk) if ( i_clken )
 begin
         mem_data_st1 <= mem [ i_rd_addr ];
-end
-
-// Write logic.
-always_ff @ (posedge i_clk) if ( i_clken )
-begin
-        if ( i_wr_en )  
-                mem [ i_wr_addr ] <= i_wr_data;
 end
 
 // ----------------------------------------------------------------------------
@@ -114,9 +117,26 @@ end
 always_ff @ ( posedge i_clk ) if ( i_clken )
 begin
         if ( i_wr_addr == rd_addr_st1 && i_wr_en )
-                o_rd_data <= i_wr_data ;
+                o_rd_data_pre <= i_wr_data ;
         else
-                o_rd_data <= rd_data_st1;
+                o_rd_data_pre <= rd_data_st1;
+end
+
+always_ff @ ( posedge i_clk ) if ( i_clken )
+begin
+        rd_addr_st2 <= rd_addr_st1;
+end
+
+// ----------------------------------------------------------------------------
+// Stage 3
+// ----------------------------------------------------------------------------
+
+always_ff @ ( posedge i_clk ) if ( i_clken )
+begin
+        if ( i_wr_addr == rd_addr_st2 && i_wr_en )
+                o_rd_data <= i_wr_data;
+        else
+                o_rd_data <= o_rd_data_pre;
 end
 
 endmodule // zap_ram_simple.v

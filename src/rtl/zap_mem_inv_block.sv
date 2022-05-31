@@ -50,16 +50,18 @@ module zap_mem_inv_block #(
         input logic   [$clog2(DEPTH)-1:0]     i_waddr,
 
         // Read data and valid.
+        output logic [WIDTH-1:0]              o_rdata_pre,
+        output logic                          o_rdav_pre,
+
+        // Read data and valid.
         output logic [WIDTH-1:0]              o_rdata,
         output logic                          o_rdav
 );
 
 
 logic [DEPTH-1:0]         dav_ff;
-logic                     rdav;
 logic                     rdav_st1;
-logic [$clog2(DEPTH)-1:0] raddr_del;
-logic                     sel_ff;
+logic [$clog2(DEPTH)-1:0] raddr_del, raddr_del2;
 
 // Block RAM.
 zap_ram_simple #(.WIDTH(WIDTH), .DEPTH(DEPTH)) u_ram_simple (
@@ -69,7 +71,8 @@ zap_ram_simple #(.WIDTH(WIDTH), .DEPTH(DEPTH)) u_ram_simple (
         .i_wr_en   ( i_wen ),
 
         .i_wr_data ( i_wdata ),
-        .o_rd_data ( o_rdata ),
+        .o_rd_data_pre ( o_rdata_pre ),
+        .o_rd_data     ( o_rdata ),
 
         .i_wr_addr ( i_waddr ),
         .i_rd_addr ( i_raddr )
@@ -90,17 +93,9 @@ end
 always @ ( posedge i_clk )
 begin
         if ( i_reset || i_inv )
-                rdav <= 1'd0;
+                rdav_st1 <= 1'd0;
         else if ( i_clken )
-                rdav <= dav_ff [ i_raddr ];
-end
-
-always @ ( posedge i_clk )
-begin
-        if ( i_reset || i_inv )
-                sel_ff <= 1'd0;
-        else if ( i_clken )
-                sel_ff <= i_raddr == i_waddr && i_wen;
+                rdav_st1 <= i_raddr == i_waddr && i_wen ? 1'd1 : dav_ff [ i_raddr ];
 end
 
 always_ff @ ( posedge i_clk )
@@ -111,11 +106,6 @@ begin
                 raddr_del <= i_raddr;
 end
 
-always_comb 
-begin
-        rdav_st1 = sel_ff ? 1'd1 : rdav;
-end
-
 // ----------------------------------------------------------------------------
 // Stage 2
 // ----------------------------------------------------------------------------
@@ -123,9 +113,29 @@ end
 always_ff @ ( posedge i_clk )
 begin
         if ( i_reset || i_inv )
-                o_rdav <= 1'd0;
+                o_rdav_pre <= 1'd0;
         else if  ( i_clken )
-                o_rdav <= i_waddr == raddr_del && i_wen ? 1'd1 : rdav_st1;
+                o_rdav_pre <= i_waddr == raddr_del && i_wen ? 1'd1 : rdav_st1;
+end
+
+always_ff @ ( posedge i_clk )
+begin
+        if ( i_reset || i_inv )
+                raddr_del2 <= '0;
+        else if ( i_clken )
+                raddr_del2 <= raddr_del;
+end
+
+// ----------------------------------------------------------------------------
+// Stage 3
+// ----------------------------------------------------------------------------
+
+always_ff @  (posedge i_clk )
+begin   
+        if ( i_reset || i_inv )
+                o_rdav <= 1'd0;
+        else if ( i_clken )
+                o_rdav <= i_waddr == raddr_del2 && i_wen ? 1'd1 : o_rdav_pre;
 end
 
 endmodule // mem_inv_block.v

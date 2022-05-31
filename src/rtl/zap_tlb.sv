@@ -42,6 +42,9 @@ input   logic            i_reset,
 
 // From cache FSM (processor)
 input   logic    [31:0]  i_address,
+input   logic    [31:0]  i_address_check,
+input   logic            i_wr_check,
+
 input   logic    [31:0]  i_address_nxt,
 input   logic            i_rd,
 input   logic            i_wr,
@@ -86,14 +89,15 @@ always_comb o_wb_dat_nxt = 32'd0;
 `include "zap_localparams.svh"
 `include "zap_defines.svh"
 
-logic [`ZAP_SECTION_TLB_WDT-1:0]     setlb_wdata, setlb_rdata;
-logic [`ZAP_LPAGE_TLB_WDT-1:0]       lptlb_wdata, lptlb_rdata;
-logic [`ZAP_SPAGE_TLB_WDT-1:0]       sptlb_wdata, sptlb_rdata;
-logic [`ZAP_FPAGE_TLB_WDT-1:0]       fptlb_wdata, fptlb_rdata;
+logic [`ZAP_SECTION_TLB_WDT-1:0]     setlb_wdata, setlb_rdata, setlb_rdata_pre;
+logic [`ZAP_LPAGE_TLB_WDT-1:0]       lptlb_wdata, lptlb_rdata, lptlb_rdata_pre;
+logic [`ZAP_SPAGE_TLB_WDT-1:0]       sptlb_wdata, sptlb_rdata, sptlb_rdata_pre;
+logic [`ZAP_FPAGE_TLB_WDT-1:0]       fptlb_wdata, fptlb_rdata, fptlb_rdata_pre;
 
 logic                            sptlb_wen, lptlb_wen, setlb_wen;
 logic                            sptlb_ren, lptlb_ren, setlb_ren;
-logic                            fptlb_ren, fptlb_wen;
+logic                            sptlb_ren_pre, lptlb_ren_pre, setlb_ren_pre;
+logic                            fptlb_ren, fptlb_ren_pre, fptlb_wen;
 logic                            walk;
 logic [7:0]                      fsr;
 logic [31:0]                     far;
@@ -149,7 +153,12 @@ localparam W = max (
         10+$clog2(FPAGE_TLB_ENTRIES)
 );
 
-always_comb unused = |{i_address_nxt[9:0], tlb_address[9:0], i_address_nxt[31:W], tlb_address[31:W], u0, u1, u2, u3, u4, u5};
+always_comb unused = |{i_address_nxt[9:0], tlb_address[9:0], i_address_nxt[31:W], 
+                       tlb_address[31:W], u0, u1, u2, u3, u4, u5,
+                       setlb_rdata, sptlb_rdata, lptlb_rdata, fptlb_rdata, 
+                       setlb_ren, sptlb_ren, lptlb_ren, fptlb_ren,
+                       i_rd, i_wr
+                       };
 
 // ----------------------------------------------------------------------------
 
@@ -168,7 +177,10 @@ u_section_tlb (
 .i_waddr        (tlb_address[`ZAP_VA__SECTION_INDEX]),
 
 .o_rdata        (setlb_rdata),
-.o_rdav         (setlb_ren)
+.o_rdav         (setlb_ren),
+
+.o_rdata_pre    (setlb_rdata_pre),
+.o_rdav_pre     (setlb_ren_pre)
 );
 
 // ----------------------------------------------------------------------------
@@ -188,7 +200,10 @@ u_lpage_tlb   (
 .i_waddr        (tlb_address[`ZAP_VA__LPAGE_INDEX]),
 
 .o_rdata        (lptlb_rdata),
-.o_rdav         (lptlb_ren)
+.o_rdav         (lptlb_ren),
+
+.o_rdata_pre    (lptlb_rdata_pre),
+.o_rdav_pre     (lptlb_ren_pre)
 );
 
 // ----------------------------------------------------------------------------
@@ -208,7 +223,10 @@ u_spage_tlb   (
 .i_waddr        (tlb_address[`ZAP_VA__SPAGE_INDEX]),
 
 .o_rdata        (sptlb_rdata),
-.o_rdav         (sptlb_ren)
+.o_rdav         (sptlb_ren),
+
+.o_rdata_pre    (sptlb_rdata_pre),
+.o_rdav_pre     (sptlb_ren_pre)
 );
 
 // ----------------------------------------------------------------------------
@@ -228,8 +246,10 @@ u_fpage_tlb (
 .i_waddr        (tlb_address[`ZAP_VA__FPAGE_INDEX]),
 
 .o_rdata        (fptlb_rdata),
-.o_rdav         (fptlb_ren)
+.o_rdav         (fptlb_ren),
 
+.o_rdata_pre    (fptlb_rdata_pre),
+.o_rdav_pre     (fptlb_ren_pre)
 );
 
 // ----------------------------------------------------------------------------
@@ -241,27 +261,29 @@ zap_tlb_check #(
 .FPAGE_TLB_ENTRIES(FPAGE_TLB_ENTRIES)
 ) 
 u_zap_tlb_check (
+.i_clk          (i_clk),
+.i_clkena       (!i_hold),
 
 .i_mmu_en       (i_mmu_en),
-.i_va           (i_address),
-.i_rd           (i_rd),
-.i_wr           (i_wr),
+.i_va           (i_address_check),
+.i_rd           (!i_wr_check),
+.i_wr           (i_wr_check),
 
 .i_cpsr         (i_cpsr),
 .i_sr           (i_sr),
 .i_dac_reg      (i_dac_reg),
 
-.i_sptlb_rdata  (sptlb_rdata),
-.i_sptlb_rdav   (sptlb_ren),
+.i_sptlb_rdata  (sptlb_rdata_pre),
+.i_sptlb_rdav   (sptlb_ren_pre),
 
-.i_lptlb_rdata  (lptlb_rdata),
-.i_lptlb_rdav   (lptlb_ren),
+.i_lptlb_rdata  (lptlb_rdata_pre),
+.i_lptlb_rdav   (lptlb_ren_pre),
 
-.i_setlb_rdata  (setlb_rdata),
-.i_setlb_rdav   (setlb_ren),
+.i_setlb_rdata  (setlb_rdata_pre),
+.i_setlb_rdav   (setlb_ren_pre),
 
-.i_fptlb_rdata  (fptlb_rdata),
-.i_fptlb_rdav   (fptlb_ren),
+.i_fptlb_rdata  (fptlb_rdata_pre),
+.i_fptlb_rdav   (fptlb_ren_pre),
 
 .o_walk         (walk),
 .o_fsr          (fsr),

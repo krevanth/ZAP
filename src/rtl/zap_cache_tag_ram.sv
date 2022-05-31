@@ -90,6 +90,7 @@ localparam CACHE_CLEAN_GET_ADDRESS      = 1;
 localparam CACHE_CLEAN_WRITE            = 2;
 localparam CACHE_INV                    = 3;
 localparam CACHE_CLEAN_WRITE_PRE        = 4;
+localparam CACHE_CLEAN_WRITE_PRE_WAIT   = 5;
 
 localparam BLK_CTR_PAD = 32 - $clog2(NUMBER_OF_DIRTY_BLOCKS) - 1;
 localparam ADR_CTR_PAD = 32 - $clog2(CACHE_LINE/4) - 1;
@@ -102,14 +103,15 @@ logic [(CACHE_SIZE/CACHE_LINE)-1:0]        valid;
 logic [`ZAP_CACHE_TAG_WDT-1:0]             tag_ram_wr_data;
 logic                                      tag_ram_wr_en;
 logic [$clog2(CACHE_SIZE/CACHE_LINE)-1:0]  tag_ram_wr_addr;
-logic [$clog2(CACHE_SIZE/CACHE_LINE)-1:0]  tag_ram_rd_addr, tag_ram_rd_addr_del;
+logic [$clog2(CACHE_SIZE/CACHE_LINE)-1:0]  tag_ram_rd_addr, tag_ram_rd_addr_del, 
+                                           tag_ram_rd_addr_del2;
 logic                                      tag_ram_clear;
 logic                                      tag_ram_clean;
 logic [2:0]                                state_ff, state_nxt;
 logic [$clog2(NUMBER_OF_DIRTY_BLOCKS):0]   blk_ctr_ff, blk_ctr_nxt;
 logic [$clog2(CACHE_LINE/4):0]             adr_ctr_ff, adr_ctr_nxt;
-logic                                      cache_tag_dirty;
-logic                                      cache_tag_valid;
+logic                                      cache_tag_dirty, cache_tag_dirty_del;
+logic                                      cache_tag_valid, cache_tag_valid_del;
 
 logic                                      unused;
 logic [BLK_CTR_PAD-1:0]                    dummy;
@@ -117,10 +119,12 @@ logic [CACHE_LINE*8-32-1:0]                line_dummy;
 logic                                      unused_0;
 logic                                      cache_unused0;
 logic                                      cache_unused1;
+logic [CACHE_LINE*8-1:0]                   w_dummy;
+logic [`ZAP_CACHE_TAG_WDT-1:0]             w_dummy_1;
 
 always_comb cache_unused0 = |{i_address[31: $clog2(CACHE_LINE)+$clog2(CACHE_SIZE/CACHE_LINE)], i_address[$clog2(CACHE_LINE)-1:0]};
 always_comb cache_unused1 = |{i_address_nxt[31: $clog2(CACHE_LINE)+$clog2(CACHE_SIZE/CACHE_LINE)], i_address_nxt[$clog2(CACHE_LINE)-1:0]};
-always_comb        unused = |{dummy, line_dummy, i_wb_dat, unused_0, cache_unused0, cache_unused1};
+always_comb        unused = |{dummy, line_dummy, i_wb_dat, unused_0, cache_unused0, cache_unused1, w_dummy, w_dummy_1};
 
 // ----------------------------------------------------------------------------
 
@@ -132,6 +136,8 @@ begin
 
                 .i_wr_en(i_cache_line_ben[i]),
                 .i_wr_data(i_cache_line   [i*8+7:i*8]),
+
+                .o_rd_data_pre(w_dummy[i*8+7:i*8]),
                 .o_rd_data(o_cache_line   [i*8+7:i*8]),
 
                 .i_wr_addr(tag_ram_wr_addr),
@@ -145,6 +151,8 @@ zap_ram_simple #(.WIDTH(`ZAP_CACHE_TAG_WDT), .DEPTH(CACHE_SIZE/CACHE_LINE)) u_za
 
         .i_wr_en(tag_ram_wr_en),
         .i_wr_data(tag_ram_wr_data),
+
+        .o_rd_data_pre(w_dummy_1),
         .o_rd_data(o_cache_tag),
 
         .i_wr_addr(tag_ram_wr_addr),
@@ -157,7 +165,8 @@ always_ff @ (posedge i_clk)
 begin
         if ( !i_hold )
         begin
-                tag_ram_rd_addr_del <= tag_ram_rd_addr;
+                tag_ram_rd_addr_del  <= tag_ram_rd_addr;
+                tag_ram_rd_addr_del2 <= tag_ram_rd_addr_del;
         end
 end
 
@@ -165,9 +174,10 @@ always_ff @ (posedge i_clk)
 begin
         if ( !i_hold )
         begin
-                o_cache_tag_dirty <= cache_tag_dirty;
-                cache_tag_dirty   <= tag_ram_rd_addr == tag_ram_wr_addr && tag_ram_wr_en ? i_cache_tag_dirty : dirty [ tag_ram_rd_addr ];
-
+                o_cache_tag_dirty  <= tag_ram_rd_addr_del2 == tag_ram_wr_addr && tag_ram_wr_en ? i_cache_tag_dirty : cache_tag_dirty_del;
+                cache_tag_dirty_del<= tag_ram_rd_addr_del  == tag_ram_wr_addr && tag_ram_wr_en ? i_cache_tag_dirty : cache_tag_dirty;
+                cache_tag_dirty    <= tag_ram_rd_addr      == tag_ram_wr_addr && tag_ram_wr_en ? i_cache_tag_dirty : dirty [ tag_ram_rd_addr ];
+        
                 if ( i_reset )
                 begin
                         dirty <= 0;
@@ -176,10 +186,6 @@ begin
                 begin
                         dirty [ tag_ram_wr_addr ]   <= i_cache_tag_dirty;
                         
-                        if ( tag_ram_wr_addr == tag_ram_rd_addr_del )
-                        begin
-                                o_cache_tag_dirty <= i_cache_tag_dirty;
-                        end
                 end
                 else if ( tag_ram_clean )
                 begin
@@ -192,8 +198,9 @@ always_ff @ (posedge i_clk)
 begin
         if ( !i_hold )
         begin
-                o_cache_tag_valid <= cache_tag_valid;
-                cache_tag_valid   <= tag_ram_rd_addr == tag_ram_wr_addr && tag_ram_wr_en ? 1'd1 : valid [ tag_ram_rd_addr ];
+                o_cache_tag_valid   <= tag_ram_rd_addr_del2 == tag_ram_wr_addr && tag_ram_wr_en ? 1'd1 : cache_tag_valid_del;
+                cache_tag_valid_del <= tag_ram_rd_addr_del  == tag_ram_wr_addr && tag_ram_wr_en ? 1'd1 : cache_tag_valid;
+                cache_tag_valid     <= tag_ram_rd_addr      == tag_ram_wr_addr && tag_ram_wr_en ? 1'd1 : valid [ tag_ram_rd_addr ];
 
                 if ( tag_ram_clear || !i_cache_en || i_reset )
                 begin
@@ -202,11 +209,6 @@ begin
                 else if ( tag_ram_wr_en )
                 begin
                         valid [ tag_ram_wr_addr ]   <= 1'd1;
-
-                        if ( tag_ram_wr_addr == tag_ram_rd_addr_del )
-                        begin
-                                o_cache_tag_valid <= 1'd1;
-                        end
                 end
         end
 end
@@ -320,10 +322,16 @@ begin:blk1
                 else
                 begin
                         // Go to state.
-                        state_nxt = CACHE_CLEAN_WRITE_PRE;
+                        state_nxt = CACHE_CLEAN_WRITE_PRE_WAIT;
                 end
 
                 adr_ctr_nxt     = 0; // Initialize address counter.
+        end
+
+        CACHE_CLEAN_WRITE_PRE_WAIT: // Since RAM is pipelined.
+        begin
+                tag_ram_rd_addr = get_tag_ram_rd_addr (blk_ctr_ff, dirty);
+                state_nxt       = CACHE_CLEAN_WRITE_PRE;
         end
 
         CACHE_CLEAN_WRITE_PRE: // Since RAM is pipelined.

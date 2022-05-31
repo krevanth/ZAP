@@ -1,4 +1,4 @@
- ZAP: A HIGH PERFORMANCE 15-STAGE PIPE ARM PROCESSOR (v5TE) WITH CACHE AND MMU
+      ZAP : A HIGH PERFORMANCE ARM PROCESSOR (v5TE) WITH CACHE AND MMU
                   https://github.com/krevanth/ZAP
             By Revanth Kamaraj <revanth91kamaraj@gmail.com>
                       
@@ -11,7 +11,7 @@ LinkedIn Profile : https://linkedin.com/in/revanth-kamaraj-178662113
 1. About The ZAP Processor
 ===============================================================================
 
-The ZAP processor is a scalar 15-stage high performance synthesizable 32-bit 
+The ZAP processor is a scalar 17-stage high performance synthesizable 32-bit 
 soft processor core that is fully compatible with the older ARMv5TE ISA 
 (reference [1]). The processor also features an architecturally compliant 
 (CP15 controllable) cache and MMU.
@@ -27,10 +27,10 @@ instruction sets:
  * The 16-bit Thumb instruction set.
 
 -------------------------------------------------------------------------------
-1.1. ZAP Superpipelined Microarchitecture (15 Stage)
+1.1. ZAP Superpipelined Microarchitecture (17 Stage)
 -------------------------------------------------------------------------------
 
-ZAP uses a 15 stage execution pipeline to increase the speed of the flow of 
+ZAP uses a 17 stage execution pipeline to increase the speed of the flow of 
 instructions to the processor. The 14 stage pipeline consists of Address 
 Generator, Cache Access, Memory, Fetch, Instruction Buffer, Thumb Decoder, 
 Pre-Decoder, Decoder, Issue, Shift, Execute, Cache Access, Memory and 
@@ -45,6 +45,7 @@ During normal operation:
   * In case of LDR/STR with writeback, two results are being written to the
     register bank in a single cycle. 
   * All other instructions write out one result to the register bank per cycle.
+* The instruction before that is accessing the cache/TLB RAM.
 * The instruction before that is accessing the cache/TLB RAM.
 * The instruction before that is accessing the cache/TLB RAM.
 * The instruction before that is accessing the cache/TLB RAM.
@@ -72,9 +73,10 @@ During normal operation:
 * The instruction before that is accessing the cache/TLB RAM.
 * The instruction before that is accessing the cache/TLB RAM.
 * The instruction before that is accessing the cache/TLB RAM.
+* The instruction before that is accessing the cache/TLB RAM.
 
 The deep pipeline, although uses more resources, allows the ZAP to run at 
-high clock speeds (120MHz @ xc7a35t256g-3 FPGA).
+high clock speeds (133.33MHz @ xc7a35t256g-3 FPGA).
 
 The ZAP pipeline has an efficient automatic dual forwarding network with 
 interlock detection hardware. This is done automatically and no software 
@@ -333,37 +335,35 @@ the following settings:
 
 * Speed Grade       : -3
 * Mode              : PerformanceOptimized
-* Retiming          : No 
+* Retiming          : Yes 
 * Flatten Hierarchy : full
 * Mode              : out_of_context
 
 +----------+-------+---------------------+
 | Ref Name |  Used | Functional Category |
 +----------+-------+---------------------+
-| FDRE     | 11596 |                Flop |
-| LUT6     |  9829 |                 LUT |
-| LUT5     |  2882 |                 LUT |
-| LUT4     |  2006 |                 LUT |
-| LUT3     |  1581 |                 LUT |
+| FDR/SE   | 14787 |                Flop |
+| LUT6     |  8599 |                 LUT |
+| LUT5     |  4673 |                 LUT |
+| LUT3     |  3525 |                 LUT |
+| LUT4     |  2040 |                 LUT |
 | RAMD64E  |  1536 |  Distributed Memory |
-| MUXF7    |  1084 |               MuxFx |
-| LUT2     |   727 |                 LUT |
+| MUXF7    |   973 |               MuxFx |
+| LUT2     |   897 |                 LUT |
 | RAMD32   |   348 |  Distributed Memory |
-| LUT1     |   233 |                 LUT |
-| CARRY4   |   158 |          CarryLogic |
+| MUXF8    |   264 |               MuxFx |
+| CARRY4   |   162 |          CarryLogic |
 | RAMS32   |   114 |  Distributed Memory |
-| MUXF8    |    91 |               MuxFx |
-| FDSE     |    28 |                Flop |
+| LUT1     |    98 |                 LUT |
 | RAMB36E1 |     5 |        Block Memory |
 | DSP48E1  |     4 |    Block Arithmetic |
 | RAMB18E1 |     1 |        Block Memory |
 +----------+-------+---------------------+
 
-
 +-------+-------------+-----------------+
 | Clock |    Fmax     |     Part        |
 +-------+-------------+-----------------+
-| i_clk |   120MHz    | 7a35t-ftg256-3  |
+| i_clk |  133.33MHz  | 7a35t-ftg256-3  |
 +-------+-------------+-----------------+
 
 ===============================================================================
@@ -373,7 +373,14 @@ the following settings:
 [1] ARM Architecture Specification (ARM DDI 0100E)
 
 ===============================================================================
-6. License
+6. Mentions
+===============================================================================
+
+The ZAP project was mentioned in this paper : 
+researchgate.net/publication/347558929_Free_ARM_Compatible_Softcores_on_FPGA 
+
+===============================================================================
+7. License
 ===============================================================================
 
 Copyright (C) 2016-2022  Revanth Kamaraj

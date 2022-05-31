@@ -44,8 +44,14 @@ parameter [31:0] CACHE_LINE             = 8
 input   logic            i_clk,
 input   logic            i_reset,
 
-// Address from processor.
+// Signals to check (Provide 1 cycle before TLB+cache access).
+input   logic   [31:0]   i_address_check,
+input   logic            i_wr_check,
+
+// Address of TLB+Cache access
 input   logic    [31:0]  i_address,
+
+// Address of RAM read.
 input   logic    [31:0]  i_address_nxt,
 
 // Other control signals from/to processor.
@@ -242,6 +248,8 @@ u_zap_tlb (
         .i_reset        (i_reset),
         .i_address      (i_address),
         .i_address_nxt  (i_address_nxt),
+        .i_address_check(i_address_check),
+        .i_wr_check     (i_wr_check),
         .i_hold         (hold),
         .i_rd           (i_rd),
         .i_wr           (i_wr),
