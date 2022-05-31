@@ -31,10 +31,10 @@ instruction sets:
 -------------------------------------------------------------------------------
 
 ZAP uses a 17 stage execution pipeline to increase the speed of the flow of 
-instructions to the processor. The 14 stage pipeline consists of Address 
-Generator, Cache Access, Memory, Fetch, Instruction Buffer, Thumb Decoder, 
-Pre-Decoder, Decoder, Issue, Shift, Execute, Cache Access, Memory and 
-Writeback.
+instructions to the processor. The 17 stage pipeline consists of Address 
+Generator, TLB Check, Cache Access, Memory, Fetch, Instruction Buffer, 
+Thumb Decoder, Pre-Decoder, Decoder, Issue, Shift, Execute, TLB Check, 
+Cache Access, Memory and Writeback.
 
 > To maintain compatibility with the ARMv5TE standard, reading the program 
 counter (PC) will return PC + 8 when read.
@@ -127,6 +127,10 @@ actually perform locked transfers.
 Please refer to ref [1] for CP15 CSR architectural requirements. The ZAP
 implements the following software accessinble registers within its CP15
 coprocessor.
+
+NOTE: Cleaning and flushing cache and TLB is only supported for the entire
+memory. Selective flushing and cleaning of cache/TLB is not available. This
+is permitted as per the arch spec.
 
  * Register 1: Cache and MMU control.
  * Register 2: Translation Base.
