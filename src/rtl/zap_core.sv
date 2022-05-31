@@ -473,9 +473,9 @@ always_comb o_mem_translate = postalu1_mem_translate_ff;
 
 always_comb
 begin
-        o_data_wb_adr_check  = {postalu1_address_ff[31:2], 2'd0};
-        o_data_wb_we_check   =  postalu1_data_wb_we;
-        o_code_stall         =  code_stall;
+        o_data_wb_adr_check  =  {postalu1_address_ff[31:2], 2'd0};
+        o_data_wb_we_check   =   postalu1_data_wb_we;
+        o_code_stall         =   code_stall;
 end
 
 // ----------------------------------------------------------------------------

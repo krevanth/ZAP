@@ -114,6 +114,7 @@ begin
                 o_irq_ff                         <= 0; 
                 o_fiq_ff                         <= 0; 
                 o_swi_ff                         <= 0; 
+                o_und_ff                         <= 0;
                 o_mem_srcdest_index_ff           <= 0; 
                 o_mem_srcdest_index_ff           <= 0; 
                 o_mem_load_ff                    <= 0; 
@@ -126,6 +127,8 @@ begin
                 o_data_wb_cyc_ff                 <= 0;
                 o_data_wb_stb_ff                 <= 0;
                 o_data_wb_sel_ff                 <= 0;
+                o_data_wb_dat_ff                 <= 0;
+                o_data_wb_we_ff                  <= 0;
                 o_flags_ff                       <= 0;
         end
         else if ( i_clear_from_writeback ) 

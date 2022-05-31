@@ -107,7 +107,7 @@ always_comb
 begin
         o_wb_stb = !w_emp;
         o_wb_cyc = !w_emp;
-        o_wb_cti = {w_eob, 1'd1, w_eob};
+        o_wb_cti = w_eob ? CTI_EOB : CTI_BURST;
 end
 
 // Flip flop clocking block.
