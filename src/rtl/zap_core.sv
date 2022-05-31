@@ -101,6 +101,7 @@ output logic      [`ZAP_CPSR_MODE]       o_cpsr,
 // For MMU/cache connectivity.
 // -----------------------------------------------------
 
+output logic                             o_code_stall,
 input logic      [31:0]                  i_fsr,
 input logic      [31:0]                  i_far,
 output logic      [31:0]                 o_dac,
@@ -474,6 +475,7 @@ always_comb
 begin
         o_data_wb_adr_check  = {postalu1_address_ff[31:2], 2'd0};
         o_data_wb_we_check   =  postalu1_data_wb_we;
+        o_code_stall         =  code_stall;
 end
 
 // ----------------------------------------------------------------------------

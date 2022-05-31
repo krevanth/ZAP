@@ -156,6 +156,7 @@ logic           icache_err2, dcache_err2;
 logic           cpu_dwe_check;
 
 logic           s_reset, s_fiq, s_irq;
+logic           code_stall;
 
 zap_dual_rank_synchronizer #(.WIDTH(3)) u_sync (
         .i_clk(i_clk),
@@ -186,6 +187,8 @@ zap_core #(
 /* verilator lint_on PINCONNECTEMPTY */
 
 // Code related.
+.o_code_stall           (code_stall),
+
 .i_instr_wb_dat         (ic_data),
 
 .i_instr_wb_ack         (instr_ack),
@@ -260,6 +263,7 @@ zap_cache #(
 )
 u_data_cache (
 .i_clk                  (i_clk),
+.i_stall                (1'd0), // For timing.
 .i_reset                (s_reset),
 .i_address              (cpu_daddr     + ({24'd0, cpu_pid[7:0]} << 32'd25)),
 .i_address_nxt          (cpu_daddr_nxt + ({24'd0, cpu_pid[7:0]} << 32'd25)),
@@ -323,6 +327,7 @@ zap_cache #(
 ) 
 u_code_cache (
 .i_clk              (i_clk),
+.i_stall            (code_stall),
 .i_reset            (s_reset),
 .i_address          ((cpu_iaddr     & 32'hFFFF_FFFC) + ({24'd0, cpu_pid[7:0]} << 32'd25)), // Cut off lower 2 bits.
 .i_address_nxt      ((cpu_iaddr_nxt & 32'hFFFF_FFFC) + ({24'd0, cpu_pid[7:0]} << 32'd25)), // Cut off lower 2 bits.

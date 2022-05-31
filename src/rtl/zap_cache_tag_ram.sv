@@ -172,7 +172,7 @@ end
 
 always_ff @ (posedge i_clk)
 begin
-        if ( !i_hold )
+        if ( !i_hold || tag_ram_clean )
         begin
                 o_cache_tag_dirty  <= tag_ram_rd_addr_del2 == tag_ram_wr_addr && tag_ram_wr_en ? i_cache_tag_dirty : cache_tag_dirty_del;
                 cache_tag_dirty_del<= tag_ram_rd_addr_del  == tag_ram_wr_addr && tag_ram_wr_en ? i_cache_tag_dirty : cache_tag_dirty;
@@ -196,7 +196,7 @@ end
 
 always_ff @ (posedge i_clk)
 begin
-        if ( !i_hold )
+        if ( !i_hold || tag_ram_clear )
         begin
                 o_cache_tag_valid   <= tag_ram_rd_addr_del2 == tag_ram_wr_addr && tag_ram_wr_en ? 1'd1 : cache_tag_valid_del;
                 cache_tag_valid_del <= tag_ram_rd_addr_del  == tag_ram_wr_addr && tag_ram_wr_en ? 1'd1 : cache_tag_valid;

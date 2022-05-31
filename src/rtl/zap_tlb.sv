@@ -69,6 +69,7 @@ output  logic    [31:0]  o_far,
 output  logic            o_fault,
 output  logic            o_cacheable,
 output  logic            o_busy,
+input   wire             i_idle,
 
 // Wishbone memory interface - Needs to go through some OR gates.
 output logic             o_wb_stb_nxt,
@@ -312,6 +313,7 @@ zap_tlb_fsm #(
 .i_cacheable    (cacheable),
 .i_phy_addr     (phy_addr),
 
+.i_idle         (i_idle),
 .o_fsr          (o_fsr),
 .o_far          (o_far),
 .o_fault        (o_fault),

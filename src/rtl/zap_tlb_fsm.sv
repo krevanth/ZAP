@@ -49,6 +49,7 @@ input   logic   [31:0]           i_baddr,
 
 /* From cache FSM */
 input   logic   [31:0]           i_address,
+input   logic                    i_idle,
 
 /* From TLB check unit */
 input   logic                    i_walk,
@@ -182,7 +183,7 @@ begin: blk1
         case ( state_ff )
         IDLE:
         begin
-                if ( i_mmu_en )
+                if ( i_mmu_en && i_idle )
                 begin
                         if ( i_walk ) /* Prepare to access the PTEs. */
                         begin

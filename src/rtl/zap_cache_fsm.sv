@@ -99,6 +99,9 @@ input   logic                      i_cacheable,
 input   logic                      i_busy,
 output  logic                      o_hold,
 
+/* Cache state */
+output  logic                      o_idle,                     
+
 /* Memory access ports, both NXT and FF. Usually you'll be connecting NXT ports */
 output  logic             o_wb_cyc_ff, o_wb_cyc_nxt,
 output  logic             o_wb_stb_ff, o_wb_stb_nxt,
@@ -228,6 +231,8 @@ end
 always_comb
 begin:blk1
        logic [$clog2(CACHE_LINE/4)-1:0] a;
+
+        o_idle                  = ~(|state_ff);
 
         /* Default values */
         a                       = {($clog2(CACHE_LINE/4)){1'd0}};

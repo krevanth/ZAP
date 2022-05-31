@@ -527,7 +527,6 @@ end
 //
 // Straightforward read feedback function. Looks at all stages of the pipeline
 // to extract the latest value of the register. 
-// There is some complexity here to perform accelerated memory reads. 
 //
 function [31:0] get_register_value ( 
 

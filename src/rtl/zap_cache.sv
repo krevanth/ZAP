@@ -44,6 +44,9 @@ parameter [31:0] CACHE_LINE             = 8
 input   logic            i_clk,
 input   logic            i_reset,
 
+// RAM stall.
+input   logic            i_stall,
+
 // Signals to check (Provide 1 cycle before TLB+cache access).
 input   logic   [31:0]   i_address_check,
 input   logic            i_wr_check,
@@ -126,6 +129,7 @@ logic [2:0]                      wb_ack;
 logic [1:0]                      state_ff, state_nxt;
 logic [31:0]                     cache_address;
 logic                            hold;
+logic                            idle;
 
 // Selection 2 of Wishbone CTI[2x3] is always on all CPU supported modes.
 always_comb wb_cti[2] = 3'd0;
@@ -138,6 +142,7 @@ zap_cache_fsm #(.CACHE_SIZE(CACHE_SIZE), .CACHE_LINE(CACHE_LINE)) u_zap_cache_fs
         .i_rd                   (i_rd),
         .i_wr                   (i_wr),
         .i_din                  (i_dat),
+        .o_idle                 (idle),
         .i_ben                  (i_ben),
         .o_dat                  (o_dat),
         .o_ack                  (o_ack),
@@ -199,7 +204,7 @@ zap_cache_tag_ram #(.CACHE_SIZE(CACHE_SIZE), .CACHE_LINE(CACHE_LINE)) u_zap_cach
         .i_reset                (i_reset),
         .i_address_nxt          (i_address_nxt),
         .i_address              (cache_address),
-        .i_hold                 (hold),
+        .i_hold                 (hold || i_stall),
         .i_cache_en             (i_cache_en),
         .i_cache_line           (cf_cache_line),
         .o_cache_line           (tr_cache_line),
@@ -249,8 +254,9 @@ u_zap_tlb (
         .i_address      (i_address),
         .i_address_nxt  (i_address_nxt),
         .i_address_check(i_address_check),
+        .i_idle         (idle),
         .i_wr_check     (i_wr_check),
-        .i_hold         (hold),
+        .i_hold         (hold || i_stall),
         .i_rd           (i_rd),
         .i_wr           (i_wr),
         .i_cpsr         (i_cpsr),
