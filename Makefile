@@ -21,7 +21,7 @@
 # // --                                                                         --
 # // -----------------------------------------------------------------------------
 
-.PHONY: test clean reset lint runlint c2asm dirs runsim
+.PHONY: test clean reset lint runlint c2asm dirs runsim syn
 
 PWD          := $(shell pwd)
 TAG          := archlinux/zap
@@ -39,7 +39,9 @@ CC           := arm-none-eabi-gcc
 AS           := arm-none-eabi-as
 LD           := arm-none-eabi-ld
 OB           := arm-none-eabi-objcopy
+DP           := arm-none-eabi-objdump
 CPU_FILES    := $(wildcard src/rtl/*)
+SYN_SCRIPTS  := $(wildcard src/syn/*)
 TB_FILES     := $(wildcard src/testbench/*)
 SCRIPT_FILES := $(wildcard scripts/*)
 TEST         := $(shell find src/ts/* -type d -exec basename {} \; | xargs echo)
@@ -80,7 +82,16 @@ lint:
 	docker image ls | grep $(TAG) || echo -e $(DLOAD) | docker build --no-cache --rm --tag $(TAG) -
 	docker run --interactive --tty --volume `pwd`:`pwd` --workdir `pwd` $(TAG) $(MAKE) runlint || exit 10
 
+# Synthesis
+syn: obj/syn/syn_timing.rpt
+	vi obj/syn/syn_timing.rpt
+
 ############################################ Internal Targets #########################################################
+
+obj/syn/syn_timing.rpt: $(CPU_FILES) $(SYN_SCRIPTS)
+	rm -rf obj/syn
+	mkdir -p obj/syn
+	cd obj/syn ; vivado -mode batch -source ../../src/syn/syn.tcl
 
 # Compile S files to OBJ.
 obj/ts/$(TC)/a.o: $(S_FILES)
@@ -93,6 +104,7 @@ obj/ts/$(TC)/c.o: $(C_FILES) $(H_FILES)
 # Rule to convert the object files to an ELF file.
 obj/ts/$(TC)/$(TC).elf: $(LD_FILE) obj/ts/$(TC)/a.o obj/ts/$(TC)/c.o
 	$(LD) $(LFLAGS) $(LD_FILE) obj/ts/$(TC)/a.o obj/ts/$(TC)/c.o -o obj/ts/$(TC)/$(TC).elf
+	$(DP) -d obj/ts/$(TC)/$(TC).elf > obj/ts/$(TC)/$(TC).dump
 
 # Rule to generate a BIN file.
 obj/ts/$(TC)/$(TC).bin: obj/ts/$(TC)/$(TC).elf
@@ -139,4 +151,4 @@ c2asm:
 # Print internal variables.
 print-%  : ; @echo $* = $($*)
 
-#######################################################################################################################
+

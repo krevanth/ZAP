@@ -288,7 +288,7 @@ To run all/a specific TC, do:
 See src/ts for a list of test names. Not providing a testname will run all
 tests.
 
-To remove existing object/simulation files, do:
+To remove existing object/simulation/synthesis files, do:
 
 > make clean
 
@@ -357,6 +357,27 @@ To remove existing object/simulation files, do:
 To run RTL lint, simply do:
 > make lint
 
+-------------------------------------------------------------------------------
+2.4. Running Vivado Synthesis
+-------------------------------------------------------------------------------
+
+Synthesis scripts can be found here: src/syn/
+
+Assuming you have Vivado installed, please do:
+> make syn
+
+Timing report will be available in obj/syn/syn_timing.rpt
+
+If you had used Docker previously to run a test, do a
+> make clean
+first.
+
+XDC Setup
+--------------
+* The XDC assumes a 140MHz clock. 
+* Input assume they receive data from a flop with Tcq = 3.7ns
+* Outputs assume they are driving a flop with Tsu = 2ns Th=1ns.
+
 ===============================================================================
 3. Timing and Resource Utilization 
    (4KB + 4KB cache , 2,32,2,2 + 2,32,2,2 TLB entries, 1K Predictor Depth)
@@ -366,11 +387,11 @@ To run RTL lint, simply do:
 3.1. Timing
 -------------------------------------------------------------------------------
 
-+-------+-------------+--------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Clock |    Fmax     | Slack  | Synthesis Command                                                                                                                                               |
-+-------+-------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| i_clk |   140 MHz   |  MET   | synth_design -top zap_top -part xc7a35tftg256-3 -gated_clock_conversion auto -directive PerformanceOptimized -incremental_mode aggressive -mode out_of_context  |
-+-------+-------------+--------+----------------+------------------------------------------------------------------------------------------------------------------------------------------------|
++-------+-------------+--------+-----------------------------------------------------------------------+
+| Clock |    Fmax     | Slack  | Synthesis Command                                                     |
++-------+-------------+--------------------------------------------------------------------------------+
+| i_clk |   140 MHz   |  MET   | synth_design -top zap_top -part xc7a35tftg256-3 -mode out_of_context  |
++-------+-------------+--------+----------------+------------------------------------------------------|
 
 -------------------------------------------------------------------------------
 3.2. Area
