@@ -1,4 +1,0 @@
-This test is taken from the ARM4U CPU project. It is a comprehensive test
-and exercises a bunch of different ARM instructions. Interrupts must not
-be enabled during the test since handlers are not properly setup. This test
-does NOT have cache and MMU enabled.
