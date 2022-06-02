@@ -62,13 +62,11 @@ logic               empty, nempty;
 logic               full, nfull;
 logic [PTR_WDT-1:0] wptr_nxt;
 logic [WIDTH-1:0]   mem [DEPTH-1:0]; 
-logic               sel_ff;
-logic [WIDTH-1:0]   bram_ff;         
-logic [WIDTH-1:0]   dt_ff;
 logic               unused;
 
 // Assigns
 always_comb unused  = |{FWFT, 1'd1};
+
 always_comb o_empty = empty;
 always_comb o_full  = full;
 always_comb o_empty_n = nempty;
@@ -82,20 +80,9 @@ always_ff @ (posedge i_clk)
         if ( i_wr_en && !o_full )
                 mem[wptr_ff[PTR_WDT-2:0]] <= i_data;
 
-// FIFO read logic
-// Retimed output data compared to normal FIFO.
-always_ff @ (posedge i_clk) 
-begin
-         dt_ff <= i_data;
-        sel_ff <= ( i_wr_en && (wptr_ff == rptr_nxt) );
-       bram_ff <= mem[rptr_nxt[PTR_WDT-2:0]];
-end
-
-// Output signal steering MUX.
+// Read data output.
 always_comb
-begin
-        o_data = sel_ff ? dt_ff : bram_ff;
-end
+        o_data = mem[rptr_ff[PTR_WDT-2:0]];
 
 // Flip-flop update.
 always_ff @ (posedge i_clk)
@@ -104,8 +91,8 @@ begin
         wptr_ff <= i_reset ? 0 : wptr_nxt;
         empty   <= i_reset ? 1 : ( wptr_nxt == rptr_nxt );
         nempty  <= i_reset ? 0 : ( wptr_nxt != rptr_nxt );
-        nfull   <= o_full_n_nxt;
-        full    <= !o_full_n_nxt;
+        nfull   <= i_reset ? 1 :  o_full_n_nxt;
+        full    <= i_reset ? 0 : !o_full_n_nxt;
 end
 
 // Pointer updates.

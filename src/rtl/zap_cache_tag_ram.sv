@@ -112,6 +112,7 @@ logic [$clog2(NUMBER_OF_DIRTY_BLOCKS):0]   blk_ctr_ff, blk_ctr_nxt;
 logic [$clog2(CACHE_LINE/4):0]             adr_ctr_ff, adr_ctr_nxt;
 logic                                      cache_tag_dirty, cache_tag_dirty_del;
 logic                                      cache_tag_valid, cache_tag_valid_del;
+logic                                      cache_clean_done_nxt, cache_clean_done_ff;
 
 logic                                      unused;
 logic [BLK_CTR_PAD-1:0]                    dummy;
@@ -229,6 +230,7 @@ begin
                 adr_ctr_ff              <= 0;
                 blk_ctr_ff              <= 0;
                 state_ff                <= IDLE;
+                cache_clean_done_ff     <= 0;
         end
         else
         begin
@@ -242,6 +244,7 @@ begin
                 adr_ctr_ff              <= adr_ctr_nxt;
                 blk_ctr_ff              <= blk_ctr_nxt;
                 state_ff                <= state_nxt;
+                cache_clean_done_ff     <= cache_clean_done_nxt;
         end
 end
 
@@ -266,18 +269,19 @@ begin:blk1
         tag_ram_clean           = 0;
         adr_ctr_nxt             = adr_ctr_ff;
         blk_ctr_nxt             = blk_ctr_ff;
-        o_cache_clean_done      = 0;
+        cache_clean_done_nxt    = cache_clean_done_ff;
         o_cache_inv_done        = 0;
+        o_wb_cyc_nxt            = o_wb_cyc_ff;
+        o_wb_stb_nxt            = o_wb_stb_ff;
+        o_wb_adr_nxt            = o_wb_adr_ff;
+        o_wb_dat_nxt            = o_wb_dat_ff;
+        o_wb_sel_nxt            = o_wb_sel_ff;
+        o_wb_wen_nxt            = o_wb_wen_ff;
+        o_wb_cti_nxt            = o_wb_cti_ff;
+        tag_ram_wr_data         = 0;
 
-        o_wb_cyc_nxt = o_wb_cyc_ff;
-        o_wb_stb_nxt = o_wb_stb_ff;
-        o_wb_adr_nxt = o_wb_adr_ff;
-        o_wb_dat_nxt = o_wb_dat_ff;
-        o_wb_sel_nxt = o_wb_sel_ff;
-        o_wb_wen_nxt = o_wb_wen_ff;
-        o_wb_cti_nxt = o_wb_cti_ff;
-
-        tag_ram_wr_data = 0;
+        // Cache clean done.
+        o_cache_clean_done      = cache_clean_done_ff;
 
         case ( state_ff )
 
@@ -289,15 +293,17 @@ begin:blk1
                 tag_ram_wr_addr = i_address     [`ZAP_VA__CACHE_INDEX];
                 tag_ram_wr_en   = i_cache_tag_wr_en;
                 tag_ram_wr_data = i_cache_tag;
+                
+                cache_clean_done_nxt = 1'd0;
 
-                if ( i_cache_clean_req )
+                if ( i_cache_clean_req && !cache_clean_done_ff )
                 begin
                         tag_ram_wr_en = 0;
                         blk_ctr_nxt   = 0;
 
                         state_nxt     = CACHE_CLEAN_GET_ADDRESS;
                 end
-                else if ( i_cache_inv_req )
+                else if ( i_cache_inv_req && !cache_clean_done_ff )
                 begin
                         tag_ram_wr_en = 0;
                         state_nxt     = CACHE_INV;
@@ -315,8 +321,8 @@ begin:blk1
 
                         if ( {{BLK_CTR_PAD{1'd0}}, blk_ctr_ff} == NUMBER_OF_DIRTY_BLOCKS - 1 )
                         begin
-                                state_nxt          = IDLE;
-                                o_cache_clean_done = 1'd1;
+                                state_nxt            = IDLE;
+                                cache_clean_done_nxt = 1'd1;
                         end
                 end
                 else

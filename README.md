@@ -1,8 +1,15 @@
 ```text
-                                     ZAP 
-A HIGH PERFORMANCE ARM PROCESSOR (v5TE) WITH CP15 COMPATIBLE CACHE AND MMU (140MHz ON 7-SERIES FPGA)
-                          https://github.com/krevanth/ZAP
-                    By Revanth Kamaraj <revanth91kamaraj@gmail.com>
+
+                           ██████████████████  
+                              █████   ███   ██ 
+                             ███ ████████████  
+                            ███  ██   ███      
+                           ████████   ███
+                            
+            A v5TE ARM SOFT PROCESSOR (140MHz @ XCA735T256-3 FPGA)
+
+                     https://github.com/krevanth/ZAP
+                By Revanth Kamaraj <revanth91kamaraj@gmail.com>
                       
 Please reach me at :
 EMail Address    : revanth91kamaraj@gmail.com
@@ -375,23 +382,24 @@ first.
 XDC Setup
 --------------
 * The XDC assumes a 140MHz clock. 
-* Input assume they receive data from a flop with Tcq = 3.7ns
+* Input assume they receive data from a flop with Tcq = 50% of clock period.
 * Outputs assume they are driving a flop with Tsu = 2ns Th=1ns.
 
 ===============================================================================
 3. Timing and Resource Utilization 
    (4KB + 4KB cache , 2,32,2,2 + 2,32,2,2 TLB entries, 1K Predictor Depth)
+   Vivado 2021.2 (64-Bit)
 ===============================================================================
 
 -------------------------------------------------------------------------------
 3.1. Timing
 -------------------------------------------------------------------------------
 
-+-------+-------------+--------+-----------------------------------------------------------------------+
-| Clock |    Fmax     | Slack  | Synthesis Command                                                     |
-+-------+-------------+--------------------------------------------------------------------------------+
-| i_clk |   140 MHz   |  MET   | synth_design -top zap_top -part xc7a35tftg256-3 -mode out_of_context  |
-+-------+-------------+--------+----------------+------------------------------------------------------|
++-------+-------------+--------+-----------------------------------------------------------------------------------------------------------+
+| Clock |    Fmax     | Slack  | Synthesis Command                                                                                         |
++-------+-------------+--------------------------------------------------------------------------------------------------------------------+
+| i_clk |   140 MHz   |  MET   | synth_design -top zap_top -part xc7a35tftg256-3 -mode out_of_context -flatten_hierarchy none  -retiming   |
++-------+-------------+--------+----------------+------------------------------------------------------------------------------------------|
 
 -------------------------------------------------------------------------------
 3.2. Area

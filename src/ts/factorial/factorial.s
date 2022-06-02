@@ -228,13 +228,16 @@ add r0, r0, #4            // Move to INT_MASK
 mov r1, #0                // Prepare mask value
 str r1, [r0]              // Unmask all interrupt sources.
 
-// Program timer peripheral to tick every 32 clock cycles.
+// Program timer peripheral to tick every N cycles.
 ldr r0 ,=TIMER_BASE_ADDRESS     // Timer base address.
 mov r1 , #1
+
 str r1, [r0]                    // Enable timer
 add r0, r0, #4
-mov r1, #32     
-str r1, [r0]                    // Program to 255 clocks.
+
+mov r1, #32                     // Program to N=32 clock cycles.
+str r1, [r0]                    
+
 add r0, r0, #8
 mov r1, #0x1
 str r1, [r0]                    // Start the timer.
