@@ -6,7 +6,8 @@
                             ███  ██   ███      
                            ████████   ███
                             
-            A v5TE ARM SOFT PROCESSOR (150MHz @ XCA735T256-3 FPGA)
+            A v5TE ARM SOFT PROCESSOR WITH CACHES, MMUs AND TLBs 
+                        (150MHz @ XCA735T256-3 FPGA)
 
                      https://github.com/krevanth/ZAP
                 By Revanth Kamaraj <revanth91kamaraj@gmail.com>
