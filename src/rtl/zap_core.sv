@@ -522,8 +522,6 @@ u_zap_fetch_main (
         .o_pc_ff                        (),
         /* verilator lint_on PINCONNECTEMPTY */
 
-
-
         .i_confirm_from_alu             (confirm_from_alu),
         .i_pc_from_alu                  (shifter_pc_ff),
         .i_taken                        (shifter_taken_ff),

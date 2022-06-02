@@ -235,7 +235,7 @@ mov r1 , #1
 str r1, [r0]                    // Enable timer
 add r0, r0, #4
 
-mov r1, #32                     // Program to N=32 clock cycles.
+mov r1, #8192                    // Program to N=8K CC
 str r1, [r0]                    
 
 add r0, r0, #8

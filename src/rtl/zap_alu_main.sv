@@ -734,7 +734,10 @@ begin: flags_bp_feedback
 
                                         // Send confirmation message to branch predictor.
 
-                                        w_pc_from_alu      = 32'd0;
+                                        // This assignment doesn't matter.
+                                        w_pc_from_alu      = tmp_sum; // Simplify logic.
+
+                                        // This DOES matter.
                                         o_confirm_from_alu = 1'd1; 
                                 end
                         end
