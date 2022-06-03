@@ -541,13 +541,13 @@ zap_fifo #( .WDT(67), .DEPTH(FIFO_DEPTH) ) U_ZAP_FIFO (
         .i_clear_from_writeback         (clear_from_writeback),
 
         .i_write_inhibit                ( code_stall ),
-        .i_data_stall                   ( data_stall ),
-
         .i_clear_from_alu               (clear_from_alu),
-        .i_stall_from_shifter           (stall_from_shifter),
-        .i_stall_from_issue             (stall_from_issue),  
-        .i_stall_from_decode            (stall_from_decode),
-        .i_clear_from_decode            (clear_from_decode),
+
+        .i_data_stall                   (data_stall         && thumb_valid && fifo_valid ),
+        .i_stall_from_shifter           (stall_from_shifter && thumb_valid && fifo_valid ),
+        .i_stall_from_issue             (stall_from_issue   && thumb_valid && fifo_valid ),  
+        .i_stall_from_decode            (stall_from_decode  && thumb_valid && fifo_valid ),
+        .i_clear_from_decode            (clear_from_decode  && thumb_valid && fifo_valid ),
 
         .i_instr                        ({fetch_pc_plus_8_ff, fetch_instr_abort, fetch_instruction, fetch_bp_state}),
         .i_valid                        (fetch_valid),
@@ -568,11 +568,13 @@ zap_thumb_decoder_main u_zap_thumb_decoder (
 .i_clk                                  (i_clk),
 .i_reset                                (i_reset),
 .i_clear_from_writeback                 (clear_from_writeback),
-.i_data_stall                           (data_stall),
 .i_clear_from_alu                       (clear_from_alu),
-.i_stall_from_shifter                   (stall_from_shifter),
-.i_stall_from_issue                     (stall_from_issue),
-.i_stall_from_decode                    (stall_from_decode),
+
+.i_data_stall                           (data_stall         && thumb_valid  ),
+.i_stall_from_shifter                   (stall_from_shifter && thumb_valid  ),
+.i_stall_from_issue                     (stall_from_issue   && thumb_valid  ),
+.i_stall_from_decode                    (stall_from_decode  && thumb_valid  ),
+
 .i_clear_from_decode                    (clear_from_decode),
 
 .i_taken                                (fifo_bp_state),
@@ -614,10 +616,12 @@ u_zap_predecode (
         .i_reset                        (reset),
 
         .i_clear_from_writeback         (clear_from_writeback),
-        .i_data_stall                   (data_stall), 
         .i_clear_from_alu               (clear_from_alu),
-        .i_stall_from_shifter           (stall_from_shifter),
-        .i_stall_from_issue             (stall_from_issue),
+
+
+        .i_data_stall                   (data_stall         ), 
+        .i_stall_from_shifter           (stall_from_shifter ),
+        .i_stall_from_issue             (stall_from_issue   ),
 
         .i_irq                          (thumb_irq),
         .i_fiq                          (thumb_fiq),
@@ -681,10 +685,12 @@ u_zap_decode_main (
         .i_reset                        (reset),
 
         .i_clear_from_writeback         (clear_from_writeback),
-        .i_data_stall                   (data_stall),
         .i_clear_from_alu               (clear_from_alu),
-        .i_stall_from_shifter           (stall_from_shifter),
-        .i_stall_from_issue             (stall_from_issue),
+
+        .i_data_stall                   (data_stall         ),
+        .i_stall_from_shifter           (stall_from_shifter ),
+        .i_stall_from_issue             (stall_from_issue   ),
+
         .i_thumb_und                    (predecode_und),
         .i_irq                          (predecode_irq),
         .i_fiq                          (predecode_fiq),
