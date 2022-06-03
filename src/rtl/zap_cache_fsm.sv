@@ -230,11 +230,11 @@ end
 /* Combo block */
 always_comb
 begin:blk1
+       logic [$clog2(CACHE_LINE/4)-1:0] a;
+  
        UNUSED_1B = '0;
        UNUSED_2B = '0;
         
-       logic [$clog2(CACHE_LINE/4)-1:0] a;
-
         o_idle                  = ~(|state_ff);
 
         /* Default values */
