@@ -269,11 +269,6 @@ begin
         end
 end
 
-always_comb skid_instruction_valid       = o_stall_from_decode ? skid[0] : 
-                                           i_instruction_valid;
-
-always_comb skid_instruction             = o_stall_from_decode ? skid[35:1] : 
-                                           i_instruction;
 always_comb
 begin
         if ( o_stall_from_decode )
