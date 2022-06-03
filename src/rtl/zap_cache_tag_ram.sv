@@ -259,7 +259,8 @@ begin:blk1
         data  = 0;
         pa    = 0;
         dummy = 0;
-
+        unused_0 = '0;
+  
         // Defaults.
         state_nxt = state_ff;
         tag_ram_rd_addr         = 0;
