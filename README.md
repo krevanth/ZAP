@@ -61,7 +61,7 @@ During normal operation:
 * The instruction before that is accessing the cache/TLB RAM.
 * The instruction before that is performing arithmetic, logic or memory address 
   generation operations. This stage also confirms or rejects the branch 
-  predictor's decisions.
+  predictor's decisions. The ALU performs saturation in the same cycle.
 * The instruction before that is performing a correction, shift or multiply/MAC 
   operation.
 * The instruction before that is performing a register or pipeline read.
@@ -108,17 +108,19 @@ The only times a pipeline stalls is when (assume 100% cache hit rate):
 * Two back to back instructions require non-zero shift and the second 
   instruction's operand overlaps with the first instruction's destination.
 
-This snippet of ARM code takes 5 cycles to execute:
-        ADD R1, R2, R2 LSL #10 (1 cycle)
-        ADD R1, R1, R1 LSL #20 (2 cycles)
-        ADD R3, R4, R5, LSR #3 (1 cycles)
-        ADD R3, R3, R3 (1 cycles)
+This snippet of ARM code takes 6 cycles to execute:
+        ADD  R1, R2, R2 LSL #10 (1 cycle)
+        ADD  R1, R1, R1 LSL #20 (2 cycles)
+        ADD  R3, R4, R5, LSR #3 (1 cycle)
+        QADD R3, R3, R3         (1 cycle)
+        MOV  R4, R3             (1 cycle)
 
-This snippet of ARM code takes only 4 cycles:
-        ADD R1, R2, R2, R2 (1 cycle)
-        ADD R1, R1, R1 LSL #2 (1 cycle)
-        ADD R3, R4, R5 LSR #3 (1 cycle)
-        ADD R3, R3, R3 (1 cycle)
+This snippet of ARM code takes only 5 cycles:
+        ADD  R1, R2, R2, R2     (1 cycle)
+        ADD  R1, R1, R1 LSL #2  (1 cycle)
+        ADD  R3, R4, R5 LSR #3  (1 cycle)
+        QADD R3, R3, R3         (1 cycle)
+        MOV  R4, R3             (1 cycle)
 
 -------------------------------------------------------------------------------
 1.1.2. Two Write Port RF
@@ -384,7 +386,7 @@ first.
 -------------------------------------------------------------------------------
 2.4.1. XDC Setup
 -------------------------------------------------------------------------------
-* The XDC assumes a 150MHz clock. 
+* The XDC assumes a 152MHz clock. 
 * Input assume they receive data from a flop with Tcq = 50% of clock period.
 * Outputs assume they are driving a flop with Tsu = 2ns Th=1ns.
 
