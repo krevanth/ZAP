@@ -254,8 +254,9 @@ logic [31:0]                     o_data_wb_dat_nxt;
 logic [3:0]                      o_data_wb_sel_nxt;
 
 // Clear
-logic                            w_clear_from_alu;
-logic [31:0]                     w_pc_from_alu;
+logic [1:0]                      w_clear_from_alu;
+logic [31:0]                     w_pc_from_alu_1, w_pc_from_alu_2, w_pc_from_alu_3;
+logic [1:0]                      r_clear_from_alu;
 
 // -------------------------------------------------------------------------------
 // Assigns
@@ -401,12 +402,26 @@ begin
                 sleep_ff                         <= sleep_nxt;
                 o_und_ff                         <= i_und_ff;
 
-                o_clear_from_alu                <= w_clear_from_alu;
-                o_pc_from_alu                   <= w_pc_from_alu;
+                o_clear_from_alu                <= |w_clear_from_alu;
+                r_clear_from_alu                <= w_clear_from_alu;
 
-                // For debug
+                w_pc_from_alu_1                 <= sum[31:0];
+                w_pc_from_alu_2                 <= tmp_sum;
+                w_pc_from_alu_3                 <= i_pc_ff;
+
                 o_decompile                     <= i_decompile;
         end
+end
+
+// Retime the output.
+always_comb
+begin
+        case(r_clear_from_alu)
+        2'd1   : o_pc_from_alu = w_pc_from_alu_1;
+        2'd2   : o_pc_from_alu = w_pc_from_alu_2;
+        2'd3   : o_pc_from_alu = w_pc_from_alu_3;
+        2'd0   : o_pc_from_alu = {32{1'dx}};
+        endcase
 end
 
 // ----------------------------------------------------------------------------
@@ -659,8 +674,8 @@ end
 always_comb
 begin: flags_bp_feedback
 
-        w_clear_from_alu         = 1'd0;
-        w_pc_from_alu            = 32'd0;
+        w_clear_from_alu         = 2'd0;
+
         sleep_nxt                = sleep_ff;
         flags_nxt                = tmp_flags;
         o_destination_index_nxt  = i_destination_index_ff;
@@ -681,8 +696,7 @@ begin: flags_bp_feedback
         end
         else if ( (opcode == {1'd0, FMOV}) && o_dav_nxt ) // Writes to CPSR...
         begin
-                w_clear_from_alu        = 1'd1; // Need to flush everything because we might end up fetching stuff in KERNEL instead of USER mode.
-                w_pc_from_alu           = sum[31:0];  // NOT tmp_sum, that would be loaded into CPSR. 
+                w_clear_from_alu        = 2'd1; // Need to flush everything because we might end up fetching stuff in KERNEL instead of USER mode.
 
                 // USR cannot change mode. Will silently fail.
                 flags_nxt[`ZAP_CPSR_MODE]   = (flags_nxt[`ZAP_CPSR_MODE] == USR) ? USR : flags_nxt[`ZAP_CPSR_MODE]; // Security.
@@ -692,8 +706,7 @@ begin: flags_bp_feedback
                 if ( i_flag_update_ff && o_dav_nxt ) // PC update with S bit. Context restore. 
                 begin
                         o_destination_index_nxt = PHY_RAZ_REGISTER;
-                        w_clear_from_alu        = 1'd1;
-                        w_pc_from_alu           = tmp_sum;
+                        w_clear_from_alu        = 2'd2;
                         flags_nxt               = i_mem_srcdest_value_ff;                                       // Restore CPSR from SPSR.
                         flags_nxt[`ZAP_CPSR_MODE]   = (flags_nxt[`ZAP_CPSR_MODE] == USR) ? USR : flags_nxt[`ZAP_CPSR_MODE]; // Security.
                 end
@@ -704,8 +717,7 @@ begin: flags_bp_feedback
                                 // Quick branches - Flush everything before.
                                 // Dumping ground since PC change is done. Jump to branch target for fast switching.
                                 o_destination_index_nxt = PHY_RAZ_REGISTER;
-                                w_clear_from_alu        = 1'd1;
-                                w_pc_from_alu           = tmp_sum;
+                                w_clear_from_alu        = 2'd2;
 
                                 if ( i_switch_ff ) 
                                 begin
@@ -721,8 +733,7 @@ begin: flags_bp_feedback
                                         // change is done.
 
                                         o_destination_index_nxt = PHY_RAZ_REGISTER;                     
-                                        w_clear_from_alu        = 1'd1;
-                                        w_pc_from_alu           = tmp_sum; // Jump to branch target.
+                                        w_clear_from_alu        = 2'd2;
                                         flags_nxt[T]            = tmp_sum[0];   
                                 end
                                 else
@@ -730,12 +741,9 @@ begin: flags_bp_feedback
                                         // No mode change, do not change anything.
 
                                         o_destination_index_nxt = PHY_RAZ_REGISTER;
-                                        w_clear_from_alu        = 1'd0;
+                                        w_clear_from_alu        = 2'd0;
 
                                         // Send confirmation message to branch predictor.
-
-                                        // This assignment doesn't matter.
-                                        w_pc_from_alu      = tmp_sum; // Simplify logic.
 
                                         // This DOES matter.
                                         o_confirm_from_alu = 1'd1; 
@@ -753,13 +761,11 @@ begin: flags_bp_feedback
                         // MISTAKE - THE NEXT TIME THE PREDICTION WILL BE NOT-TAKEN.
                         //
                         begin
-                                w_clear_from_alu = 1'd1;
-                                w_pc_from_alu    = i_pc_ff; 
+                                w_clear_from_alu = 2'd3;
                         end
                         else // Correct prediction.
                         begin
-                                w_clear_from_alu = 1'd0;
-                                w_pc_from_alu    = 32'd0;
+                                w_clear_from_alu = 2'd0;
                         end
                 end
         end
@@ -880,7 +886,6 @@ endfunction
 task automatic clear ( input [31:0] flags );
 begin
                 o_clear_from_alu                 <= 0;
-                o_pc_from_alu                    <= 0;
                 o_dav_ff                         <= 0;
                 flags_ff                         <= flags;
                 o_abt_ff                         <= 0;
@@ -995,6 +1000,9 @@ begin
                 o_mem_signed_halfword_enable_ff  <= 0; 
                 o_mem_unsigned_halfword_enable_ff<= 0; 
                 o_mem_translate_ff               <= 0; 
+                w_pc_from_alu_1                  <= 0;
+                w_pc_from_alu_2                  <= 0;
+                w_pc_from_alu_3                  <= 0;
                 o_decompile                      <= 0; 
 end
 endtask

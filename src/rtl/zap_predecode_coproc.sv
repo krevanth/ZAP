@@ -139,9 +139,8 @@ begin
                 begin
                         if ( i_instruction[11:8] == 4'b1111 && i_cpsr_ff_mode != USR )  // CP15 and root access -- perfectly fine.
                         begin
-                                // Send ANDNV R0, R0, R0 instruction.
-                                o_instruction = {3'd0, 4'b1111, 28'd0}; 
-                                o_valid       = 1'd0;
+                                o_instruction = i_instruction; 
+                                o_valid       = i_valid;
                                 o_irq         = 1'd0;
                                 o_fiq         = 1'd0;
 
@@ -151,7 +150,7 @@ begin
                                         // Do not impose any output. However, continue
                                         // to stall all before this unit in the 
                                         // pipeline.
-                                        o_valid                 = 1'd0;
+                                        o_valid                 = i_valid;
                                         o_stall_from_decode     = 1'd1;
                                         cp_dav_nxt              = 1'd0;
                                         cp_word_nxt             = 32'd0;
@@ -160,7 +159,7 @@ begin
                                 begin
                                         // Prepare to move to BUSY. Continue holding
                                         // stall. Send out 0s.
-                                        o_valid                 = 1'd0;
+                                        o_valid                 = i_valid;
                                         o_stall_from_decode     = 1'd1;
                                         cp_word_nxt             = i_instruction[31:0];
                                         cp_dav_nxt              = 1'd1;
@@ -205,8 +204,8 @@ begin
                 o_stall_from_decode     = 1'd1;
 
                 // Send out nothing.
-                o_valid                 = 1'd0;
-                o_instruction           = 35'd0;
+                o_valid                 = i_valid;
+                o_instruction           = i_instruction;
 
                 // Block interrupts.
                 o_irq = 1'd0;

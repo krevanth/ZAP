@@ -30,7 +30,7 @@ update_compile_order -fileset sources_1
 
 add_files -fileset constrs_1 -norecurse ../../src/syn/syn.xdc
 
-synth_design -top zap_top -part xc7a35tftg256-3 -retiming -mode out_of_context -flatten_hierarchy none
+synth_design -top zap_top -part xc7a35tftg256-3 -mode out_of_context -flatten_hierarchy none
 
 report_timing_summary -delay_type max -report_unconstrained -check_timing_verbose -max_paths 1000 -input_pins -file syn_timing.rpt
 

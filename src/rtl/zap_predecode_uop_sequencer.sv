@@ -326,8 +326,22 @@ begin:blk_a
 
                 IDLE:
                 begin
-                        // LDRD and STRD (First register should be EVEN)
-                        if ( i_instruction[27:25] == 3'b000                                 && 
+                        // Instruction in coprocessor space.
+                        if ( i_instruction[31:0] ==? MRC  ||
+                             i_instruction[31:0] ==? MCR  ||
+                             i_instruction[31:0] ==? LDC  ||
+                             i_instruction[31:0] ==? STC  ||
+                             i_instruction[31:0] ==? CDP  ||
+                             i_instruction[31:0] ==? MCR2 || 
+                             i_instruction[31:0] ==? LDC2 ||
+                             i_instruction[31:0] ==? STC2 &&
+                             i_instruction_valid )
+                        begin
+                                o_instruction_valid = 1'd0;
+                        end
+                        // LDRD and STRD. First reg should be EVEN.
+                        else if 
+                            ( i_instruction[27:25] == 3'b000                                 && 
                              i_instruction[20]    == 1'd0                                   && 
                              ( i_instruction[6:5] == 2'b10 || i_instruction[6:5] == 2'b11 ) &&
                              i_instruction[12]    == 1'd0                                   &&

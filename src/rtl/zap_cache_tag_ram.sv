@@ -85,12 +85,13 @@ input logic                               i_wb_ack
 localparam NUMBER_OF_DIRTY_BLOCKS = ((CACHE_SIZE/CACHE_LINE)/16); // Keep cache size > 16 bytes.
 
 // States.
-localparam IDLE                         = 0;
-localparam CACHE_CLEAN_GET_ADDRESS      = 1;
-localparam CACHE_CLEAN_WRITE            = 2;
-localparam CACHE_INV                    = 3;
-localparam CACHE_CLEAN_WRITE_PRE        = 4;
-localparam CACHE_CLEAN_WRITE_PRE_WAIT   = 5;
+localparam IDLE                           = 0;
+localparam CACHE_CLEAN_GET_ADDRESS        = 1;
+localparam CACHE_INV                      = 2;
+localparam CACHE_CLEAN_WRITE_PRE_PRE_WAIT = 3;
+localparam CACHE_CLEAN_WRITE_PRE_WAIT     = 4;
+localparam CACHE_CLEAN_WRITE_PRE          = 5;
+localparam CACHE_CLEAN_WRITE              = 6;
 
 localparam BLK_CTR_PAD = 32 - $clog2(NUMBER_OF_DIRTY_BLOCKS) - 1;
 localparam ADR_CTR_PAD = 32 - $clog2(CACHE_LINE/4) - 1;
@@ -104,7 +105,8 @@ logic [`ZAP_CACHE_TAG_WDT-1:0]             tag_ram_wr_data;
 logic                                      tag_ram_wr_en;
 logic [$clog2(CACHE_SIZE/CACHE_LINE)-1:0]  tag_ram_wr_addr;
 logic [$clog2(CACHE_SIZE/CACHE_LINE)-1:0]  tag_ram_rd_addr, tag_ram_rd_addr_del, 
-                                           tag_ram_rd_addr_del2;
+                                           tag_ram_rd_addr_del2, tag_ram_rd_addr_ff,
+                                           tag_ram_rd_addr_nxt;
 logic                                      tag_ram_clear;
 logic                                      tag_ram_clean;
 logic [2:0]                                state_ff, state_nxt;
@@ -231,6 +233,7 @@ begin
                 blk_ctr_ff              <= 0;
                 state_ff                <= IDLE;
                 cache_clean_done_ff     <= 0;
+                tag_ram_rd_addr_ff      <= 0;
         end
         else
         begin
@@ -245,6 +248,7 @@ begin
                 blk_ctr_ff              <= blk_ctr_nxt;
                 state_ff                <= state_nxt;
                 cache_clean_done_ff     <= cache_clean_done_nxt;
+                tag_ram_rd_addr_ff      <= tag_ram_rd_addr_nxt;
         end
 end
 
@@ -263,6 +267,7 @@ begin:blk1
   
         // Defaults.
         state_nxt = state_ff;
+        tag_ram_rd_addr_nxt     = get_tag_ram_rd_addr (blk_ctr_ff, dirty);
         tag_ram_rd_addr         = 0;
         tag_ram_wr_addr         = i_address     [`ZAP_VA__CACHE_INDEX];
         tag_ram_wr_en           = 0; 
@@ -284,13 +289,17 @@ begin:blk1
         // Cache clean done.
         o_cache_clean_done      = cache_clean_done_ff;
 
+        if ( state_ff == IDLE )
+                tag_ram_rd_addr = i_address_nxt [`ZAP_VA__CACHE_INDEX];
+        else
+                tag_ram_rd_addr = tag_ram_rd_addr_ff; 
+
         case ( state_ff )
 
         IDLE:
         begin
                 kill_access ();
 
-                tag_ram_rd_addr = i_address_nxt [`ZAP_VA__CACHE_INDEX];
                 tag_ram_wr_addr = i_address     [`ZAP_VA__CACHE_INDEX];
                 tag_ram_wr_en   = i_cache_tag_wr_en;
                 tag_ram_wr_data = i_cache_tag;
@@ -313,8 +322,6 @@ begin:blk1
 
         CACHE_CLEAN_GET_ADDRESS:
         begin
-                tag_ram_rd_addr = get_tag_ram_rd_addr (blk_ctr_ff , dirty);
-
                 if ( &baggage(dirty, blk_ctr_ff) )
                 begin
                         // Move to next block.
@@ -329,27 +336,29 @@ begin:blk1
                 else
                 begin
                         // Go to state.
-                        state_nxt = CACHE_CLEAN_WRITE_PRE_WAIT;
+                        state_nxt = CACHE_CLEAN_WRITE_PRE_PRE_WAIT;
                 end
 
                 adr_ctr_nxt     = 0; // Initialize address counter.
         end
 
+        CACHE_CLEAN_WRITE_PRE_PRE_WAIT:
+        begin
+                state_nxt = CACHE_CLEAN_WRITE_PRE_WAIT;
+        end
+
         CACHE_CLEAN_WRITE_PRE_WAIT: // Since RAM is pipelined.
         begin
-                tag_ram_rd_addr = get_tag_ram_rd_addr (blk_ctr_ff, dirty);
                 state_nxt       = CACHE_CLEAN_WRITE_PRE;
         end
 
         CACHE_CLEAN_WRITE_PRE: // Since RAM is pipelined.
         begin
-                tag_ram_rd_addr = get_tag_ram_rd_addr (blk_ctr_ff, dirty);
                 state_nxt       = CACHE_CLEAN_WRITE;
         end
 
         CACHE_CLEAN_WRITE:
         begin
-                tag_ram_rd_addr = get_tag_ram_rd_addr (blk_ctr_ff , dirty);
 
                 adr_ctr_nxt = adr_ctr_ff + ((i_wb_ack && o_wb_stb_ff) ? 
                               {{(ZERO_WDT-1){1'd0}}, 1'd1} : 
