@@ -132,8 +132,7 @@ module zap_issue_main
         // pipeline vector when sniffing for register values yet to be written.
         //
 
-        // Taken from alu_nxt instead of shifter_ff because ALU can invalidate
-        // instructions.
+        input logic                              i_shifter_dav_ff,
         input logic                              i_alu_dav_nxt,            
         input logic                              i_alu_dav_ff,
         input logic                              i_postalu0_dav_ff, // ADDED+
@@ -848,7 +847,7 @@ begin
                         o_condition_code_ff, 
                         o_mem_load_ff, 
                         i_shifter_mem_srcdest_index_ff, 
-                        i_alu_dav_nxt, 
+                        i_shifter_dav_ff,
                         i_shifter_mem_load_ff, 
                         i_alu_mem_srcdest_index_ff, 
                         i_alu_dav_ff, 
@@ -874,7 +873,7 @@ begin
                         o_condition_code_ff, 
                         o_mem_load_ff, 
                         i_shifter_mem_srcdest_index_ff, 
-                        i_alu_dav_nxt, 
+                        i_shifter_dav_ff,
                         i_shifter_mem_load_ff, 
                         i_alu_mem_srcdest_index_ff, 
                         i_alu_dav_ff, 
@@ -899,7 +898,7 @@ begin
                         o_condition_code_ff, 
                         o_mem_load_ff, 
                         i_shifter_mem_srcdest_index_ff, 
-                        i_alu_dav_nxt, 
+                        i_shifter_dav_ff,
                         i_shifter_mem_load_ff, 
                         i_alu_mem_srcdest_index_ff, 
                         i_alu_dav_ff, 
@@ -924,7 +923,7 @@ begin
                         o_condition_code_ff, 
                         o_mem_load_ff, 
                         i_shifter_mem_srcdest_index_ff, 
-                        i_alu_dav_nxt, 
+                        i_shifter_dav_ff,
                         i_shifter_mem_load_ff, 
                         i_alu_mem_srcdest_index_ff, 
                         i_alu_dav_ff, 
@@ -1008,11 +1007,11 @@ begin
                                 o_flag_update_ff
                         );
 
-        flag_lock       = determine_flag_lock ( skid_shift_source_ff, o_flag_update_ff, i_alu_dav_nxt, 
+        flag_lock       = determine_flag_lock ( skid_shift_source_ff, o_flag_update_ff, i_shifter_dav_ff,
                                                 i_shifter_flag_update_ff  ) ||
-                          determine_flag_lock ( skid_shift_length_ff, o_flag_update_ff, i_alu_dav_nxt, 
+                          determine_flag_lock ( skid_shift_length_ff, o_flag_update_ff, i_shifter_dav_ff,
                                                 i_shifter_flag_update_ff  ) ||
-                          determine_flag_lock ( skid_alu_source_ff  , o_flag_update_ff, i_alu_dav_nxt, 
+                          determine_flag_lock ( skid_alu_source_ff  , o_flag_update_ff, i_shifter_dav_ff,
                                                 i_shifter_flag_update_ff  );
 end
 
@@ -1040,9 +1039,9 @@ begin
         // and that the output is valid.      
         // If immediate, no lock obviously.
 
-        if ( index[32] == IMMED_EN || index == PHY_RAZ_REGISTER )                     shifter_lock_check = 1'd0;
+        if ( index[32] == IMMED_EN || index == PHY_RAZ_REGISTER )                 shifter_lock_check = 1'd0;
         else if ( destination_index_ff == index[5:0] && condition_code_ff != NV ) shifter_lock_check = 1'd1;
-        else                                                                          shifter_lock_check = 1'd0;
+        else                                                                      shifter_lock_check = 1'd0;
 end        
 endfunction
 

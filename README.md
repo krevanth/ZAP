@@ -6,8 +6,8 @@
                             ███  ██   ███      
                            ████████   ███
                             
-            A v5TE ARM SOFT PROCESSOR WITH CACHES, MMUs AND TLBs 
-                        (150MHz @ XCA735T256-3 FPGA)
+              A v5TE ARM PROCESSOR WITH CACHES, MMUs AND TLBs
+                  (152 MHz @ XC7A35T256-3 Artix-7 FPGA)
 
                      https://github.com/krevanth/ZAP
                 By Revanth Kamaraj <revanth91kamaraj@gmail.com>
@@ -191,7 +191,8 @@ is permitted as per the arch spec.
 -------------------------------------------------------------------------------
 
 Note that all parameters should be 2^n. Cache size should be multiple of line
-size.
+size. Caches/TLBs consume majority of the resources so should be tuned
+as required. The default parameters give you quite large caches.
 
 +--------------------------+--------+-----------------------------------------+
 | Parameter                | Default| Description                             |
