@@ -55,6 +55,10 @@ module zap_shifter_main
         input logic    [1:0]                       i_taken_ff,
         output logic   [1:0]                       o_taken_ff,
 
+        // Predicted PC
+        input logic     [31:0]                     i_ppc_ff,
+        output logic    [31:0]                     o_ppc_ff,
+
         // Stall and clear. Hi to low priority.
         input logic                               i_clear_from_writeback, // | High Priority.
         input logic                               i_data_stall,           // |
@@ -315,6 +319,7 @@ begin
            o_und_ff                          <= i_und_ff;
            o_force32align_ff                 <= i_force32align_ff;
            o_taken_ff                        <= i_taken_ff;
+           o_ppc_ff                          <= i_ppc_ff;
            o_pc_ff                           <= i_pc_ff;
            o_nozero_ff                       <= nozero_nxt;
 
@@ -485,6 +490,7 @@ begin
            o_und_ff                          <= 0; 
            o_force32align_ff                 <= 0;      
            o_taken_ff                        <= 0; 
+           o_ppc_ff                          <= 0;
            o_pc_ff                           <= 0; 
            o_nozero_ff                       <= 0; 
            o_decompile                       <= 0; 

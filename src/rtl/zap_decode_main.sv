@@ -54,7 +54,8 @@ module zap_decode_main #(
 
         // Branch state.
         input   logic     [1:0]                  i_taken,
-
+        input   logic     [31:0]                 i_ppc_ff,
+        
         // Thumb undefined.
         input   logic                            i_thumb_und,
 
@@ -89,6 +90,9 @@ module zap_decode_main #(
         // ------------------------
         // Outputs.
         // ------------------------
+
+        // Predicted program counter.
+        output  logic   [31:0]                    o_ppc_ff,
  
         // This signal is used to check the validity of a pipeline stage.
         output   logic    [3:0]                   o_condition_code_ff,
@@ -319,6 +323,7 @@ begin
                 o_switch_ff                             <= o_switch_nxt;
                 o_force32align_ff                       <= i_force32align;
                 o_taken_ff                              <= i_taken;
+                o_ppc_ff                                <= i_ppc_ff;
 
                 // For debug
                 o_decompile                             <= decompile_tmp;
@@ -357,6 +362,7 @@ begin
                 o_force32align_ff                       <= 0; 
                 o_taken_ff                              <= 0; 
                 o_decompile                             <= 0; 
+                o_ppc_ff                                <= 0;
 end
 endtask
 

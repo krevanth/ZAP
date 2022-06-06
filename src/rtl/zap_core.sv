@@ -177,6 +177,18 @@ logic                            fifo_instr_abort;
 logic [31:0]                     fifo_instruction;
 logic [1:0]                      fifo_bp_state;
 
+// Compressed decoder.
+logic                            thumb_irq;
+logic                            thumb_fiq;
+logic                            thumb_iabort;
+logic [34:0]                     thumb_instruction;
+logic                            thumb_valid;
+logic                            thumb_und;
+logic                            thumb_force32;
+logic [1:0]                      thumb_bp_state;
+logic [31:0]                     thumb_pc_plus_8_ff;
+
+
 // Predecode
 logic [31:0]                     predecode_pc_plus_8;
 logic [31:0]                     predecode_pc;
@@ -188,17 +200,7 @@ logic                            predecode_val;
 logic                            predecode_force32;
 logic                            predecode_und;
 logic [1:0]                      predecode_taken;
-
-// Compressed decoder.
-logic                            thumb_irq;
-logic                            thumb_fiq;
-logic                            thumb_iabort;
-logic [34:0]                     thumb_instruction;
-logic                            thumb_valid;
-logic                            thumb_und;
-logic                            thumb_force32;
-logic [1:0]                      thumb_bp_state;
-logic [31:0]                     thumb_pc_plus_8_ff;
+logic [31:0]                     predecode_ppc_ff;
 
 // Decode
 logic [3:0]                      decode_condition_code;
@@ -230,6 +232,9 @@ logic                            decode_und_ff;
 logic                            clear_from_decode;
 logic [31:0]                     pc_from_decode;
 logic [1:0]                      decode_taken_ff;
+logic [31:0]                     decode_ppc_ff;
+
+// Issue
 logic [3:0]                      issue_condition_code_ff;  
 logic [$clog2(PHY_REGS)-1:0]     issue_destination_index_ff;
 logic [$clog2(ALU_OPS)-1:0]      issue_alu_operation_ff;
@@ -261,6 +266,7 @@ logic                            issue_switch_ff;
 logic                            issue_force32_ff;
 logic                            issue_und_ff;
 logic  [1:0]                     issue_taken_ff;
+logic  [31:0]                    issue_ppc_ff;
 
 logic [$clog2(PHY_REGS)-1:0]     rd_index_0;
 logic [$clog2(PHY_REGS)-1:0]     rd_index_1;
@@ -298,6 +304,7 @@ logic                            shifter_force32_ff;
 logic                            shifter_und_ff;
 logic                            stall_from_shifter;
 logic [1:0]                      shifter_taken_ff;
+logic [31:0]                     shifter_ppc_ff;
 
 // ALU
 logic [31:0]                     alu_alu_result_nxt;
@@ -313,6 +320,7 @@ logic [31:0]                     pc_from_alu;
 logic [$clog2(PHY_REGS)-1:0]     alu_destination_index_ff;
 logic [FLAG_WDT-1:0]             alu_flags_ff;
 logic [$clog2(PHY_REGS)-1:0]     alu_mem_srcdest_index_ff;
+logic [1:0]                      alu_taken_ff;
 logic                            alu_mem_load_ff;
 logic                            alu_und_ff;
 logic [31:0]                     alu_cpsr_nxt; 
@@ -523,8 +531,8 @@ u_zap_fetch_main (
         /* verilator lint_on PINCONNECTEMPTY */
 
         .i_confirm_from_alu             (confirm_from_alu),
-        .i_pc_from_alu                  (shifter_pc_ff),
-        .i_taken                        (shifter_taken_ff),
+        .i_pc_from_alu                  (alu_pc_plus_8_ff - 32'd8),
+        .i_taken                        (alu_taken_ff),
         .o_taken                        (fetch_bp_state)
 );
 
@@ -664,7 +672,8 @@ u_zap_predecode (
         .o_instruction_ff               (predecode_inst),
         .o_instruction_valid_ff         (predecode_val),
 
-        .o_taken_ff                     (predecode_taken)
+        .o_taken_ff                     (predecode_taken),
+        .o_ppc_ff                       (predecode_ppc_ff)
 );
 
 // =====================
@@ -705,6 +714,7 @@ u_zap_decode_main (
         .i_instruction                  (predecode_inst[35:0]),
         .i_instruction_valid            (predecode_val),
         .i_taken                        (predecode_taken),
+        .i_ppc_ff                       (predecode_ppc_ff),
         .i_force32align                 (predecode_force32),
 
         // Output.
@@ -734,7 +744,8 @@ u_zap_decode_main (
         .o_swi_ff                       (decode_swi_ff),
         .o_und_ff                       (decode_und_ff),
         .o_force32align_ff              (decode_force32_ff),
-        .o_taken_ff                     (decode_taken_ff)
+        .o_taken_ff                     (decode_taken_ff),
+        .o_ppc_ff                       (decode_ppc_ff)
 );
 
 // ==================
@@ -757,6 +768,9 @@ u_zap_issue_main
 
         .i_taken_ff(decode_taken_ff),
         .o_taken_ff(issue_taken_ff),
+
+        .i_ppc_ff (decode_ppc_ff),
+        .o_ppc_ff (issue_ppc_ff),
 
         .i_pc_ff(decode_pc_ff),
         .o_pc_ff(issue_pc_ff),
@@ -897,6 +911,9 @@ u_zap_shifter_main
         .i_pc_ff                        (issue_pc_ff),
         .o_pc_ff                        (shifter_pc_ff),
 
+        .i_ppc_ff                       (issue_ppc_ff),
+        .o_ppc_ff                       (shifter_ppc_ff),
+
         .i_taken_ff                     (issue_taken_ff),
         .o_taken_ff                     (shifter_taken_ff),
 
@@ -1001,6 +1018,7 @@ u_zap_alu_main
 (
          .i_decompile                    (shifter_decompile),
          .i_taken_ff                     (shifter_taken_ff),
+         .i_ppc_ff                       (shifter_ppc_ff),
          .o_confirm_from_alu             (confirm_from_alu),
          .i_pc_ff                        (shifter_pc_ff),
          .i_und_ff                       (shifter_und_ff),
@@ -1054,6 +1072,7 @@ u_zap_alu_main
          .o_mem_address_ff                 (alu_address_ff),    
          .o_destination_index_ff           (alu_destination_index_ff),
          .o_flags_ff                       (alu_flags_ff),       
+         .o_taken_ff                       (alu_taken_ff),
          .o_mem_srcdest_index_ff           (alu_mem_srcdest_index_ff),     
          .o_mem_load_ff                    (alu_mem_load_ff),                     
          .o_mem_unsigned_byte_enable_ff    (alu_ubyte_ff),     

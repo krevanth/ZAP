@@ -7,7 +7,7 @@
                            ████████   ███
                             
               A v5TE ARM PROCESSOR WITH CACHES, MMUs AND TLBs
-                  (152 MHz @ XC7A35T256-3 Artix-7 FPGA)
+                  (150 MHz @ XC7A35T256-3 Artix-7 FPGA)
 
                      https://github.com/krevanth/ZAP
                 By Revanth Kamaraj <revanth91kamaraj@gmail.com>
@@ -130,7 +130,7 @@ The ZAP can execute LDR/STR with writeback in a single cycle. This is possible
 as the ZAP uses a register file with two write ports.
 
 -------------------------------------------------------------------------------
-1.1.3. Branch Predictor
+1.1.3. Branch Predictor, RAS
 -------------------------------------------------------------------------------
 
 To improve performance, the ZAP processor uses a bimodal branch predictor. A
@@ -142,6 +142,12 @@ the predictor can only predict Bcc instructions.
 * Loading to PC from memory takes 17 cycles.
 The bimodal predictor is organized as a direct mapped unit so aliasing is
 possible. The predictor cannot be disabled.
+
+The processor also implements a 4 deep return address stack. Upon calls to
+BL instructions, the potential return address is pushed to a stack in the
+processor. On encountering these instructions: BX LR, MOV PC, LR, the CPU
+treats them as function returns and will pop return address of the stack
+much earlier. This results in some performance improvement.
 
 -------------------------------------------------------------------------------
 1.2. Bus Interface
@@ -386,9 +392,10 @@ first.
 -------------------------------------------------------------------------------
 2.4.1. XDC Setup
 -------------------------------------------------------------------------------
-* The XDC assumes a 152MHz clock. 
+* The XDC assumes a 200MHz clock. 
 * Input assume they receive data from a flop with Tcq = 50% of clock period.
 * Outputs assume they are driving a flop with Tsu = 2ns Th=1ns.
+* Setting it to an unattainable frequency may result in better timing closure.
 
 ===============================================================================
 4. References

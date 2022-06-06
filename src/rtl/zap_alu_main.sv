@@ -65,6 +65,7 @@ module zap_alu_main #(
         input logic  [31:0]                      i_cpsr_nxt,                  // From passive CPSR.
         input logic                              i_switch_ff,                 // Switch state.
         input logic   [1:0]                      i_taken_ff,                  // Branch prediction.
+        input logic   [31:0]                     i_ppc_ff,                    // Predicted PC.
         input logic   [31:0]                     i_pc_ff,                     // Addr of instr.
         input logic                              i_nozero_ff,                 // Zero flag will not be set.
 
@@ -144,6 +145,7 @@ module zap_alu_main #(
         output logic                              o_clear_from_alu,           // ALU commands a pipeline clear and a predictor correction.
         output logic [31:0]                       o_pc_from_alu,              // Corresponding address to go to is provided here.
         output logic                              o_confirm_from_alu,         // Tell branch predictor it was correct.
+        output logic [1:0]                        o_taken_ff,
 
         // ----------------------------------------------------------------
         // Memory access related
@@ -257,6 +259,7 @@ logic [3:0]                      o_data_wb_sel_nxt;
 logic [1:0]                      w_clear_from_alu;
 logic [31:0]                     w_pc_from_alu_1, w_pc_from_alu_2, w_pc_from_alu_3;
 logic [1:0]                      r_clear_from_alu;
+logic                            w_confirm_from_alu;
 
 // -------------------------------------------------------------------------------
 // Assigns
@@ -384,6 +387,7 @@ begin
                 o_destination_index_ff           <= o_destination_index_nxt;
                 flags_ff                         <= flags_nxt;
                 o_abt_ff                         <= i_abt_ff;
+                o_taken_ff                       <= i_taken_ff;
                 o_irq_ff                         <= i_irq_ff;
                 o_fiq_ff                         <= i_fiq_ff;
                 o_swi_ff                         <= i_swi_ff;
@@ -409,6 +413,8 @@ begin
                 w_pc_from_alu_2                 <= tmp_sum;
                 w_pc_from_alu_3                 <= i_pc_ff;
 
+                o_confirm_from_alu              <= w_confirm_from_alu;
+
                 o_decompile                     <= i_decompile;
         end
 end
@@ -417,10 +423,10 @@ end
 always_comb
 begin
         case(r_clear_from_alu)
+        2'd0   : o_pc_from_alu = {32{1'dx}};
         2'd1   : o_pc_from_alu = w_pc_from_alu_1;
         2'd2   : o_pc_from_alu = w_pc_from_alu_2;
         2'd3   : o_pc_from_alu = w_pc_from_alu_3;
-        2'd0   : o_pc_from_alu = {32{1'dx}};
         endcase
 end
 
@@ -679,7 +685,7 @@ begin: flags_bp_feedback
         sleep_nxt                = sleep_ff;
         flags_nxt                = tmp_flags;
         o_destination_index_nxt  = i_destination_index_ff;
-        o_confirm_from_alu       = 1'd0;
+        w_confirm_from_alu       = 1'd0;
 
          // Check if condition is satisfied.
         o_dav_nxt = is_cc_satisfied ( i_condition_code_ff, flags_ff[31:28] );
@@ -705,17 +711,20 @@ begin: flags_bp_feedback
         begin
                 if ( i_flag_update_ff && o_dav_nxt ) // PC update with S bit. Context restore. 
                 begin
-                        o_destination_index_nxt = PHY_RAZ_REGISTER;
-                        w_clear_from_alu        = 2'd2;
-                        flags_nxt               = i_mem_srcdest_value_ff;                                       // Restore CPSR from SPSR.
+                        o_destination_index_nxt     = PHY_RAZ_REGISTER;
+                        w_clear_from_alu            = 2'd2;
+                        flags_nxt                   = i_mem_srcdest_value_ff;                                                   // Restore CPSR from SPSR.
                         flags_nxt[`ZAP_CPSR_MODE]   = (flags_nxt[`ZAP_CPSR_MODE] == USR) ? USR : flags_nxt[`ZAP_CPSR_MODE]; // Security.
                 end
                 else if ( o_dav_nxt ) // Branch taken and no flag update.
                 begin
-                        if ( i_taken_ff == SNT || i_taken_ff == WNT ) // Incorrectly predicted. 
+                        if ( i_taken_ff == SNT || i_taken_ff == WNT ) 
+                        // Incorrectly predicted. Need to branch.
                         begin
                                 // Quick branches - Flush everything before.
-                                // Dumping ground since PC change is done. Jump to branch target for fast switching.
+                                // Dumping ground since PC change is done. 
+                                // Jump to branch target for fast switching.
+
                                 o_destination_index_nxt = PHY_RAZ_REGISTER;
                                 w_clear_from_alu        = 2'd2;
 
@@ -724,13 +733,13 @@ begin: flags_bp_feedback
                                         flags_nxt[T]            = tmp_sum[0];
                                 end
                         end
-                        else    // Correctly predicted.
+                        else    // Correctly predicted as taken...
                         begin
                                 // If thumb bit changes, flush everything before
-                                if ( i_switch_ff )
+                                if ( i_switch_ff && (tmp_sum[0] != flags_ff[T]) )
                                 begin
                                         // Quick branches! PC goes to RAZ register since
-                                        // change is done.
+                                        // change is done. Flush pipe before.
 
                                         o_destination_index_nxt = PHY_RAZ_REGISTER;                     
                                         w_clear_from_alu        = 2'd2;
@@ -738,32 +747,39 @@ begin: flags_bp_feedback
                                 end
                                 else
                                 begin
-                                        // No mode change, do not change anything.
+                                        // Check predicted PC.
+                                        if ( i_ppc_ff == i_shifted_source_value_ff )  
+                                        begin
+                                                // No mode change, do not change anything.
 
-                                        o_destination_index_nxt = PHY_RAZ_REGISTER;
-                                        w_clear_from_alu        = 2'd0;
+                                                o_destination_index_nxt = PHY_RAZ_REGISTER;
+                                                w_clear_from_alu        = 2'd0;
 
-                                        // Send confirmation message to branch predictor.
+                                                // Send confirmation message to branch predictor.
 
-                                        // This DOES matter.
-                                        o_confirm_from_alu = 1'd1; 
+                                                // This DOES matter.
+                                                w_confirm_from_alu = 1'd1; 
+                                        end
+                                        else
+                                        begin
+                                                o_destination_index_nxt = PHY_RAZ_REGISTER;
+                                                w_clear_from_alu        = 2'd2;
+                                        end
                                 end
                         end
                 end
-                else    // Branch not taken
+                else    // Branch not taken. CC failed.
                 begin
-                        if ( i_taken_ff == WT || i_taken_ff == ST ) 
                         //
                         // Wrong prediction as taken. Go back to the same
                         // branch. Non branches are always predicted as not-taken.
+                        // Inform predictor of its mistake.
                         //
-                        // GO BACK TO THE SAME BRANCH AND INFORM PREDICTOR OF ITS   
-                        // MISTAKE - THE NEXT TIME THE PREDICTION WILL BE NOT-TAKEN.
-                        //
+                        if ( i_taken_ff == WT || i_taken_ff == ST ) 
                         begin
                                 w_clear_from_alu = 2'd3;
                         end
-                        else // Correct prediction.
+                        else // Correct prediction. Branch is not taken.
                         begin
                                 w_clear_from_alu = 2'd0;
                         end
@@ -1004,6 +1020,8 @@ begin
                 w_pc_from_alu_2                  <= 0;
                 w_pc_from_alu_3                  <= 0;
                 o_decompile                      <= 0; 
+                o_taken_ff                       <= 0;
+                o_confirm_from_alu               <= 0;
 end
 endtask
 
