@@ -79,6 +79,7 @@ module zap_predecode_main #( parameter PHY_REGS = 46     )
         // PC output.
         output  logic  [31:0]                     o_pc_plus_8_ff,       
         output  logic  [31:0]                     o_pc_ff,
+        output  logic  [31:0]                     o_ppc_ff,
 
         // Interrupts.
         output  logic                             o_irq_ff,
@@ -104,7 +105,11 @@ module zap_predecode_main #( parameter PHY_REGS = 46     )
 `include "zap_defines.svh"
 `include "zap_localparams.svh"
 
-localparam ST = 3; 
+// Branch states.
+localparam [1:0] ST  = 2'b11; 
+localparam [1:0] SNT = 2'b00; 
+
+logic                            dbg;
 
 logic [39:0]                     o_instruction_nxt;
 logic                            o_instruction_valid_nxt;
@@ -121,6 +126,7 @@ logic                            cp_instruction_valid;
 logic                            cp_irq;
 logic                            cp_fiq;
 logic [1:0]                      taken_nxt;
+logic [31:0]                     ppc_nxt; // Predicted PC.
 logic [34:0]                     skid_instruction;
 logic                            skid_instruction_valid;
 logic [106:0]                    skid;
@@ -132,6 +138,8 @@ logic                            skid_fiq;
 logic                            skid_abt;
 logic [31:0]                     skid_pc_ff;
 logic [31:0]                     skid_pc_plus_8_ff;
+logic [3:0][31:0]                ras_ff, ras_nxt;
+logic [1:0]                      ras_ptr_ff, ras_ptr_nxt;
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -177,6 +185,13 @@ begin
                 o_taken_ff             <= taken_nxt;
                 o_instruction_ff       <= o_instruction_nxt;
                 o_instruction_valid_ff <= o_instruction_valid_nxt;
+
+                if ( mem_fetch_stall == 1'd0 )
+                begin
+                        o_ppc_ff               <= ppc_nxt;
+                        ras_ff                 <= ras_nxt;
+                        ras_ptr_ff             <= ras_ptr_nxt;
+                end
         end
 end
 
@@ -192,6 +207,9 @@ begin
                 o_taken_ff             <= 0; 
                 o_instruction_ff       <= 0; 
                 o_instruction_valid_ff <= 0; 
+                o_ppc_ff               <= 0;
+                ras_ff                 <= 0;
+                ras_ptr_ff             <= 0;
 end
 endtask
 
@@ -357,14 +375,22 @@ always_comb arm_fiq                  = cp_fiq;
 
 ///////////////////////////////////////////////////////////////////////////////
 
+wire unused;
+assign unused = |dbg;
+
 always_comb
 begin:bprblk1
         logic [31:0] addr;
         logic [31:0] addr_final;
 
+        dbg = 1'd0;
+
         o_clear_from_decode     = 1'd0;
         o_pc_from_decode        = 32'd0;
         taken_nxt               = skid_taken;
+        ppc_nxt                 = o_ppc_ff;
+        ras_nxt                 = ras_ff;
+        ras_ptr_nxt             = ras_ptr_ff;
         addr                    = {{8{arm_instruction[23]}},arm_instruction[23:0]}; // Offset.
         
         if ( arm_instruction[34] )      // Indicates a left shift of 1 i.e., X = X * 2.
@@ -372,10 +398,13 @@ begin:bprblk1
         else                            // Indicates a left shift of 2 i.e., X = X * 4.
                 addr_final = addr << 2;
 
-        //
-        // Perform actions as mentioned by the predictor unit in the fetch
-        // stage.
-        //
+        // Is it an instruction that we support ?
+        // Proccessor recognizes:
+        // 1. BL as a function call.
+        // 2. MOV PC, LR as a function return.
+        // 3. BX LR as a function return.
+
+        // Bcc[L] <offset>. Function call.
         if ( arm_instruction[27:25] == 3'b101 && arm_instruction_valid )
         begin
                 if ( skid_taken[1] || arm_instruction[31:28] == AL ) 
@@ -386,9 +415,18 @@ begin:bprblk1
 
                         // Predict new PC.
                         o_pc_from_decode    = skid_pc_plus_8_ff + addr_final;
+                        ppc_nxt             = o_pc_from_decode;
 
                        if ( arm_instruction[31:28] == AL ) 
                                 taken_nxt = ST;  
+
+                        // If Link=1, push next address onto RAS.
+                        if ( arm_instruction[24] )
+                        begin
+                               ras_nxt[ras_ptr_ff] = skid_pc_ff + 
+                                                     (i_cpu_mode_t ? 32'd2 : 32'd4); 
+                               ras_ptr_nxt++;
+                        end
                 end
                 else // Not Taken or Weakly Not Taken.
                 begin
@@ -397,6 +435,44 @@ begin:bprblk1
                         o_clear_from_decode = 1'd0;
                         o_pc_from_decode    = 32'd0;
                 end
+        end
+        else if ( 
+                  // BX LR is recognized as a fnction return.
+                  (
+                   arm_instruction[31:0] ==? BX_INST && 
+                   arm_instruction[3:0]   ==   4'd14 && 
+                   arm_instruction_valid) || 
+                   // As is MOV PC, LR
+                  (
+                   arm_instruction[34:0] ==?  { 3'd0, 4'b????, 2'b00, 1'd0, MOV, 1'd0, 
+                                                4'd0, ARCH_PC, 8'd0, 4'd15 }
+                  ) 
+                )
+        begin
+                dbg = 1'd1;
+
+                // Predicted as taken.
+                if ( skid_taken[1] || arm_instruction[31:28] == AL )
+                begin
+                        o_clear_from_decode = 1'd1;
+                        ras_ptr_nxt--;
+                        o_pc_from_decode    = ras_ff[ras_ptr_nxt];
+
+                        if ( arm_instruction[31:28] == AL )
+                                taken_nxt = ST;
+
+                        // Helps ALU verify that the RAS is correct.
+                        ppc_nxt             = o_pc_from_decode;
+                end
+                else // Predicted as not taken.
+                begin
+                        o_clear_from_decode = 1'd0;
+                        o_pc_from_decode    = 32'd0;
+                end
+        end
+        else // Predict non supported as strongly not taken.
+        begin
+                taken_nxt = SNT;
         end
 end
 

@@ -70,6 +70,7 @@ module zap_issue_main
         input logic  [31:0]                      i_pc_ff,
         input logic                              i_switch_ff,
         input logic    [1:0]                     i_taken_ff,
+        input logic    [31:0]                    i_ppc_ff,
         input logic      [64*8-1:0]              i_decompile,
         input logic      [3:0]                   i_condition_code_ff,
         input logic      [$clog2(PHY_REGS )-1:0] i_destination_index_ff,
@@ -256,6 +257,7 @@ module zap_issue_main
         output  logic     [64*8-1:0]              o_decompile,
         output logic [31:0]                       o_pc_ff,
         output logic   [1:0]                      o_taken_ff,
+        output logic [31:0]                       o_ppc_ff,
         output logic                              o_force32align_ff,
         output logic                              o_und_ff
 );
@@ -271,7 +273,7 @@ logic [31:0] o_alu_source_value_nxt,
            o_mem_srcdest_value_nxt;
 
 logic [32+32+1+2+64*8+4+$clog2(PHY_REGS)+33+$clog2(ALU_OPS)+33+$clog2(SHIFT_OPS)
-+33+1+$clog2(PHY_REGS)+14-1:0] skid;
++33+1+$clog2(PHY_REGS)+14+32-1:0] skid;
 
 // Individual lock signals. These are ORed to get the final lock.
 logic shift_lock;
@@ -309,6 +311,7 @@ logic                              skid_abt_ff;
 logic                              skid_swi_ff;                               
 logic                              skid_force32align_ff;
 logic                              skid_und_ff;
+logic  [31:0]                      skid_ppc_ff;
 
 always_comb  lock = shift_lock | load_lock | flag_lock;
 
@@ -383,6 +386,7 @@ begin
                 o_force32align_ff                 <= skid_force32align_ff;
                 o_und_ff                          <= skid_und_ff;
                 o_taken_ff                        <= skid_taken_ff;
+                o_ppc_ff                          <= skid_ppc_ff;
                 o_pc_ff                           <= skid_pc_ff;
                 
                 // For debug
@@ -723,7 +727,8 @@ begin
                                         i_abt_ff,                               
                                         i_swi_ff,                               
                                         i_force32align_ff,
-                                        i_und_ff
+                                        i_und_ff,
+                                        i_ppc_ff
                         };
                 end
         end
@@ -770,7 +775,8 @@ begin
                  skid_abt_ff,                               
                  skid_swi_ff,                               
                  skid_force32align_ff,
-                 skid_und_ff} = skid;
+                 skid_und_ff,
+                 skid_ppc_ff} = skid;
         end
         else
         begin
@@ -801,7 +807,8 @@ begin
                  skid_abt_ff,                               
                  skid_swi_ff,                               
                  skid_force32align_ff,
-                 skid_und_ff} =  
+                 skid_und_ff,
+                 skid_ppc_ff} =  
                 {i_pc_plus_8_ff,
                  i_pc_ff,
                  i_switch_ff,
@@ -829,7 +836,8 @@ begin
                  i_abt_ff,                               
                  i_swi_ff,                               
                  i_force32align_ff,
-                 i_und_ff};
+                 i_und_ff,
+                 i_ppc_ff};
         end
 end
 
@@ -1174,6 +1182,7 @@ begin
                 o_taken_ff                        <= 0; 
                 o_pc_ff                           <= 0; 
                 o_decompile                       <= 0; 
+                o_ppc_ff                          <= 0;
 end
 endtask
 

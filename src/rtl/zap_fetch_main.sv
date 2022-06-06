@@ -99,8 +99,8 @@ localparam  [1:0]    WNT     =       2'b01; // Weakly Not Taken.
 localparam  [1:0]    WT      =       2'b10; // Weakly Taken.
 localparam  [1:0]    ST      =       2'b11; // Strongly Taken.
 
-// Predict non branches as not taken...
-always_comb o_taken    = o_instruction[28:26] == 3'b101 ? taken_v : SNT;
+// Branch prediction.
+always_comb o_taken    = taken_v;
 
 // Unused
 always_comb unused = |{i_pc_from_alu[0], i_pc_from_alu[31:$clog2(BP_ENTRIES)+1]};
