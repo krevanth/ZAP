@@ -411,7 +411,7 @@ begin
 
                 w_pc_from_alu_1                 <= sum[31:0];
                 w_pc_from_alu_2                 <= tmp_sum;
-                w_pc_from_alu_3                 <= i_pc_ff;
+                w_pc_from_alu_3                 <= i_pc_ff + (flags_ff[T] ? 32'd2 : 32'd4);
 
                 o_confirm_from_alu              <= w_confirm_from_alu;
 
@@ -713,8 +713,12 @@ begin: flags_bp_feedback
                 begin
                         o_destination_index_nxt     = PHY_RAZ_REGISTER;
                         w_clear_from_alu            = 2'd2;
-                        flags_nxt                   = i_mem_srcdest_value_ff;                                                   // Restore CPSR from SPSR.
-                        flags_nxt[`ZAP_CPSR_MODE]   = (flags_nxt[`ZAP_CPSR_MODE] == USR) ? USR : flags_nxt[`ZAP_CPSR_MODE]; // Security.
+
+                        flags_nxt                   = i_mem_srcdest_value_ff;   
+                        // Restore CPSR from SPSR.
+
+                        flags_nxt[`ZAP_CPSR_MODE]   = (flags_nxt[`ZAP_CPSR_MODE] == USR) ? 
+                        USR : flags_nxt[`ZAP_CPSR_MODE]; // Security.
                 end
                 else if ( o_dav_nxt ) // Branch taken and no flag update.
                 begin
@@ -747,8 +751,9 @@ begin: flags_bp_feedback
                                 end
                                 else
                                 begin
-                                        // Check predicted PC.
-                                        if ( i_ppc_ff == i_shifted_source_value_ff )  
+                                        // Check predicted PC based on opcode...
+                                        if ( opcode == {2'd0, ADD} ? (i_ppc_ff == rm + rn) : 
+                                             opcode == {2'd0, MOV} ? (i_ppc_ff == rm) : 1'd0 )  
                                         begin
                                                 // No mode change, do not change anything.
 
@@ -760,7 +765,7 @@ begin: flags_bp_feedback
                                                 // This DOES matter.
                                                 w_confirm_from_alu = 1'd1; 
                                         end
-                                        else
+                                        else // PC not predicted correctly. Go to correct vector.
                                         begin
                                                 o_destination_index_nxt = PHY_RAZ_REGISTER;
                                                 w_clear_from_alu        = 2'd2;
@@ -777,6 +782,8 @@ begin: flags_bp_feedback
                         //
                         if ( i_taken_ff == WT || i_taken_ff == ST ) 
                         begin
+                                // Go to the next instruction as this branch
+                                // is NOT taken.
                                 w_clear_from_alu = 2'd3;
                         end
                         else // Correct prediction. Branch is not taken.
