@@ -144,10 +144,20 @@ The bimodal predictor is organized as a direct mapped unit so aliasing is
 possible. The predictor cannot be disabled.
 
 The processor also implements a 4 deep return address stack. Upon calls to
-BL instructions, the potential return address is pushed to a stack in the
-processor. On encountering these instructions: BX LR, MOV PC, LR, the CPU
-treats them as function returns and will pop return address of the stack
-much earlier. This results in some performance improvement.
+
+* BL<cc> offset
+
+the potential return address is pushed to a stack in the processor. 
+
+On encountering these instructions: 
+
+* BX LR, 
+* MOV PC, LR, 
+
+the CPU treats them as function returns and will pop return address of the 
+stack much earlier. This results in some performance improvement and reduced
+branch latency. Correctly predicted return takes 7 cycles, while incorrectly
+or unpredicted returns take 11 cycles.
 
 -------------------------------------------------------------------------------
 1.2. Bus Interface
