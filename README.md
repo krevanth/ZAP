@@ -15,7 +15,7 @@ The ZAP project is Copyright (C) Revanth Kamaraj <[revanth91kamaraj@gmail.com](m
 
 Thanks to Erez Binyamin for adding Docker support. 
 
-Thanks to Bharath Mulagondla for debugging MMU.
+Thanks to Bharath Mulagondla for testing MMU.
 
 -------------------------------------------------------------------------------
 
