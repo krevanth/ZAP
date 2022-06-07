@@ -441,11 +441,18 @@ begin:bprblk1
                   (
                    arm_instruction[31:0] ==? BX_INST && 
                    arm_instruction[3:0]   ==   4'd14 && 
-                   arm_instruction_valid) || 
+                   arm_instruction_valid) 
+                  || 
                    // As is MOV PC, LR
                   (
                    arm_instruction[34:0] ==?  { 3'd0, 4'b????, 2'b00, 1'd0, MOV, 1'd0, 
                                                 4'd0, ARCH_PC, 8'd0, 4'd15 }
+                  ) ||
+                  // As is load multiple with PC in register list.
+                  (
+                   arm_instruction[27:25] == 3'b100 && // LDM
+                   arm_instruction[20]              && // Load
+                   arm_instruction[15]                 // PC in reglist.
                   ) 
                 )
         begin
