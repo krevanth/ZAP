@@ -153,6 +153,7 @@ On encountering these instructions:
 
 * BX LR, 
 * MOV PC, LR, 
+* Load multiple with PC in register list.
 
 the CPU treats them as function returns and will pop return address of the 
 stack much earlier. This results in some performance improvement and reduced
