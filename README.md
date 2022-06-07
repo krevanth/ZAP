@@ -1,4 +1,7 @@
 # ZAP : A v5TE SUPERPIPELINED ARM PROCESSOR WITH CACHES, MMUs AND TLBs (150 MHz @ XC7A35T256-3 Artix-7 FPGA)
+<!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
+[![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat-square)](#contributors-)
+<!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 **By Revanth Kamaraj <[revanth91kamaraj@gmail.com](mailto:revanth91kamaraj@gmail.com)>**
 --------------------------------------------------------------------------------
@@ -484,3 +487,23 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along with 
 this program; if not, write to the Free Software Foundation, Inc., 51 Franklin 
 Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+## Contributors ✨
+
+Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+<table>
+  <tr>
+    <td align="center"><a href="http://www.linkedin.com/in/revanth-kamaraj-178662113"><img src="https://avatars.githubusercontent.com/u/16576547?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Revanth Kamaraj</b></sub></a><br /><a href="https://github.com/krevanth/ZAP/commits?author=krevanth" title="Code">💻</a> <a href="https://github.com/krevanth/ZAP/commits?author=krevanth" title="Documentation">📖</a> <a href="#ideas-krevanth" title="Ideas, Planning, & Feedback">🤔</a> <a href="#infra-krevanth" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="https://github.com/krevanth/ZAP/commits?author=krevanth" title="Tests">⚠️</a> <a href="#tool-krevanth" title="Tools">🔧</a></td>
+  </tr>
+</table>
+
+<!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
+
+<!-- ALL-CONTRIBUTORS-LIST:END -->
+
+This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
