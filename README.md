@@ -112,18 +112,22 @@ The only times a pipeline stalls is when (assume 100% cache hit rate):
   instruction's operand overlaps with the first instruction's destination.
 
 This snippet of ARM code takes 6 cycles to execute:
-        ADD  R1, R2, R2 LSL #10 (1 cycle)
-        ADD  R1, R1, R1 LSL #20 (2 cycles)
-        ADD  R3, R4, R5, LSR #3 (1 cycle)
-        QADD R3, R3, R3             (1 cycle)
-        MOV  R4, R3                     (1 cycle)
+```text
+    ADD  R1, R2, R2 LSL #10 (1 cycle)
+    ADD  R1, R1, R1 LSL #20 (2 cycles)
+    ADD  R3, R4, R5, LSR #3 (1 cycle)
+    QADD R3, R3, R3         (1 cycle)
+    MOV  R4, R3             (1 cycle)
+```
 
 This snippet of ARM code takes only 5 cycles:
-        ADD  R1, R2, R2, R2        (1 cycle)
-        ADD  R1, R1, R1 LSL #2  (1 cycle)
-        ADD  R3, R4, R5 LSR #3  (1 cycle)
-        QADD R3, R3, R3             (1 cycle)
-        MOV  R4, R3                     (1 cycle)
+```text
+    ADD  R1, R2, R2, R2     (1 cycle)
+    ADD  R1, R1, R1 LSL #2  (1 cycle)
+    ADD  R3, R4, R5 LSR #3  (1 cycle)
+    QADD R3, R3, R3         (1 cycle)
+    MOV  R4, R3             (1 cycle)
+```
 
 -------------------------------------------------------------------------------
 
@@ -273,9 +277,8 @@ as required. The default parameters give you quite large caches.
   * Add src/rtl/ to your tool's search path to allow it to pick up SV headers.
   
   * Instantiate the ZAP processor in your project using this template:
-    
+```text
        zap_top #(.FIFO_DEPTH              (),
-    
                  .BP_ENTRIES              (),
                  .STORE_BUFFER_DEPTH      (),
                  .DATA_SECTION_TLB_ENTRIES(),
@@ -291,7 +294,7 @@ as required. The default parameters give you quite large caches.
                  .i_clk                   (),
                  .i_reset                 (),
                  .i_irq                   (),
-                 .i_fiq                   (), 
+                 .i_fiq                   (),
                  .o_wb_cyc                (),
                  .o_wb_stb                (),
                  .o_wb_adr                (),
@@ -301,10 +304,9 @@ as required. The default parameters give you quite large caches.
                  .o_wb_dat                (),
                  .i_wb_ack                (),
                  .o_wb_sel                (),
-                 .o_wb_bte                ()             
-    
+                 .o_wb_bte                ()
        );
-
+```
 * The processor provides a Wishbone B3 bus. It is recommended that you use 
   it in registered feedback cycle mode.
 
@@ -354,14 +356,15 @@ To remove existing object/simulation/synthesis files, do:
 * Create a Config.cfg. This is a Perl hash that must be edited to meet 
   requirements. Note that the registers in the REG_CHECK are indexed 
   registers. To find those, please do:
-  
+
   > cat src/rtl/zap_localparams.svh | grep PHY
-  
+
   For example, if a check requires a certain value of R13 in IRQ mode, the
   hash will mention the register number as r25.
 
 * Here is a sample Config.cfg:
-  
+
+```text
        %Config = ( 
                # CPU configuration.
                DATA_CACHE_SIZE             => 4096,    
@@ -400,6 +403,8 @@ To remove existing object/simulation/synthesis files, do:
                                               # 32-bit verilog_value. The 
                                               # script compares 4 bytes at 
                                               # once.
+        );
+```
 
 -------------------------------------------------------------------------------
 
@@ -426,7 +431,8 @@ Timing report will be available in obj/syn/syn_timing.rpt
 If you had used Docker previously to run a test, or had run synth before, do a
 
 > make clean
-> first.
+
+first.
 
 -------------------------------------------------------------------------------
 
