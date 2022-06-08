@@ -1,6 +1,6 @@
 # The ZAP Processor (ARMV5TE)
 
-[![All Contributors](https://img.shields.io/badge/all\_contributors-4-orange.svg?style=flat-square)](./#contributors-)
+[![All Contributors](https://img.shields.io/badge/all\_contributors-4-orange.svg?style=flat-square)](./README.md#contrib)
 
 **By Revanth Kamaraj <**[**revanth91kamaraj@gmail.com**](mailto:revanth91kamaraj@gmail.com)**>**
 
@@ -353,7 +353,8 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 
 You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-## Contributors ✨
+<a name="contrib"></a>
+### Contributors ✨
 
 Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
 
