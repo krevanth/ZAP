@@ -8,6 +8,10 @@
 
 The ZAP is an ARMV5TE compliant processor, designed for FPGA. It has been designed for high performance and high clock speeds and is intended to be used as part of a high performance FPGA system. The processor can operate at 140MHz on -3 speed grade Artix-7 FPGA parts. 
 
+A simplified block digram of the ZAP's pipeline is shown below:
+
+![Pipeline](./Pipeline.drawio.svg)
+
 ZAP includes several microarchitectural enhancements to improve instruction throughput, hide external bus and memory latency and boost performance:
 
 * The ability to continue instruction execution even when the data cache is being filled. The data cache features hit under miss capability. The processor stalls when an instruction that depends on the cache access is decoded.
