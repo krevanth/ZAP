@@ -49,10 +49,10 @@ input   logic    [31:0]            i_address,
 input   logic                      i_rd,
 input   logic                      i_wr,
 input   logic    [31:0]            i_din,
-input   logic    [3:0]             i_ben, /* Valid only for writes. */
+input   logic    [3:0]             i_ben,     /* Valid only for writes. */
 input   logic    [63:0]            i_reg_idx, /* Register to load to. added */
-output  logic     [63:0]           o_lock, /* Register that is locked. added */
-output  logic [31:0]               o_reg_dat, /* Register data. aded */
+output  logic     [63:0]           o_lock,    /* Register that is locked. added */
+output  logic [31:0]               o_reg_dat, /* Register data. aded   */
 output  logic [63:0]               o_reg_idx, /* Register index. added */
 output  logic     [31:0]           o_dat,
 output  logic                      o_ack,
@@ -383,7 +383,10 @@ begin:blk1
                                         begin
                                                 for(int i=0;i<64;i++)
                                                         if (i_reg_idx[i] )
-                                                                lock_nxt[i] = 1'd1;
+                                                                if ( !lock_ff[i] )
+                                                                        lock_nxt[i] = 1'd1;
+                                                                else
+                                                                        o_err2 = 1'd1;
                                         end
 
                                         if ( cache_dirty )
@@ -420,7 +423,10 @@ begin:blk1
                                                 begin
                                                         for(int i=0;i<64;i++)
                                                                 if(i_reg_idx[i])
-                                                                        lock_nxt[i] = 1'd1;
+                                                                        if(!lock_ff[i])
+                                                                                lock_nxt[i] = 1'd1;
+                                                                        else
+                                                                                o_err2 = 1'd1;
                                                 end
                                 end
                                 endcase
@@ -747,6 +753,15 @@ begin
                 begin  
                         rhit    = 1'd1;
                         o_ack   = 1'd1;
+
+                        /* Coherent to ongoing write */
+                        if ( i_address == address && wr )
+                        begin
+                                if(i_ben[0])   o_dat[7:0] = din[7:0];
+                                if(i_ben[1])  o_dat[15:8] = din[15:8];
+                                if(i_ben[2]) o_dat[23:16] = din[23:16];
+                                if(i_ben[3]) o_dat[31:24] = din[31:24];
+                        end
                 end
                 else if ( i_wr ) /* Write request */
                 begin

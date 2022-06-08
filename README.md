@@ -217,8 +217,9 @@ is permitted as per the arch spec.
 -------------------------------------------------------------------------------
 
 Note that all parameters should be 2^n. Cache size should be multiple of line
-size. Caches/TLBs consume majority of the resources so should be tuned
-as required. The default parameters give you quite large caches.
+size and atleast 16 x line width. Caches/TLBs consume majority of the resources 
+so should be tuned as required. The default parameters give you quite large 
+caches.
 
 | Parameter                | Default | Description                          |
 | ------------------------ | ------- | ------------------------------------ |
