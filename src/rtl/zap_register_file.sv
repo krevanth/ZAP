@@ -31,10 +31,12 @@ module zap_register_file
 
         input logic              i_wen,
         input logic  [5:0]       i_wr_addr_a, 
-        input logic  [5:0]       i_wr_addr_b,       // 2 write addresses.
+        input logic  [5:0]       i_wr_addr_b,       // 3 write addresses.
+        input logic  [39:0]      i_wr_addr_c,
 
         input logic  [31:0]      i_wr_data_a, 
-        input logic  [31:0]      i_wr_data_b,       // 2 write data.
+        input logic  [31:0]      i_wr_data_b,       // 3 write data.
+        input logic  [31:0]      i_wr_data_c,
 
         input logic  [5:0]       i_rd_addr_a, 
         input logic  [5:0]       i_rd_addr_b, 
@@ -56,10 +58,24 @@ begin
         begin
                 mem <= {32'd40{32'd0}};
         end
-        else if ( i_wen )
+        else
         begin
-                mem [ i_wr_addr_a ] <= i_wr_data_a;
-                mem [ i_wr_addr_b ] <= i_wr_data_b;
+                if ( i_wen )
+                begin
+                        mem [ i_wr_addr_a ] <= i_wr_data_a;
+                        mem [ i_wr_addr_b ] <= i_wr_data_b;
+                end
+
+                if ( |i_wr_addr_c )
+                begin
+                        for(int i=0;i<40;i++)
+                        begin
+                                if(i_wr_addr_c[i])
+                                begin
+                                        mem [i] <= i_wr_data_c;
+                                end
+                        end
+                end
         end
 end
 

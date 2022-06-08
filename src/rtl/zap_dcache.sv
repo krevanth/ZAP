@@ -65,6 +65,10 @@ output  logic            o_err,
 output  logic [7:0]      o_fsr,
 output  logic [31:0]     o_far,
 output  logic            o_err2,
+input   logic [63:0]     i_reg_idx, /* Register to load to. added */
+output  logic [63:0]     o_lock,    /* Register that is locked. added */
+output  logic [31:0]     o_reg_dat, /* Register data. aded */
+output  logic [63:0]     o_reg_idx, /* Register index. added */
 
 // MMU controls from/to processor.
 input   logic            i_mmu_en,
@@ -174,6 +178,10 @@ zap_dcache_fsm #(.CACHE_SIZE(CACHE_SIZE), .CACHE_LINE(CACHE_LINE)) u_zap_cache_f
         .o_address              (cache_address),
         .o_wb_cyc_nxt           (wb_cyc[0]),
         .o_hold                 (hold),
+        .i_reg_idx              (i_reg_idx),
+        .o_lock                 (o_lock),
+        .o_reg_dat              (o_reg_dat),
+        .o_reg_idx              (o_reg_idx),
 
         /* verilator lint_off PINCONNECTEMPTY */
         .o_wb_cyc_ff            (),

@@ -122,7 +122,17 @@ input   logic                            i_icache_inv_done,
 input   logic                            i_dcache_clean_done,
 input   logic                            i_icache_clean_done,
 input   logic                            i_icache_err2,
-input   logic                            i_dcache_err2
+input   logic                            i_dcache_err2,
+
+// -----------------------------------------------------
+// Background load.
+// -----------------------------------------------------
+
+input   logic [63:0]                     i_dc_reg_idx, /* Register to load to. added */
+input   logic [31:0]                     i_dc_reg_dat, /* Register data. added */
+input   logic [63:0]                     i_dc_lock,    /* Register that is locked. added. Goes to issue. */
+output  logic [63:0]                     o_dc_reg_idx  /* Register index. added. From postalu. */
+
 );
 
 // ----------------------------------------------------------------------------
@@ -448,7 +458,8 @@ logic unused;
 logic [(8*8)-1:0] CPU_MODE; // Max 8 characters i.e. 64-bit string.
 
 always_comb unused = |{rb_decompile, CPU_MODE, alu_cpsr_nxt[31:30], alu_cpsr_nxt[28:0],
-                       predecode_inst[39:36], postalu_mem_translate_ff};
+                       predecode_inst[39:36], postalu_mem_translate_ff,
+                       i_dc_reg_idx[63:PHY_REGS]};
 
 // ----------------------------------------------------------------------------
 
@@ -484,6 +495,7 @@ begin
         o_data_wb_adr_check  =  {postalu1_address_ff[31:2], 2'd0};
         o_data_wb_we_check   =   postalu1_data_wb_we;
         o_code_stall         =   code_stall;
+        o_dc_reg_idx         =   64'd1 << {58'd0, postalu_mem_srcdest_index_ff};
 end
 
 // ----------------------------------------------------------------------------
@@ -817,6 +829,7 @@ u_zap_issue_main
         .i_rd_data_3                    (rd_data_3),
 
         // Feedback.
+        .i_dc_lock                      (i_dc_lock),
         .i_shifter_destination_index_ff (shifter_destination_index_ff),
         .i_shifter_flag_update_ff       (shifter_flag_update_ff),
         .i_alu_destination_index_ff     (alu_destination_index_ff),
@@ -1391,8 +1404,12 @@ u_zap_writeback
         .i_wr_index             (memory_destination_index_ff),
         .i_wr_data              (memory_alu_result_ff),
         .i_flags                (memory_flags_ff),
+
         .i_wr_index_1           (memory_mem_srcdest_index_ff),// load index.
         .i_wr_data_1            (memory_mem_rd_data),         // load data.
+        
+        .i_wr_index_2           (i_dc_reg_idx[PHY_REGS-1:0]),
+        .i_wr_data_2            (i_dc_reg_dat),
 
         .i_irq                  (memory_irq_ff),
         .i_fiq                  (memory_fiq_ff),

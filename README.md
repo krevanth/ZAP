@@ -121,11 +121,15 @@ This snippet of ARM code takes only 5 cycles:
 
 -------------------------------------------------------------------------------
 
-1.1.2. Two Write Port RF
+1.1.2. Multiple Write Port RF
 -------------------------------------------------------------------------------
 
 The ZAP can execute LDR/STR with writeback in a single cycle. This is possible
-as the ZAP uses a register file with two write ports.
+as the ZAP uses a register file with multiple write ports. The RF is implemented
+as flip-flops.
+
+Data cache accesses that are performing line fills will not block subsequent
+instructions from executing.
 
 -------------------------------------------------------------------------------
 

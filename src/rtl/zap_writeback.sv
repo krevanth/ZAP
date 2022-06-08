@@ -68,6 +68,8 @@ module zap_writeback #(
         input   logic                        i_thumb,
         input   logic [$clog2(PHY_REGS)-1:0] i_wr_index_1,
         input   logic [31:0]                 i_wr_data_1,
+        input   logic [PHY_REGS-1:0]         i_wr_index_2,
+        input   logic [31:0]                 i_wr_data_2,
 
         // Interrupt indicators.
         input   logic                         i_irq,
@@ -147,9 +149,11 @@ zap_register_file u_zap_register_file
 
  .i_wr_addr_a    (       wa1             ),
  .i_wr_addr_b    (       wa2             ),
+ .i_wr_addr_c    (     i_wr_index_2      ),
 
  .i_wr_data_a    (       wdata1          ),
  .i_wr_data_b    (       wdata2          ),
+ .i_wr_data_c    (     i_wr_data_2       ),
 
  .i_wen          (       wen             ),        
 

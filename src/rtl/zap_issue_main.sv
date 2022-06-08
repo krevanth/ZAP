@@ -93,12 +93,15 @@ module zap_issue_main
         input logic                              i_fiq_ff,                               
         input logic                              i_abt_ff,                               
         input logic                              i_swi_ff,                               
-        input logic                              i_force32align_ff,
         input logic                              i_und_ff,
+        input logic                              i_force32align_ff,
 
         // ---------------------
         // Feedback Network
         // ---------------------
+
+        // Lock
+        input logic [63:0]                       i_dc_lock,
 
         // From register file. Read ports.
         input logic  [31:0]                      i_rd_data_0,
@@ -871,7 +874,9 @@ begin
                         i_postalu_dav_ff,
                         i_memory_mem_srcdest_index_ff,
                         i_memory_mem_load_ff,
-                        i_memory_dav_ff
+                        i_memory_dav_ff,
+                        i_dc_lock,
+                        i_irq_ff || i_fiq_ff || i_abt_ff || i_swi_ff || i_abt_ff
                         ) 
                         || 
                         determine_load_lock 
@@ -897,7 +902,9 @@ begin
                         i_postalu_dav_ff,
                         i_memory_mem_srcdest_index_ff,
                         i_memory_mem_load_ff,
-                        i_memory_dav_ff
+                        i_memory_dav_ff,
+                        i_dc_lock,
+                        i_irq_ff || i_fiq_ff || i_abt_ff || i_swi_ff || i_abt_ff
                         ) 
                         ||
                         determine_load_lock 
@@ -922,7 +929,9 @@ begin
                         i_postalu_dav_ff,
                         i_memory_mem_srcdest_index_ff,
                         i_memory_mem_load_ff,
-                        i_memory_dav_ff
+                        i_memory_dav_ff,
+                        i_dc_lock,
+                        i_irq_ff || i_fiq_ff || i_abt_ff || i_swi_ff || i_abt_ff
                         ) 
                         ||
                         determine_load_lock
@@ -947,7 +956,9 @@ begin
                         i_postalu_dav_ff,
                         i_memory_mem_srcdest_index_ff,
                         i_memory_mem_load_ff,
-                        i_memory_dav_ff
+                        i_memory_dav_ff,
+                        i_dc_lock,
+                        i_irq_ff || i_fiq_ff || i_abt_ff || i_swi_ff || i_abt_ff
                         );
 
         // A shift lock occurs if the current instruction requires a shift amount as a register
@@ -1079,7 +1090,9 @@ input                           postalu_mem_load_ff,
 input                           postalu_dav_ff,
 input  [$clog2(PHY_REGS)-1:0]   memory_mem_srcdest_index_ff,
 input                           memory_mem_load_ff,
-input                           memory_dav_ff
+input                           memory_dav_ff,
+input  [63:0]                   xlock,
+input                           ext_lock
 );
 begin
         determine_load_lock = 1'd0;
@@ -1092,6 +1105,10 @@ begin
         if ( index[32] == IMMED_EN || index[5:0] == PHY_RAZ_REGISTER[5:0] ) // Lock only occurs for indices.
         begin
                 determine_load_lock = 1'd0;
+        end
+        else if ( xlock[index[5:0]] || ext_lock )
+        begin
+                determine_load_lock = 1'd1;
         end
         else if 
         ( 

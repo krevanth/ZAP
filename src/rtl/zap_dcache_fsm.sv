@@ -50,13 +50,16 @@ input   logic                      i_rd,
 input   logic                      i_wr,
 input   logic    [31:0]            i_din,
 input   logic    [3:0]             i_ben, /* Valid only for writes. */
-
-output  logic     [31:0]            o_dat,
-output  logic                       o_ack,
-output  logic                       o_err,
-output  logic     [7:0]             o_fsr,
-output  logic     [31:0]            o_far,
-output  logic                       o_err2,
+input   logic    [63:0]            i_reg_idx, /* Register to load to. added */
+output  logic     [63:0]           o_lock, /* Register that is locked. added */
+output  logic [31:0]               o_reg_dat, /* Register data. aded */
+output  logic [63:0]               o_reg_idx, /* Register index. added */
+output  logic     [31:0]           o_dat,
+output  logic                      o_ack,
+output  logic                      o_err,
+output  logic     [7:0]            o_fsr,
+output  logic     [31:0]           o_far,
+output  logic                      o_err2,
 
 /* From/To CP15 unit */
 input   logic                      i_cache_en,
@@ -128,7 +131,8 @@ localparam CLEAN_SINGLE         = 3; /* Ultimately cleans up cache line. Parent 
 localparam FETCH_SINGLE         = 4; /* Ultimately validates cache line. Parent state */
 localparam INVALIDATE           = 5; /* Cache invalidate parent state */
 localparam CLEAN                = 6; /* Cache clean parent state */
-localparam NUMBER_OF_STATES     = 7; 
+localparam UNLOCK_REG           = 7; /* Unlock register */
+localparam NUMBER_OF_STATES     = 8; 
 
 localparam ADR_PAD              = 32 - $clog2(CACHE_LINE/4) - 1;
 localparam ADR_PAD_MINUS_2      = ADR_PAD - 2;
@@ -159,6 +163,8 @@ logic    [3:0]                            ben; /* Valid only for writes. */
 logic    [CACHE_LINE*8-1:0]               cache_line;
 logic  [`ZAP_CACHE_TAG_WDT-1:0]           cache_tag; // Tag 
 logic    [31:0]                           phy_addr;
+logic    [63:0]                           reg_idx;
+logic    [63:0]                           lock_nxt, lock_ff;
 
 logic                                     UNUSED_1B, UNUSED_2B, unused;
 
@@ -182,9 +188,18 @@ always_ff @ ( posedge i_clk ) if ( state_ff == IDLE ) address         <= i_addre
 always_ff @ ( posedge i_clk ) if ( state_ff == IDLE ) wr              <= i_wr;
 always_ff @ ( posedge i_clk ) if ( state_ff == IDLE ) din             <= i_din;
 always_ff @ ( posedge i_clk ) if ( state_ff == IDLE ) ben             <= i_ben;
-always_ff @ ( posedge i_clk ) if ( state_ff == IDLE ) cache_line      <= i_cache_line;
+
+always_ff @ ( posedge i_clk )
+begin 
+        if ( state_ff == IDLE ) 
+                cache_line      <= i_cache_line;
+        else if ( state_nxt == UNLOCK_REG )
+                cache_line      <= o_cache_line;
+end
+
 always_ff @ ( posedge i_clk ) if ( state_ff == IDLE ) cache_tag       <= i_cache_tag;
 always_ff @ ( posedge i_clk ) if ( state_ff == IDLE ) phy_addr        <= i_phy_addr;
+always_ff @ ( posedge i_clk ) if ( state_ff == IDLE ) reg_idx         <= i_reg_idx;
 
 /* Sequential Block */
 always_ff @ (posedge i_clk)
@@ -202,6 +217,7 @@ begin
                 cache_inv_req_ff        <= 0;
                 adr_ctr_ff              <= 0;
                 state_ff                <= IDLE;
+                lock_ff                 <= 64'd0;
         end
         else
         begin
@@ -216,6 +232,7 @@ begin
                 cache_inv_req_ff        <= cache_inv_req_nxt;
                 adr_ctr_ff              <= adr_ctr_nxt;
                 state_ff                <= state_nxt;
+                lock_ff                 <= lock_nxt;
         end
 end
 
@@ -244,10 +261,12 @@ begin:blk1
         o_wb_adr_nxt            = o_wb_adr_ff;
         o_wb_dat_nxt            = o_wb_dat_ff;
         o_wb_cti_nxt            = o_wb_cti_ff;
+        lock_nxt                = lock_ff;
         o_wb_wen_nxt            = o_wb_wen_ff;
         o_wb_sel_nxt            = o_wb_sel_ff;
         cache_clean_req_nxt     = cache_clean_req_ff;
         cache_inv_req_nxt       = cache_clean_req_ff;
+        o_lock                  = lock_ff;
         o_fsr                   = 0;
         o_far                   = 0;
         o_cache_tag             = 0;
@@ -258,6 +277,8 @@ begin:blk1
         o_cache_line            = 0;
         o_cache_line_ben        = 0;
         o_hold                  = 1'd0;
+        o_reg_dat               = 32'd0;
+        o_reg_idx               = 64'd0;
 
         // Output data port.
         if ( state_ff == UNCACHEABLE )
@@ -358,9 +379,16 @@ begin:blk1
 
                                 2'b01: /* Unrelated tag, possibly dirty. */
                                 begin
-                                        /* CPU should retry */
-                                        o_ack  = 1'd1;
-                                        o_err2 = 1'd1;
+                                        /* Acknowledge current entry. Lock the register. */
+                                        o_ack               = 1'd1;
+
+                                        /* Lock register on load */
+                                        if ( i_rd )
+                                        begin
+                                                for(int i=0;i<64;i++)
+                                                        if (i_reg_idx[i] )
+                                                                lock_nxt[i] = 1'd1;
+                                        end
 
                                         if ( cache_dirty )
                                         begin
@@ -384,13 +412,20 @@ begin:blk1
                                 begin
                                                 /* CPU should wait. */
                                                 o_ack  = 1'd1;
-                                                o_err2 = 1'd1;
 
                                                 /* Set up counter */
                                                 adr_ctr_nxt = 0;
 
                                                 /* Fetch a single cache line */
                                                 state_nxt = FETCH_SINGLE;
+
+                                                /* Lock register on load */
+                                                if ( i_rd )
+                                                begin
+                                                        for(int i=0;i<64;i++)
+                                                                if(i_reg_idx[i])
+                                                                        lock_nxt[i] = 1'd1;
+                                                end
                                 end
                                 endcase
                         end
@@ -451,14 +486,15 @@ begin:blk1
 
                                       {{ADR_PAD{1'd0}},adr_ctr_nxt} != ((CACHE_LINE/4) - 1) ? 
                                         CTI_BURST : CTI_EOB, 
-
                                         4'b1111);
                 end
                 else
                 begin
                         /* Move to wait state */
                         kill_access ();
-                        state_nxt = IDLE;                             
+
+                        adr_ctr_nxt = 0;
+                        state_nxt   = FETCH_SINGLE;                             
                         
                         /* Update tag. Remove dirty bit. */
                         o_cache_tag_wr_en                      = 1'd1; // Implicitly sets valid (redundant).
@@ -520,8 +556,51 @@ begin:blk1
 
                         /* Move to idle state */
                         kill_access ();
-                        state_nxt = IDLE;
+                        state_nxt = UNLOCK_REG;
                 end
+        end
+
+        UNLOCK_REG: /* Load data into the register if required. */
+        begin
+                o_ack  = 1'd1;
+                o_err2 = i_rd || i_wr ? 1'd1 : 1'd0;
+
+                if ( !wr )
+                begin
+                        /* Write to register file */
+                        o_reg_dat = adapt_cache_data(address[$clog2(CACHE_LINE)-1:2],
+                                                     cache_line);
+                        o_reg_idx = reg_idx;
+                end
+                else /* Update cache line. */
+                begin
+                        o_ack        = 1'd1;
+
+                        o_cache_line = 
+                        {(CACHE_LINE/4){din}};
+  
+                        o_cache_line_ben  = ben_comp ( 
+                                address[$clog2(CACHE_LINE)-1:2], 
+                                ben ); 
+
+                        /* Write to tag and also write out physical address. */
+                        o_cache_tag_wr_en                = 1'd1;
+                        o_cache_tag[`ZAP_CACHE_TAG__TAG] = address[`ZAP_VA__CACHE_TAG]; 
+                        o_cache_tag_dirty                = 1'd1;
+                        o_cache_tag[`ZAP_CACHE_TAG__PA]  = phy_addr[31 : $clog2(CACHE_LINE)]; 
+                        o_address                        = address;
+                end
+
+                /* Unlock the register on load */
+                if ( !wr )
+                begin
+                        for(int i=0;i<64;i++)
+                                if ( reg_idx[i] )
+                                        lock_nxt[i] = 1'd0;
+                end
+
+                /* Back to IDLE */
+                state_nxt = IDLE;
         end
 
         INVALIDATE: /* Invalidate the cache - Almost Single Cycle */

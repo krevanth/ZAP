@@ -152,6 +152,10 @@ logic [31:0]     d_wb_adr;
 logic [2:0]      d_wb_cti;
 logic            d_wb_ack;
 
+logic [63:0]     dc_rreg_idx, dc_wreg_idx;
+logic [63:0]     dc_lock;
+logic [31:0]     dc_reg_data;
+
 logic           icache_err2, dcache_err2;
 logic           cpu_dwe_check;
 
@@ -249,7 +253,13 @@ zap_core #(
 .o_instr_wb_adr_check   (cpu_iaddr_check),
 
 // CPSR
-.o_cpsr                 (cpu_cpsr[`ZAP_CPSR_MODE])  
+.o_cpsr                 (cpu_cpsr[`ZAP_CPSR_MODE]),
+
+// Added DC signals.
+.o_dc_reg_idx          (dc_rreg_idx),
+.i_dc_reg_idx          (dc_wreg_idx),
+.i_dc_lock             (dc_lock),
+.i_dc_reg_dat          (dc_reg_data) 
 
 );
 
@@ -278,6 +288,11 @@ u_data_cache (
 .o_dat                  (dc_data),
 .o_ack                  (data_ack),
 .o_err                  (data_err),
+
+.i_reg_idx              (dc_rreg_idx),
+.o_lock                 (dc_lock),
+.o_reg_dat              (dc_reg_data),
+.o_reg_idx              (dc_wreg_idx),
 
 .o_fsr                  (dc_fsr),
 .o_far                  (dc_far),
