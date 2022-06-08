@@ -27,6 +27,15 @@
       "contributions": [
         "infra"
       ]
+    },
+    {
+      "login": "bharathmulagondla",
+      "name": "bharathm",
+      "avatar_url": "https://avatars.githubusercontent.com/u/38918983?v=4",
+      "profile": "https://github.com/bharathmulagondla",
+      "contributions": [
+        "test"
+      ]
     }
   ],
   "contributorsPerLine": 7,
