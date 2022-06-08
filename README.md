@@ -1,4 +1,4 @@
-# ZAP : A v5TE Superpipelined ARM Processor with Caches, MMUs and TLBs (150 MHz @ XC7A35T256-3 Artix-7 FPGA)
+# ZAP : A v5TE Superpipelined ARM Processor with Caches, MMUs and TLBs (140 MHz @ XC7A35T256-3 Artix-7 FPGA)
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
 [![All Contributors](https://img.shields.io/badge/all_contributors-4-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
