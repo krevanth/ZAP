@@ -36,6 +36,15 @@
       "contributions": [
         "test"
       ]
+    },
+    {
+      "login": "arbaranwal",
+      "name": "Akhil Raj Baranwal",
+      "avatar_url": "https://avatars.githubusercontent.com/u/22285086?v=4",
+      "profile": "https://arbaranwal.github.io",
+      "contributions": [
+        "ideas"
+      ]
     }
   ],
   "contributorsPerLine": 7,
