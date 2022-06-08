@@ -253,7 +253,7 @@ zap_core #(
 
 );
 
-zap_cache #(
+zap_dcache #(
         .CACHE_SIZE(DATA_CACHE_SIZE), 
         .SPAGE_TLB_ENTRIES(DATA_SPAGE_TLB_ENTRIES), 
         .LPAGE_TLB_ENTRIES(DATA_LPAGE_TLB_ENTRIES), 

@@ -221,7 +221,11 @@ input [63:0]            tlb                            // TLB entry.
 logic [3:0]  apsr; // Concat of AP and SR.
 logic [1:0]  dac;  // DAC bits.
 logic [29:0] dummy;// 30-bit dummy variable. ** UNUSED **
+
+
+/* verilator lint_off VARHIDDEN */
 logic        unused;
+/* verilator lint_on VARHIDDEN */
 
 begin
         dummy  = 30'd0;
