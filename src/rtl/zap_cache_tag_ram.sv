@@ -124,6 +124,7 @@ logic                                      cache_unused0;
 logic                                      cache_unused1;
 logic [CACHE_LINE*8-1:0]                   w_dummy;
 logic [`ZAP_CACHE_TAG_WDT-1:0]             w_dummy_1;
+logic [(CACHE_SIZE/CACHE_LINE) - 16 - 1:0] unusedx;
 
 always_comb cache_unused0 = |{i_address[31: $clog2(CACHE_LINE)+$clog2(CACHE_SIZE/CACHE_LINE)], i_address[$clog2(CACHE_LINE)-1:0]};
 always_comb cache_unused1 = |{i_address_nxt[31: $clog2(CACHE_LINE)+$clog2(CACHE_SIZE/CACHE_LINE)], i_address_nxt[$clog2(CACHE_LINE)-1:0]};
@@ -259,12 +260,14 @@ begin:blk1
         logic [31:0] shamt, data, pa;
 
         line_dummy = {(CACHE_LINE*8-32){1'd0}};
-        shamt = 0;
-        data  = 0;
-        pa    = 0;
-        dummy = 0;
-        unused_0 = '0;
-  
+        shamt      = 0;
+        data       = 0;
+        pa         = 0;
+
+        dummy      = '0;
+        unused_0   = '0;
+        unusedx    = '0; 
+ 
         // Defaults.
         state_nxt = state_ff;
         tag_ram_rd_addr_nxt     = get_tag_ram_rd_addr (blk_ctr_ff, dirty);
@@ -408,7 +411,7 @@ end
 // -----------------------------------------------------------------------------
 
 // Priority encoder.
-function  [4:0] pri_enc_1 ( input [CACHE_SIZE/CACHE_LINE-1:0] in );
+function  [4:0] pri_enc_1 ( input [15:0] in );
 begin: priEncFn
                 pri_enc_1 = 5'b11111;
 
@@ -428,15 +431,15 @@ input [$clog2(NUMBER_OF_DIRTY_BLOCKS):0]   blk_ctr,
 input [CACHE_SIZE/CACHE_LINE-1:0]          Dirty
 );
 localparam W = $clog2(NUMBER_OF_DIRTY_BLOCKS) + 5;
-logic [CACHE_SIZE/CACHE_LINE-1:0] dirty_new;
+logic [15:0]                      dirty_new;
 logic [4:0]                       enc;
 logic [W-1:0]                     shamt;
 logic [31:0]                      sum;
 begin
         sum                 = 32'd0;
         shamt               = {blk_ctr, 4'd0};
-        dirty_new           = Dirty >> shamt;
-        enc                 = pri_enc_1(dirty_new[CACHE_SIZE/CACHE_LINE-1:0]);
+        {unusedx,dirty_new} = Dirty >> shamt;
+        enc                 = pri_enc_1(dirty_new[15:0]);
         sum[W:0]            = {1'd0, shamt[W-1:0]} + {1'd0, {{(W-5){1'd0}}, enc}};
         get_tag_ram_rd_addr = sum[$clog2(CACHE_SIZE/CACHE_LINE)-1:0];
         unused_0            = |{sum[31:$clog2(CACHE_SIZE/CACHE_LINE)]};
@@ -502,13 +505,13 @@ function [4:0] baggage (
         input [CACHE_SIZE/CACHE_LINE-1:0]               Dirty, 
         input [$clog2(NUMBER_OF_DIRTY_BLOCKS):0]        blk_ctr 
 );
-localparam                      W = $clog2(NUMBER_OF_DIRTY_BLOCKS) + 5;
-logic [W-1:0]                     shamt;
-logic [CACHE_SIZE/CACHE_LINE-1:0] val;
+logic [CACHE_SIZE/CACHE_LINE-1:0] w_dirty;
+logic [15:0] val;
 begin
-        shamt   = {blk_ctr, 4'd0};
-        val     = Dirty >> shamt;
-        baggage = pri_enc_1(val[CACHE_SIZE/CACHE_LINE-1:0]);
+        w_dirty        = Dirty >> {blk_ctr, 4'd0};
+        {unusedx, val} = w_dirty;
+
+        return pri_enc_1(val);
 end
 endfunction
 
