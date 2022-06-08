@@ -1,24 +1,9 @@
-# ZAP : A v5TE SUPERPIPELINED ARM PROCESSOR WITH CACHES, MMUs AND TLBs (150 MHz @ XC7A35T256-3 Artix-7 FPGA)
+# ZAP : A v5TE Superpipelined ARM Processor with Caches, MMUs and TLBs (150 MHz @ XC7A35T256-3 Artix-7 FPGA)
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
 [![All Contributors](https://img.shields.io/badge/all_contributors-4-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 **By Revanth Kamaraj <[revanth91kamaraj@gmail.com](mailto:revanth91kamaraj@gmail.com)>**
---------------------------------------------------------------------------------
-
-Please reach me at :
-
-EMail Address    : revanth91kamaraj@gmail.com
-
-GitHub Profile   : https://github.com/krevanth 
-
-LinkedIn Profile : https://linkedin.com/in/revanth-kamaraj-178662113
-
-The ZAP project is Copyright (C) Revanth Kamaraj <[revanth91kamaraj@gmail.com](mailto:revanth91kamaraj@gmail.com)> 
-
-Thanks to Erez Binyamin for adding Docker support. 
-
-Thanks to Bharath Mulagondla for testing MMU.
 
 -------------------------------------------------------------------------------
 
@@ -462,9 +447,7 @@ first.
 ##4. Mentions and Contributors
 -------------------------------------------------------------------------------
 
-
-The ZAP project was mentioned in this paper : 
-researchgate.net/publication/347558929_Free_ARM_Compatible_Softcores_on_FPGA 
+The ZAP project was mentioned [here](https://researchgate.net/publication/347558929_Free_ARM_Compatible_Softcores_on_FPGA) 
 
 Thanks to Erez Binyamin for pointing it out and for adding Docker support.
 
