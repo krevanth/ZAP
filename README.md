@@ -1,108 +1,81 @@
-# ZAP : A v5TE Superpipelined ARM Processor with Caches, MMUs and TLBs (140 MHz @ XC7A35T256-3 Artix-7 FPGA)
-<!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-4-orange.svg?style=flat-square)](#contributors-)
-<!-- ALL-CONTRIBUTORS-BADGE:END -->
+---
+description: Technical Reference Manual
+---
 
-**By Revanth Kamaraj <[revanth91kamaraj@gmail.com](mailto:revanth91kamaraj@gmail.com)>**
+# The ZAP Processor (ARMV5TE)
 
--------------------------------------------------------------------------------
+[![All Contributors](https://img.shields.io/badge/all\_contributors-4-orange.svg?style=flat-square)](./#contributors-)
+
+**By Revanth Kamaraj <**[**revanth91kamaraj@gmail.com**](mailto:revanth91kamaraj@gmail.com)**>**
+
+***
 
 ## 1. About The ZAP Processor
--------------------------------------------------------------------------------
 
+***
 
-The ZAP processor is a scalar 17-stage high performance synthesizable 32-bit 
-soft processor core that is fully compatible with the older ARMv5TE ISA 
-(reference [1]). The processor also features an architecturally compliant 
-(CP15 controllable) cache and MMU.
+***
 
-ZAP provides full software compatibility including architecturally exposed CPU 
-modes, short instruction support, FCSE, cache, MMU, TLBs and the CP15 interface 
-layer for cache and MMU control. The software compatibility allows ZAP to boot 
-full operating systems like Linux. All caches and TL buffers are direct mapped. 
+* The ability to continue instruction execution even when the data cache is being filled. The data cache features hit under miss capability. The processor stalls when an instruction that depends on the cache access is decoded.
+* Direct mapped instruction and data caches. These caches are virtually indexed and virtually tagged. Individual caches allow code and data to be accessed at the same time. The sizes of these caches can be set during synthesis. Cache size is parameterizable. Cache line width may be set as well.&#x20;
+* Direct mapped instruction and data memory TLBs. Having separate translation buffers allows data and code translation to happen in parallel. The sizes of these TLBs can be set during synthesis. Six different TLB memories are provides, each providing direct mapped buffering for sections, large page and small page, each for instruction and data (3 x 2 = 6). The sizes of these 6 memories is parameterizable.&#x20;
+* A parameterizable store buffer that helps buffer stores when the cache is disabled or if the data access is uncacheable. When the cache is enabled and data is cacheable, the store buffer helps buffer cache clean operations. This is slightly different from a write buffer.
+* A 4-state bimodal branch predictor that predicts the outcome of immediate branches and branch-and-link instructions. The branch memory is 2-bit wide and is direct mapped. Aliasing is possible due to absence of a tag field. Note that the ZAP does not include a branch target buffer.
+* A 4 deep return address stack that stores the predicted return address of branch and link instructions function return. When a BX LR, MOV PC,LR or a block load with PC in register list, the processor pops off the return address. Note that switching between ARM and Thumb state has a penalty of 11 cycles.
+* The ability to execute most ARM instructions in a single clock cycle. The only instructions that take multiple cycles include branch-and-link, 64-bit loads and stores, block loads and stores, swap instructions and BLX2.
+* A highly efficient superpipeline with dual feedback networks to minimize pipeline stalls as much as possible while allowing for high clock frequencies. A deep 17 stage superpipelined architecture that allows the CPU to run at relatively high FPGA speeds (140MHz @ xc7a35t-3 Artix-7 FPGA)
+* Support for single cycle saturating additions and subtractions for better signal processing performance. Multiplications/MAC take 4 to 5 cycles per operation. Note that the multiplier inside the ZAP processor is not pipelined.
 
-The ZAP implements the ARMv5TE ISA and hence supports the two standard 
-instruction sets:
+### 1.1. Superpipelined Microarchitecture&#x20;
 
-* The 32-bit ARM instruction set.
-* The 16-bit Thumb instruction set.
+ZAP uses a 17 stage execution pipeline to increase the speed of the flow of instructions to the processor. The 17 stage pipeline consists of Address Generator, TLB Check, Cache Access, Memory, Fetch, Instruction Buffer, Thumb Decoder, Pre-Decoder, Decoder, Issue, Shift, Execute, TLB Check, Cache Access, Memory and Writeback.
 
--------------------------------------------------------------------------------
-
-1.1. ZAP Superpipelined Microarchitecture (17 Stage)
--------------------------------------------------------------------------------
-
-ZAP uses a 17 stage execution pipeline to increase the speed of the flow of 
-instructions to the processor. The 17 stage pipeline consists of Address 
-Generator, TLB Check, Cache Access, Memory, Fetch, Instruction Buffer, 
-Thumb Decoder, Pre-Decoder, Decoder, Issue, Shift, Execute, TLB Check, 
-Cache Access, Memory and Writeback.
-
-> To maintain compatibility with the ARMv5TE standard, reading the program 
-> counter (PC) will return PC + 8 when read.
+> To maintain compatibility with the ARMv5TE standard, reading the program counter (PC) will return PC + 8 when read.
 
 During normal operation:
 
 * One instruction is writing out one or two results to the register bank.
-  * In case of LDR/STR with writeback, two results are being written to the
-    register bank in a single cycle. 
+  * In case of LDR/STR with writeback, two results are being written to the register bank in a single cycle.
   * All other instructions write out one result to the register bank per cycle.
+  * A pending load might write another value. The RF has 3 write ports.
 * The instruction before that is accessing the cache/TLB RAM.
 * The instruction before that is accessing the cache/TLB RAM.
 * The instruction before that is accessing the cache/TLB RAM.
 * The instruction before that is accessing the cache/TLB RAM.
-* The instruction before that is performing arithmetic, logic or memory address 
-  generation operations. This stage also confirms or rejects the branch 
-  predictor's decisions. The ALU performs saturation in the same cycle.
-* The instruction before that is performing a correction, shift or multiply/MAC 
-  operation.
+* The instruction before that is performing arithmetic, logic or memory address generation operations. This stage also confirms or rejects the branch predictor's decisions. The ALU performs saturation in the same cycle.
+* The instruction before that is performing a correction, shift or multiply/MAC operation.
 * The instruction before that is performing a register or pipeline read.
 * The instruction before that is being decoded.
-* The instruction before that is being sequenced to micro-ops (possibly). 
+* The instruction before that is being sequenced to micro-ops (possibly).
   * Most of the time, 1 ARM instruction = 1 micro-op.
-  * The only ARM instructions requiring more than 1 micro-op generation are 
-    BLX, LDM, STM, SWAP and LONG MULTIPLY (They generate a 32-bit result per 
-    micro-op). 
+  * The only ARM instructions requiring more than 1 micro-op generation are BLX, LDM, STM, SWAP and LONG MULTIPLY (They generate a 32-bit result per micro-op).
   * All other ARM instruction decode to just a single micro-op.
-  * This stage also causes branches predicted as taken to be actually 
-    executed. The latency for a successfully predicted taken branch is 
-    6 cycles.
-* The instruction before that is being being decompressed. This is only req. 
-  in the Thumb state, else the stage simply passes the instructions on. 
+  * This stage also causes branches predicted as taken to be actually executed. The latency for a successfully predicted taken branch is 6 cycles.
+* The instruction before that is being being decompressed. This is only req. in the Thumb state, else the stage simply passes the instructions on.
 * The instruction before that is popped off the instruction buffer.
-* The instruction before that is pushed onto the instruction buffer. Branches  
+* The instruction before that is pushed onto the instruction buffer. Branches\
   are predicted using a bimodal predictor (if applicable).
 * The instruction before that is accessing the cache/TLB RAM.
 * The instruction before that is accessing the cache/TLB RAM.
 * The instruction before that is accessing the cache/TLB RAM.
 * The instruction before that is accessing the cache/TLB RAM.
 
-The deep pipeline, although uses more resources, allows the ZAP to run at 
-high clock speeds.
+The deep pipeline, although uses more resources, allows the ZAP to run at high clock speeds.
 
--------------------------------------------------------------------------------
+#### 1.1.1. Automatic Dual Forwarding Network
 
-1.1.1. Automatic Dual Forwarding Network
--------------------------------------------------------------------------------
-
-The ZAP pipeline has an efficient automatic dual forwarding network with 
-interlock detection hardware. This is done automatically and no software 
-intervention is required. This complex feedback logic guarantees that almost 
-all micro-ops/instructions execute at a rate of 1 every cycle.
+The ZAP pipeline has an efficient automatic dual forwarding network with interlock detection hardware. This is done automatically and no software intervention is required. This complex feedback logic guarantees that almost all micro-ops/instructions execute at a rate of 1 every cycle.
 
 The only times a pipeline stalls is when (assume 100% cache hit rate):
 
-* An instruction uses a register that is a data (not pointer) destination for a 
-  load instruction within 6 cycles (assuming a load hit).
-* The pipeline is executing a multiply/MAC instruction (4 cycles(short)/5 
-  cycles(long)). 
-  * An instruction that uses a register that is a destination for multiply/MAC 
-    adds +1 to the multiply/MAC operation's latency.
-* Two back to back instructions require non-zero shift and the second 
-  instruction's operand overlaps with the first instruction's destination.
+* An instruction uses a register that is a data (not pointer) destination for a load instruction within 6 cycles (assuming a load hit).
+* The pipeline is executing any multiply/MAC instruction (4 to 5 cycle latency).
+  * An instruction that uses a register that is a destination for multiply/MAC adds +1 to the multiply/MAC operation's latency.
+* Two back to back instructions require non-zero shift and the second instruction's operand overlaps with the first instruction's destination.
 
 This snippet of ARM code takes 6 cycles to execute:
-```text
+
+```
     ADD  R1, R2, R2 LSL #10 (1 cycle)
     ADD  R1, R1, R1 LSL #20 (2 cycles)
     ADD  R3, R4, R5, LSR #3 (1 cycle)
@@ -110,8 +83,9 @@ This snippet of ARM code takes 6 cycles to execute:
     MOV  R4, R3             (1 cycle)
 ```
 
-This snippet of ARM code takes only 5 cycles:
-```text
+This snippet of ARM code takes only 5 cycles (Possible because of dual feedback network):
+
+```
     ADD  R1, R2, R2, R2     (1 cycle)
     ADD  R1, R1, R1 LSL #2  (1 cycle)
     ADD  R3, R4, R5 LSR #3  (1 cycle)
@@ -119,78 +93,47 @@ This snippet of ARM code takes only 5 cycles:
     MOV  R4, R3             (1 cycle)
 ```
 
--------------------------------------------------------------------------------
+#### 1.1.2. Single Cycle Load with Writeback&#x20;
 
-1.1.2. Multiple Write Port RF
--------------------------------------------------------------------------------
+The ZAP can execute LDR/STR with writeback in a single cycle. It will perform a parallel write to the register file with the pointer register and the daata register in the same cycle.
 
-The ZAP can execute LDR/STR with writeback in a single cycle. This is possible
-as the ZAP uses a register file with multiple write ports. The RF is implemented
-as flip-flops.
+#### 1.1.3. Hit Under Miss/Execute Under Miss
 
-Data cache accesses that are performing line fills will not block subsequent
-instructions from executing.
+Data cache accesses that are performing line fills will not block subsequent instructions from executing. In addition, the data cache supports hit under miss functionality i.e., the cache can service the next memory access (hit) while handing the current linefill (miss). Thus, the ZAP can change the order of completion of memory accesses with respect to other instructions, when possible, in a relatively simple way.
 
--------------------------------------------------------------------------------
+#### 1.1.3. Branch Predictor and Return Address Stack
 
-1.1.3. Branch Predictor, RAS
--------------------------------------------------------------------------------
+To improve performance, the ZAP processor uses a bimodal branch predictor. A branch memory is maintained which stores the state of each branch. Note that the predictor can only predict Bcc instructions.
 
-To improve performance, the ZAP processor uses a bimodal branch predictor. A
-branch memory is maintained which stores the state of each branch. Note that
-the predictor can only predict Bcc instructions. 
-
-* Correctly predicted Bccinstructions take 7 cycles (taken)/0 cycles (not taken)
-  of latency. 
-* Bcc mispredicts/Data processing PC changes/BX/BLX takes 11 cycles. 
-* Loading to PC from memory takes 17 cycles.
-  The bimodal predictor is organized as a direct mapped unit so aliasing is
-  possible. The predictor cannot be disabled.
+* Correctly predicted Bccinstructions take 7 cycles (taken)/0 cycles (not taken) of latency.
+* Bcc mispredicts/Data processing PC changes/BX/BLX takes 11 cycles.
+* Loading to PC from memory takes 17 cycles. The bimodal predictor is organized as a direct mapped unit so aliasing is possible. The predictor cannot be disabled.
 
 The processor also implements a 4 deep return address stack. Upon calls to
 
-* BL<cc> offset
+* BL offset
 
-the potential return address is pushed to a stack in the processor. 
+the potential return address is pushed to a stack in the processor.
 
-On encountering these instructions: 
+On encountering these instructions:
 
-* BX LR, 
-* MOV PC, LR, 
+* BX LR,
+* MOV PC, LR,
 * Load multiple with PC in register list.
 
-the CPU treats them as function returns and will pop return address of the 
-stack much earlier. This results in some performance improvement and reduced
-branch latency. Correctly predicted return takes 7 cycles, while incorrectly
-or unpredicted returns take 11 cycles.
+the CPU treats them as function returns and will pop return address of the stack much earlier. This results in some performance improvement and reduced branch latency. Correctly predicted return takes 7 cycles, while incorrectly or unpredicted returns take 11 cycles.
 
--------------------------------------------------------------------------------
+### 1.2. External Bus Interface
 
-1.2. Bus Interface
--------------------------------------------------------------------------------
+ZAP features a common 32-bit Wishbone B3 bus to access external resources (like DRAM/SRAM/IO etc). The processor can generate byte, halfword or word accesses. The processor uses CTI and BTE signals to allow the bus to function more efficiently. Registered feedback mode is supported for higher performance. Note that multiprocessing is not readily supported and hence, SWAP instructions do not actually perform locked transfers.
 
-ZAP uses a Von Neumann memory model and features a common 32-bit Wishbone B3 
-bus. The processor can generate byte, halfword or word accesses. The processor 
-uses CTI and BTE signals to allow the bus to function more efficiently. 
-Registered feedback mode is supported for higher performance. Note that 
-multiprocessing is not readily supported and hence, SWAP instructions do not 
-actually perform locked transfers.
+**The bus interface is efficient for burst transfers and hence, cache must be enabled as soon as possible for good performance.**
 
-The bus interface is efficient for burst transfers and hence, cache must be
-enabled as soon as possible for good performance.
+### 1.3. System Control
 
--------------------------------------------------------------------------------
+Please refer to ref \[1] for CP15 CSR architectural requirements. The ZAP implements the following software accessinble registers within its CP15 coprocessor.
 
-1.3. Cache, MMU and CP15 Commands
--------------------------------------------------------------------------------
-
-Please refer to ref [1] for CP15 CSR architectural requirements. The ZAP
-implements the following software accessinble registers within its CP15
-coprocessor.
-
-NOTE: Cleaning and flushing cache and TLB is only supported for the entire
-memory. Selective flushing and cleaning of cache/TLB is not available. This
-is permitted as per the arch spec.
+NOTE: Cleaning and flushing cache and TLB is only supported for the entire memory. Selective flushing and cleaning of cache/TLB is not available. This is permitted as per the arch spec.
 
 * Register 1: Cache and MMU control.
 * Register 2: Translation Base.
@@ -199,80 +142,71 @@ is permitted as per the arch spec.
 * Register 6: FAR.
 * Register 8: TLB functions.
 * Register 7: Cache functions.
-  * The arch spec allows for a subset of the functions to be implemented for 
-    register 7. 
+  * The arch spec allows for a subset of the functions to be implemented for register 7.
   * These are supported (Read as {opcode2, crm}) in ZAP for register 7:
-    * CASE_FLUSH_ID_CACHE               = 7'b000_0111
-    * CASE_FLUSH_I_CACHE                = 7'b000_0101
-    * CASE_FLUSH_D_CACHE                = 7'b000_0110
-    * CASE_CLEAN_ID_CACHE               = 7'b000_1011
-    * CASE_CLEAN_D_CACHE                = 7'b000_1010
-    * CASE_CLEAN_AND_FLUSH_ID_CACHE     = 7'b000_1111
-    * CASE_CLEAN_AND_FLUSH_D_CACHE      = 7'b000_1110
+    * CASE\_FLUSH\_ID\_CACHE                       = 7'b000\_0111
+    * CASE\_FLUSH\_I\_CACHE                         = 7'b000\_0101
+    * CASE\_FLUSH\_D\_CACHE                        = 7'b000\_0110
+    * CASE\_CLEAN\_ID\_CACHE                       = 7'b000\_1011
+    * CASE\_CLEAN\_D\_CACHE                        = 7'b000\_1010
+    * CASE\_CLEAN\_AND\_FLUSH\_ID\_CACHE = 7'b000\_1111
+    * CASE\_CLEAN\_AND\_FLUSH\_D\_CACHE = 7'b000\_1110
 * Register 13: FCSE Register.
 
--------------------------------------------------------------------------------
+### 1.4. CPU Ports and Parameters
 
-1.4. CPU Top Level Configuration
--------------------------------------------------------------------------------
+#### 1.4.1. Parameters
 
-Note that all parameters should be 2^n. Cache size should be multiple of line
-size and atleast 16 x line width. Caches/TLBs consume majority of the resources 
-so should be tuned as required. The default parameters give you quite large 
-caches.
+Note that all parameters should be 2^n. Cache size should be multiple of line size and atleast 16 x line width. Caches/TLBs consume majority of the resources so should be tuned as required. The default parameters give you quite large caches.
 
-| Parameter                | Default | Description                          |
-| ------------------------ | ------- | ------------------------------------ |
-| BP_ENTRIES               | 1024    | Predictor RAM depth.                 |
-| FIFO_DEPTH               | 4       | Command FIFO depth.                  |
-| STORE_BUFFER_DEPTH       | 16      | Depth of the store buffer.           |
-| DATA_SECTION_TLB_ENTRIES | 2       | Section TLB entries.                 |
-| DATA_LPAGE_TLB_ENTRIES   | 2       | Large page TLB entries.              |
-| DATA_SPAGE_TLB_ENTRIES   | 32      | Small page TLB entries.              |
-| DATA_FPAGE_TLB_ENTRIES   | 2       | Tiny page TLB entries.               |
-| DATA_CACHE_SIZE          | 4096    | Cache size in bytes.                 |
-| CODE_SECTION_TLB_ENTRIES | 2       | Section TLB entries.                 |
-| CODE_LPAGE_TLB_ENTRIES   | 2       | Large page TLB entries.              |
-| CODE_SPAGE_TLB_ENTRIES   | 32      | Small page TLB entries.              |
-| CODE_FPAGE_TLB_ENTRIES   | 2       | Tiny page TLB entries.               |
-| CODE_CACHE_SIZE          | 4096    | Cache size in bytes.                 |
-| DATA_CACHE_LINE          | 64      | Cache Line for Data (Byte). Keep > 8 |
-| CODE_CACHE_LINE          | 64      | Cache Line for Code (Byte). Keep > 8 |
+| Parameter                   | Default | Description                                                               |
+| --------------------------- | ------- | ------------------------------------------------------------------------- |
+| BP\_ENTRIES                 | 1024    | Predictor RAM depth.                                                      |
+| FIFO\_DEPTH                 | 4       | Command FIFO depth.                                                       |
+| STORE\_BUFFER\_DEPTH        | 16      | Depth of the store buffer. Keep multiple of cache line size in bytes / 4. |
+| DATA\_SECTION\_TLB\_ENTRIES | 2       | Section TLB entries.                                                      |
+| DATA\_LPAGE\_TLB\_ENTRIES   | 2       | Large page TLB entries.                                                   |
+| DATA\_SPAGE\_TLB\_ENTRIES   | 32      | Small page TLB entries.                                                   |
+| DATA\_FPAGE\_TLB\_ENTRIES   | 2       | Tiny page TLB entries.                                                    |
+| DATA\_CACHE\_SIZE           | 4096    | Cache size in bytes. Should be atleast 16 x line size.                    |
+| CODE\_SECTION\_TLB\_ENTRIES | 2       | Section TLB entries.                                                      |
+| CODE\_LPAGE\_TLB\_ENTRIES   | 2       | Large page TLB entries.                                                   |
+| CODE\_SPAGE\_TLB\_ENTRIES   | 32      | Small page TLB entries.                                                   |
+| CODE\_FPAGE\_TLB\_ENTRIES   | 2       | Tiny page TLB entries.                                                    |
+| CODE\_CACHE\_SIZE           | 4096    | Cache size in bytes. Should be atleast 16 x line size.                    |
+| DATA\_CACHE\_LINE           | 64      | Cache Line for Data (Byte). Keep > 8                                      |
+| CODE\_CACHE\_LINE           | 64      | Cache Line for Code (Byte). Keep > 8                                      |
 
--------------------------------------------------------------------------------
+#### 1.4.2. IO
 
-1.5. CPU Top Level IO Interface
--------------------------------------------------------------------------------
+| Port       | Description                                                                                                                                         |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| i\_clk     | Clock. All logic is clocked on the rising edge of this signal.                                                                                      |
+| i\_reset   | Active high global reset signal. Assert for a duration >= 1 clock cycle (not necessarily synchronously to clock edge). Signal is internally synced. |
+| i\_irq     | Interrupt. Level Sensitive. Signal is internally synced.                                                                                            |
+| i\_fiq     | Fast Interrupt. Level Sensitive. Signal is internally synced.                                                                                       |
+| o\_wb\_cyc | Wishbone CYC signal.                                                                                                                                |
+| o\_wb\_stb | WIshbone STB signal.                                                                                                                                |
+| o\_wb\_adr | Wishbone address signal. (32)                                                                                                                       |
+| o\_wb\_we  | Wishbone write enable signal.                                                                                                                       |
+| o\_wb\_dat | Wishbone data output signal. (32)                                                                                                                   |
+| o\_wb\_sel | Wishbone byte select signal. (4)                                                                                                                    |
+| o\_wb\_cti | Wishbone CTI (Classic, Incrementing Burst, EOB) (3)                                                                                                 |
+| o\_wb\_bte | Wishbone BTE (Linear) (2)                                                                                                                           |
+| i\_wb\_ack | Wishbone ack signal. Wishbone registered cycles recommended.                                                                                        |
+| i\_wb\_dat | Wishbone data input signal. (32)                                                                                                                    |
 
-| Port     | Description                                                    |
-| -------- | -------------------------------------------------------------- |
-| i_clk    | Clock. All logic is clocked on the rising edge of this signal. |
-| i_reset  | Active high global reset signal. Assert for >= 1 clock cycle.  |
-| i_irq    | Interrupt. Level Sensitive. Signal is internally synced.       |
-| i_fiq    | Fast Interrupt. Level Sensitive. Signal is internally synced.  |
-| o_wb_cyc | Wishbone CYC signal.                                           |
-| o_wb_stb | WIshbone STB signal.                                           |
-| o_wb_adr | Wishbone address signal. (32)                                  |
-| o_wb_we  | Wishbone write enable signal.                                  |
-| o_wb_dat | Wishbone data output signal. (32)                              |
-| o_wb_sel | Wishbone byte select signal. (4)                               |
-| o_wb_cti | Wishbone CTI (Classic, Incrementing Burst, EOB) (3)            |
-| o_wb_bte | Wishbone BTE (Linear) (2)                                      |
-| i_wb_ack | Wishbone ack signal. Wishbone registered cycles recommended.   |
-| i_wb_dat | Wishbone data input signal. (32)                               |
+#### 1.4.3. Integration
 
 * To use the ZAP processor in your project:
-  
-  * Get the project files:
-    
-    > git clone https://github.com/krevanth/ZAP.git
-  
-  * Add all the *.sv files in src/rtl/ to your project.
-  
+  *   Get the project files:
+
+      > git clone https://github.com/krevanth/ZAP.git
+  * Add all the \*.sv files in src/rtl/ to your project.
   * Add src/rtl/ to your tool's search path to allow it to pick up SV headers.
-  
   * Instantiate the ZAP processor in your project using this template:
-```text
+
+```
        zap_top #(.FIFO_DEPTH              (),
                  .BP_ENTRIES              (),
                  .STORE_BUFFER_DEPTH      (),
@@ -302,64 +236,41 @@ caches.
                  .o_wb_bte                ()
        );
 ```
-* The processor provides a Wishbone B3 bus. It is recommended that you use 
-  it in registered feedback cycle mode.
 
+* The processor provides a Wishbone B3 bus. It is recommended that you use it in registered feedback cycle mode.
 * Interrupts are level sensitive and are internally synced to clock.
 
--------------------------------------------------------------------------------
+### 2. Project Environment (Docker)
 
-## 2. Project Environment
--------------------------------------------------------------------------------
+The project environment requires Docker to be installed at your site. I (Revanth Kamaraj) would like to thank Erez Binyamin for adding Docker support to allow the core to be used more widely.
 
-
-The project environment requires Docker to be installed at your site. I 
-(Revanth Kamaraj) would like to thank Erez Binyamin for adding Docker support
-to allow the core to be used more widely.
-
--------------------------------------------------------------------------------
-
-2.1. Running TCs
--------------------------------------------------------------------------------
+#### 2.1. Running TCs
 
 To run all/a specific TC, do:
 
-> make [TC=test_name] 
+> make \[TC=test\_name]
 
-See src/ts for a list of test names. Not providing a testname will run all
-tests.
+See src/ts for a list of test names. Not providing a testname will run all tests.
 
 To remove existing object/simulation/synthesis files, do:
 
 > make clean
 
--------------------------------------------------------------------------------
+#### 2.2. Adding TCs
 
-2.2. Adding TCs
--------------------------------------------------------------------------------
-
-* Create a folder src/ts/TEST_NAME
-
+* Create a folder `src/ts/<test_name>`
 * Please note that these will be run on the sample TB SOC platform.
-  
-  * See src/testbench/testbench.v for more information.
-
-* Tests will produce wave files in the obj/src/ts/<test_name>/zap.vcd.
-
+  * See `src/testbench/testbench.v` for more information.
+* Tests will produce wave files in the `obj/src/ts/<test_name>/zap.vcd`.
 * Add a C file (.c), an assembly file (.s) and a linker script (.ld).
+*   Create a Config.cfg. This is a Perl hash that must be edited to meet requirements. Note that the registers in the REG\_CHECK are indexed registers. To find those, please do:
 
-* Create a Config.cfg. This is a Perl hash that must be edited to meet 
-  requirements. Note that the registers in the REG_CHECK are indexed 
-  registers. To find those, please do:
+    > cat src/rtl/zap\_localparams.svh | grep PHY
 
-  > cat src/rtl/zap_localparams.svh | grep PHY
+    For example, if a check requires a certain value of R13 in IRQ mode, the hash will mention the register number as r25.
+* Here is a sample `Config.cfg`:
 
-  For example, if a check requires a certain value of R13 in IRQ mode, the
-  hash will mention the register number as r25.
-
-* Here is a sample Config.cfg:
-
-```text
+```
        %Config = ( 
                # CPU configuration.
                DATA_CACHE_SIZE             => 4096,    
@@ -401,19 +312,13 @@ To remove existing object/simulation/synthesis files, do:
         );
 ```
 
--------------------------------------------------------------------------------
-
-2.3. Running RTL Lint
--------------------------------------------------------------------------------
+#### 2.3. Running RTL Lint
 
 To run RTL lint, simply do:
 
 > make lint
 
--------------------------------------------------------------------------------
-
-2.4. Running Vivado Synthesis
--------------------------------------------------------------------------------
+#### 2.4. Running Vivado Synthesis
 
 Synthesis scripts can be found here: src/syn/
 
@@ -421,7 +326,7 @@ Assuming you have Vivado installed, please do:
 
 > make syn
 
-Timing report will be available in obj/syn/syn_timing.rpt
+Timing report will be available in obj/syn/syn\_timing.rpt
 
 If you had used Docker previously to run a test, or had run synth before, do a
 
@@ -429,72 +334,36 @@ If you had used Docker previously to run a test, or had run synth before, do a
 
 first.
 
--------------------------------------------------------------------------------
+#### XDC Setup
 
-2.4.1. XDC Setup
--------------------------------------------------------------------------------
-
-* The XDC assumes a 200MHz clock. 
+* The XDC assumes a 200MHz clock.
 * Input assume they receive data from a flop with Tcq = 50% of clock period.
 * Outputs assume they are driving a flop with Tsu = 2ns Th=1ns.
 * Setting it to an unattainable frequency may result in better timing closure.
 
--------------------------------------------------------------------------------
+### 3. References
 
-## 3. References
--------------------------------------------------------------------------------
+\[1] ARM Architecture Specification (ARM DDI 0100E)
 
+### 4. Mentions&#x20;
 
-[1] ARM Architecture Specification (ARM DDI 0100E)
+The ZAP project was mentioned [here](https://researchgate.net/publication/347558929\_Free\_ARM\_Compatible\_Softcores\_on\_FPGA)
 
--------------------------------------------------------------------------------
+### 5. License
 
-## 4. Mentions and Contributors
--------------------------------------------------------------------------------
+Copyright (C) 2016-2022 Revanth Kamaraj
 
-The ZAP project was mentioned [here](https://researchgate.net/publication/347558929_Free_ARM_Compatible_Softcores_on_FPGA) 
+This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
 
-Thanks to Erez Binyamin for pointing it out and for adding Docker support.
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
--------------------------------------------------------------------------------
-
-## 5. License
--------------------------------------------------------------------------------
-
-Copyright (C) 2016-2022  Revanth Kamaraj
-
-This program is free software; you can redistribute it and/or modify it under 
-the terms of the GNU General Public License as published by the Free Software 
-Foundation; either version 2 of the License, or (at your option) any later 
-version.
-
-This program is distributed in the hope that it will be useful, but WITHOUT ANY 
-WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
-PARTICULAR PURPOSE.  See the GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License along with 
-this program; if not, write to the Free Software Foundation, Inc., 51 Franklin 
-Street, Fifth Floor, Boston, MA 02110-1301 USA.
+You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ## Contributors ✨
 
 Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
 
-<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
-<!-- prettier-ignore-start -->
-<!-- markdownlint-disable -->
-<table>
-  <tr>
-    <td align="center"><a href="https://github.com/krevanth"><img src="https://avatars.githubusercontent.com/u/16576547?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Revanth Kamaraj</b></sub></a><br /><a href="https://github.com/krevanth/ZAP/commits?author=krevanth" title="Code">💻</a> <a href="https://github.com/krevanth/ZAP/commits?author=krevanth" title="Documentation">📖</a> <a href="#ideas-krevanth" title="Ideas, Planning, & Feedback">🤔</a> <a href="#infra-krevanth" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="https://github.com/krevanth/ZAP/commits?author=krevanth" title="Tests">⚠️</a> <a href="#tool-krevanth" title="Tools">🔧</a></td>
-    <td align="center"><a href="https://github.com/ErezBinyamin"><img src="https://avatars.githubusercontent.com/u/22354670?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Erez</b></sub></a><br /><a href="#infra-ErezBinyamin" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
-    <td align="center"><a href="https://github.com/bharathmulagondla"><img src="https://avatars.githubusercontent.com/u/38918983?v=4?s=100" width="100px;" alt=""/><br /><sub><b>bharathm</b></sub></a><br /><a href="https://github.com/krevanth/ZAP/commits?author=bharathmulagondla" title="Tests">⚠️</a></td>
-    <td align="center"><a href="https://arbaranwal.github.io"><img src="https://avatars.githubusercontent.com/u/22285086?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Akhil Raj Baranwal</b></sub></a><br /><a href="#ideas-arbaranwal" title="Ideas, Planning, & Feedback">🤔</a></td>
-  </tr>
-</table>
-
-<!-- markdownlint-restore -->
-<!-- prettier-ignore-end -->
-
-<!-- ALL-CONTRIBUTORS-LIST:END -->
+| <p><a href="https://github.com/krevanth"><img src="https://avatars.githubusercontent.com/u/16576547?v=4?s=100" alt=""><br><strong>Revanth Kamaraj</strong></a><br><a href="https://github.com/krevanth/ZAP/commits?author=krevanth">💻</a> <a href="https://github.com/krevanth/ZAP/commits?author=krevanth">📖</a> <a href="./#ideas-krevanth">🤔</a> <a href="./#infra-krevanth">🚇</a> <a href="https://github.com/krevanth/ZAP/commits?author=krevanth">⚠️</a> <a href="./#tool-krevanth">🔧</a></p> | <p><a href="https://github.com/ErezBinyamin"><img src="https://avatars.githubusercontent.com/u/22354670?v=4?s=100" alt=""><br><strong>Erez</strong></a><br><a href="./#infra-ErezBinyamin">🚇</a></p> | <p><a href="https://github.com/bharathmulagondla"><img src="https://avatars.githubusercontent.com/u/38918983?v=4?s=100" alt=""><br><strong>bharathm</strong></a><br><a href="https://github.com/krevanth/ZAP/commits?author=bharathmulagondla">⚠️</a></p> | <p><a href="https://arbaranwal.github.io"><img src="https://avatars.githubusercontent.com/u/22285086?v=4?s=100" alt=""><br><strong>Akhil Raj Baranwal</strong></a><br><a href="./#ideas-arbaranwal">🤔</a></p> |
+| :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
 
 This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
