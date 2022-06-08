@@ -486,7 +486,8 @@ always_comb pipeline_is_not_empty    = predecode_val                      ||
                                        postalu0_dav_ff                    ||
                                        postalu1_dav_ff                    ||
                                        postalu_dav_ff                     ||
-                                       memory_dav_ff;  
+                                       memory_dav_ff                      ||
+                                       (|i_dc_lock);  
 
 always_comb o_mem_translate = postalu1_mem_translate_ff;
 

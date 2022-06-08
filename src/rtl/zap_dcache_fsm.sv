@@ -173,7 +173,7 @@ logic                                     UNUSED_1B, UNUSED_2B, unused;
 // ----------------------------------------------------------------------------
 
 /* Unused */
-always_comb unused = |{rhit, whit, UNUSED_1B, UNUSED_2B, phy_addr[$clog2(CACHE_LINE)-1:0]};
+always_comb unused = |{UNUSED_1B, UNUSED_2B, phy_addr[$clog2(CACHE_LINE)-1:0]};
 
 /* Tie flops to the output */
 always_comb o_cache_clean_req = cache_clean_req_ff; // Tie req flop to output.
@@ -279,12 +279,7 @@ begin:blk1
         o_hold                  = 1'd0;
         o_reg_dat               = 32'd0;
         o_reg_idx               = 64'd0;
-
-        // Output data port.
-        if ( state_ff == UNCACHEABLE )
-                o_dat           = i_wb_dat;
-        else
-                o_dat           = adapt_cache_data(i_address[$clog2(CACHE_LINE)-1:2], 
+        o_dat                   = adapt_cache_data(i_address[$clog2(CACHE_LINE)-1:2], 
                                                    i_cache_line);
         o_ack                   = 0;
         o_err                   = 0;
@@ -294,8 +289,8 @@ begin:blk1
         for(int i=0;i<CACHE_LINE/4;i++)
                 buf_nxt[i] = buf_ff[i];
 
-        rhit                     = 0;
-        whit                     = 0;
+        rhit                     = 1'd0;
+        whit                     = 1'd0;
  
         case(state_ff)
 
@@ -372,7 +367,8 @@ begin:blk1
                                                 o_cache_tag_wr_en                = 1'd1;
                                                 o_cache_tag[`ZAP_CACHE_TAG__TAG] = i_address[`ZAP_VA__CACHE_TAG]; 
                                                 o_cache_tag_dirty                = 1'd1;
-                                                o_cache_tag[`ZAP_CACHE_TAG__PA]  = i_phy_addr[31 : $clog2(CACHE_LINE)]; 
+                                                o_cache_tag[`ZAP_CACHE_TAG__PA]  = i_phy_addr[31 : 
+                                                                                   $clog2(CACHE_LINE)]; 
                                                 o_address                        = i_address;
                                         end
                                 end
@@ -454,6 +450,7 @@ begin:blk1
 
         UNCACHEABLE: /* Uncacheable reads and writes definitely go through this. */
         begin
+                o_dat  = i_wb_dat;
                 o_ack  = 1'd0;
                 o_hold = 1'd1;
 
@@ -469,8 +466,13 @@ begin:blk1
 
         CLEAN_SINGLE: /* Clean single cache line */
         begin
-                o_ack  = 1'd1;
-                o_err2 = i_rd || i_wr ? 1'd1 : 1'd0;
+                hit_under_miss();
+
+                if(!rhit && !whit)
+                begin
+                        o_ack  = 1'd1;
+                        o_err2 = i_rd || i_wr ? 1'd1 : 1'd0;
+                end
 
                 /* Generate address */
                 adr_ctr_nxt = adr_ctr_ff + ((o_wb_stb_ff && i_wb_ack) ? {{($clog2(CACHE_LINE/4) ){1'd0}}, 1'd1} : 
@@ -506,8 +508,13 @@ begin:blk1
 
         FETCH_SINGLE: /* Fetch a single cache line */
         begin
-                o_ack  = 1'd1;
-                o_err2 = i_rd || i_wr ? 1'd1 : 1'd0;
+                hit_under_miss();
+
+                if(!rhit && !whit)
+                begin
+                        o_ack  = 1'd1;
+                        o_err2 = i_rd || i_wr ? 1'd1 : 1'd0;
+                end
 
                 /* Generate address */
                 adr_ctr_nxt = adr_ctr_ff + ((o_wb_stb_ff && i_wb_ack) ? {{($clog2(CACHE_LINE/4) ){1'd0}}, 1'd1} : 
@@ -562,8 +569,13 @@ begin:blk1
 
         UNLOCK_REG: /* Load data into the register if required. */
         begin
-                o_ack  = 1'd1;
-                o_err2 = i_rd || i_wr ? 1'd1 : 1'd0;
+                hit_under_miss();
+
+                if(!rhit && !whit)
+                begin
+                        o_ack  = 1'd1;
+                        o_err2 = i_rd || i_wr ? 1'd1 : 1'd0;
+                end
 
                 if ( !wr )
                 begin
@@ -721,6 +733,45 @@ begin
         o_wb_cti_nxt = CTI_CLASSIC;
 end
 endfunction
+
+/* Allow hit under miss. */
+function void hit_under_miss ();
+begin
+        rhit = 1'd0;
+        whit = 1'd0;
+
+        if (!i_busy && !i_fault && (i_rd || i_wr) && !i_cache_en && i_cacheable
+           && cache_cmp && i_cache_tag_valid)
+        begin
+                if ( i_rd ) /* Read request. */
+                begin  
+                        rhit    = 1'd1;
+                        o_ack   = 1'd1;
+                end
+                else if ( i_wr ) /* Write request */
+                begin
+                        o_ack        = 1'd1;
+                        whit         = 1'd1;
+
+                        o_cache_line = 
+                        {(CACHE_LINE/4){i_din}};
+  
+                        o_cache_line_ben  = ben_comp ( 
+                                i_address[$clog2(CACHE_LINE)-1:2], 
+                                i_ben ); 
+
+                        /* Write to tag and also write out physical address. */
+                        o_cache_tag_wr_en                = 1'd1;
+                        o_cache_tag[`ZAP_CACHE_TAG__TAG] = i_address[`ZAP_VA__CACHE_TAG]; 
+                        o_cache_tag_dirty                = 1'd1;
+                        o_cache_tag[`ZAP_CACHE_TAG__PA]  = i_phy_addr[31 : 
+                                                           $clog2(CACHE_LINE)]; 
+                        o_address                        = i_address;
+                end
+        end
+end
+endfunction
+
 
 endmodule // zap_cache_fsm
 
