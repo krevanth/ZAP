@@ -416,7 +416,7 @@ begin: priEncFn
                 pri_enc_1 = 5'b11111;
 
                 // Run a backward loop.
-                for(int j=CACHE_SIZE/CACHE_LINE-1;j>=0;j--)
+                for(int j=15;j>=0;j--) // 15 downto 0.
                 begin
                         if ( in[j] == 1'd1 )
                                 pri_enc_1[4:0] = j[4:0];
