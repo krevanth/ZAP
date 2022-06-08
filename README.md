@@ -1,7 +1,3 @@
----
-description: Technical Reference Manual
----
-
 # The ZAP Processor (ARMV5TE)
 
 [![All Contributors](https://img.shields.io/badge/all\_contributors-4-orange.svg?style=flat-square)](./#contributors-)
@@ -10,9 +6,9 @@ description: Technical Reference Manual
 
 ### 1. Introduction
 
-***
+The ZAP is an ARMV5TE compliant processor, designed for FPGA. It has been designed for high performance and high clock speeds and is intended to be used as part of a high performance FPGA system. The processor can operate at 140MHz on -3 speed grade Artix-7 FPGA parts. 
 
-***
+ZAP includes several microarchitectural enhancements to improve instruction throughput, hide external bus and memory latency and boost performance:
 
 * The ability to continue instruction execution even when the data cache is being filled. The data cache features hit under miss capability. The processor stalls when an instruction that depends on the cache access is decoded.
 * Direct mapped instruction and data caches. These caches are virtually indexed and virtually tagged. Individual caches allow code and data to be accessed at the same time. The sizes of these caches can be set during synthesis. Cache size is parameterizable. Cache line width may be set as well.&#x20;
