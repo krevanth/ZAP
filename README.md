@@ -8,8 +8,6 @@ description: Technical Reference Manual
 
 **By Revanth Kamaraj <**[**revanth91kamaraj@gmail.com**](mailto:revanth91kamaraj@gmail.com)**>**
 
-***
-
 ### 1. Introduction
 
 ***
