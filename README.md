@@ -1,8 +1,15 @@
 # The ZAP Processor (ARMV5TE)
 
-[![All Contributors](https://img.shields.io/badge/all\_contributors-4-orange.svg?style=flat-square)](./README.md#contrib)
-
 **By Revanth Kamaraj <**[**revanth91kamaraj@gmail.com**](mailto:revanth91kamaraj@gmail.com)**>**
+
+### Contributors ✨
+
+Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
+
+| <p><a href="https://github.com/krevanth"><img src="https://avatars.githubusercontent.com/u/16576547?v=4?s=100" alt=""><br><strong>Revanth Kamaraj</strong></a><br><a href="https://github.com/krevanth/ZAP/commits?author=krevanth">💻</a> <a href="https://github.com/krevanth/ZAP/commits?author=krevanth">📖</a> <a href="./#ideas-krevanth">🤔</a> <a href="./#infra-krevanth">🚇</a> <a href="https://github.com/krevanth/ZAP/commits?author=krevanth">⚠️</a> <a href="./#tool-krevanth">🔧</a></p> | <p><a href="https://github.com/ErezBinyamin"><img src="https://avatars.githubusercontent.com/u/22354670?v=4?s=100" alt=""><br><strong>Erez</strong></a><br><a href="./#infra-ErezBinyamin">🚇</a></p> | <p><a href="https://github.com/bharathmulagondla"><img src="https://avatars.githubusercontent.com/u/38918983?v=4?s=100" alt=""><br><strong>bharathm</strong></a><br><a href="https://github.com/krevanth/ZAP/commits?author=bharathmulagondla">⚠️</a></p> | <p><a href="https://arbaranwal.github.io"><img src="https://avatars.githubusercontent.com/u/22285086?v=4?s=100" alt=""><br><strong>Akhil Raj Baranwal</strong></a><br><a href="./#ideas-arbaranwal">🤔</a></p> |
+| :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
+
+This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
 
 ### 1. Introduction
 
@@ -118,7 +125,7 @@ The ZAP can execute LDR/STR with writeback in a single cycle. It will perform a 
 
 Data cache accesses that are performing line fills will not block subsequent instructions from executing. In addition, the data cache supports hit under miss functionality i.e., the cache can service the next memory access (hit) while handing the current line fill (miss). Thus, the ZAP can change the order of completion of memory accesses with respect to other instructions, when possible, in a relatively simple way.
 
-If a store misses and is in the process of a linefill, a subsequent load at the same address will report as a hit during the linefill.&#x20;
+If a store misses and is in the process of a linefill, a subsequent load at the same address will report as a hit during the linefill.
 
 #### 1.1.4. Multi Port Register File
 
@@ -390,13 +397,6 @@ This program is free software; you can redistribute it and/or modify it under th
 
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-#contrib
-### Contributors ✨
+You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA. #contrib
 
-Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
-
-| <p><a href="https://github.com/krevanth"><img src="https://avatars.githubusercontent.com/u/16576547?v=4?s=100" alt=""><br><strong>Revanth Kamaraj</strong></a><br><a href="https://github.com/krevanth/ZAP/commits?author=krevanth">💻</a> <a href="https://github.com/krevanth/ZAP/commits?author=krevanth">📖</a> <a href="./#ideas-krevanth">🤔</a> <a href="./#infra-krevanth">🚇</a> <a href="https://github.com/krevanth/ZAP/commits?author=krevanth">⚠️</a> <a href="./#tool-krevanth">🔧</a></p> | <p><a href="https://github.com/ErezBinyamin"><img src="https://avatars.githubusercontent.com/u/22354670?v=4?s=100" alt=""><br><strong>Erez</strong></a><br><a href="./#infra-ErezBinyamin">🚇</a></p> | <p><a href="https://github.com/bharathmulagondla"><img src="https://avatars.githubusercontent.com/u/38918983?v=4?s=100" alt=""><br><strong>bharathm</strong></a><br><a href="https://github.com/krevanth/ZAP/commits?author=bharathmulagondla">⚠️</a></p> | <p><a href="https://arbaranwal.github.io"><img src="https://avatars.githubusercontent.com/u/22285086?v=4?s=100" alt=""><br><strong>Akhil Raj Baranwal</strong></a><br><a href="./#ideas-arbaranwal">🤔</a></p> |
-| :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
-
-This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
+###
