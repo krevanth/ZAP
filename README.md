@@ -6,7 +6,26 @@
 
 ### 1. Introduction
 
-The ZAP is an ARMV5TE compliant processor, designed for FPGA. It has been designed for high performance and high clock speeds and is intended to be used as part of a high performance FPGA system. The processor can operate at 140MHz on -3 speed grade Artix-7 FPGA parts. 
+The ZAP is a high performance ARMV5TE compliant processor. Some specifications are listed below:
+
+| **Property**              | **Value**                                                                                                         |
+|---------------------------|-------------------------------------------------------------------------------------------------------------------|
+| Clock Rate@FPGA           | 140MHz@Artix7<br>112MHz@CycloneV<br>108MHz@CycloneIV                                                              |
+| Pipeline Depth            | 17                                                                                                                |
+| Issue and Execution Width | In order single issue, in-order completion with out-of-order completion for some loads/stores that miss in cache. |
+| Data Width                | 32                                                                                                                |
+| Address Width             | 32                                                                                                                |
+| Virtual Address Width     | 32                                                                                                                |
+| Instruction Set           | ARMV5TE                                                                                                           |
+| L1 I-Cache                | (Line Size/8) x Direct Mapped RAM, Configurable depth and line size.                                              |
+| L1 D-Cache                | (Line Size/8) x Direct Mapped RAM, Configurable depth and line size.                                              |
+| I-TLB Structure           | 4 x Direct Mapped RAM, Configurable, 1 RAM/page size                                                              |
+| D-TLB Structure           | 4 x Direct Mapped RAM, Configurable, 1 RAM/page size, Hit-under-Miss supported.                                   |
+| Branch Prediction         | Bimodal Predictor, Direct Mapped, Configurable                                                                    |
+| RAS Depth                 | 4                                                                                                                 |
+| Branch latency            | 12 cycles (mispredict), 8 cycles(taken, correctly predicted), 1 cycle(not-taken, correctly predicted)             |
+| Store Buffer              | FIFO, Configurable depth                                                                                          |
+| Fetch Buffer              | FIFO, Configurable depth                                                                                          |
 
 A simplified block digram of the ZAP's pipeline is shown below:
 
@@ -103,9 +122,9 @@ Data cache accesses that are performing line fills will not block subsequent ins
 
 To improve performance, the ZAP processor uses a bimodal branch predictor. A branch memory is maintained which stores the state of each branch. Note that the predictor can only predict Bcc instructions.
 
-* Correctly predicted Bccinstructions take 7 cycles (taken)/0 cycles (not taken) of latency.
-* Bcc mispredicts/Data processing PC changes/BX/BLX takes 11 cycles.
-* Loading to PC from memory takes 17 cycles. The bimodal predictor is organized as a direct mapped unit so aliasing is possible. The predictor cannot be disabled.
+* Correctly predicted Bccinstructions take 8 cycles (taken)/0 cycles (not taken) of latency.
+* Bcc mispredicts/Data processing PC changes/BX/BLX takes 12 cycles.
+* Loading to PC from memory takes 18 cycles. The bimodal predictor is organized as a direct mapped unit so aliasing is possible. The predictor cannot be disabled.
 
 The processor also implements a 4 deep return address stack. Upon calls to
 
@@ -141,14 +160,17 @@ NOTE: Cleaning and flushing cache and TLB is only supported for the entire memor
 * Register 8: TLB functions.
 * Register 7: Cache functions.
   * The arch spec allows for a subset of the functions to be implemented for register 7.
-  * These are supported (Read as {opcode2, crm}) in ZAP for register 7:
-    * CASE\_FLUSH\_ID\_CACHE                       = 7'b000\_0111
-    * CASE\_FLUSH\_I\_CACHE                         = 7'b000\_0101
-    * CASE\_FLUSH\_D\_CACHE                        = 7'b000\_0110
-    * CASE\_CLEAN\_ID\_CACHE                       = 7'b000\_1011
-    * CASE\_CLEAN\_D\_CACHE                        = 7'b000\_1010
-    * CASE\_CLEAN\_AND\_FLUSH\_ID\_CACHE = 7'b000\_1111
-    * CASE\_CLEAN\_AND\_FLUSH\_D\_CACHE = 7'b000\_1110
+  * These are supported in ZAP for register 7:
+  
+    | Cache Operation                              | Opcode2| CRM     |
+    |----------------------------------------------|--------|---------|
+    | CASE\_FLUSH\_ID\_CACHE                       | 0b000  | 0b0111  |
+    | CASE\_FLUSH\_I\_CACHE                        | 0b000  | 0b0101  |
+    | CASE\_FLUSH\_D\_CACHE                        | 0b000  | 0b0110  |
+    | CASE\_CLEAN\_ID\_CACHE                       | 0b000  | 0b1011  |
+    | CASE\_CLEAN\_D\_CACHE                        | 0b000  | 0b1010  |
+    | CASE\_CLEAN\_AND\_FLUSH\_ID\_CACHE           | 0b000  | 0b1111  |
+    | CASE\_CLEAN\_AND\_FLUSH\_D\_CACHE            | 0b000  | 0b1110  |
 * Register 13: FCSE Register.
 
 ### 1.4. CPU Ports and Parameters
