@@ -1,6 +1,6 @@
 # The ZAP Processor (ARMV5TE)
 
-[![All Contributors](https://img.shields.io/badge/all\_contributors-4-orange.svg?style=flat-square)](./README.md#contrib)
+[![All Contributors](https://img.shields.io/badge/all\_contributors-4-orange.svg?style=flat-square)](./#contrib)
 
 **By Revanth Kamaraj <**[**revanth91kamaraj@gmail.com**](mailto:revanth91kamaraj@gmail.com)**>**
 
@@ -8,35 +8,34 @@
 
 The ZAP is a high performance ARMV5TE compliant processor. Some specifications are listed below:
 
-| **Property**              | **Value**                                                                                                         |
-|---------------------------|-------------------------------------------------------------------------------------------------------------------|
-| Clock Rate@FPGA           | 140MHz@Artix7<br>112MHz@CycloneV<br>108MHz@CycloneIV                                                              |
-| Pipeline Depth            | 17                                                                                                                |
-| Issue and Execution Width | Single issue, in order core, with out-of-order completion for some loads/stores that miss in cache.               |
-| Data Width                | 32                                                                                                                |
-| Address Width             | 32                                                                                                                |
-| Virtual Address Width     | 32                                                                                                                |
-| Instruction Set           | ARMV5TE                                                                                                           |
-| L1 I-Cache                | (Line Size/8) x Direct Mapped RAM, Configurable depth and line size.                                              |
-| L1 D-Cache                | (Line Size/8) x Direct Mapped RAM, Configurable depth and line size.                                              |
-| I-TLB Structure           | 4 x Direct Mapped RAM, Configurable, 1 RAM/page size                                                              |
-| D-TLB Structure           | 4 x Direct Mapped RAM, Configurable, 1 RAM/page size, Hit-under-Miss supported.                                   |
-| Branch Prediction         | Bimodal Predictor, Direct Mapped, Configurable                                                                    |
-| RAS Depth                 | 4                                                                                                                 |
-| Branch latency            | 12 cycles (mispredict), 8 cycles(taken, correctly predicted), 1 cycle(not-taken, correctly predicted)             |
-| Store Buffer              | FIFO, Configurable depth                                                                                          |
-| Fetch Buffer              | FIFO, Configurable depth                                                                                          |
-| Register File             | 4 Read Ports, 3 Write Ports, Allowing at max, a load with writeback, a background load and a non-load operation   |
+| **Property**              | **Value**                                                                                                   |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Clock Rate@FPGA           | <p>140MHz@Artix7<br>112MHz@CycloneV<br>108MHz@CycloneIV</p>                                                 |
+| Pipeline Depth            | 17                                                                                                          |
+| Issue and Execution Width | Single issue, in order core, with out-of-order completion for some loads/stores that miss in cache.         |
+| Data Width                | 32                                                                                                          |
+| Address Width             | 32                                                                                                          |
+| Virtual Address Width     | 32                                                                                                          |
+| Instruction Set           | ARMV5TE                                                                                                     |
+| L1 I-Cache                | (Line Size/8) x Direct Mapped RAM, Configurable depth and line size.                                        |
+| L1 D-Cache                | (Line Size/8) x Direct Mapped RAM, Configurable depth and line size.                                        |
+| I-TLB Structure           | 4 x Direct Mapped RAM, Configurable, 1 RAM/page size                                                        |
+| D-TLB Structure           | 4 x Direct Mapped RAM, Configurable, 1 RAM/page size, Hit-under-Miss supported.                             |
+| Branch Prediction         | Bimodal Predictor, Direct Mapped, Configurable                                                              |
+| RAS Depth                 | 4                                                                                                           |
+| Branch latency            | 12 cycles (wrong prediction), 8 cycles(taken, correctly predicted), 1 cycle(not-taken, correctly predicted) |
+| Store Buffer              | FIFO, Configurable depth                                                                                    |
+| Fetch Buffer              | FIFO, Configurable depth                                                                                    |
 
-A simplified block digram of the ZAP's pipeline is shown below:
+A simplified block diagram of the ZAP pipeline is shown below:
 
-![Pipeline](./Pipeline.drawio.svg)
+![Pipeline](Pipeline.drawio.svg)
 
 ZAP includes several microarchitectural enhancements to improve instruction throughput, hide external bus and memory latency and boost performance:
 
 * The ability to continue instruction execution even when the data cache is being filled. The data cache features hit under miss capability. The processor stalls when an instruction that depends on the cache access is decoded.
-* Direct mapped instruction and data caches. These caches are virtually indexed and virtually tagged. Individual caches allow code and data to be accessed at the same time. The sizes of these caches can be set during synthesis. Cache size is parameterizable. Cache line width may be set as well.&#x20;
-* Direct mapped instruction and data memory TLBs. Having separate translation buffers allows data and code translation to happen in parallel. The sizes of these TLBs can be set during synthesis. Six different TLB memories are provides, each providing direct mapped buffering for sections, large page and small page, each for instruction and data (3 x 2 = 6). The sizes of these 6 memories is parameterizable.&#x20;
+* Direct mapped instruction and data caches. These caches are virtually indexed and virtually tagged. Individual caches allow code and data to be accessed at the same time. The sizes of these caches can be set during synthesis. Cache size is parameterizable. Cache line width may be set as well.
+* Direct mapped instruction and data memory TLBs. Having separate translation buffers allows data and code translation to happen in parallel. The sizes of these TLBs can be set during synthesis. Six different TLB memories are provides, each providing direct mapped buffering for sections, large page and small page, each for instruction and data (3 x 2 = 6). The sizes of these 6 memories is parameterizable.
 * A parameterizable store buffer that helps buffer stores when the cache is disabled or if the data access is uncacheable. When the cache is enabled and data is cacheable, the store buffer helps buffer cache clean operations. This is slightly different from a write buffer.
 * A 4-state bimodal branch predictor that predicts the outcome of immediate branches and branch-and-link instructions. The branch memory is 2-bit wide and is direct mapped. Aliasing is possible due to absence of a tag field. Note that the ZAP does not include a branch target buffer.
 * A 4 deep return address stack that stores the predicted return address of branch and link instructions function return. When a BX LR, MOV PC,LR or a block load with PC in register list, the processor pops off the return address. Note that switching between ARM and Thumb state has a penalty of 11 cycles.
@@ -44,7 +43,7 @@ ZAP includes several microarchitectural enhancements to improve instruction thro
 * A highly efficient superpipeline with dual feedback networks to minimize pipeline stalls as much as possible while allowing for high clock frequencies. A deep 17 stage superpipelined architecture that allows the CPU to run at relatively high FPGA speeds (140MHz @ xc7a35t-3 Artix-7 FPGA)
 * Support for single cycle saturating additions and subtractions for better signal processing performance. Multiplications/MAC take 4 to 5 cycles per operation. Note that the multiplier inside the ZAP processor is not pipelined.
 
-### 1.1. Superpipelined Microarchitecture&#x20;
+### 1.1. Superpipelined Microarchitecture
 
 ZAP uses a 17 stage execution pipeline to increase the speed of the flow of instructions to the processor. The 17 stage pipeline consists of Address Generator, TLB Check, Cache Access, Memory, Fetch, Instruction Buffer, Thumb Decoder, Pre-Decoder, Decoder, Issue, Shift, Execute, TLB Check, Cache Access, Memory and Writeback.
 
@@ -69,7 +68,7 @@ During normal operation:
   * The only ARM instructions requiring more than 1 micro-op generation are BLX, LDM, STM, SWAP and LONG MULTIPLY (They generate a 32-bit result per micro-op).
   * All other ARM instruction decode to just a single micro-op.
   * This stage also causes branches predicted as taken to be actually executed. The latency for a successfully predicted taken branch is 6 cycles.
-* The instruction before that is being being decompressed. This is only req. in the Thumb state, else the stage simply passes the instructions on.
+* The instruction before that is being being decompressed. This is only required in the Thumb state, else the stage simply passes the instructions on.
 * The instruction before that is popped off the instruction buffer.
 * The instruction before that is pushed onto the instruction buffer. Branches\
   are predicted using a bimodal predictor (if applicable).
@@ -111,19 +110,30 @@ This snippet of ARM code takes only 5 cycles (Possible because of dual feedback 
     MOV  R4, R3             (1 cycle)
 ```
 
-#### 1.1.2. Single Cycle Load with Writeback&#x20;
+#### 1.1.2. Single Cycle Load with Writeback
 
-The ZAP can execute LDR/STR with writeback in a single cycle. It will perform a parallel write to the register file with the pointer register and the daata register in the same cycle.
+The ZAP can execute LDR/STR with writeback in a single cycle. It will perform a parallel write to the register file with the pointer register and the data register in the same cycle.
 
 #### 1.1.3. Hit Under Miss/Execute Under Miss
 
-Data cache accesses that are performing line fills will not block subsequent instructions from executing. In addition, the data cache supports hit under miss functionality i.e., the cache can service the next memory access (hit) while handing the current linefill (miss). Thus, the ZAP can change the order of completion of memory accesses with respect to other instructions, when possible, in a relatively simple way.
+Data cache accesses that are performing line fills will not block subsequent instructions from executing. In addition, the data cache supports hit under miss functionality i.e., the cache can service the next memory access (hit) while handing the current line fill (miss). Thus, the ZAP can change the order of completion of memory accesses with respect to other instructions, when possible, in a relatively simple way.
 
-#### 1.1.3. Branch Predictor and Return Address Stack
+If a store misses and is in the process of a linefill, a subsequent load at the same address will report as a hit during the linefill.&#x20;
+
+#### 1.1.4. Multi Port Register File
+
+ZAP implements the register file in flip-flops. The register file provides 4 read ports and 3 write ports (A, B and C). The operation is as follows:
+
+| Operation           | Port A | Port B | Port C                               |
+| ------------------- | ------ | ------ | ------------------------------------ |
+| Load with Writeback | Used   | Used   | _Free to be used by background load_ |
+| Other               | Used   | Unused | _Free to be used by background load_ |
+
+#### 1.1.5. Branch Predictor and Return Address Stack
 
 To improve performance, the ZAP processor uses a bimodal branch predictor. A branch memory is maintained which stores the state of each branch. Note that the predictor can only predict Bcc instructions.
 
-* Correctly predicted Bccinstructions take 8 cycles (taken)/0 cycles (not taken) of latency.
+* Correctly predicted Bcc instructions take 8 cycles (taken)/0 cycles (not taken) of latency.
 * Bcc mispredicts/Data processing PC changes/BX/BLX takes 12 cycles.
 * Loading to PC from memory takes 18 cycles. The bimodal predictor is organized as a direct mapped unit so aliasing is possible. The predictor cannot be disabled.
 
@@ -161,25 +171,24 @@ NOTE: Cleaning and flushing cache and TLB is only supported for the entire memor
 * Register 8: TLB functions.
 * Register 7: Cache functions.
   * The arch spec allows for a subset of the functions to be implemented for register 7.
-  * These below are valid value supported in ZAP for register 7. Using other operations will result in UNDEFINED operation.
-  
-    | Cache Operation                              | Opcode2| CRM     |
-    |----------------------------------------------|--------|---------|
-    | Flush instruction and data cache             | 0b000  | 0b0111  |
-    | Flush instruction cache                      | 0b000  | 0b0101  |
-    | Flush data cache                             | 0b000  | 0b0110  |
-    | Clean instruction and data cache             | 0b000  | 0b1011  |
-    | Clean data cache                             | 0b000  | 0b1010  |
-    | Clean and flush instruction and data cache   | 0b000  | 0b1111  |
-    | Clean and flush data cache                   | 0b000  | 0b1110  |
+  *   These below are valid value supported in ZAP for register 7. Using other operations will result in UNDEFINED operation.
 
+      | Cache Operation                            | Opcode2 | CRM    |
+      | ------------------------------------------ | ------- | ------ |
+      | Flush instruction and data cache           | 0b000   | 0b0111 |
+      | Flush instruction cache                    | 0b000   | 0b0101 |
+      | Flush data cache                           | 0b000   | 0b0110 |
+      | Clean instruction and data cache           | 0b000   | 0b1011 |
+      | Clean data cache                           | 0b000   | 0b1010 |
+      | Clean and flush instruction and data cache | 0b000   | 0b1111 |
+      | Clean and flush data cache                 | 0b000   | 0b1110 |
 * Register 13: FCSE Register.
 
 ### 1.4. CPU Ports and Parameters
 
 #### 1.4.1. Parameters
 
-Note that all parameters should be 2^n. Cache size should be multiple of line size and atleast 16 x line width. Caches/TLBs consume majority of the resources so should be tuned as required. The default parameters give you quite large caches.
+Note that all parameters should be 2^n. Cache size should be multiple of line size and at least 16 x line width. Caches/TLBs consume majority of the resources so should be tuned as required. The default parameters give you quite large caches.
 
 | Parameter                   | Default | Description                                                               |
 | --------------------------- | ------- | ------------------------------------------------------------------------- |
@@ -190,12 +199,12 @@ Note that all parameters should be 2^n. Cache size should be multiple of line si
 | DATA\_LPAGE\_TLB\_ENTRIES   | 2       | Large page TLB entries.                                                   |
 | DATA\_SPAGE\_TLB\_ENTRIES   | 32      | Small page TLB entries.                                                   |
 | DATA\_FPAGE\_TLB\_ENTRIES   | 2       | Tiny page TLB entries.                                                    |
-| DATA\_CACHE\_SIZE           | 4096    | Cache size in bytes. Should be atleast 16 x line size.                    |
+| DATA\_CACHE\_SIZE           | 4096    | Cache size in bytes. Should be at least 16 x line size.                   |
 | CODE\_SECTION\_TLB\_ENTRIES | 2       | Section TLB entries.                                                      |
 | CODE\_LPAGE\_TLB\_ENTRIES   | 2       | Large page TLB entries.                                                   |
 | CODE\_SPAGE\_TLB\_ENTRIES   | 32      | Small page TLB entries.                                                   |
 | CODE\_FPAGE\_TLB\_ENTRIES   | 2       | Tiny page TLB entries.                                                    |
-| CODE\_CACHE\_SIZE           | 4096    | Cache size in bytes. Should be atleast 16 x line size.                    |
+| CODE\_CACHE\_SIZE           | 4096    | Cache size in bytes. Should be at least 16 x line size.                   |
 | DATA\_CACHE\_LINE           | 64      | Cache Line for Data (Byte). Keep > 8                                      |
 | CODE\_CACHE\_LINE           | 64      | Cache Line for Code (Byte). Keep > 8                                      |
 
@@ -215,7 +224,7 @@ Note that all parameters should be 2^n. Cache size should be multiple of line si
 | o\_wb\_sel | Wishbone byte select signal. (4)                                                                                                                    |
 | o\_wb\_cti | Wishbone CTI (Classic, Incrementing Burst, EOB) (3)                                                                                                 |
 | o\_wb\_bte | Wishbone BTE (Linear) (2)                                                                                                                           |
-| i\_wb\_ack | Wishbone ack signal. Wishbone registered cycles recommended.                                                                                        |
+| i\_wb\_ack | Wishbone acknowledge signal. Wishbone registered cycles recommended.                                                                                |
 | i\_wb\_dat | Wishbone data input signal. (32)                                                                                                                    |
 
 #### 1.4.3. Integration
@@ -224,8 +233,8 @@ Note that all parameters should be 2^n. Cache size should be multiple of line si
   *   Get the project files:
 
       > git clone https://github.com/krevanth/ZAP.git
-  * Add all the \*.sv files in src/rtl/ to your project.
-  * Add src/rtl/ to your tool's search path to allow it to pick up SV headers.
+  * Add all the files in `src/rtl/*.sv` to your project.
+  * Add `src/rtl/` to your tool's search path to allow it to pick up SV headers.
   * Instantiate the ZAP processor in your project using this template:
 
 ```
@@ -264,7 +273,9 @@ Note that all parameters should be 2^n. Cache size should be multiple of line si
 
 ### 2. Project Environment (Docker)
 
-The project environment requires Docker to be installed at your site. I (Revanth Kamaraj) would like to thank Erez Binyamin for adding Docker support to allow the core to be used more widely.
+The project environment requires Docker to be installed at your site. Click [here](https://docs.docker.com/engine/install/) for instructions on how to install Docker. The steps here assume that the user is a part of the `docker` group.
+
+I (Revanth Kamaraj) would like to thank Erez Binyamin for adding Docker support to allow the core to be used more widely.
 
 #### 2.1. Running TCs
 
@@ -272,7 +283,7 @@ To run all/a specific TC, do:
 
 > make \[TC=test\_name]
 
-See src/ts for a list of test names. Not providing a testname will run all tests.
+See `src/ts` for a list of test names. Not providing a testname will run all tests.
 
 To remove existing object/simulation/synthesis files, do:
 
@@ -285,7 +296,7 @@ To remove existing object/simulation/synthesis files, do:
   * See `src/testbench/testbench.v` for more information.
 * Tests will produce wave files in the `obj/src/ts/<test_name>/zap.vcd`.
 * Add a C file (.c), an assembly file (.s) and a linker script (.ld).
-*   Create a Config.cfg. This is a Perl hash that must be edited to meet requirements. Note that the registers in the REG\_CHECK are indexed registers. To find those, please do:
+*   Create a `Config.cfg`. This is a Perl hash that must be edited to meet requirements. Note that the registers in the `REG_CHECK` are indexed registers. To find those, please do:
 
     > cat src/rtl/zap\_localparams.svh | grep PHY
 
@@ -342,13 +353,13 @@ To run RTL lint, simply do:
 
 #### 2.4. Running Vivado Synthesis
 
-Synthesis scripts can be found here: src/syn/
+Synthesis scripts can be found here: `src/syn/`
 
 Assuming you have Vivado installed, please do:
 
 > make syn
 
-Timing report will be available in obj/syn/syn\_timing.rpt
+Timing report will be available in `obj/syn/syn_timing.rpt`
 
 If you had used Docker previously to run a test, or had run synth before, do a
 
@@ -356,18 +367,18 @@ If you had used Docker previously to run a test, or had run synth before, do a
 
 first.
 
-#### XDC Setup
+#### XDC Setup (Vivado FPGA Synthesis)
 
 * The XDC assumes a 200MHz clock.
 * Input assume they receive data from a flop with Tcq = 50% of clock period.
 * Outputs assume they are driving a flop with Tsu = 2ns Th=1ns.
-* Setting it to an unattainable frequency may result in better timing closure.
+* Setting FPGA synthesis to an unattainable frequency may result in better timing closure.
 
 ### 3. References
 
 \[1] ARM Architecture Specification (ARM DDI 0100E)
 
-### 4. Mentions&#x20;
+### 4. Mentions
 
 The ZAP project was mentioned [here](https://researchgate.net/publication/347558929\_Free\_ARM\_Compatible\_Softcores\_on\_FPGA)
 
@@ -381,7 +392,6 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 
 You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-<a name="contrib"></a>
 ### Contributors ✨
 
 Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
