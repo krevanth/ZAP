@@ -148,9 +148,9 @@ ZAP features a common 32-bit Wishbone B3 bus to access external resources (like 
 
 ### 1.3. System Control
 
-Please refer to ref \[1] for CP15 CSR architectural requirements. The ZAP implements the following software accessinble registers within its CP15 coprocessor.
+Please refer to ref \[1] for CP15 CSR architectural requirements. The ZAP implements the following software accessible registers within its CP15 coprocessor.
 
-NOTE: Cleaning and flushing cache and TLB is only supported for the entire memory. Selective flushing and cleaning of cache/TLB is not available. This is permitted as per the arch spec.
+NOTE: Cleaning and flushing cache and TLB is only supported for the entire memory. Selective flushing and cleaning of TLB will result in the entire TLB being flushed/cleaned. This is permitted as per the arch spec.
 
 * Register 1: Cache and MMU control.
 * Register 2: Translation Base.
@@ -160,17 +160,18 @@ NOTE: Cleaning and flushing cache and TLB is only supported for the entire memor
 * Register 8: TLB functions.
 * Register 7: Cache functions.
   * The arch spec allows for a subset of the functions to be implemented for register 7.
-  * These are supported in ZAP for register 7:
+  * These below are valid value supported in ZAP for register 7. Using other operations will result in UNDEFINED operation.
   
     | Cache Operation                              | Opcode2| CRM     |
     |----------------------------------------------|--------|---------|
-    | CASE\_FLUSH\_ID\_CACHE                       | 0b000  | 0b0111  |
-    | CASE\_FLUSH\_I\_CACHE                        | 0b000  | 0b0101  |
-    | CASE\_FLUSH\_D\_CACHE                        | 0b000  | 0b0110  |
-    | CASE\_CLEAN\_ID\_CACHE                       | 0b000  | 0b1011  |
-    | CASE\_CLEAN\_D\_CACHE                        | 0b000  | 0b1010  |
-    | CASE\_CLEAN\_AND\_FLUSH\_ID\_CACHE           | 0b000  | 0b1111  |
-    | CASE\_CLEAN\_AND\_FLUSH\_D\_CACHE            | 0b000  | 0b1110  |
+    | Flush instruction and data cache             | 0b000  | 0b0111  |
+    | Flush instruction cache                      | 0b000  | 0b0101  |
+    | Flush data cache                             | 0b000  | 0b0110  |
+    | Clean instruction and data cache             | 0b000  | 0b1011  |
+    | Clean data cache                             | 0b000  | 0b1010  |
+    | Clean and flush instruction and data cache   | 0b000  | 0b1111  |
+    | Clean and flush data cache                   | 0b000  | 0b1110  |
+
 * Register 13: FCSE Register.
 
 ### 1.4. CPU Ports and Parameters
