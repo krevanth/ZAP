@@ -2,7 +2,7 @@
 
 **By Revanth Kamaraj <**[**revanth91kamaraj@gmail.com**](mailto:revanth91kamaraj@gmail.com)**>**
 
-### Author and Contributors ✨
+### Project Author and Contributors ✨
 
 
 
@@ -49,6 +49,7 @@ ZAP includes several microarchitectural enhancements to improve instruction thro
 * The ability to execute most ARM instructions in a single clock cycle. The only instructions that take multiple cycles include branch-and-link, 64-bit loads and stores, block loads and stores, swap instructions and BLX2.
 * A highly efficient superpipeline with dual feedback networks to minimize pipeline stalls as much as possible while allowing for high clock frequencies. A deep 17 stage superpipelined architecture that allows the CPU to run at relatively high FPGA speeds (140MHz @ xc7a35t-3 Artix-7 FPGA)
 * Support for single cycle saturating additions and subtractions for better signal processing performance. Multiplications/MAC take 4 to 5 cycles per operation. Note that the multiplier inside the ZAP processor is not pipelined.
+* The abort model is base restored. This allows for the implementation of a demand based paging system if supporting software is available.
 
 ### 1.1. Superpipelined Microarchitecture
 
@@ -125,7 +126,7 @@ The ZAP can execute LDR/STR with writeback in a single cycle. It will perform a 
 
 Data cache accesses that are performing line fills will not block subsequent instructions from executing. In addition, the data cache supports hit under miss functionality i.e., the cache can service the next memory access (hit) while handing the current line fill (miss). Thus, the ZAP can change the order of completion of memory accesses with respect to other instructions, when possible, in a relatively simple way.
 
-If a store misses and is in the process of a linefill, a subsequent load at the same address will report as a hit during the linefill.
+If a store misses and is in the process of a line fill, a subsequent load at the same address will report as a hit during the line fill.
 
 #### 1.1.4. Multi Port Register File
 
@@ -180,15 +181,14 @@ NOTE: Cleaning and flushing cache and TLB is only supported for the entire memor
   * The arch spec allows for a subset of the functions to be implemented for register 7.
   *   These below are valid value supported in ZAP for register 7. Using other operations will result in UNDEFINED operation.
 
-      | Cache Operation                            | Opcode2 | CRM    |
-      | ------------------------------------------ | ------- | ------ |
-      | Flush instruction and data cache           | 0b000   | 0b0111 |
-      | Flush instruction cache                    | 0b000   | 0b0101 |
-      | Flush data cache                           | 0b000   | 0b0110 |
-      | Clean instruction and data cache           | 0b000   | 0b1011 |
-      | Clean data cache                           | 0b000   | 0b1010 |
-      | Clean and flush instruction and data cache | 0b000   | 0b1111 |
-      | Clean and flush data cache                 | 0b000   | 0b1110 |
+      | Cache Operation                                      | Opcode2 | CRM    |
+      | ---------------------------------------------------- | ------- | ------ |
+      | Flush instruction and data cache                     | 0b000   | 0b0111 |
+      | Flush instruction cache                              | 0b000   | 0b0101 |
+      | Flush data cache                                     | 0b000   | 0b0110 |
+      | Clean data cache                                     | 0b000   | 0b101x |
+      | Clean and flush data cache. Flush instruction cache. | 0b000   | 0b1111 |
+      | Clean and flush data cache                           | 0b000   | 0b1110 |
 * Register 13: FCSE Register.
 
 ### 1.4. CPU Ports and Parameters
@@ -278,13 +278,70 @@ Note that all parameters should be 2^n. Cache size should be multiple of line si
 * The processor provides a Wishbone B3 bus. It is recommended that you use it in registered feedback cycle mode.
 * Interrupts are level sensitive and are internally synced to clock.
 
-### 2. Project Environment (Docker)
+### 1.5. ARM Implementation Options
+
+#### 1.5.1. Big and Little Endian
+
+ZAP only supports little endian byte ordering.
+
+#### 1.5.2. 26-Bit Architecture
+
+ZAP does not support the legacy 26-bit mode.
+
+#### 1.5.3. Thumb
+
+ZAP has support for the thumb (ARMV5T) instruction set.
+
+#### 1.5.4. ARM DSP Enhanced Instruction Set
+
+The ZAP implements the ARM DSP-enhanced instruction set (ARMV5E). There are new multiply instructions that operate on 16-bit data values and new saturation instructions. Some of the new instructions are:&#x20;
+
+* SMLAxy 32<=16x16+32&#x20;
+* SMLAWy 32<=32x16+32
+* SMLALxy 64<=16x16+64
+* SMULxy 32<=16x16&#x20;
+* SMULWy 32<=32x16&#x20;
+* QADD adds two registers and saturates the result if an overflow occurred.
+* QDADD doubles and saturates one of the input registers then add and saturate.
+* QSUB subtracts two registers and saturates the result if an overflow occurred.
+* QDSUB doubles and saturates one of the input registers then subtract and saturate.
+
+The ZAP also implements LDRD, STRD and PLD instructions with the following implementation notes:&#x20;
+
+* PLD is interpreted as a NOP.
+* MCRR and MRRC are not intended to be used on coprocessor 15 (see \[1]). Since ZAP does not have an external coprocessor bus, these instructions should not be used.
+
+#### 1.5.5. Base Register Update
+
+If a data abort is signaled on a memory instruction that specifies writeback, the contents of the base register will not be updated. This holds for all load and store instructions. This behavior  is referred to in the ARM V5TE architecture as the Base Restored Abort Model.
+
+#### 1.5.6. Cache and TLB Lockdown
+
+ZAP does not support lockdown of cache and TLB entries.
+
+#### 1.5.7. TLB Flush
+
+ZAP implements global TLB flushing. If software tries to invalidate selective TLB entries, the entire TLB will be invalidated. This behavior is acceptable as per the arch specification.
+
+#### 1.5.8. Cache Clean and Flush
+
+ZAP implements global cache cleaning and flushing. Cleaning and/or flushing specific cache lines/VA is not supported.
+
+#### 1.5.9. Cache and TLB Structure
+
+ZAP implements a direct mapped cache and TLB. Separate caches and TLBs exist for instruction and data paths. Each MMU (I and D) has 4 TLBs, one each for sections, large pages, small pages and tiny pages. Each one is direct mapped.
+
+#### 1.5.10. FCSE
+
+ZAP implements the FCSE.
+
+## 2. Project Environment (Docker)
 
 The project environment requires Docker to be installed at your site. Click [here](https://docs.docker.com/engine/install/) for instructions on how to install Docker. The steps here assume that the user is a part of the `docker` group.
 
 I (Revanth Kamaraj) would like to thank Erez Binyamin for adding Docker support to allow the core to be used more widely.
 
-#### 2.1. Running TCs
+### 2.1. Running TCs
 
 To run all/a specific TC, do:
 
@@ -296,7 +353,7 @@ To remove existing object/simulation/synthesis files, do:
 
 > make clean
 
-#### 2.2. Adding TCs
+### 2.2. Adding TCs
 
 * Create a folder `src/ts/<test_name>`
 * Please note that these will be run on the sample TB SOC platform.
@@ -352,13 +409,13 @@ To remove existing object/simulation/synthesis files, do:
         );
 ```
 
-#### 2.3. Running RTL Lint
+### 2.3. Running RTL Lint
 
 To run RTL lint, simply do:
 
 > make lint
 
-#### 2.4. Running Vivado Synthesis
+### 2.4. Running Vivado Synthesis
 
 Synthesis scripts can be found here: `src/syn/`
 
@@ -374,7 +431,7 @@ If you had used Docker previously to run a test, or had run synth before, do a
 
 first.
 
-#### XDC Setup (Vivado FPGA Synthesis)
+#### 2.4.1. XDC Setup (Vivado FPGA Synthesis)
 
 * The XDC assumes a 200MHz clock.
 * Input assume they receive data from a flop with Tcq = 50% of clock period.
@@ -397,6 +454,6 @@ This program is free software; you can redistribute it and/or modify it under th
 
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA. #contrib
+You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.&#x20;
 
 ###
