@@ -13,11 +13,11 @@ This project follows the [all-contributors](https://github.com/all-contributors/
 
 ### 1. Introduction
 
-The ZAP is a high performance ARMV5TE compliant processor. Some specifications are listed below:
+The ZAP is a high performance ARMV5TE compliant processor. It is intended to be used in FPGA projects that need a high performance ARMV5TE soft processor core.&#x20;
 
 | **Property**              | **Value**                                                                                                   |
 | ------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| Clock Rate@FPGA           | <p>140MHz@Artix7<br>112MHz@CycloneV<br>108MHz@CycloneIV</p>                                                 |
+| Fmax@FPGA                 | <p>Artix7   ->  160MHz@xc7a75tcsg324-3 <br></p>                                                             |
 | Pipeline Depth            | 17                                                                                                          |
 | Issue and Execution Width | Single issue, in order core, with out-of-order completion for some loads/stores that miss in cache.         |
 | Data Width                | 32                                                                                                          |
@@ -47,8 +47,8 @@ ZAP includes several microarchitectural enhancements to improve instruction thro
 * A 4-state bimodal branch predictor that predicts the outcome of immediate branches and branch-and-link instructions. The branch memory is 2-bit wide and is direct mapped. Aliasing is possible due to absence of a tag field. Note that the branch RAM  does not specify the target address. This is OK to do since the branch instructions that are being predicted always have 24-bit offsets in them, which means the target can be computed early.
 * A 4 deep return address stack that stores the predicted return address of branch and link instructions function return. When a BX LR, MOV PC,LR or a block load with PC in register list, the processor pops off the return address. Note that switching between ARM and Thumb state has a penalty of 11 cycles.
 * The ability to execute most ARM instructions in a single clock cycle. The only instructions that take multiple cycles include branch-and-link, 64-bit loads and stores, block loads and stores, swap instructions and BLX2.
-* A highly efficient superpipeline with dual feedback networks to minimize pipeline stalls as much as possible while allowing for high clock frequencies. A deep 17 stage superpipelined architecture that allows the CPU to run at relatively high FPGA speeds (140MHz @ xc7a35t-3 Artix-7 FPGA)
-* Support for single cycle saturating additions and subtractions for better signal processing performance. Multiplications/MAC take 4 to 5 cycles per operation. Note that the multiplier inside the ZAP processor is not pipelined.
+* A highly efficient superpipeline with dual feedback networks to minimize pipeline stalls as much as possible while allowing for high clock frequencies. A deep 17 stage superpipelined architecture that allows the CPU to run at relatively high FPGA speeds.
+* Support for single cycle saturating additions and subtractions for better signal processing performance. Result is available for immediate use in the next instruction itself. Do note that multiplication/MAC operations take 4 to 5 cycles per operation. Note that the multiplier inside the ZAP processor is not pipelined.
 * The abort model is base restored. This allows for the implementation of a demand based paging system if supporting software is available.
 
 ### 1.1. Superpipelined Microarchitecture
@@ -147,15 +147,15 @@ To improve performance, the ZAP processor uses a bimodal branch predictor. A bra
 
 The processor also implements a 4 deep return address stack. Upon calls to
 
-* BL offset
+* `BL offset`
 
 the potential return address is pushed to a stack in the processor.
 
 On encountering these instructions:
 
-* BX LR,
-* MOV PC, LR,
-* Load multiple with PC in register list.
+* `BX LR`,
+* `MOV PC, LR`
+* `LDM` with PC in register list.
 
 the CPU treats them as function returns and will pop return address of the stack much earlier. This results in some performance improvement and reduced branch latency. Correctly predicted return takes 7 cycles, while incorrectly or unpredicted returns take 11 cycles.
 
