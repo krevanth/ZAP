@@ -12,7 +12,7 @@ The ZAP is a high performance ARMV5TE compliant processor. Some specifications a
 |---------------------------|-------------------------------------------------------------------------------------------------------------------|
 | Clock Rate@FPGA           | 140MHz@Artix7<br>112MHz@CycloneV<br>108MHz@CycloneIV                                                              |
 | Pipeline Depth            | 17                                                                                                                |
-| Issue and Execution Width | In order single issue, in-order completion with out-of-order completion for some loads/stores that miss in cache. |
+| Issue and Execution Width | Single issue, in order core, with out-of-order completion for some loads/stores that miss in cache.               |
 | Data Width                | 32                                                                                                                |
 | Address Width             | 32                                                                                                                |
 | Virtual Address Width     | 32                                                                                                                |
@@ -26,6 +26,7 @@ The ZAP is a high performance ARMV5TE compliant processor. Some specifications a
 | Branch latency            | 12 cycles (mispredict), 8 cycles(taken, correctly predicted), 1 cycle(not-taken, correctly predicted)             |
 | Store Buffer              | FIFO, Configurable depth                                                                                          |
 | Fetch Buffer              | FIFO, Configurable depth                                                                                          |
+| Register File             | 4 Read Ports, 3 Write Ports, Allowing at max, a load with writeback, a background load and a non-load operation   |
 
 A simplified block digram of the ZAP's pipeline is shown below:
 
