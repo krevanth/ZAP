@@ -227,6 +227,12 @@ begin
                 buf_ff[i] <= buf_nxt[i];
 end
 
+/* Idle indication */
+always_ff @ ( posedge i_clk )
+begin
+        o_idle <= ~(|state_nxt);
+end
+
 /* Combo block */
 always_comb
 begin:blk1
@@ -235,8 +241,6 @@ begin:blk1
        UNUSED_1B = '0;
        UNUSED_2B = '0;
         
-        o_idle                  = ~(|state_ff);
-
         /* Default values */
         a                       = {($clog2(CACHE_LINE/4)){1'd0}};
         state_nxt               = state_ff;

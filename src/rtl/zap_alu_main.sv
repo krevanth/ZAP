@@ -266,7 +266,6 @@ logic                            w_confirm_from_alu;
 // -------------------------------------------------------------------------------
 
 always_comb opcode = i_alu_operation_ff;
-always_comb sum    = {1'd0, op1} + {1'd0, op2} + {32'd0, cin};
 always_comb not_rm = ~rm;
 always_comb not_rn = ~rn;
 
@@ -288,6 +287,12 @@ always_comb mem_srcdest_value_nxt =  duplicate (
                                                  i_mem_unsigned_halfword_enable_ff, 
                                                  i_mem_unsigned_halfword_enable_ff, 
                                                  i_mem_srcdest_value_ff );  
+
+// -------------------------------------------------------------------------------
+// Adder
+// -------------------------------------------------------------------------------
+
+zap_adder u_zap_adder ( .a(op1), .b(op2), .c(cin), .sum());
 
 // -------------------------------------------------------------------------------
 // CLZ logic.
