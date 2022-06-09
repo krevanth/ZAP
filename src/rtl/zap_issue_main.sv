@@ -961,6 +961,21 @@ begin
                         i_irq_ff || i_fiq_ff || i_abt_ff || i_swi_ff || i_abt_ff
                         );
 
+        // BUG FIX:
+        // If a register is locked by load, don't issue an instruction that
+        // writes to that register. Assert load lock. Else, background
+        // load will overwrite the latest value.
+        if ( skid_destination_index_ff[5:0] != PHY_RAZ_REGISTER[5:0] )
+        begin
+                if ( skid_condition_code_ff != NV )
+                begin
+                        if ( i_dc_lock[skid_destination_index_ff] )
+                        begin
+                                load_lock = 1'd1;
+                        end
+                end
+        end
+
         // A shift lock occurs if the current instruction requires a shift amount as a register
         // other than LSL #0 or RORI if the operands are right on the output of this
         // stage because in that case we do not have the register value and thus

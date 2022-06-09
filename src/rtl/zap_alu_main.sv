@@ -292,7 +292,7 @@ always_comb mem_srcdest_value_nxt =  duplicate (
 // Adder
 // -------------------------------------------------------------------------------
 
-zap_adder u_zap_adder ( .a(op1), .b(op2), .c(cin), .sum());
+zap_adder u_zap_adder ( .a(op1), .b(op2), .c(cin), .sum(sum));
 
 // -------------------------------------------------------------------------------
 // CLZ logic.
