@@ -22,7 +22,6 @@
 # // ---------------------------------------------------------------------------
 
 create_clock -period 5.000 -name i_clk [get_ports i_clk]
-set_false_path -from [get_pins u_zap_core/u_zap_cp15_cb/o_mmu_en_reg/C]
 set_input_delay -clock [get_clocks i_clk] -min -add_delay 2.500 [get_ports {i_wb_dat[*]}]
 set_input_delay -clock [get_clocks i_clk] -min -add_delay 2.500 [get_ports i_fiq]
 set_input_delay -clock [get_clocks i_clk] -min -add_delay 2.500 [get_ports i_irq]
