@@ -442,8 +442,6 @@ first.
 #### Timing Summary Report
 
 ```
-Timing Summary Report
-
 ------------------------------------------------------------------------------------------------
 | Timer Settings
 | --------------
@@ -569,7 +567,7 @@ Table of Contents
 
     WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints     WPWS(ns)     TPWS(ns)  TPWS Failing Endpoints  TPWS Total Endpoints  
     -------      -------  ---------------------  -------------------     --------     --------  ----------------------  --------------------  
-     -1.382    -5508.637                  11415                49513        1.450        0.000                       0                 17460  
+     -1.937    -5849.842                  11699                49722        1.450        0.000                       0                 17509  
 
 
 Timing constraints are not met.
@@ -592,7 +590,45 @@ i_clk  {0.000 2.500}        5.000           200.000
 
 Clock             WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints     WPWS(ns)     TPWS(ns)  TPWS Failing Endpoints  TPWS Total Endpoints  
 -----             -------      -------  ---------------------  -------------------     --------     --------  ----------------------  --------------------  
-i_clk              -1.382    -5508.637                  11415                49513        1.450        0.000                       0                 17460  
+i_clk              -1.937    -5849.842                  11699                49722        1.450        0.000                       0                 17509  
+
+
+------------------------------------------------------------------------------------------------
+| Inter Clock Table
+| -----------------
+------------------------------------------------------------------------------------------------
+
+From Clock    To Clock          WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints  
+----------    --------          -------      -------  ---------------------  -------------------  
+
+
+------------------------------------------------------------------------------------------------
+| Other Path Groups Table
+| -----------------------
+------------------------------------------------------------------------------------------------
+
+Path Group    From Clock    To Clock          WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints  
+----------    ----------    --------          -------      -------  ---------------------  -------------------  
+
+
+------------------------------------------------------------------------------------------------
+| User Ignored Path Table
+| -----------------------
+------------------------------------------------------------------------------------------------
+
+Path Group    From Clock    To Clock    
+----------    ----------    --------    
+(none)        i_clk         i_clk         
+
+
+------------------------------------------------------------------------------------------------
+| Unconstrained Path Table
+| ------------------------
+------------------------------------------------------------------------------------------------
+
+Path Group    From Clock    To Clock    
+----------    ----------    --------    
+
 
 ------------------------------------------------------------------------------------------------
 | Timing Details
@@ -604,7 +640,7 @@ i_clk              -1.382    -5508.637                  11415                495
 From Clock:  i_clk
   To Clock:  i_clk
 
-Setup :        11415  Failing Endpoints,  Worst Slack       -1.382ns,  Total Violation    -5508.637ns
+Setup :        11699  Failing Endpoints,  Worst Slack       -1.937ns,  Total Violation    -5849.842ns
 Hold  :           NA  Failing Endpoints,  Worst Slack           NA  ,  Total Violation           NA
 PW    :            0  Failing Endpoints,  Worst Slack        1.450ns,  Total Violation        0.000ns
 ---------------------------------------------------------------------------------------------------
@@ -612,16 +648,16 @@ PW    :            0  Failing Endpoints,  Worst Slack        1.450ns,  Total Vio
 
 Max Delay Paths
 --------------------------------------------------------------------------------------
-Slack (VIOLATED) :        -1.382ns  (required time - arrival time)
-  Source:                 u_zap_core/u_zap_postalu_main/o_mem_address_ff_reg[24]/C
+Slack (VIOLATED) :        -1.937ns  (required time - arrival time)
+  Source:                 u_zap_core/u_zap_shifter_main/o_alu_operation_ff_reg[4]/C
                             (rising edge-triggered cell FDRE clocked by i_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
-  Destination:            u_data_cache/u_zap_cache_tag_ram/genblk1[0].u_zap_ram_simple_data_ram/o_rd_data_pre_reg[0]/D
+  Destination:            u_zap_core/u_zap_issue_main/o_shift_length_value_ff_reg[5]/D
                             (rising edge-triggered cell FDRE clocked by i_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
   Path Group:             i_clk
   Path Type:              Setup (Max at Slow Process Corner)
   Requirement:            5.000ns  (i_clk rise@5.000ns - i_clk rise@0.000ns)
-  Data Path Delay:        6.352ns  (logic 2.620ns (41.247%)  route 3.732ns (58.753%))
-  Logic Levels:           11  (CARRY4=3 LUT2=1 LUT3=2 LUT5=1 LUT6=4)
+  Data Path Delay:        6.907ns  (logic 2.735ns (39.597%)  route 4.172ns (60.402%))
+  Logic Levels:           17  (CARRY4=8 LUT3=1 LUT4=1 LUT6=7)
   Clock Path Skew:        -0.035ns (DCD - SCD + CPR)
     Destination Clock Delay (DCD):    0.669ns = ( 5.669 - 5.000 ) 
     Source Clock Delay      (SCD):    0.704ns
@@ -636,62 +672,85 @@ Slack (VIOLATED) :        -1.382ns  (required time - arrival time)
   -------------------------------------------------------------------    -------------------
                          (clock i_clk rise edge)      0.000     0.000 r  
                                                       0.000     0.000 r  i_clk (IN)
-                         net (fo=17459, unset)        0.704     0.704    i_clk
-                         FDRE                                         r  u_zap_core/u_zap_postalu_main/o_mem_address_ff_reg[24]/C
+                         net (fo=17508, unset)        0.704     0.704    i_clk
+                         FDRE                                         r  u_zap_core/u_zap_shifter_main/o_alu_operation_ff_reg[4]/C
   -------------------------------------------------------------------    -------------------
-                         FDRE (Prop_fdre_C_Q)         0.357     1.061 r  u_zap_core/u_zap_postalu_main/o_mem_address_ff_reg[24]/Q
-                         net (fo=1, unplaced)         0.459     1.520    cpu_daddr[24]
-                                                                      r  address_reg[27]_i_1__0/S[0]
+                         FDRE (Prop_fdre_C_Q)         0.357     1.061 r  u_zap_core/u_zap_shifter_main/o_alu_operation_ff_reg[4]/Q
+                         net (fo=67, unplaced)        0.785     1.846    u_zap_core/shifter_alu_operation_ff[4]
+                                                                      r  w_pc_from_alu_1[31]_i_10/I0
+                         LUT6 (Prop_lut6_I0_O)        0.199     2.045 f  w_pc_from_alu_1[31]_i_10/O
+                         net (fo=32, unplaced)        0.582     2.627    w_pc_from_alu_1[31]_i_10_n_0
+                                                                      f  w_pc_from_alu_1[3]_i_6/I0
+                         LUT6 (Prop_lut6_I0_O)        0.097     2.724 r  w_pc_from_alu_1[3]_i_6/O
+                         net (fo=2, unplaced)         0.312     3.036    u_zap_core/u_zap_alu_main/p_1_out[0]
+                                                                      r  u_zap_adder/w_pc_from_alu_1[3]_i_10/I0
+                         LUT6 (Prop_lut6_I0_O)        0.097     3.133 r  u_zap_adder/w_pc_from_alu_1[3]_i_10/O
+                         net (fo=1, unplaced)         0.463     3.596    u_zap_adder/w_pc_from_alu_1[3]_i_10_n_0
+                                                                      r  w_pc_from_alu_1_reg[3]_i_1/S[0]
                          CARRY4 (Prop_carry4_S[0]_CO[3])
-                                                      0.578     2.098 r  address_reg[27]_i_1__0/CO[3]
-                         net (fo=1, unplaced)         0.000     2.098    address_reg[27]_i_1__0_n_0
-                                                                      r  address_reg[31]_i_1/CI
-                         CARRY4 (Prop_carry4_CI_O[1])
-                                                      0.234     2.332 r  address_reg[31]_i_1/O[1]
-                         net (fo=6, unplaced)         0.436     2.768    i_address02_out[29]
-                                                                      r  i___10_i_5/I1
-                         LUT6 (Prop_lut6_I1_O)        0.216     2.984 r  i___10_i_5/O
-                         net (fo=1, unplaced)         0.000     2.984    i___10_i_5_n_0
-                                                                      r  u_data_cache/u_zap_cache_fsm/i___10_i_2/S[1]
-                         CARRY4 (Prop_carry4_S[1]_CO[2])
-                                                      0.430     3.414 f  u_data_cache/u_zap_cache_fsm/i___10_i_2/CO[2]
-                         net (fo=6, unplaced)         0.334     3.748    u_data_cache/u_zap_cache_fsm/p_64_in[1]
-                                                                      f  i___11_i_1/I1
-                         LUT6 (Prop_lut6_I1_O)        0.223     3.971 f  i___11_i_1/O
-                         net (fo=8, unplaced)         0.339     4.310    i___11_i_1_n_0
-                                                                      f  mem_reg_0_63_0_2_i_15__0/I0
-                         LUT2 (Prop_lut2_I0_O)        0.097     4.407 f  mem_reg_0_63_0_2_i_15__0/O
-                         net (fo=1, unplaced)         0.301     4.708    mem_reg_0_63_0_2_i_15__0_n_0
-                                                                      f  mem_reg_0_63_0_2_i_14__0/I0
-                         LUT6 (Prop_lut6_I0_O)        0.097     4.805 r  mem_reg_0_63_0_2_i_14__0/O
-                         net (fo=32, unplaced)        0.372     5.177    mem_reg_0_63_0_2_i_14__0_n_0
-                                                                      r  mem_reg_0_63_0_2_i_7/I1
-                         LUT3 (Prop_lut3_I1_O)        0.097     5.274 r  mem_reg_0_63_0_2_i_7/O
-                         net (fo=337, unplaced)       0.641     5.915    mem_reg_0_63_0_2_i_7_n_0
-                                                                      r  o_rd_data_pre[7]_i_3/I0
-                         LUT6 (Prop_lut6_I0_O)        0.097     6.012 r  o_rd_data_pre[7]_i_3/O
-                         net (fo=1, unplaced)         0.511     6.523    o_rd_data_pre[7]_i_3_n_0
-                                                                      r  o_rd_data_pre[7]_i_2/I0
-                         LUT3 (Prop_lut3_I0_O)        0.097     6.620 r  o_rd_data_pre[7]_i_2/O
-                         net (fo=8, unplaced)         0.339     6.959    u_data_cache/u_zap_cache_tag_ram/genblk1[0].u_zap_ram_simple_data_ram/o_rd_data_pre1
-                                                                      r  o_rd_data_pre[0]_i_1/I1
-                         LUT5 (Prop_lut5_I1_O)        0.097     7.056 r  o_rd_data_pre[0]_i_1/O
-                         net (fo=1, unplaced)         0.000     7.056    u_data_cache/u_zap_cache_tag_ram/genblk1[0].u_zap_ram_simple_data_ram/p_0_in[0]
-                         FDRE                                         r  u_data_cache/u_zap_cache_tag_ram/genblk1[0].u_zap_ram_simple_data_ram/o_rd_data_pre_reg[0]/D
+                                                      0.476     4.072 r  w_pc_from_alu_1_reg[3]_i_1/CO[3]
+                         net (fo=1, unplaced)         0.000     4.072    w_pc_from_alu_1_reg[3]_i_1_n_0
+                                                                      r  w_pc_from_alu_1_reg[7]_i_1/CI
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     4.164 r  w_pc_from_alu_1_reg[7]_i_1/CO[3]
+                         net (fo=1, unplaced)         0.000     4.164    w_pc_from_alu_1_reg[7]_i_1_n_0
+                                                                      r  w_pc_from_alu_1_reg[11]_i_1/CI
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     4.256 r  w_pc_from_alu_1_reg[11]_i_1/CO[3]
+                         net (fo=1, unplaced)         0.000     4.256    w_pc_from_alu_1_reg[11]_i_1_n_0
+                                                                      r  w_pc_from_alu_1_reg[15]_i_1/CI
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     4.348 r  w_pc_from_alu_1_reg[15]_i_1/CO[3]
+                         net (fo=1, unplaced)         0.000     4.348    w_pc_from_alu_1_reg[15]_i_1_n_0
+                                                                      r  w_pc_from_alu_1_reg[19]_i_1/CI
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     4.440 r  w_pc_from_alu_1_reg[19]_i_1/CO[3]
+                         net (fo=1, unplaced)         0.000     4.440    w_pc_from_alu_1_reg[19]_i_1_n_0
+                                                                      r  w_pc_from_alu_1_reg[23]_i_1/CI
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     4.532 r  w_pc_from_alu_1_reg[23]_i_1/CO[3]
+                         net (fo=1, unplaced)         0.000     4.532    w_pc_from_alu_1_reg[23]_i_1_n_0
+                                                                      r  w_pc_from_alu_1_reg[27]_i_1/CI
+                         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.092     4.624 r  w_pc_from_alu_1_reg[27]_i_1/CO[3]
+                         net (fo=1, unplaced)         0.000     4.624    w_pc_from_alu_1_reg[27]_i_1_n_0
+                                                                      r  w_pc_from_alu_1_reg[31]_i_1/CI
+                         CARRY4 (Prop_carry4_CI_O[3])
+                                                      0.250     4.874 r  w_pc_from_alu_1_reg[31]_i_1/O[3]
+                         net (fo=10, unplaced)        0.348     5.222    u_zap_core/u_zap_alu_main/p_1_in3_in
+                                                                      r  i___1_i_22/I5
+                         LUT6 (Prop_lut6_I5_O)        0.222     5.444 r  i___1_i_22/O
+                         net (fo=9, unplaced)         0.342     5.786    i___1_i_22_n_0
+                                                                      r  i___1_i_14/I2
+                         LUT6 (Prop_lut6_I2_O)        0.097     5.883 r  i___1_i_14/O
+                         net (fo=60, unplaced)        0.388     6.271    i___1_i_14_n_0
+                                                                      r  o_alu_result_ff[5]_i_1/I3
+                         LUT4 (Prop_lut4_I3_O)        0.097     6.368 r  o_alu_result_ff[5]_i_1/O
+                         net (fo=8, unplaced)         0.339     6.707    u_zap_core/alu_alu_result_nxt[5]
+                                                                      r  u_zap_core/u_zap_issue_main/i___200_i_5/I0
+                         LUT6 (Prop_lut6_I0_O)        0.097     6.804 r  u_zap_core/u_zap_issue_main/i___200_i_5/O
+                         net (fo=2, unplaced)         0.312     7.116    u_zap_core/u_zap_issue_main/i___200_i_5_n_0
+                                                                      r  u_zap_core/u_zap_issue_main/i___200_i_2/I2
+                         LUT6 (Prop_lut6_I2_O)        0.097     7.213 f  u_zap_core/u_zap_issue_main/i___200_i_2/O
+                         net (fo=1, unplaced)         0.301     7.514    u_zap_core/u_zap_issue_main/i___200_i_2_n_0
+                                                                      f  u_zap_core/u_zap_issue_main/i___200/I2
+                         LUT3 (Prop_lut3_I2_O)        0.097     7.611 r  u_zap_core/u_zap_issue_main/i___200/O
+                         net (fo=1, unplaced)         0.000     7.611    u_zap_core/u_zap_issue_main/i___200_n_0
+                         FDRE                                         r  u_zap_core/u_zap_issue_main/o_shift_length_value_ff_reg[5]/D
   -------------------------------------------------------------------    -------------------
 
                          (clock i_clk rise edge)      5.000     5.000 r  
                                                       0.000     5.000 r  i_clk (IN)
-                         net (fo=17459, unset)        0.669     5.669    i_clk
-                         FDRE                                         r  u_data_cache/u_zap_cache_tag_ram/genblk1[0].u_zap_ram_simple_data_ram/o_rd_data_pre_reg[0]/C
+                         net (fo=17508, unset)        0.669     5.669    i_clk
+                         FDRE                                         r  u_zap_core/u_zap_issue_main/o_shift_length_value_ff_reg[5]/C
                          clock pessimism              0.000     5.669    
                          clock uncertainty           -0.035     5.633    
-                         FDRE (Setup_fdre_C_D)        0.041     5.674    u_data_cache/u_zap_cache_tag_ram/genblk1[0].u_zap_ram_simple_data_ram/o_rd_data_pre_reg[0]
+                         FDRE (Setup_fdre_C_D)        0.041     5.674    u_zap_core/u_zap_issue_main/o_shift_length_value_ff_reg[5]
   -------------------------------------------------------------------
                          required time                          5.674    
-                         arrival time                          -7.056    
+                         arrival time                          -7.611    
   -------------------------------------------------------------------
-                         slack                                 -1.382    
+                         slack                                 -1.937    
 
 
 ```
