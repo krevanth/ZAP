@@ -45,6 +45,8 @@ module zap_thumb_decoder_main (
 
         // Predictor status.
         input logic  [1:0]       i_taken,
+        input logic  [32:0]      i_pred,
+        output logic [32:0]      o_pred,
 
         // Input from I-cache.
         // Instruction and valid qualifier.
@@ -167,6 +169,7 @@ begin
                 o_irq                   <= irq_nxt;
                 o_fiq                   <= fiq_nxt;
                 o_taken_ff              <= i_taken;
+                o_pred                  <= i_pred;
         end
 end
 
@@ -182,7 +185,7 @@ begin
                 o_irq                   <= 0; 
                 o_fiq                   <= 0; 
                 o_taken_ff              <= 0; 
-
+                o_pred                  <= 33'd0;
 end
 endtask
 

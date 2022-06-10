@@ -188,12 +188,6 @@ localparam [1:0] _N  = 2'd3;
 localparam [1:0] _Z  = 2'd2;
 localparam [1:0] _C  = 2'd1;
 
-// Branch status.
-localparam [1:0] SNT = 2'd0;
-localparam [1:0] WNT = 2'd1;
-localparam [1:0] WT  = 2'd2;
-localparam [1:0] ST  = 2'd3;
-
 // ------------------------------------------------------------------------------
 // Variables
 // ------------------------------------------------------------------------------
@@ -257,7 +251,7 @@ logic [3:0]                      o_data_wb_sel_nxt;
 
 // Clear
 logic [1:0]                      w_clear_from_alu;
-logic [31:0]                     w_pc_from_alu_1, w_pc_from_alu_2, w_pc_from_alu_3;
+logic [31:0]                     w_pc_from_alu_0, w_pc_from_alu_1, w_pc_from_alu_2, w_pc_from_alu_3;
 logic [1:0]                      r_clear_from_alu;
 logic                            w_confirm_from_alu;
 
@@ -414,6 +408,7 @@ begin
                 o_clear_from_alu                <= |w_clear_from_alu;
                 r_clear_from_alu                <= w_clear_from_alu;
 
+                w_pc_from_alu_0                 <= i_ppc_ff;
                 w_pc_from_alu_1                 <= sum[31:0];
                 w_pc_from_alu_2                 <= tmp_sum;
                 w_pc_from_alu_3                 <= i_pc_ff + (flags_ff[T] ? 32'd2 : 32'd4);
@@ -428,7 +423,7 @@ end
 always_comb
 begin
         case(r_clear_from_alu)
-        2'd0   : o_pc_from_alu = {32{1'dx}};
+        2'd0   : o_pc_from_alu = w_pc_from_alu_0; 
         2'd1   : o_pc_from_alu = w_pc_from_alu_1;
         2'd2   : o_pc_from_alu = w_pc_from_alu_2;
         2'd3   : o_pc_from_alu = w_pc_from_alu_3;
@@ -1028,6 +1023,7 @@ begin
                 o_mem_signed_halfword_enable_ff  <= 0; 
                 o_mem_unsigned_halfword_enable_ff<= 0; 
                 o_mem_translate_ff               <= 0; 
+                w_pc_from_alu_0                  <= 0;
                 w_pc_from_alu_1                  <= 0;
                 w_pc_from_alu_2                  <= 0;
                 w_pc_from_alu_3                  <= 0;

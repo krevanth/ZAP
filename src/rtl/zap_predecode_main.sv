@@ -46,6 +46,10 @@ module zap_predecode_main #( parameter PHY_REGS = 46     )
         input logic                              i_stall_from_shifter,   // |
         input logic                              i_stall_from_issue,     // V
 
+        // Predict. MSB is valid bit.
+        input logic   [32:0]                     i_pred,
+        output logic                             o_clear_btb,
+
         // Interrupt events.
         input   logic                            i_irq,
         input   logic                            i_fiq,
@@ -105,11 +109,10 @@ module zap_predecode_main #( parameter PHY_REGS = 46     )
 `include "zap_defines.svh"
 `include "zap_localparams.svh"
 
-// Branch states.
-localparam [1:0] ST  = 2'b11; 
-localparam [1:0] SNT = 2'b00; 
-
 logic                            dbg;
+
+logic                            w_clear_from_decode;
+logic [31:0]                     w_pc_from_decode;
 
 logic [39:0]                     o_instruction_nxt;
 logic                            o_instruction_valid_nxt;
@@ -171,6 +174,10 @@ begin
         begin
                 // Preserve state.
         end
+        else if ( o_clear_from_decode )
+        begin
+                clear;
+        end
         // If no stall, only then update...
         else
         begin
@@ -188,6 +195,8 @@ begin
 
                 if ( mem_fetch_stall == 1'd0 )
                 begin
+                        o_clear_from_decode    <= w_clear_from_decode;
+                        o_pc_from_decode       <= w_pc_from_decode;
                         o_ppc_ff               <= ppc_nxt;
                         ras_ff                 <= ras_nxt;
                         ras_ptr_ff             <= ras_ptr_nxt;
@@ -210,6 +219,8 @@ begin
                 o_ppc_ff               <= 0;
                 ras_ff                 <= 0;
                 ras_ptr_ff             <= 0;
+                o_clear_from_decode    <= 0;
+                o_pc_from_decode       <= 0;
 end
 endtask
 
@@ -221,6 +232,7 @@ begin
                 o_und_ff                                <= 0;
                 o_taken_ff                              <= 0;
                 o_instruction_valid_ff                  <= 0;
+                o_clear_from_decode                     <= 0;
 end
 endtask
 
@@ -385,8 +397,9 @@ begin:bprblk1
 
         dbg = 1'd0;
 
-        o_clear_from_decode     = 1'd0;
-        o_pc_from_decode        = 32'd0;
+        o_clear_btb             = 1'd0;
+        w_clear_from_decode     = 1'd0;
+        w_pc_from_decode        = 32'd0;
         taken_nxt               = skid_taken;
         ppc_nxt                 = o_ppc_ff;
         ras_nxt                 = ras_ff;
@@ -407,18 +420,25 @@ begin:bprblk1
         // Bcc[L] <offset>. Function call.
         if ( arm_instruction[27:25] == 3'b101 && arm_instruction_valid )
         begin
-                if ( skid_taken[1] || arm_instruction[31:28] == AL ) 
-                // Taken or Strongly Taken or Always taken.
+                if ( skid_taken == ST || skid_taken == WT || arm_instruction[31:28] == AL ) 
+                // Predicted as Taken or Predicted as Strongly Taken or Always taken.
                 begin
-                        // Take the branch. Clear pre-fetched instruction.
-                        o_clear_from_decode = 1'd1;
-
                         // Predict new PC.
-                        o_pc_from_decode    = skid_pc_plus_8_ff + addr_final;
-                        ppc_nxt             = o_pc_from_decode;
+                        w_pc_from_decode    = skid_pc_plus_8_ff + addr_final;
+                        ppc_nxt             = w_pc_from_decode;
+        
+                        if ( i_pred[32] && i_pred[31:0] != w_pc_from_decode )
+                                w_clear_from_decode = 1'd1;
+                        else if ( !i_pred[32] )
+                                w_clear_from_decode = 1'd1;
+                        else
+                                w_clear_from_decode = 1'd0;
 
-                       if ( arm_instruction[31:28] == AL ) 
+                        // Force taken status to ST.
+                        if ( arm_instruction[31:28] == AL )
+                        begin 
                                 taken_nxt = ST;  
+                        end
 
                         // If Link=1, push next address onto RAS.
                         if ( arm_instruction[24] )
@@ -428,12 +448,11 @@ begin:bprblk1
                                ras_ptr_nxt++;
                         end
                 end
-                else // Not Taken or Weakly Not Taken.
+                else // Predicted as Not Taken or Weakly Not Taken.
                 begin
-                        // Else dont take the branch since pre-fetched 
-                        // instruction is correct.
-                        o_clear_from_decode = 1'd0;
-                        o_pc_from_decode    = 32'd0;
+                        w_clear_from_decode = 1'd0;
+                        w_pc_from_decode    = 32'd0;
+                        ppc_nxt             = skid_pc_ff + (i_cpu_mode_t ? 32'd2 : 32'd4);
                 end
         end
         else if ( 
@@ -459,27 +478,42 @@ begin:bprblk1
                 dbg = 1'd1;
 
                 // Predicted as taken.
-                if ( skid_taken[1] || arm_instruction[31:28] == AL )
+                if ( skid_taken == WT || skid_taken == ST || arm_instruction[31:28] == AL )
                 begin
-                        o_clear_from_decode = 1'd1;
                         ras_ptr_nxt--;
-                        o_pc_from_decode    = ras_ff[ras_ptr_nxt];
+                        w_pc_from_decode    = ras_ff[ras_ptr_nxt];
+
+                        if ( i_pred[32] && i_pred[31:0] != w_pc_from_decode )
+                                w_clear_from_decode = 1'd1;
+                        else if (!i_pred[32])
+                                w_clear_from_decode = 1'd1;
+                        else
+                                w_clear_from_decode = 1'd0;
 
                         if ( arm_instruction[31:28] == AL )
                                 taken_nxt = ST;
 
                         // Helps ALU verify that the RAS is correct.
-                        ppc_nxt             = o_pc_from_decode;
+                        ppc_nxt             = w_pc_from_decode;
                 end
                 else // Predicted as not taken.
                 begin
-                        o_clear_from_decode = 1'd0;
-                        o_pc_from_decode    = 32'd0;
+                        w_clear_from_decode = 1'd0;
+                        w_pc_from_decode    = 32'd0;
+                        ppc_nxt             = skid_pc_ff + (i_cpu_mode_t ? 32'd2 : 32'd4);
                 end
         end
         else // Predict non supported as strongly not taken.
         begin
                 taken_nxt = SNT;
+
+                if ( i_pred[32] )
+                begin
+                        w_clear_from_decode = 1'd1;
+                        w_pc_from_decode    = skid_pc_ff + (i_cpu_mode_t ? 32'd2 : 32'd4);
+                        ppc_nxt             = w_pc_from_decode;
+                        o_clear_btb         = 1'd1;
+                end
         end
 end
 

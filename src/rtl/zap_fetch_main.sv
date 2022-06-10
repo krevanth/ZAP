@@ -77,7 +77,11 @@ output logic [31:0]  o_pc_ff,        // PC output.
 input logic         i_confirm_from_alu,  // Confirm branch prediction from ALU.
 input logic [31:0]  i_pc_from_alu,       // Address of branch. 
 input logic [1:0]   i_taken,             // Predicted status.
-output logic [1:0]  o_taken              // Prediction. Not a flip-flop...
+output logic [1:0]  o_taken,             // Prediction. Not a flip-flop...
+
+// Pred
+input logic [32:0]  i_pred,
+output logic [32:0] o_pred
 
 );
 
@@ -92,12 +96,6 @@ logic [1:0] taken_v;
 
 // Unused.
 logic unused;
-
-// Branch states.
-localparam  [1:0]    SNT     =       2'b00; // Strongly Not Taken.
-localparam  [1:0]    WNT     =       2'b01; // Weakly Not Taken.
-localparam  [1:0]    WT      =       2'b10; // Weakly Taken.
-localparam  [1:0]    ST      =       2'b11; // Strongly Taken.
 
 // Branch prediction.
 always_comb o_taken    = taken_v;
@@ -136,6 +134,8 @@ begin
 
                 // Wake unit up.
                 sleep_ff        <= 1'd0;
+
+                o_pred          <= 33'd0;
         end
         else if ( i_clear_from_writeback )       clear_unit;
         else if ( i_data_stall)                  begin end // Save state.
@@ -198,6 +198,8 @@ begin
                         else if ( !i_pc_ff[1] && i_instruction[15:0] ==? T_BKPT )
                                 o_instr_abort <= 1'd1;
                 end
+
+                o_pred <= i_pred;
         end
         else
         begin

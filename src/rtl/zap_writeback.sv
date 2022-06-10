@@ -21,9 +21,8 @@
 // --                                                                         --
 // -----------------------------------------------------------------------------
 
-
-
 module zap_writeback #(
+        parameter BP_ENTRIES = 1024,
         parameter FLAG_WDT = 32, // Flags width a.k.a CPSR.
         parameter PHY_REGS = 46  // Number of physical registers.
 )
@@ -34,6 +33,9 @@ module zap_writeback #(
 
         // Shelve output.
         output logic                          o_shelve,
+
+        // Clear BTB
+        input   logic                         i_clear_btb,
 
         // Clock and reset.
         input logic                           i_clk, 
@@ -51,6 +53,9 @@ module zap_writeback #(
         input logic                           i_clear_from_decode,
         input logic      [31:0]               i_pc_from_decode,
         input logic                           i_clear_from_icache,
+        input logic                           i_confirm_from_alu, // Added
+        input logic [31:0]                    i_alu_pc_plus_8_ff, // Added
+        input logic [1:0]                     i_taken,            // Added
 
         // 4 read ports for high performance.
         input logic   [$clog2(PHY_REGS)-1:0] i_rd_index_0, 
@@ -101,6 +106,9 @@ module zap_writeback #(
         output logic     [31:0]               o_pc_check,
         output logic     [31:0]               o_pc_nxt,
 
+        // Predict.
+        output logic     [32:0]               o_pred,
+
         // CPSR output
         output logic      [31:0]              o_cpsr_nxt,
 
@@ -119,21 +127,28 @@ module zap_writeback #(
 // ----------------------------------------------------------------------------
 
 logic     [31:0]                  cpsr_ff, cpsr_nxt;
-logic     [31:0]                  pc_ff, pc_nxt;
 logic [$clog2(PHY_REGS)-1:0]      wa1, wa2;
 logic [31:0]                      wdata1, wdata2;
 logic                             wen;
 logic [31:0]                      pc_shelve_ff, pc_shelve_nxt;
 logic                             shelve_ff, shelve_nxt;
 logic [2:0]                       mask_ff, mask_nxt;
+logic     [31:0]                  pc_ff, pc_nxt;
 logic [31:0]                      pc_del_ff, pc_del_nxt;
 logic [31:0]                      pc_del2_ff, pc_del2_nxt;
 logic [31:0]                      pc_del3_ff, pc_del3_nxt;
+logic [32:0]                      pred_ff, pred_nxt;
+logic [32:0]                      pred_del_ff, pred_del_nxt;
+logic [32:0]                      pred_del2_ff, pred_del2_nxt;
+logic [32:0]                      pred_del3_ff, pred_del3_nxt;
 logic                             arm_mode;
+logic                             clear_from_btb;
+logic [31:0]                      pc_from_btb;
 
 always_comb  arm_mode        = (cpsr_ff[T] == 1'd0) ? 1'd1 : 1'd0;
 always_comb  o_shelve        = shelve_ff; // Shelve the PC until it is needed.
 always_comb  o_pc            = pc_del3_ff;
+always_comb  o_pred          = pred_del3_ff[32:0];
 always_comb  o_pc_check      = pc_del2_ff;
 always_comb  o_pc_nxt        = pc_ff;
 always_comb  o_cpsr_nxt      = cpsr_nxt;
@@ -185,11 +200,18 @@ begin: blk1
         wdata1                   = 32'd0;
         wdata2                   = 32'd0;
         o_clear_from_writeback   = 0;
-        pc_nxt                   = pc_ff;
+
         cpsr_nxt                 = cpsr_ff;
+
+        pc_nxt                   = pc_ff;
         pc_del_nxt               = pc_del_ff;
         pc_del2_nxt              = pc_del2_ff;
         pc_del3_nxt              = pc_del3_ff;
+
+        pred_nxt                 = pred_ff;
+        pred_del_nxt             = pred_del_ff;
+        pred_del2_nxt            = pred_del2_ff;
+        pred_del3_nxt            = pred_del3_ff;       
 
         // ------------------- Low priority PC control tree -------------------------------
         // Keep looking further down for more high priority logic that can modify the PC.
@@ -210,6 +232,11 @@ begin: blk1
                 pc_del_nxt  = pc_del_ff;
                 pc_del2_nxt = pc_del2_ff;
                 pc_del3_nxt = pc_del3_ff;
+
+                pred_nxt      = pred_ff;
+                pred_del_nxt  = pred_del_ff;
+                pred_del2_nxt = pred_del2_ff;
+                pred_del3_nxt = pred_del3_ff;
         end
         else if ( shelve_ff )
         begin
@@ -221,12 +248,21 @@ begin: blk1
         begin
                 pc_shelve (pc_del3_ff);
         end
+        else if ( clear_from_btb ) // Lowest priority now.
+        begin
+                pc_shelve_1 (pc_from_btb);
+        end
         else
         begin
                 pc_nxt      = pc_ff + (i_thumb ? 32'd2 : 32'd4);
                 pc_del_nxt  = pc_ff;
                 pc_del2_nxt = pc_del_ff;
                 pc_del3_nxt = pc_del2_ff;
+
+                pred_nxt      = 33'd0;
+                pred_del_nxt  = pred_ff;
+                pred_del2_nxt = pred_del_ff;
+                pred_del3_nxt = pred_del2_ff;
         end
 
         // -------------- High priority PC control tree -------------------------
@@ -373,10 +409,16 @@ begin
                 // On reset, the CPU starts at 0 in
                 // supervisor mode.
                 shelve_ff                  <= 1'd0;
+
                 pc_ff                      <= 32'd0;
                 pc_del_ff                  <= 32'd0;
                 pc_del2_ff                 <= 32'd0;
                 pc_del3_ff                 <= 32'd0;
+
+                pred_ff                    <= 33'd0;
+                pred_del_ff                <= 33'd0;
+                pred_del2_ff               <= 33'd0;
+                pred_del3_ff               <= 33'd0;
 
                 // CPSR reset logic.
                 cpsr_ff                    <= 32'd0;
@@ -392,16 +434,44 @@ begin
         begin
                 shelve_ff                 <= shelve_nxt;
                 pc_shelve_ff              <= pc_shelve_nxt;
+
                 pc_ff                     <= pc_nxt;
                 pc_del_ff                 <= pc_del_nxt;
                 pc_del2_ff                <= pc_del2_nxt;
                 pc_del3_ff                <= pc_del3_nxt;
+
+                pred_ff                   <= pred_nxt;
+                pred_del_ff               <= pred_del_nxt;
+                pred_del2_ff              <= pred_del2_nxt;
+                pred_del3_ff              <= pred_del3_nxt;
+
                 cpsr_ff                   <= cpsr_nxt;
                 o_decompile               <= i_decompile;
                 o_copro_reg_rd_data_ff    <= o_rd_data_0;
                 mask_ff                   <= mask_nxt;
         end
 end
+
+// ----------------------------------------------------------------------------
+// Instantiationss
+// ----------------------------------------------------------------------------
+
+zap_btb #(.BP_ENTRIES(BP_ENTRIES)) u_zap_btb (
+        .i_clk(i_clk),
+        .i_reset(i_reset),
+        .i_stall(i_code_stall),
+        .i_clear(i_clear_btb),
+        .i_fb_ok(i_confirm_from_alu),
+        .i_fb_nok(i_clear_from_alu),
+        .i_fb_branch_src_address(i_alu_pc_plus_8_ff - 32'd8),
+        .i_fb_branch_dest_address(i_pc_from_alu),
+        .i_fb_current_branch_state(i_taken),
+        .i_rd_addr(pc_ff),
+        .i_rd_addr_del(pc_del_ff),
+
+        .o_clear_from_btb(clear_from_btb),
+        .o_pc_from_btb(pc_from_btb)
+);
 
 // ----------------------------------------------------------------------------
 // Tasks
@@ -416,17 +486,43 @@ begin
                 pc_del_nxt    = pc_ff;
                 pc_del2_nxt   = pc_del_ff;
                 pc_del3_nxt   = pc_del2_ff;
+
                 shelve_nxt    = 1'd0;
-                mask_nxt      = 3'd1; 
+                mask_nxt      = 3'd1;
+ 
+                pred_nxt      = 33'd0;
+                pred_del_nxt  = pred_ff;
+                pred_del2_nxt = pred_del_ff;
+                pred_del3_nxt = pred_del2_ff;
         end
         else
         begin
                 shelve_nxt    = 1'd1;
                 pc_shelve_nxt = new_pc;
+
                 pc_nxt        = pc_ff;
                 pc_del_nxt    = pc_del_ff;
                 pc_del2_nxt   = pc_del2_ff;
                 pc_del3_nxt   = pc_del3_ff;
+
+                pred_nxt      = pred_ff;
+                pred_del_nxt  = pred_del_ff;
+                pred_del2_nxt = pred_del2_ff;
+                pred_del3_nxt = pred_del3_ff;
+        end
+end
+endfunction
+
+function void pc_shelve_1 (input [31:0] new_pc);
+begin
+        pc_shelve(new_pc);
+
+        if (!i_code_stall )
+        begin
+                pred_nxt      = {1'd1, pc_nxt};
+                pred_del_nxt  = pred_ff;
+                pred_del2_nxt = pred_del_ff;
+                pred_del3_nxt = pred_del2_ff;
         end
 end
 endfunction

@@ -179,6 +179,7 @@ logic                            fetch_valid;        // Instruction valid from t
 logic                            fetch_instr_abort;  // abort indicator.
 logic [31:0]                     fetch_pc_plus_8_ff; // PC + 8 generated from the fetch unit.
 logic [1:0]                      fetch_bp_state;
+logic [32:0]                     fetch_pred;
 
 // FIFO.
 logic [31:0]                     fifo_pc_plus_8;
@@ -186,6 +187,7 @@ logic                            fifo_valid;
 logic                            fifo_instr_abort;
 logic [31:0]                     fifo_instruction;
 logic [1:0]                      fifo_bp_state;
+logic [32:0]                     fifo_pred;
 
 // Compressed decoder.
 logic                            thumb_irq;
@@ -197,7 +199,7 @@ logic                            thumb_und;
 logic                            thumb_force32;
 logic [1:0]                      thumb_bp_state;
 logic [31:0]                     thumb_pc_plus_8_ff;
-
+logic [32:0]                     thumb_pred;
 
 // Predecode
 logic [31:0]                     predecode_pc_plus_8;
@@ -211,6 +213,7 @@ logic                            predecode_force32;
 logic                            predecode_und;
 logic [1:0]                      predecode_taken;
 logic [31:0]                     predecode_ppc_ff;
+logic                            predecode_clear_btb;
 
 // Decode
 logic [3:0]                      decode_condition_code;
@@ -442,6 +445,7 @@ logic [31:0]                     rd_data_2;
 logic [31:0]                     rd_data_3;
 logic [31:0]                     cpsr_nxt;
 logic                            writeback_mask;
+logic [32:0]                     wb_pred;
 
 // Decompile chain for debugging.
 logic [64*8-1:0]                 decode_decompile;
@@ -546,7 +550,9 @@ u_zap_fetch_main (
         .i_confirm_from_alu             (confirm_from_alu),
         .i_pc_from_alu                  (alu_pc_plus_8_ff - 32'd8),
         .i_taken                        (alu_taken_ff),
-        .o_taken                        (fetch_bp_state)
+        .o_taken                        (fetch_bp_state),
+        .i_pred                         (wb_pred),
+        .o_pred                         (fetch_pred)
 );
 
 // =========================
@@ -556,7 +562,7 @@ u_zap_fetch_main (
 logic w_instr_wb_stb;
 logic w_instr_wb_cyc;
 
-zap_fifo #( .WDT(67), .DEPTH(FIFO_DEPTH) ) U_ZAP_FIFO (
+zap_fifo #( .WDT(67 + 33), .DEPTH(FIFO_DEPTH) ) U_ZAP_FIFO (
         .i_clk                          (i_clk),
         .i_reset                        (i_reset),
         .i_clear_from_writeback         (clear_from_writeback),
@@ -570,9 +576,9 @@ zap_fifo #( .WDT(67), .DEPTH(FIFO_DEPTH) ) U_ZAP_FIFO (
         .i_stall_from_decode            (stall_from_decode  && thumb_valid && fifo_valid ),
         .i_clear_from_decode            (clear_from_decode  && thumb_valid && fifo_valid ),
 
-        .i_instr                        ({fetch_pc_plus_8_ff, fetch_instr_abort, fetch_instruction, fetch_bp_state}),
+        .i_instr                        ({fetch_pc_plus_8_ff, fetch_instr_abort, fetch_instruction, fetch_bp_state, fetch_pred}),
         .i_valid                        (fetch_valid),
-        .o_instr                        ({fifo_pc_plus_8, fifo_instr_abort, fifo_instruction, fifo_bp_state}),
+        .o_instr                        ({fifo_pc_plus_8, fifo_instr_abort, fifo_instruction, fifo_bp_state, fifo_pred}),
         .o_valid                        (fifo_valid),
 
         .o_wb_stb                       (w_instr_wb_stb),
@@ -622,7 +628,10 @@ zap_thumb_decoder_main u_zap_thumb_decoder (
 .o_pc_plus_8_ff                         (thumb_pc_plus_8_ff),
 .o_irq                                  (thumb_irq),
 .o_fiq                                  (thumb_fiq),
-.o_taken_ff                             (thumb_bp_state)
+.o_taken_ff                             (thumb_bp_state),
+
+.i_pred                                 (fifo_pred),
+.o_pred                                 (thumb_pred)
 );
 
 // =========================
@@ -639,6 +648,8 @@ u_zap_predecode (
         .i_clear_from_writeback         (clear_from_writeback),
         .i_clear_from_alu               (clear_from_alu),
 
+        .i_pred                         (thumb_pred),
+        .o_clear_btb                    (predecode_clear_btb),
 
         .i_data_stall                   (data_stall         ), 
         .i_stall_from_shifter           (stall_from_shifter ),
@@ -1369,17 +1380,24 @@ u_zap_memory_main
 // ==================
 
 zap_writeback #(
-        .PHY_REGS(PHY_REGS)
+        .BP_ENTRIES(BP_ENTRIES),
+        .PHY_REGS(PHY_REGS),
+        .FLAG_WDT(FLAG_WDT)
 )
 u_zap_writeback
 (
         .i_decompile            (memory_decompile),
         .o_decompile            (rb_decompile),
 
+        .i_clear_btb            (predecode_clear_btb),
+
+        .i_confirm_from_alu     (confirm_from_alu),
+        .i_alu_pc_plus_8_ff     (alu_pc_plus_8_ff),
+        .i_taken                (alu_taken_ff),
+
         .o_shelve               (shelve),
 
         .i_clk                  (i_clk), // ZAP clock.
-
 
         .i_reset                (reset),           // ZAP reset.
         .i_valid                (memory_dav_ff),
@@ -1434,6 +1452,7 @@ u_zap_writeback
         .o_rd_data_3            (rd_data_3),
 
         .o_pc                   (o_instr_wb_adr),
+        .o_pred                 (wb_pred),
         .o_pc_nxt               (o_instr_wb_adr_nxt),
         .o_pc_check             (o_instr_wb_adr_check),
         .o_cpsr_nxt             (cpsr_nxt),

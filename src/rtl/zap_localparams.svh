@@ -470,6 +470,13 @@ localparam DABT_VECTOR  = 32'h00000010;
 localparam IRQ_VECTOR   = 32'h00000018;
 localparam FIQ_VECTOR   = 32'h0000001C;
 
+// Branches
+localparam  [1:0]    SNT     =       2'b00; // Strongly Not Taken.
+localparam  [1:0]    WNT     =       2'b01; // Weakly Not Taken.
+localparam  [1:0]    WT      =       2'b10; // Weakly Taken.
+localparam  [1:0]    ST      =       2'b11; // Strongly Taken.
+
+
 /* verilator lint_on UNUSED */
 
 // Turn the warning back on.
