@@ -1121,7 +1121,7 @@ begin
         begin
                 determine_load_lock = 1'd0;
         end
-        else if ( xlock[index[5:0]] || ext_lock )
+        else if ( xlock[index[5:0]] || ((|xlock) && ext_lock) )
         begin
                 determine_load_lock = 1'd1;
         end

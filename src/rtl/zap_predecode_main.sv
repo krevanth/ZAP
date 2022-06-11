@@ -153,6 +153,10 @@ begin
         begin
                 reset;
                 clear;
+                
+                // Return address stack is RESET.
+                ras_ff     <= '0;
+                ras_ptr_ff <= '0;
         end
         else if ( i_clear_from_writeback )
         begin
@@ -176,7 +180,7 @@ begin
         end
         else if ( o_clear_from_decode )
         begin
-                clear;
+                reset;
         end
         // If no stall, only then update...
         else
@@ -217,8 +221,6 @@ begin
                 o_instruction_ff       <= 0; 
                 o_instruction_valid_ff <= 0; 
                 o_ppc_ff               <= 0;
-                ras_ff                 <= 0;
-                ras_ptr_ff             <= 0;
                 o_clear_from_decode    <= 0;
                 o_pc_from_decode       <= 0;
 end
@@ -296,6 +298,11 @@ begin
                 end
 
                 endcase
+
+                if ( o_clear_from_decode )
+                begin
+                        o_stall_from_decode <= 1'd0;
+                end
         end
 end
 
