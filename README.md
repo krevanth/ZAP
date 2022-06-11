@@ -1,3 +1,7 @@
+---
+description: Developer's Manual
+---
+
 # The ZAP Processor (ARMV5TE)
 
 **By Revanth Kamaraj <**[**revanth91kamaraj@gmail.com**](mailto:revanth91kamaraj@gmail.com)**>**
@@ -15,25 +19,25 @@ This project follows the [all-contributors](https://github.com/all-contributors/
 
 The ZAP is a high performance ARMV5TE compliant processor. It is intended to be used in FPGA projects that need a high performance ARMV5TE soft processor core.&#x20;
 
-| **Property**                                                                                                                                                                                                                                                                                   | **Value**                                                                                                   |
-| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| <p>Fmax@FPGA when synthesized with<br><code>-flatten_hierarchy full</code> <br><code>-directive PerformanceOptimized -retiming</code> <br><code>-fsm_extraction one_hot -keep_equivalent_registers -resource_sharing off</code> <br><code>-no_lc</code> <br><code>-shreg_min_size 5</code></p> | <p>Artix7   ->  145MHz@xc7a75tcsg324-3 <br></p>                                                             |
-| Pipeline Depth                                                                                                                                                                                                                                                                                 | 17                                                                                                          |
-| Issue and Execution Width                                                                                                                                                                                                                                                                      | Single issue, in order core, with out-of-order completion for some loads/stores that miss in cache.         |
-| Data Width                                                                                                                                                                                                                                                                                     | 32                                                                                                          |
-| Address Width                                                                                                                                                                                                                                                                                  | 32                                                                                                          |
-| Virtual Address Width                                                                                                                                                                                                                                                                          | 32                                                                                                          |
-| Instruction Set                                                                                                                                                                                                                                                                                | ARMV5TE                                                                                                     |
-| L1 I-Cache                                                                                                                                                                                                                                                                                     | (Line Size/8) x Direct Mapped RAM, Configurable depth and line size.                                        |
-| L1 D-Cache                                                                                                                                                                                                                                                                                     | (Line Size/8) x Direct Mapped RAM, Configurable depth and line size.                                        |
-| I-TLB Structure                                                                                                                                                                                                                                                                                | 4 x Direct Mapped RAM, Configurable, 1 RAM/page size                                                        |
-| D-TLB Structure                                                                                                                                                                                                                                                                                | 4 x Direct Mapped RAM, Configurable, 1 RAM/page size, Hit-under-Miss supported.                             |
-| Branch Prediction                                                                                                                                                                                                                                                                              | Bimodal Predictor, Direct Mapped, Configurable                                                              |
-| RAS Depth                                                                                                                                                                                                                                                                                      | 4                                                                                                           |
-| Branch latency                                                                                                                                                                                                                                                                                 | 12 cycles (wrong prediction), 2 cycles(taken, correctly predicted), 1 cycle(not-taken, correctly predicted) |
-| Store Buffer                                                                                                                                                                                                                                                                                   | FIFO, Configurable depth                                                                                    |
-| Fetch Buffer                                                                                                                                                                                                                                                                                   | FIFO, Configurable depth                                                                                    |
-| DMIPS@MHz Rating                                                                                                                                                                                                                                                                               | 190DMIPS@145MHz (ARM code)                                                                                  |
+| **Property**                                                                                                                                                                                                                                                                                   | **Value**                                                                                                      |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| <p>Fmax@FPGA when synthesized with<br><code>-flatten_hierarchy full</code> <br><code>-directive PerformanceOptimized -retiming</code> <br><code>-fsm_extraction one_hot -keep_equivalent_registers -resource_sharing off</code> <br><code>-no_lc</code> <br><code>-shreg_min_size 5</code></p> | <p>Artix7   ->  145MHz@xc7a75tcsg324-3 <br></p>                                                                |
+| Pipeline Depth                                                                                                                                                                                                                                                                                 | 17                                                                                                             |
+| Issue and Execution Width                                                                                                                                                                                                                                                                      | Single issue, in order core, with out-of-order completion for some loads/stores that miss in cache.            |
+| Data Width                                                                                                                                                                                                                                                                                     | 32                                                                                                             |
+| Address Width                                                                                                                                                                                                                                                                                  | 32                                                                                                             |
+| Virtual Address Width                                                                                                                                                                                                                                                                          | 32                                                                                                             |
+| Instruction Set                                                                                                                                                                                                                                                                                | ARMV5TE                                                                                                        |
+| L1 I-Cache                                                                                                                                                                                                                                                                                     | (Line Size/8) x Direct Mapped RAM, Configurable depth and line size.                                           |
+| L1 D-Cache                                                                                                                                                                                                                                                                                     | (Line Size/8) x Direct Mapped RAM, Configurable depth and line size.                                           |
+| I-TLB Structure                                                                                                                                                                                                                                                                                | 4 x Direct Mapped RAM, Configurable, 1 RAM/page size                                                           |
+| D-TLB Structure                                                                                                                                                                                                                                                                                | 4 x Direct Mapped RAM, Configurable, 1 RAM/page size, Hit-under-Miss supported.                                |
+| Branch Prediction                                                                                                                                                                                                                                                                              | Bimodal Predictor, Direct Mapped, Configurable with BTB.                                                       |
+| RAS Depth                                                                                                                                                                                                                                                                                      | 4                                                                                                              |
+| Branch latency                                                                                                                                                                                                                                                                                 | 12/18 cycles (wrong prediction), 2 cycles(taken, correctly predicted), 1 cycle(not-taken, correctly predicted) |
+| Store Buffer                                                                                                                                                                                                                                                                                   | FIFO, Configurable depth                                                                                       |
+| Fetch Buffer                                                                                                                                                                                                                                                                                   | FIFO, Configurable depth                                                                                       |
+| DMIPS@MHz Rating                                                                                                                                                                                                                                                                               | 190DMIPS@145MHz (ARM code)                                                                                     |
 
 A simplified block diagram of the ZAP pipeline is shown below:
 
@@ -46,8 +50,8 @@ ZAP includes several microarchitectural enhancements to improve instruction thro
 * Direct mapped instruction and data memory TLBs. Having separate translation buffers allows data and code translation to happen in parallel. The sizes of these TLBs can be set during synthesis. Six different TLB memories are provides, each providing direct mapped buffering for sections, large page and small page, each for instruction and data (3 x 2 = 6). The sizes of these 6 memories is parameterizable.
 * A parameterizable store buffer that helps buffer stores when the cache is disabled or if the data access is uncacheable. When the cache is enabled and data is cacheable, the store buffer helps buffer cache clean operations. This is slightly different from a write buffer.
 * A 4-state bimodal branch predictor that predicts the outcome of immediate branches and branch-and-link instructions. ZAP employs a BTB (Branch Target Buffer) to predict branch outcomes early.&#x20;
-* A 4 deep return address stack that stores the predicted return address of branch and link instructions function return. When a BX LR, MOV PC,LR or a block load with PC in register list, the processor pops off the return address. Note that switching between ARM and Thumb state has a penalty of 12 cycles.
-* The ability to execute most ARM instructions in a single clock cycle. The only instructions that take multiple cycles include branch-and-link, 64-bit loads and stores, block loads and stores, swap instructions and BLX2.
+* A 4 deep return address stack that stores the predicted return address of branch and link instructions function return. When a `BX LR`, `MOV PC,LR` or a block load with PC in register list, the processor pops off the return address. Note that switching between ARM and Thumb state has a penalty of 12 cycles.
+* The ability to execute most ARM instructions in a single clock cycle. The only instructions that take multiple cycles include branch-and-link, 64-bit loads and stores, block loads and stores, swap instructions and `BLX2`.
 * A highly efficient superpipeline with dual feedback networks to minimize pipeline stalls as much as possible while allowing for high clock frequencies. A deep 17 stage superpipelined architecture that allows the CPU to run at relatively high FPGA speeds.
 * Support for single cycle saturating additions and subtractions for better signal processing performance. Result is available for immediate use in the next instruction itself. Do note that multiplication/MAC operations take 4 to 5 cycles per operation. Note that the multiplier inside the ZAP processor is not pipelined.
 * The abort model is base restored. This allows for the implementation of a demand based paging system if supporting software is available.
@@ -121,7 +125,7 @@ This snippet of ARM code takes only 5 cycles (Possible because of dual feedback 
 
 #### 1.1.2. Single Cycle Load with Writeback
 
-The ZAP can execute LDR/STR with writeback in a single cycle. It will perform a parallel write to the register file with the pointer register and the data register in the same cycle.
+The ZAP can execute `LDR`/`STR` with writeback in a single cycle. It will perform a parallel write to the register file with the pointer register and the data register in the same cycle.
 
 #### 1.1.3. Hit Under Miss/Execute Under Miss
 
@@ -140,13 +144,15 @@ ZAP implements the register file in flip-flops. The register file provides 4 rea
 
 #### 1.1.5. Branch Predictor and Return Address Stack
 
-To improve performance, the ZAP processor uses a bimodal branch predictor. A branch memory is maintained which stores the state of each branch and the target address and branch tag. Note that the predictor can only predict `Bcc[L]`, `BX LR`, `LDM` with PC in register list and `MOV PC, LR` instructions.
+To improve performance, the ZAP processor uses a bimodal branch predictor. A branch memory is maintained which stores the state of each branch and the target address and branch tag. Note that the predictor can only predict `Bcc[L]`, `BX LR`, `LDM` with PC in register list and `MOV PC, LR` instructions. Some of these utilize the RAS.
 
 * Correctly predicted instructions take 2 cycles (taken)/1 cycle (not taken) of latency. Misprediction latency is 12 cycles.
 * Prediction unsupported methods for PC changes takes 12 cycles.
 * Loading to PC from memory takes 18 cycles. The bimodal predictor is organized as a direct mapped unit so aliasing is possible. The predictor cannot be disabled.
 
-The processor also implements a 4 deep return address stack. Upon calls to
+The processor implements a 4 deep return address stack.&#x20;
+
+Upon calls to
 
 * `BL offset`
 
@@ -158,7 +164,7 @@ On encountering these instructions:
 * `MOV PC, LR`
 * `LDM` with PC in register list.
 
-the CPU treats them as function returns and will pop return address of the stack much earlier. This results in some performance improvement and reduced branch latency. Correctly predicted return takes 7 cycles, while incorrectly or unpredicted returns take 11 cycles.
+the CPU treats them as function returns and will pop return address of the stack much earlier. This results in some performance improvement and reduced branch latency. Correctly predicted return takes 2 cycles, while incorrectly or unpredicted returns take 12 cycles.
 
 ### 1.2. External Bus Interface
 
@@ -198,23 +204,23 @@ NOTE: Cleaning and flushing cache and TLB is only supported for the entire memor
 
 Note that all parameters should be 2^n. Cache size should be multiple of line size and at least 16 x line width. Caches/TLBs consume majority of the resources so should be tuned as required. The default parameters give you quite large caches.
 
-| Parameter                   | Default | Description                                                               |
-| --------------------------- | ------- | ------------------------------------------------------------------------- |
-| BP\_ENTRIES                 | 1024    | Predictor RAM depth.                                                      |
-| FIFO\_DEPTH                 | 4       | Command FIFO depth.                                                       |
-| STORE\_BUFFER\_DEPTH        | 16      | Depth of the store buffer. Keep multiple of cache line size in bytes / 4. |
-| DATA\_SECTION\_TLB\_ENTRIES | 2       | Section TLB entries.                                                      |
-| DATA\_LPAGE\_TLB\_ENTRIES   | 2       | Large page TLB entries.                                                   |
-| DATA\_SPAGE\_TLB\_ENTRIES   | 32      | Small page TLB entries.                                                   |
-| DATA\_FPAGE\_TLB\_ENTRIES   | 2       | Tiny page TLB entries.                                                    |
-| DATA\_CACHE\_SIZE           | 4096    | Cache size in bytes. Should be at least 16 x line size.                   |
-| CODE\_SECTION\_TLB\_ENTRIES | 2       | Section TLB entries.                                                      |
-| CODE\_LPAGE\_TLB\_ENTRIES   | 2       | Large page TLB entries.                                                   |
-| CODE\_SPAGE\_TLB\_ENTRIES   | 32      | Small page TLB entries.                                                   |
-| CODE\_FPAGE\_TLB\_ENTRIES   | 2       | Tiny page TLB entries.                                                    |
-| CODE\_CACHE\_SIZE           | 4096    | Cache size in bytes. Should be at least 16 x line size.                   |
-| DATA\_CACHE\_LINE           | 64      | Cache Line for Data (Byte). Keep > 8                                      |
-| CODE\_CACHE\_LINE           | 64      | Cache Line for Code (Byte). Keep > 8                                      |
+| Parameter                   | Default | Description                                                                |
+| --------------------------- | ------- | -------------------------------------------------------------------------- |
+| BP\_ENTRIES                 | 1024    | Predictor RAM depth. Each RAM row also contains the branch target address. |
+| FIFO\_DEPTH                 | 4       | Command FIFO depth.                                                        |
+| STORE\_BUFFER\_DEPTH        | 16      | Depth of the store buffer. Keep multiple of cache line size in bytes / 4.  |
+| DATA\_SECTION\_TLB\_ENTRIES | 2       | Section TLB entries.                                                       |
+| DATA\_LPAGE\_TLB\_ENTRIES   | 2       | Large page TLB entries.                                                    |
+| DATA\_SPAGE\_TLB\_ENTRIES   | 32      | Small page TLB entries.                                                    |
+| DATA\_FPAGE\_TLB\_ENTRIES   | 2       | Tiny page TLB entries.                                                     |
+| DATA\_CACHE\_SIZE           | 4096    | Cache size in bytes. Should be at least 16 x line size.                    |
+| CODE\_SECTION\_TLB\_ENTRIES | 2       | Section TLB entries.                                                       |
+| CODE\_LPAGE\_TLB\_ENTRIES   | 2       | Large page TLB entries.                                                    |
+| CODE\_SPAGE\_TLB\_ENTRIES   | 32      | Small page TLB entries.                                                    |
+| CODE\_FPAGE\_TLB\_ENTRIES   | 2       | Tiny page TLB entries.                                                     |
+| CODE\_CACHE\_SIZE           | 4096    | Cache size in bytes. Should be at least 16 x line size.                    |
+| DATA\_CACHE\_LINE           | 64      | Cache Line for Data (Byte). Keep > 8                                       |
+| CODE\_CACHE\_LINE           | 64      | Cache Line for Code (Byte). Keep > 8                                       |
 
 #### 1.4.2. IO
 
