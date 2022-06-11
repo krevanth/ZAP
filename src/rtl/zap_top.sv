@@ -44,9 +44,9 @@ parameter  [31:0]       STORE_BUFFER_DEPTH = 32'd16,   // Depth of the store buf
 // ----------------------------------
 parameter [31:0] DATA_SECTION_TLB_ENTRIES =  32'd2,    // Section TLB entries.
 parameter [31:0] DATA_LPAGE_TLB_ENTRIES   =  32'd2,    // Large page TLB entries.
-parameter [31:0] DATA_SPAGE_TLB_ENTRIES   =  32'd32,   // Small page TLB entries.
+parameter [31:0] DATA_SPAGE_TLB_ENTRIES   =  32'd128,  // Small page TLB entries.
 parameter [31:0] DATA_FPAGE_TLB_ENTRIES   =  32'd2,    // Tiny page TLB entries.
-parameter [31:0] DATA_CACHE_SIZE          =  32'd4096, // Cache size in bytes.
+parameter [31:0] DATA_CACHE_SIZE          =  32'd16384,// Cache size in bytes.
 parameter [31:0] DATA_CACHE_LINE          =  32'd64,   // Cache line size in bytes.
 
 // ----------------------------------
@@ -54,9 +54,9 @@ parameter [31:0] DATA_CACHE_LINE          =  32'd64,   // Cache line size in byt
 // ----------------------------------
 parameter [31:0] CODE_SECTION_TLB_ENTRIES =  32'd2,    // Section TLB entries.
 parameter [31:0] CODE_LPAGE_TLB_ENTRIES   =  32'd2,    // Large page TLB entries.
-parameter [31:0] CODE_SPAGE_TLB_ENTRIES   =  32'd32,   // Small page TLB entries.
+parameter [31:0] CODE_SPAGE_TLB_ENTRIES   =  32'd128,  // Small page TLB entries.
 parameter [31:0] CODE_FPAGE_TLB_ENTRIES   =  32'd2,    // Fine page TLB entries.
-parameter [31:0] CODE_CACHE_SIZE          =  32'd4096, // Cache size in bytes.
+parameter [31:0] CODE_CACHE_SIZE          =  32'd16384,// Cache size in bytes.
 parameter [31:0] CODE_CACHE_LINE          =  32'd64    // Ccahe line size in bytes.
 
 )(
