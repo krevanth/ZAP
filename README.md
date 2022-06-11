@@ -1,7 +1,3 @@
----
-description: Developer's Manual
----
-
 # The ZAP Processor (ARMV5TE)
 
 **By Revanth Kamaraj <**[**revanth91kamaraj@gmail.com**](mailto:revanth91kamaraj@gmail.com)**>**
