@@ -208,14 +208,14 @@ Note that all parameters should be 2^n. Cache size should be multiple of line si
 | STORE\_BUFFER\_DEPTH        | 16      | Depth of the store buffer. Keep multiple of cache line size in bytes / 4.  |
 | DATA\_SECTION\_TLB\_ENTRIES | 2       | Section TLB entries.                                                       |
 | DATA\_LPAGE\_TLB\_ENTRIES   | 2       | Large page TLB entries.                                                    |
-| DATA\_SPAGE\_TLB\_ENTRIES   | 32      | Small page TLB entries.                                                    |
+| DATA\_SPAGE\_TLB\_ENTRIES   | 128     | Small page TLB entries.                                                    |
 | DATA\_FPAGE\_TLB\_ENTRIES   | 2       | Tiny page TLB entries.                                                     |
-| DATA\_CACHE\_SIZE           | 4096    | Cache size in bytes. Should be at least 16 x line size.                    |
+| DATA\_CACHE\_SIZE           | 16384   | Cache size in bytes. Should be at least 16 x line size.                    |
 | CODE\_SECTION\_TLB\_ENTRIES | 2       | Section TLB entries.                                                       |
 | CODE\_LPAGE\_TLB\_ENTRIES   | 2       | Large page TLB entries.                                                    |
-| CODE\_SPAGE\_TLB\_ENTRIES   | 32      | Small page TLB entries.                                                    |
+| CODE\_SPAGE\_TLB\_ENTRIES   | 128     | Small page TLB entries.                                                    |
 | CODE\_FPAGE\_TLB\_ENTRIES   | 2       | Tiny page TLB entries.                                                     |
-| CODE\_CACHE\_SIZE           | 4096    | Cache size in bytes. Should be at least 16 x line size.                    |
+| CODE\_CACHE\_SIZE           | 16384   | Cache size in bytes. Should be at least 16 x line size.                    |
 | DATA\_CACHE\_LINE           | 64      | Cache Line for Data (Byte). Keep > 8                                       |
 | CODE\_CACHE\_LINE           | 64      | Cache Line for Code (Byte). Keep > 8                                       |
 
