@@ -169,6 +169,7 @@ logic                            clear_from_alu;
 logic                            stall_from_issue;
 logic                            clear_from_writeback;
 logic                            data_stall;
+logic                            fifo_full;    
 logic                            code_stall;
 logic                            instr_valid;
 logic                            pipeline_is_not_empty;
@@ -444,7 +445,6 @@ logic [31:0]                     rd_data_1;
 logic [31:0]                     rd_data_2;
 logic [31:0]                     rd_data_3;
 logic [31:0]                     cpsr_nxt;
-logic                            writeback_mask;
 logic [32:0]                     wb_pred;
 
 // Decompile chain for debugging.
@@ -476,10 +476,7 @@ always_comb reset                    = i_reset;
 always_comb irq                      = i_irq;   
 always_comb fiq                      = i_fiq;   
 always_comb data_stall               = o_data_wb_stb && o_data_wb_cyc && !i_data_wb_ack;
-always_comb code_stall               = writeback_mask ? 1'd0 : ((!o_instr_wb_stb && !o_instr_wb_cyc) || 
-                                       !i_instr_wb_ack);
-always_comb instr_valid              = writeback_mask ? 1'd0 : (o_instr_wb_stb && o_instr_wb_cyc && 
-                                       i_instr_wb_ack & !shelve);
+always_comb instr_valid              = (o_instr_wb_stb && o_instr_wb_cyc && i_instr_wb_ack & !shelve);
 
 // CP registers are changed only when pipe is EMPTY.
 always_comb pipeline_is_not_empty    = predecode_val                      ||     
@@ -494,6 +491,16 @@ always_comb pipeline_is_not_empty    = predecode_val                      ||
                                        (|i_dc_lock);  
 
 always_comb o_mem_translate = postalu1_mem_translate_ff;
+
+always_comb
+begin
+        if ( fifo_full )
+                code_stall = 1'd1;
+        else if ( o_instr_wb_stb && o_instr_wb_cyc && !i_instr_wb_ack )
+                code_stall = 1'd1;
+        else
+                code_stall = 1'd0;
+end
 
 always_comb
 begin
@@ -531,7 +538,7 @@ u_zap_fetch_main (
         .i_stall_from_decode            (1'd0), 
 
         .i_pc_ff                        (o_instr_wb_adr),
-        .i_instruction                  (writeback_mask ? 32'd0 : i_instr_wb_dat),
+        .i_instruction                  (i_instr_wb_dat),
         .i_valid                        (i_icache_err2  ? 1'd0  : instr_valid),
         .i_instr_abort                  (i_icache_err2  ? 1'd0  : i_instr_wb_err),
 
@@ -548,7 +555,7 @@ u_zap_fetch_main (
         /* verilator lint_on PINCONNECTEMPTY */
 
         .i_confirm_from_alu             (confirm_from_alu),
-        .i_pc_from_alu                  (alu_pc_plus_8_ff - 32'd8),
+        .i_pc_from_alu                  (alu_flags_ff[T] ? alu_pc_plus_8_ff - 32'd4 : alu_pc_plus_8_ff - 32'd8),
         .i_taken                        (alu_taken_ff),
         .o_taken                        (fetch_bp_state),
         .i_pred                         (wb_pred),
@@ -559,15 +566,12 @@ u_zap_fetch_main (
 // FIFO to store commands.
 // =========================
 
-logic w_instr_wb_stb;
-logic w_instr_wb_cyc;
-
 zap_fifo #( .WDT(67 + 33), .DEPTH(FIFO_DEPTH) ) U_ZAP_FIFO (
         .i_clk                          (i_clk),
         .i_reset                        (i_reset),
         .i_clear_from_writeback         (clear_from_writeback),
 
-        .i_write_inhibit                ( code_stall ),
+        .i_write_inhibit                (code_stall),
         .i_clear_from_alu               (clear_from_alu),
 
         .i_data_stall                   (data_stall         && thumb_valid && fifo_valid ),
@@ -581,12 +585,8 @@ zap_fifo #( .WDT(67 + 33), .DEPTH(FIFO_DEPTH) ) U_ZAP_FIFO (
         .o_instr                        ({fifo_pc_plus_8, fifo_instr_abort, fifo_instruction, fifo_bp_state, fifo_pred}),
         .o_valid                        (fifo_valid),
 
-        .o_wb_stb                       (w_instr_wb_stb),
-        .o_wb_cyc                       (w_instr_wb_cyc)
+        .o_full                           (fifo_full)  
 );
-
-always_comb o_instr_wb_stb = writeback_mask ? 1'd0 : w_instr_wb_stb;
-always_comb o_instr_wb_cyc = writeback_mask ? 1'd0 : w_instr_wb_cyc;
 
 // =========================
 // COMPRESSED DECODER STAGE
@@ -660,7 +660,7 @@ u_zap_predecode (
 
         .i_abt                          (thumb_iabort),
         .i_pc_plus_8_ff                 (thumb_pc_plus_8_ff),
-        .i_pc_ff                        (thumb_pc_plus_8_ff - 32'd8),
+        .i_pc_ff                        (alu_flags_ff[T] ? thumb_pc_plus_8_ff - 32'd4 : thumb_pc_plus_8_ff - 32'd8),
 
         .i_cpu_mode_t                   (alu_flags_ff[T]),
         .i_cpu_mode_mode                (alu_flags_ff[`ZAP_CPSR_MODE]),
@@ -1392,7 +1392,7 @@ u_zap_writeback
         .i_clear_btb            (predecode_clear_btb),
 
         .i_confirm_from_alu     (confirm_from_alu),
-        .i_alu_pc_plus_8_ff     (alu_pc_plus_8_ff),
+        .i_alu_pc_ff            (alu_flags_ff[T] ? alu_pc_plus_8_ff - 32'd4 : alu_pc_plus_8_ff - 32'd8),
         .i_taken                (alu_taken_ff),
 
         .o_shelve               (shelve),
@@ -1437,7 +1437,7 @@ u_zap_writeback
         .i_swi                  (memory_swi_ff),    
         .i_und                  (memory_und_ff),
 
-        .i_pc_buf_ff            (memory_pc_plus_8_ff),
+        .i_pc_plus_8_buf_ff     (memory_pc_plus_8_ff),
 
         .i_copro_reg_en         (copro_reg_en),
         .i_copro_reg_wr_index   (copro_reg_wr_index),
@@ -1458,7 +1458,8 @@ u_zap_writeback
         .o_cpsr_nxt             (cpsr_nxt),
         .o_clear_from_writeback (clear_from_writeback),
 
-        .o_mask                 (writeback_mask)
+        .o_wb_stb               (o_instr_wb_stb),
+        .o_wb_cyc               (o_instr_wb_cyc)
 );
 
 // ==================================

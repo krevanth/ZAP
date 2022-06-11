@@ -43,16 +43,12 @@ input logic           i_valid, // Above is valid. Write enable basically.
 
 output logic  [WDT-1:0] o_instr, // Instruction output.
 output logic            o_valid, // Output valid.
-
-output logic           o_wb_stb, 
-output logic           o_wb_cyc  // Wishbone request.
+output logic            o_full   // FIFO full.
 );
 
 logic clear, rd_en; 
 logic [WDT-1:0] instr;
 logic valid;
-
-always_comb o_wb_cyc = o_wb_stb;
 
 always_comb
 begin
@@ -86,11 +82,11 @@ zap_sync_fifo #(.WIDTH(WDT), .DEPTH(DEPTH), .FWFT(32'd1)) USF (
         .i_data         (i_instr),
         .o_data         (instr),
         .o_empty_n      (valid),
-        .o_full_n       (o_wb_stb),
+        .o_full         (o_full),
         /* verilator lint_off PINCONNECTEMPTY */
+        .o_full_n       (),
         .o_full_n_nxt   (),
-        .o_empty        (),
-        .o_full         ()
+        .o_empty        ()
         /* verilator lint_on PINCONNECTEMPTY */
 );
 

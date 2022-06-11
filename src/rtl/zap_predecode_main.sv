@@ -503,7 +503,7 @@ begin:bprblk1
                         ppc_nxt             = skid_pc_ff + (i_cpu_mode_t ? 32'd2 : 32'd4);
                 end
         end
-        else // Predict non supported as strongly not taken.
+        else if (arm_instruction_valid) // Predict non supported as strongly not taken.
         begin
                 taken_nxt = SNT;
 
@@ -514,6 +514,10 @@ begin:bprblk1
                         ppc_nxt             = w_pc_from_decode;
                         o_clear_btb         = 1'd1;
                 end
+        end
+        else
+        begin
+                taken_nxt = SNT;
         end
 end
 
