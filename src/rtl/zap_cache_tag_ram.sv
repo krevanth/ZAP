@@ -130,24 +130,19 @@ always_comb cache_unused0 = |{i_address[31: $clog2(CACHE_LINE)+$clog2(CACHE_SIZE
 always_comb cache_unused1 = |{i_address_nxt[31: $clog2(CACHE_LINE)+$clog2(CACHE_SIZE/CACHE_LINE)], i_address_nxt[$clog2(CACHE_LINE)-1:0]};
 always_comb        unused = |{dummy, line_dummy, i_wb_dat, unused_0, cache_unused0, cache_unused1, w_dummy, w_dummy_1};
 
-// ----------------------------------------------------------------------------
+zap_ram_simple_ben #(.WIDTH(CACHE_LINE*8), .DEPTH(CACHE_SIZE/CACHE_LINE)) u_zap_ram_simple_data_ram (
+        .i_clk(i_clk),
+        .i_clken(!i_hold),                 
 
-for(genvar i=0;i<CACHE_LINE;i++)
-begin
-        zap_ram_simple #(.WIDTH(8), .DEPTH(CACHE_SIZE/CACHE_LINE)) u_zap_ram_simple_data_ram (
-                .i_clk(i_clk),
-                .i_clken(!i_hold),                 
+        .i_wr_en(i_cache_line_ben),
+        .i_wr_data(i_cache_line),
 
-                .i_wr_en(i_cache_line_ben[i]),
-                .i_wr_data(i_cache_line   [i*8+7:i*8]),
+        .o_rd_data_pre(w_dummy),
+        .o_rd_data(o_cache_line),
 
-                .o_rd_data_pre(w_dummy[i*8+7:i*8]),
-                .o_rd_data(o_cache_line   [i*8+7:i*8]),
-
-                .i_wr_addr(tag_ram_wr_addr),
-                .i_rd_addr(tag_ram_rd_addr)
-        );
-end
+        .i_wr_addr(tag_ram_wr_addr),
+        .i_rd_addr(tag_ram_rd_addr)
+);
 
 zap_ram_simple #(.WIDTH(`ZAP_CACHE_TAG_WDT), .DEPTH(CACHE_SIZE/CACHE_LINE)) u_zap_ram_simple_tag (
         .i_clk(i_clk),
