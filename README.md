@@ -1,6 +1,6 @@
-# The ZAP Processor (ARMV5TE Architecture Compatible)
+# The ZAP Processor (ARMV5TE  Compatible)
 
-**ZAP : An Open Source High Performance ARMV5TE Architecture Compatible Processor for FPGA**
+**ZAP : An Open Source High Performance ARM Processor for FPGA (ARMV5TE)**
 
 **By Revanth Kamaraj <**[**revanth91kamaraj@gmail.com**](mailto:revanth91kamaraj@gmail.com)**>**
 
