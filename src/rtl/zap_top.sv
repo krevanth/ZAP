@@ -36,26 +36,27 @@ module zap_top #(
 // -----------------------------------
 
 parameter  [31:0]       BP_ENTRIES         = 32'd1024, // Predictor depth.
-parameter  [31:0]       FIFO_DEPTH         = 32'd4,    // FIFO depth.
+parameter  [31:0]       FIFO_DEPTH         = 32'd16,   // FIFO depth.
 parameter  [31:0]       STORE_BUFFER_DEPTH = 32'd16,   // Depth of the store buffer.
+parameter  [31:0]       RAS_DEPTH          = 32'd4,    // Depth of RAS.
 
 // ----------------------------------
 // Data MMU/Cache configuration.
 // ----------------------------------
-parameter [31:0] DATA_SECTION_TLB_ENTRIES =  32'd2,    // Section TLB entries.
-parameter [31:0] DATA_LPAGE_TLB_ENTRIES   =  32'd2,    // Large page TLB entries.
+parameter [31:0] DATA_SECTION_TLB_ENTRIES =  32'd128,  // Section TLB entries.
+parameter [31:0] DATA_LPAGE_TLB_ENTRIES   =  32'd128,  // Large page TLB entries.
 parameter [31:0] DATA_SPAGE_TLB_ENTRIES   =  32'd128,  // Small page TLB entries.
-parameter [31:0] DATA_FPAGE_TLB_ENTRIES   =  32'd2,    // Tiny page TLB entries.
+parameter [31:0] DATA_FPAGE_TLB_ENTRIES   =  32'd128,  // Tiny page TLB entries.
 parameter [31:0] DATA_CACHE_SIZE          =  32'd16384,// Cache size in bytes.
 parameter [31:0] DATA_CACHE_LINE          =  32'd64,   // Cache line size in bytes.
 
 // ----------------------------------
 // Code MMU/Cache configuration.
 // ----------------------------------
-parameter [31:0] CODE_SECTION_TLB_ENTRIES =  32'd2,    // Section TLB entries.
-parameter [31:0] CODE_LPAGE_TLB_ENTRIES   =  32'd2,    // Large page TLB entries.
+parameter [31:0] CODE_SECTION_TLB_ENTRIES =  32'd128,  // Section TLB entries.
+parameter [31:0] CODE_LPAGE_TLB_ENTRIES   =  32'd128,  // Large page TLB entries.
 parameter [31:0] CODE_SPAGE_TLB_ENTRIES   =  32'd128,  // Small page TLB entries.
-parameter [31:0] CODE_FPAGE_TLB_ENTRIES   =  32'd2,    // Fine page TLB entries.
+parameter [31:0] CODE_FPAGE_TLB_ENTRIES   =  32'd128,  // Fine page TLB entries.
 parameter [31:0] CODE_CACHE_SIZE          =  32'd16384,// Cache size in bytes.
 parameter [31:0] CODE_CACHE_LINE          =  32'd64    // Ccahe line size in bytes.
 
@@ -170,7 +171,8 @@ zap_dual_rank_synchronizer #(.WIDTH(3)) u_sync (
 
 zap_core #(
         .BP_ENTRIES(BP_ENTRIES),
-        .FIFO_DEPTH(FIFO_DEPTH)
+        .FIFO_DEPTH(FIFO_DEPTH),
+        .RAS_DEPTH(RAS_DEPTH)
 ) u_zap_core
 (
 // Clock and reset.

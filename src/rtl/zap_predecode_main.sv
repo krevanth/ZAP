@@ -27,7 +27,7 @@
 // -----------------------------------------------------------------------------
 
 
-module zap_predecode_main #( parameter PHY_REGS = 46     )
+module zap_predecode_main #( parameter PHY_REGS = 46, parameter RAS_DEPTH = 8 )
 
 (
         // Clock and reset.
@@ -109,40 +109,38 @@ module zap_predecode_main #( parameter PHY_REGS = 46     )
 `include "zap_defines.svh"
 `include "zap_localparams.svh"
 
-logic                            dbg;
-
-logic                            w_clear_from_decode;
-logic [31:0]                     w_pc_from_decode;
-
-logic [39:0]                     o_instruction_nxt;
-logic                            o_instruction_valid_nxt;
-logic                            mem_fetch_stall;
-logic                            arm_irq;
-logic                            arm_fiq;
-logic                            irq_mask;
-logic                            fiq_mask;
-logic [34:0]                     arm_instruction;
-logic                            arm_instruction_valid;
-logic                            cp_stall;
-logic [34:0]                     cp_instruction;
-logic                            cp_instruction_valid;
-logic                            cp_irq;
-logic                            cp_fiq;
-logic [1:0]                      taken_nxt;
-logic [31:0]                     ppc_nxt; // Predicted PC.
-logic [34:0]                     skid_instruction;
-logic                            skid_instruction_valid;
-logic [106:0]                    skid;
-logic [1:0]                      skid_taken;
-logic                            skid_force32;
-logic                            skid_und;
-logic                            skid_irq;
-logic                            skid_fiq;
-logic                            skid_abt;
-logic [31:0]                     skid_pc_ff;
-logic [31:0]                     skid_pc_plus_8_ff;
-logic [3:0][31:0]                ras_ff, ras_nxt;
-logic [1:0]                      ras_ptr_ff, ras_ptr_nxt;
+logic                               dbg;
+logic                               w_clear_from_decode;
+logic [31:0]                        w_pc_from_decode;
+logic [39:0]                        o_instruction_nxt;
+logic                               o_instruction_valid_nxt;
+logic                               mem_fetch_stall;
+logic                               arm_irq;
+logic                               arm_fiq;
+logic                               irq_mask;
+logic                               fiq_mask;
+logic [34:0]                        arm_instruction;
+logic                               arm_instruction_valid;
+logic                               cp_stall;
+logic [34:0]                        cp_instruction;
+logic                               cp_instruction_valid;
+logic                               cp_irq;
+logic                               cp_fiq;
+logic [1:0]                         taken_nxt;
+logic [31:0]                        ppc_nxt; // Predicted PC.
+logic [34:0]                        skid_instruction;
+logic                               skid_instruction_valid;
+logic [106:0]                       skid;
+logic [1:0]                         skid_taken;
+logic                               skid_force32;
+logic                               skid_und;
+logic                               skid_irq;
+logic                               skid_fiq;
+logic                               skid_abt;
+logic [31:0]                        skid_pc_ff;
+logic [31:0]                        skid_pc_plus_8_ff;
+logic [RAS_DEPTH-1:0][31:0]         ras_ff, ras_nxt;
+logic [$clog2(RAS_DEPTH)-1:0]       ras_ptr_ff, ras_ptr_nxt;
 
 ///////////////////////////////////////////////////////////////////////////////
 

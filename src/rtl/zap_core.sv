@@ -33,7 +33,10 @@ module zap_core #(
         parameter [31:0] BP_ENTRIES = 1024,
 
         // Depth of FIFO.
-        parameter [31:0] FIFO_DEPTH = 4
+        parameter [31:0] FIFO_DEPTH = 4,
+
+        // RAS depth.
+        parameter [31:0] RAS_DEPTH = 4
 ) 
 (
 
@@ -638,7 +641,8 @@ zap_thumb_decoder_main u_zap_thumb_decoder (
 // PREDECODE STAGE 
 // =========================
 zap_predecode_main #(
-        .PHY_REGS(PHY_REGS)
+        .PHY_REGS(PHY_REGS),
+        .RAS_DEPTH(RAS_DEPTH)
 )
 u_zap_predecode (
         // Input.
