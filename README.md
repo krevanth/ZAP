@@ -8,27 +8,27 @@
 
 The ZAP is a high performance ARMV5TE compliant processor. It is intended to be used in FPGA projects that need a high performance ARMV5TE soft processor core. Most aspects of the processor can be configured through HDL parameters. The default processor specification is as follows:
 
-| **Property**                                                                                                                                                                                                                                                                                                                                                                             | **Value**                                                                                                                                                           |
-| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| <p>Fmax@FPGA when synthesized with default configuration and synthesis options as:<br><code>-flatten_hierarchy full</code> <br><code>-directive PerformanceOptimized -retiming</code> <br><code>-fsm_extraction one_hot -keep_equivalent_registers -resource_sharing off</code> <br><code>-no_lc</code> <br><code>-shreg_min_size 5</code><br><code></code>on a -3 speed grade part.</p> | <p>Artix7   ->  138MHz@xc7a75tcsg324-3 <br></p>                                                                                                                     |
-| Pipeline Depth                                                                                                                                                                                                                                                                                                                                                                           | 17                                                                                                                                                                  |
-| Issue and Execution Width                                                                                                                                                                                                                                                                                                                                                                | Single issue, in order core, with out-of-order completion for some loads/stores that miss in cache.                                                                 |
-| Data Width                                                                                                                                                                                                                                                                                                                                                                               | 32                                                                                                                                                                  |
-| Address Width                                                                                                                                                                                                                                                                                                                                                                            | 32                                                                                                                                                                  |
-| Virtual Address Width                                                                                                                                                                                                                                                                                                                                                                    | 32                                                                                                                                                                  |
-| Instruction Set                                                                                                                                                                                                                                                                                                                                                                          | ARMV5TE                                                                                                                                                             |
-| L1 I-Cache                                                                                                                                                                                                                                                                                                                                                                               | <p>16KB Direct Mapped Cache.<br>64 Byte Cache Line</p>                                                                                                              |
-| L1 D-Cache                                                                                                                                                                                                                                                                                                                                                                               | <p>16KB Direct Mapped Cache<br>64 Byte Cache Line</p>                                                                                                               |
-| I-TLB Structure                                                                                                                                                                                                                                                                                                                                                                          | <p>Direct mapped. 512 entries divided into <br>- 128 entry section TLB<br>- 128 entry large page TLB<br>- 128 entry small page TLB<br>- 128 entry tiny page TLB</p> |
-| D-TLB Structure                                                                                                                                                                                                                                                                                                                                                                          | <p>Direct mapped. 512 entries divided into <br>- 128 entry section TLB<br>- 128 entry large page TLB<br>- 128 entry small page TLB<br>- 128 entry tiny page TLB</p> |
-| Branch Prediction                                                                                                                                                                                                                                                                                                                                                                        | <p>Bimodal Predictor + BTB. Direct Mapped.<br>1K entries in Thumb state. <br>512 entries in ARM state. </p>                                                         |
-| RAS Depth                                                                                                                                                                                                                                                                                                                                                                                | 4 deep return address stack.                                                                                                                                        |
-| Branch latency                                                                                                                                                                                                                                                                                                                                                                           | <p>12 or 18 cycles (wrong prediction)<br>3 cycles (taken, correctly predicted)<br>1 cycle    (not-taken, correctly predicted)</p>                                   |
-| Store Buffer                                                                                                                                                                                                                                                                                                                                                                             | FIFO, 16 x 32-bit.                                                                                                                                                  |
-| Fetch Buffer                                                                                                                                                                                                                                                                                                                                                                             | FIFO, 16 x 32-bit.                                                                                                                                                  |
-| DMIPS@MHz Rating                                                                                                                                                                                                                                                                                                                                                                         | 180DMIPS@138MHz                                                                                                                                                     |
-| Bus Interface                                                                                                                                                                                                                                                                                                                                                                            | Unified 32-Bit Wishbone B3 bus with CTI and BTE signals.                                                                                                            |
-| <p>FPGA Resource Utilization with default configuration when synthesized to 140MHz. This includes caches, TLBs and MMUs as well.<br>(Artix-7 FPGA  xc7a75tcsg324-3)</p>                                                                                                                                                                                                                  | <p>23K LUTs<br>116 LUTRAMs<br>15.3K FFs<br>29 BRAMs<br>4 DSP Blocks</p>                                                                                             |
+| **Property**                                                                                                                                                                                                                                                                                                                                                                             | **Value**                                                                                                                                                                                                                                  |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| <p>Fmax@FPGA when synthesized with default configuration and synthesis options as:<br><code>-flatten_hierarchy full</code> <br><code>-directive PerformanceOptimized -retiming</code> <br><code>-fsm_extraction one_hot -keep_equivalent_registers -resource_sharing off</code> <br><code>-no_lc</code> <br><code>-shreg_min_size 5</code><br><code></code>on a -3 speed grade part.</p> | <p>Artix7   ->  138MHz@xc7a75tcsg324-3 <br></p>                                                                                                                                                                                            |
+| Pipeline Depth                                                                                                                                                                                                                                                                                                                                                                           | 17                                                                                                                                                                                                                                         |
+| Issue and Execution Width                                                                                                                                                                                                                                                                                                                                                                | Single issue, in order core, with out-of-order completion for some loads/stores that miss in cache.                                                                                                                                        |
+| Data Width                                                                                                                                                                                                                                                                                                                                                                               | 32                                                                                                                                                                                                                                         |
+| Address Width                                                                                                                                                                                                                                                                                                                                                                            | 32                                                                                                                                                                                                                                         |
+| Virtual Address Width                                                                                                                                                                                                                                                                                                                                                                    | 32                                                                                                                                                                                                                                         |
+| Instruction Set                                                                                                                                                                                                                                                                                                                                                                          | ARMV5TE                                                                                                                                                                                                                                    |
+| L1 I-Cache                                                                                                                                                                                                                                                                                                                                                                               | <p>16KB Direct Mapped VIVT Cache.<br>64 Byte Cache Line</p>                                                                                                                                                                                |
+| L1 D-Cache                                                                                                                                                                                                                                                                                                                                                                               | <p>16KB Direct Mapped VIVT Cache<br>64 Byte Cache Line</p>                                                                                                                                                                                 |
+| I-TLB Structure                                                                                                                                                                                                                                                                                                                                                                          | <p>Direct mapped. 512 entries divided into <br>- 128 entry section TLB<br>- 128 entry large page TLB<br>- 128 entry small page TLB<br>- 128 entry tiny page TLB</p>                                                                        |
+| D-TLB Structure                                                                                                                                                                                                                                                                                                                                                                          | <p>Direct mapped. 512 entries divided into <br>- 128 entry section TLB<br>- 128 entry large page TLB<br>- 128 entry small page TLB<br>- 128 entry tiny page TLB</p>                                                                        |
+| Branch Prediction                                                                                                                                                                                                                                                                                                                                                                        | <p>Bimodal Predictor + BTB. Direct Mapped.<br>1K entries in Thumb state. <br>512 entries in ARM state. </p>                                                                                                                                |
+| RAS Depth                                                                                                                                                                                                                                                                                                                                                                                | 4 deep return address stack.                                                                                                                                                                                                               |
+| Branch latency                                                                                                                                                                                                                                                                                                                                                                           | <p>12 or 18 cycles (wrong prediction or unrecognized branch)<br>3 cycles (taken, correctly predicted)<br>1 cycle    (not-taken, correctly predicted)<br>12 cycles (32-bit/16-bit switch)<br>18 cycles (Exception/Interrupt Entry/Exit)</p> |
+| Store Buffer                                                                                                                                                                                                                                                                                                                                                                             | FIFO, 16 x 32-bit.                                                                                                                                                                                                                         |
+| Fetch Buffer                                                                                                                                                                                                                                                                                                                                                                             | FIFO, 16 x 32-bit.                                                                                                                                                                                                                         |
+| DMIPS@MHz Rating                                                                                                                                                                                                                                                                                                                                                                         | 180DMIPS@138MHz                                                                                                                                                                                                                            |
+| Bus Interface                                                                                                                                                                                                                                                                                                                                                                            | Unified 32-Bit Wishbone B3 bus with CTI and BTE signals.                                                                                                                                                                                   |
+| <p>FPGA Resource Utilization with default configuration when synthesized to 140MHz. This includes caches, TLBs and MMUs as well.<br>(Artix-7 FPGA  xc7a75tcsg324-3)</p>                                                                                                                                                                                                                  | <p>23K LUTs<br>116 LUTRAMs<br>15.3K FFs<br>29 BRAMs<br>4 DSP Blocks</p>                                                                                                                                                                    |
 
 A simplified block diagram of the ZAP pipeline is shown below:
 
@@ -38,6 +38,7 @@ ZAP includes several microarchitectural enhancements to improve instruction thro
 
 * The ability to continue instruction execution even when the data cache is being filled. The data cache features hit under miss capability. The processor stalls when an instruction that depends on the cache access is decoded.
 * Direct mapped instruction and data caches. These caches are virtually indexed and virtually tagged. Individual caches allow code and data to be accessed at the same time. The sizes of these caches can be set during synthesis. Cache size is parameterizable. Cache line width may be set as well.
+* The D-cache also stores the physical address of the cache line on write as this allows subsequent cache clean operations to avoid having to walk the page table again. This feature does increase resource usage but can significantly reduce cache clean latency.
 * Direct mapped instruction and data memory TLBs. Having separate translation buffers allows data and code translation to happen in parallel. The sizes of these TLBs can be set during synthesis. Six different TLB memories are provides, each providing direct mapped buffering for sections, large page and small page, each for instruction and data (3 x 2 = 6). The sizes of these 6 memories is parameterizable.
 * A parameterizable store buffer that helps buffer stores when the cache is disabled or if the data access is uncacheable. When the cache is enabled and data is cacheable, the store buffer helps buffer cache clean operations. This is slightly different from a write buffer.
 * A 4-state bimodal branch predictor that predicts the outcome of immediate branches and branch-and-link instructions. ZAP employs a BTB (Branch Target Buffer) to predict branch outcomes early.&#x20;
@@ -69,7 +70,7 @@ During normal operation:
 * The instruction before that is being decoded.
 * The instruction before that is being sequenced to micro-ops (possibly).
   * Most of the time, 1 ARM instruction = 1 micro-op.
-  * The only ARM instructions requiring more than 1 micro-op generation are BLX, LDM, STM, SWAP and LONG MULTIPLY (They generate a 32-bit result per micro-op).
+  * The only ARM instructions requiring more than 1 micro-op generation are `BLX, LDM, STM, SWAP` and LONG MULTIPLY (They generate a 32-bit result per micro-op).
   * All other ARM instruction decode to just a single micro-op.
   * This stage also causes branches predicted as taken to be actually executed. The latency for a successfully predicted taken branch is 6 cycles.
 * The instruction before that is being being decompressed. This is only required in the Thumb state, else the stage simply passes the instructions on.
@@ -135,7 +136,17 @@ ZAP implements the register file in flip-flops. The register file provides 4 rea
 
 #### 1.1.5. Branch Predictor and Return Address Stack
 
-To improve performance, the ZAP processor uses a bimodal branch predictor. A branch memory is maintained which stores the state of each branch and the target address and branch tag. Note that the predictor can only predict `Bcc[L]`, `BX LR`, `LDM` with PC in register list and `MOV PC, LR` instructions. Some of these utilize the RAS.
+To improve performance, the ZAP processor uses a bimodal branch predictor. A branch memory is maintained which stores the state of each branch and the target address and branch tag. Note that the predictor can only predict the listed ARM instructions (and equivalent 16-bit instructions in Thumb state):
+
+`Bcc[L]`
+
+`BX LR`
+
+`LDM` with PC in register list&#x20;
+
+`MOV PC, LR`&#x20;
+
+instructions. Some of these utilize the RAS for better prediction. Using an unlisted instruction to branch will result in 12 (or) 18 cycles of penalty.&#x20;
 
 * Correctly predicted instructions take 2 cycles (taken)/1 cycle (not taken) of latency. Misprediction latency is 12 cycles.
 * Prediction unsupported methods for PC changes takes 12 cycles.
@@ -149,19 +160,19 @@ Upon calls to
 
 the potential return address is pushed to a stack in the processor.
 
-On encountering these instructions:
+On encountering these ARM instructions (or equivalent 16-bit instructions):
 
 * `BX LR`,
 * `MOV PC, LR`
 * `LDM` with PC in register list.
 
-the CPU treats them as function returns and will pop return address of the stack much earlier. This results in some performance improvement and reduced branch latency. Correctly predicted return takes 2 cycles, while incorrectly or unpredicted returns take 12 cycles.
+the CPU treats them as function returns and will pop return address of the stack much earlier. This results in some performance improvement and reduced branch latency. Correctly predicted return takes 2 cycles, while incorrectly or unpredicted returns takes 12 cycles.
 
 ### 1.2. External Bus Interface
 
 ZAP features a common 32-bit Wishbone B3 bus to access external resources (like DRAM/SRAM/IO etc). The processor can generate byte, halfword or word accesses. The processor uses CTI and BTE signals to allow the bus to function more efficiently. Registered feedback mode is supported for higher performance. Note that multiprocessing is not readily supported and hence, SWAP instructions do not actually perform locked transfers.
 
-**The bus interface is efficient for burst transfers and hence, cache must be enabled as soon as possible for good performance.**
+**The bus interface is efficient for burst transfers and hence, cache and MMU must be enabled as soon as possible for good performance.**
 
 ### 1.3. System Control
 
@@ -285,6 +296,8 @@ Note that all parameters should be 2^n. Cache size should be multiple of line si
 
 ### 1.5. ARM Implementation Options
 
+ZAP implements the integer instruction set specified in ARMV5TE. T refers to the Thumb instruction set and E  refers to the enhanced DSP extensions. ZAP does not implement the optional floating point extension specified in Part C of \[1].&#x20;
+
 #### 1.5.1. Big and Little Endian
 
 ZAP only supports little endian byte ordering.
@@ -310,6 +323,8 @@ The ZAP implements the ARM DSP-enhanced instruction set (ARMV5E). There are new 
 * QDADD doubles and saturates one of the input registers then add and saturate.
 * QSUB subtracts two registers and saturates the result if an overflow occurred.
 * QDSUB doubles and saturates one of the input registers then subtract and saturate.
+
+_**All of the multiplication and MAC operations in ZAP take a fixed 4 clock cycles (irrespective of 32x32=32, 32x32=64, 16x16+32 etc). Additional latency of 1 cycle is incurred if the result is required in the immediate next instruction.**_
 
 The ZAP also implements LDRD, STRD and PLD instructions with the following implementation notes:&#x20;
 
@@ -340,11 +355,20 @@ ZAP implements a direct mapped cache and TLB. Separate caches and TLBs exist for
 
 ZAP implements the FCSE.
 
+#### 1.5.11. Cache/MMU Enabling
+
+ZAP allows the cache and MMU to have these combinations:&#x20;
+
+| MMU | Cache | Behavior                                                   |
+| --- | ----- | ---------------------------------------------------------- |
+| ON  | OFF   | All pages are treated as uncacheable. C bit is IGNORED.    |
+| ON  | ON    | **Caching and paging enabled. Recommended configuration.** |
+| OFF | OFF   | VA = PA. All addresses are treated as uncacheable.         |
+| OFF | ON    | All pages are treated as uncacheable. C bit is IGNORED.    |
+
 ## 2. Project Environment (Docker)
 
 The project environment requires Docker to be installed at your site. Click [here](https://docs.docker.com/engine/install/) for instructions on how to install Docker. The steps here assume that the user is a part of the `docker` group.
-
-I (Revanth Kamaraj) would like to thank Erez Binyamin for adding Docker support to allow the core to be used more widely.
 
 ### 2.1. Running TCs
 
@@ -448,7 +472,7 @@ first.
 
 \[1] ARM Architecture Specification (ARM DDI 0100E)
 
-### 4. Mentions
+### 4. Project Mentions
 
 The ZAP project was mentioned [here](https://researchgate.net/publication/347558929\_Free\_ARM\_Compatible\_Softcores\_on\_FPGA)
 
@@ -457,6 +481,10 @@ The ZAP project was mentioned [here](https://researchgate.net/publication/347558
 Thanks to [Erez Binyamin](https://github.com/ErezBinyamin) for adding Docker infrastructure support.
 
 Thanks to [Bharath Mulagondla](https://github.com/bharathmulagondla) and [Akhil Raj Baranwal](https://github.com/arbaranwal) for pointing out bugs in the design.
+
+The testbench UART core in `src/testbench/uart.v` is taken from the [UART-16550](https://github.com/freecores/uart16550) project.
+
+The testbench assembly tests in `src/ts/arm_test*/arm_test*`` `_``_ is based on [this](https://github.com/freecores/arm4u/blob/master/test\_program/arm\_test.s) file from the ARM4U project.
 
 ### 6. License
 
