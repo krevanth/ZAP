@@ -13,7 +13,7 @@ This project follows the [all-contributors](https://github.com/all-contributors/
 
 ### 1. Introduction
 
-The ZAP is a high performance ARMV5TE compliant processor. It is intended to be used in FPGA projects that need a high performance ARMV5TE soft processor core. Most aspects of the processor can be configured through HDL parameters. The defaullt processor specification is as follows:
+The ZAP is a high performance ARMV5TE compliant processor. It is intended to be used in FPGA projects that need a high performance ARMV5TE soft processor core. Most aspects of the processor can be configured through HDL parameters. The default processor specification is as follows:
 
 | **Property**                                                                                                                                                                                                                                                                                                                                   | **Value**                                                                                                                                                           |
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -35,6 +35,7 @@ The ZAP is a high performance ARMV5TE compliant processor. It is intended to be 
 | Fetch Buffer                                                                                                                                                                                                                                                                                                                                   | FIFO, 16 x 32-bit.                                                                                                                                                  |
 | DMIPS@MHz Rating                                                                                                                                                                                                                                                                                                                               | 182DMIPS@140MHz                                                                                                                                                     |
 | Bus Interface                                                                                                                                                                                                                                                                                                                                  | Unified 32-Bit Wishbone B3 bus with CTI and BTE signals.                                                                                                            |
+| <p>FPGA Resource Utilization with default configuration when synthesized to 140MHz. This includes caches, TLBs and MMUs as well.<br>(Artix-7 FPGA  xc7a75tcsg324-3)</p>                                                                                                                                                                        | <p>23K LUTs<br>116 LUTRAMs<br>15.3K FFs<br>29 BRAMs<br>4 DSP Blocks</p>                                                                                             |
 
 A simplified block diagram of the ZAP pipeline is shown below:
 
@@ -173,7 +174,13 @@ ZAP features a common 32-bit Wishbone B3 bus to access external resources (like 
 
 Please refer to ref \[1] for CP15 CSR architectural requirements. The ZAP implements the following software accessible registers within its CP15 coprocessor.
 
-NOTE: Cleaning and flushing cache and TLB is only supported for the entire memory. Selective flushing and cleaning of TLB will result in the entire TLB being flushed/cleaned. This is permitted as per the arch spec.
+NOTE: Cleaning and flushing cache and TLB is only supported for the entire memory.&#x20;
+
+Selective flushing of TLB will result in the entire TLB being flushed.&#x20;
+
+Selective cleaning of TLB will result in the entire TLB being cleaned.&#x20;
+
+The above rules are permitted as per the arch spec.
 
 * Register 1: Cache and MMU control.
 * Register 2: Translation Base.
@@ -229,7 +236,7 @@ Note that all parameters should be 2^n. Cache size should be multiple of line si
 | i\_irq     | Interrupt. Level Sensitive. Signal is internally synced.                                                                                            |
 | i\_fiq     | Fast Interrupt. Level Sensitive. Signal is internally synced.                                                                                       |
 | o\_wb\_cyc | Wishbone CYC signal.                                                                                                                                |
-| o\_wb\_stb | WIshbone STB signal.                                                                                                                                |
+| o\_wb\_stb | Wishbone STB signal.                                                                                                                                |
 | o\_wb\_adr | Wishbone address signal. (32)                                                                                                                       |
 | o\_wb\_we  | Wishbone write enable signal.                                                                                                                       |
 | o\_wb\_dat | Wishbone data output signal. (32)                                                                                                                   |
