@@ -4,13 +4,6 @@
 
 **By Revanth Kamaraj <**[**revanth91kamaraj@gmail.com**](mailto:revanth91kamaraj@gmail.com)**>**
 
-
-
-| <p><a href="https://github.com/krevanth"><img src="https://avatars.githubusercontent.com/u/16576547?v=4?s=100" alt="" data-size="original"><br><strong>Revanth Kamaraj</strong></a><br><br><strong>Lead, Processor Microarchitect, RTL Design, Coding, etc.</strong></p> | <p><a href="https://github.com/ErezBinyamin"><img src="https://avatars.githubusercontent.com/u/22354670?v=4?s=100" alt="" data-size="line"><br><strong>Erez</strong></a><strong></strong><br><strong></strong><br><strong></strong>Docker Infra <br></p> | <p><a href="https://github.com/bharathmulagondla"><img src="https://avatars.githubusercontent.com/u/38918983?v=4?s=100" alt="" data-size="line"><br><strong>bharathm</strong></a><br></p><p>Bug Reporter<br></p> | <p><a href="https://arbaranwal.github.io"><img src="https://avatars.githubusercontent.com/u/22285086?v=4?s=100" alt="" data-size="line"><br><strong>Akhil Raj Baranwal</strong></a><br></p><p>Bug Reporter</p><p><strong></strong></p> |
-| :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
-
-
-
 ### 1. Introduction
 
 The ZAP is a high performance ARMV5TE compliant processor. It is intended to be used in FPGA projects that need a high performance ARMV5TE soft processor core. Most aspects of the processor can be configured through HDL parameters. The default processor specification is as follows:
@@ -459,7 +452,11 @@ first.
 
 The ZAP project was mentioned [here](https://researchgate.net/publication/347558929\_Free\_ARM\_Compatible\_Softcores\_on\_FPGA)
 
-### 5. License
+### 5. Special Thanks
+
+Thanks to Erez Binyamin for adding Docker support.
+
+### 6. License
 
 Copyright (C) 2016-2022 Revanth Kamaraj
 
