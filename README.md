@@ -8,7 +8,7 @@ coverY: -974.6192893401013
 
 **ZAP : An Open Source High Performance ARM Processor for FPGA (ARMV5TE Compatible)**
 
-**By** [**Revanth Kamaraj**](https://app.gitbook.com/u/CQGqvQfsGSfGo4tFbL0JhTrxn8D2) **<**[**revanth91kamaraj@gmail.com**](mailto:revanth91kamaraj@gmail.com)**>**
+**By**[ **Revanth Kamaraj** ](https://github.com/krevanth)**<**[**revanth91kamaraj@gmail.com**](mailto:revanth91kamaraj@gmail.com)**>**
 
 ### 1. Introduction
 
