@@ -441,8 +441,8 @@ first.
 * The XDC assumes a 200MHz clock for an Artix 7 FPGA part.
 * Input assume they receive data from a flop with Tcq = 50% of clock period.
 * Outputs assume they are driving a flop with Tsu = 2ns Th=1ns.
-* Setting FPGA synthesis clock to an unreasonably high frequency may result in better timing closure (but will result in a larger design).&#x20;
-* The tool should be able to meet 140MHz on the Artix 7 FPGA.
+* Setting FPGA synthesis clock to an unreasonably high frequency may result in better timing closure (but will result in a larger design). XDC is tuned to achieve higher clock speeds.
+* The tool should be able to meet 138MHz on the Artix 7 FPGA.
 
 ### 3. References
 
