@@ -454,7 +454,9 @@ The ZAP project was mentioned [here](https://researchgate.net/publication/347558
 
 ### 5. Special Thanks
 
-Thanks to Erez Binyamin for adding Docker support.
+Thanks to [Erez Binyamin](https://github.com/ErezBinyamin) for adding Docker infrastructure support.
+
+Thanks to [Bharath Mulagondla](https://github.com/bharathmulagondla) and [Akhil Raj Baranwal](https://github.com/arbaranwal) for pointing out bugs in the design.
 
 ### 6. License
 
