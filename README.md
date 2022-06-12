@@ -2,14 +2,12 @@
 
 **By Revanth Kamaraj <**[**revanth91kamaraj@gmail.com**](mailto:revanth91kamaraj@gmail.com)**>**
 
-### Project Author and Contributors ✨
-
 
 
 | <p><a href="https://github.com/krevanth"><img src="https://avatars.githubusercontent.com/u/16576547?v=4?s=100" alt=""><br><strong>Revanth Kamaraj</strong></a><br><a href="https://github.com/krevanth/ZAP/commits?author=krevanth">💻</a> <a href="https://github.com/krevanth/ZAP/commits?author=krevanth">📖</a> <a href="./#ideas-krevanth">🤔</a> <a href="./#infra-krevanth">🚇</a> <a href="https://github.com/krevanth/ZAP/commits?author=krevanth">⚠️</a> <a href="./#tool-krevanth">🔧</a></p> | <p><a href="https://github.com/ErezBinyamin"><img src="https://avatars.githubusercontent.com/u/22354670?v=4?s=100" alt=""><br><strong>Erez</strong></a><br><a href="./#infra-ErezBinyamin">🚇</a></p> | <p><a href="https://github.com/bharathmulagondla"><img src="https://avatars.githubusercontent.com/u/38918983?v=4?s=100" alt=""><br><strong>bharathm</strong></a><br><a href="https://github.com/krevanth/ZAP/commits?author=bharathmulagondla">⚠️</a></p> | <p><a href="https://arbaranwal.github.io"><img src="https://avatars.githubusercontent.com/u/22285086?v=4?s=100" alt=""><br><strong>Akhil Raj Baranwal</strong></a><br><a href="./#ideas-arbaranwal">🤔</a></p> |
 | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
 
-This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind is welcome !
+
 
 ### 1. Introduction
 
