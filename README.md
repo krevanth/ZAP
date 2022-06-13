@@ -484,7 +484,7 @@ Thanks to [Bharath Mulagondla](https://github.com/bharathmulagondla) and [Akhil 
 
 The testbench UART core in `src/testbench/uart.v` is taken from the [UART-16550](https://github.com/freecores/uart16550) project.
 
-The testbench assembly tests in `src/ts/arm_test*/arm_test*`` `_``_ is based on [this](https://github.com/freecores/arm4u/blob/master/test\_program/arm\_test.s) file from the ARM4U project.
+The testbench assembly tests in `src/ts/arm_test*/arm_test*` __ is based on [this](https://github.com/freecores/arm4u/blob/master/test\_program/arm\_test.s) file from the ARM4U project.
 
 ### 6. License
 
