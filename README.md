@@ -374,13 +374,13 @@ The project environment requires Docker to be installed at your site. Click [her
 
 To run all/a specific TC, do:
 
-> make \[TC=test\_name]
+> `make [TC=test_name]`
 
 See `src/ts` for a list of test names. Not providing a testname will run all tests.
 
 To remove existing object/simulation/synthesis files, do:
 
-> make clean
+> `make clean`
 
 ### 2.2. Adding TCs
 
@@ -391,7 +391,7 @@ To remove existing object/simulation/synthesis files, do:
 * Add a C file (.c), an assembly file (.s) and a linker script (.ld).
 *   Create a `Config.cfg`. This is a Perl hash that must be edited to meet requirements. Note that the registers in the `REG_CHECK` are indexed registers. To find those, please do:
 
-    > cat src/rtl/zap\_localparams.svh | grep PHY
+    > `cat src/rtl/zap_localparams.svh | grep PHY`
 
     For example, if a check requires a certain value of R13 in IRQ mode, the hash will mention the register number as r25.
 * Here is a sample `Config.cfg`:
@@ -448,7 +448,7 @@ To run RTL lint, simply do:
 
 Synthesis scripts can be found here: `src/syn/`
 
-Assuming you have Vivado installed, please do:
+Assuming you have Vivado installed, please do (in project root directory):
 
 > make syn
 
@@ -462,10 +462,10 @@ first.
 
 #### 2.4.1. XDC Setup (Vivado FPGA Synthesis)
 
-* The XDC assumes a 200MHz clock for an Artix 7 FPGA part.
+* The XDC assumes a 200MHz clock for an Artix 7 FPGA part with -3 speed grade.
 * Input assume they receive data from a flop with Tcq = 50% of clock period.
 * Outputs assume they are driving a flop with Tsu = 2ns Th=1ns.
-* Setting FPGA synthesis clock to an unreasonably high frequency may result in better timing closure (but will result in a larger design). XDC is tuned to achieve higher clock speeds.
+* Setting FPGA synthesis clock to an unreasonably high FPGA design frequency may result in better timing closure (but will result in a larger FPGA design).
 
 ### 3. References
 
@@ -475,7 +475,7 @@ first.
 
 The ZAP project was mentioned [here](https://researchgate.net/publication/347558929\_Free\_ARM\_Compatible\_Softcores\_on\_FPGA)
 
-### 5. Special Thanks
+### 5. Acknowledgements
 
 Thanks to [Erez Binyamin](https://github.com/ErezBinyamin) for adding Docker infrastructure support.
 
@@ -483,7 +483,7 @@ Thanks to [Bharath Mulagondla](https://github.com/bharathmulagondla) and [Akhil 
 
 The testbench UART core in `src/testbench/uart.v` is taken from the [UART-16550](https://github.com/freecores/uart16550) project.
 
-The testbench assembly tests in `src/ts/arm_test*/arm_test*` __ is based on [this](https://github.com/freecores/arm4u/blob/master/test\_program/arm\_test.s) file from the ARM4U project.
+The testbench assembly code in `src/ts/arm_test*/arm_test*.s` is based on [this](https://github.com/freecores/arm4u/blob/master/test\_program/arm\_test.s) assembly file from the ARM4U project.
 
 ### 6. License
 
