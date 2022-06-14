@@ -760,7 +760,7 @@ begin: flags_bp_feedback
                                         // i.e., MOV and ADD instructions which
                                         // destine to PC.
                                         //
-                                        if ( opcode == {2'd0, ADD} ? ({1'd0, i_ppc_ff} == {1'd0, rm} + {1'd0, rn}) : 
+                                        if ( opcode == {2'd0, ADD} ? (i_ppc_ff == ((rm + rn) & 32'hFFFF_FFFF)) : 
                                              opcode == {2'd0, MOV} ? (i_ppc_ff == rm) : 1'd0 )  
                                         begin
                                                 // No mode change, do not change anything.
