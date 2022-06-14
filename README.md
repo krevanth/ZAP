@@ -1,6 +1,6 @@
 # The ZAP Processor (ARM® V5TE  Compatible)
 
-**ZAP : An Open Source High Performance ARM**® **Processor for FPGA (ARMV5TE Compatible)**
+**ZAP : An Open Source High Performance ARM**® **Processor for FPGA (ARM**® **V5TE Compatible)**
 
 **By**[ **Revanth Kamaraj** ](https://github.com/krevanth)**<**[**revanth91kamaraj@gmail.com**](mailto:revanth91kamaraj@gmail.com)**>**
 
@@ -10,7 +10,7 @@ The ZAP is a high performance ARM® V5TE compliant processor. It is intended to 
 
 | **Property**               | **Value**                                                                                                                                                                                                                                  |
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Fmax@FPGA                  | <p>Artix7   ->  143MHz@xc7a75tcsg324-3 <br></p>                                                                                                                                                                                            |
+| Fmax@FPGA                  | <p>Artix®7   ->  143MHz@xc7a75tcsg324-3 <br></p>                                                                                                                                                                                           |
 | Pipeline Depth             | 17                                                                                                                                                                                                                                         |
 | Issue and Execution Width  | Single issue, in order core, with out-of-order completion for some loads/stores that miss in cache.                                                                                                                                        |
 | Data Width                 | 32                                                                                                                                                                                                                                         |
@@ -21,7 +21,7 @@ The ZAP is a high performance ARM® V5TE compliant processor. It is intended to 
 | L1 D-Cache                 | <p>16KB Direct Mapped VIVT Cache<br>64 Byte Cache Line</p>                                                                                                                                                                                 |
 | I-TLB Structure            | <p>Direct mapped. 512 entries divided into <br>- 128 entry section TLB<br>- 128 entry large page TLB<br>- 128 entry small page TLB<br>- 128 entry tiny page TLB</p>                                                                        |
 | D-TLB Structure            | <p>Direct mapped. 512 entries divided into <br>- 128 entry section TLB<br>- 128 entry large page TLB<br>- 128 entry small page TLB<br>- 128 entry tiny page TLB</p>                                                                        |
-| Branch Prediction          | <p>Bimodal Predictor + BTB. Direct Mapped.<br>1K entries in Thumb state. <br>512 entries in ARM state. </p>                                                                                                                                |
+| Branch Prediction          | <p>Bimodal Predictor + BTB. Direct Mapped.<br>1K entries in Thumb® state. <br>512 entries in ARM® state. </p>                                                                                                                              |
 | RAS Depth                  | 4 deep return address stack.                                                                                                                                                                                                               |
 | Branch latency             | <p>12 or 18 cycles (wrong prediction or unrecognized branch)<br>3 cycles (taken, correctly predicted)<br>1 cycle    (not-taken, correctly predicted)<br>12 cycles (32-bit/16-bit switch)<br>18 cycles (Exception/Interrupt Entry/Exit)</p> |
 | Store Buffer               | FIFO, 16 x 32-bit.                                                                                                                                                                                                                         |
@@ -52,7 +52,7 @@ ZAP includes several microarchitectural enhancements to improve instruction thro
 
 ZAP uses a 17 stage execution pipeline to increase the speed of the flow of instructions to the processor. The 17 stage pipeline consists of Address Generator, TLB Check, Cache Access, Memory, Fetch, Instruction Buffer, Thumb Decoder, Pre-Decoder, Decoder, Issue, Shift, Execute, TLB Check, Cache Access, Memory and Writeback.
 
-> To maintain compatibility with the ARMv5TE standard, reading the program counter (PC) will return PC + 8 when read.
+> To maintain compatibility with the ARM® v5TE standard, reading the program counter (PC) will return PC + 8 when read.
 
 During normal operation:
 
@@ -221,7 +221,7 @@ Note that all parameters should be 2^n. Cache size should be multiple of line si
 | Parameter                   | Default | Description                                                                |
 | --------------------------- | ------- | -------------------------------------------------------------------------- |
 | BP\_ENTRIES                 | 1024    | Predictor RAM depth. Each RAM row also contains the branch target address. |
-| FIFO\_DEPTH                 | 4       | Command FIFO depth.                                                        |
+| FIFO\_DEPTH                 | 16      | Command FIFO depth.                                                        |
 | STORE\_BUFFER\_DEPTH        | 16      | Depth of the store buffer. Keep multiple of cache line size in bytes / 4.  |
 | DATA\_SECTION\_TLB\_ENTRIES | 128     | Section TLB entries (Data).                                                |
 | DATA\_LPAGE\_TLB\_ENTRIES   | 128     | Large page TLB entries (Data).                                             |
@@ -477,7 +477,7 @@ first.
 
 ### 3. References
 
-\[1] [ARM Architecture Specification (ARM DDI 0100E)](https://www.intel.com/content/dam/support/us/en/programmable/support-resources/bulk-container/pdfs/literature/third-party/ddi0100e-arm-arm.pdf)
+\[1] [ARM](https://www.intel.com/content/dam/support/us/en/programmable/support-resources/bulk-container/pdfs/literature/third-party/ddi0100e-arm-arm.pdf)®[ Architecture Specification (ARM](https://www.intel.com/content/dam/support/us/en/programmable/support-resources/bulk-container/pdfs/literature/third-party/ddi0100e-arm-arm.pdf)®[ DDI 0100E)](https://www.intel.com/content/dam/support/us/en/programmable/support-resources/bulk-container/pdfs/literature/third-party/ddi0100e-arm-arm.pdf)
 
 ### 4. Mentions
 
@@ -491,7 +491,7 @@ Thanks to [Bharath Mulagondla](https://github.com/bharathmulagondla) and [Akhil 
 
 The testbench UART core in `src/testbench/uart.v` is taken from the [UART-16550](https://github.com/freecores/uart16550) project.
 
-The testbench assembly code in `src/ts/arm_test*/arm_test*.s` is based on [this](https://github.com/freecores/arm4u/blob/master/test\_program/arm\_test.s) assembly file from the ARM4U project.
+The testbench assembly code in `src/ts/arm_test*/arm_test*.s` is based on [this](https://github.com/freecores/arm4u/blob/master/test\_program/arm\_test.s) external assembly file.
 
 ### 6. Trademarks&#x20;
 
