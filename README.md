@@ -43,9 +43,10 @@ ZAP includes several microarchitectural enhancements to improve instruction thro
 * A parameterizable store buffer that helps buffer stores when the cache is disabled or if the data access is uncacheable. When the cache is enabled and data is cacheable, the store buffer helps buffer cache clean operations. This is slightly different from a write buffer.
 * A 4-state bimodal branch predictor that predicts the outcome of immediate branches and branch-and-link instructions. ZAP employs a BTB (Branch Target Buffer) to predict branch outcomes early.&#x20;
 * A 4 deep return address stack that stores the predicted return address of branch and link instructions function return. When a `BX LR`, `MOV PC,LR` or a block load with PC in register list, the processor pops off the return address. Note that switching between ARM® and Thumb® state has a penalty of 12 cycles.
-* The ability to execute most ARM instructions in a single clock cycle. The only instructions that take multiple cycles include branch-and-link, 64-bit loads and stores, block loads and stores, swap instructions and `BLX2`.
+* The ability to execute most ARM instructions in a single clock cycle. The only instructions that take multiple cycles include branch-and-link, 64-bit loads and stores, block loads and stores, swap instructions and `BLX/BLX2`.
 * A highly efficient superpipeline with dual feedback networks to minimize pipeline stalls as much as possible while allowing for high clock frequencies. A deep 17 stage superpipelined architecture that allows the CPU to run at relatively high FPGA speeds.
-* Support for single cycle saturating additions and subtractions for better signal processing performance. Result is available for immediate use in the next instruction itself. Do note that multiplication/MAC operations takes 3 cycles per operation (+1 is result is immediately used). Note that the multiplier inside the ZAP processor is not pipelined.
+* Support for single cycle saturating additions and subtractions with the result being available for immediate use in the next instruction itself.&#x20;
+  * **NOTE:** Multiplication/MAC operations takes 3 cycles per operation (+1 is result is immediately used). Note that the multiplier inside the ZAP processor is not pipelined.&#x20;
 * The abort model is base restored. This allows for the implementation of a demand based paging system if supporting software is available.
 
 ### 1.1. Superpipelined Microarchitecture
@@ -70,9 +71,10 @@ During normal operation:
 * The instruction before that is being decoded.
 * The instruction before that is being sequenced to micro-ops (possibly).
   * Most of the time, 1 ARM® instruction = 1 micro-op.
-  * The only ARM instructions requiring more than 1 micro-op generation are `BLX, LDM, STM, SWAP, LDR loading to PC` and LONG MULTIPLY (They generate a 32-bit result per micro-op).
-  * All other ARM instruction decode to just a single micro-op.
-  * This stage also causes branches predicted as taken to be actually executed. The latency for a successfully predicted taken branch is 6 cycles.
+  * The only ARM instructions requiring more than 1 micro-op generation are `BLX, BL, LDM, STM, SWAP, LDR loading to PC` and long multiply variants (They generate a 32-bit result per micro-op).
+  * All other ARM®/Thumb® instructions are decode to just a single micro-op.
+  * Most micro-ops can be execute in a single cycle.
+  * This stage also causes branches predicted as taken to be actually executed. The latency for a successfully predicted taken branch is 3 cycles.
 * The instruction before that is being being decompressed. This is only required in the Thumb state, else the stage simply passes the instructions on.
 * The instruction before that is popped off the instruction buffer.
 * The instruction before that is pushed onto the instruction buffer. Branches\
@@ -336,7 +338,7 @@ The ZAP implements the ARM DSP-enhanced instruction set (ARM® V5E). There are n
 * `QSUB` subtracts two registers and saturates the result if an overflow occurred.
 * `QDSUB` doubles and saturates one of the input registers then subtract and saturate.
 
-_**All of the multiplication and MAC operations in ZAP take a fixed 3 clock cycles (irrespective of 32x32=32, 32x32=64, 16x16+32 etc). Additional latency of 1 cycle is incurred if the result is required in the immediate next instruction.**_
+**NOTE:** All of the multiplication and MAC operations in ZAP take a fixed 3 clock cycles (irrespective of 32x32=32, 32x32=64, 16x16+32 etc). Additional latency of 1 cycle is incurred if the result is required in the immediate next instruction. A further additional latency of 1 cycle is incurred if two registers must be updated (long multiply/MAC operations).
 
 The ZAP also implements `LDRD`, `STRD` and `PLD` instructions with the following implementation notes:&#x20;
 
@@ -379,6 +381,10 @@ ZAP allows the cache and MMU to have these combinations:&#x20;
 | ON  | ON    | **Caching and paging enabled. Recommended configuration.** |
 | OFF | OFF   | VA = PA. All addresses are treated as uncacheable.         |
 | OFF | ON    | All pages are treated as uncacheable. C bit is IGNORED.    |
+
+#### 1.5.12. Coprocessor Interface
+
+ZAP internally implements an internal CP15 coprocessor using its internal bus mechanism. The coprocessor interface is internal to the ZAP processor and is not exposed. Thus, ZAP only has access to its internal coprocessor 15. External coprocessors cannot be attached to the processor.
 
 ## 2. Project Environment (Docker®)
 
