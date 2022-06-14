@@ -88,7 +88,7 @@ The deep pipeline, although uses more resources, allows the ZAP to run at high c
 
 The ZAP pipeline has an efficient automatic dual forwarding network with interlock detection hardware. This is done automatically and no software intervention is required. This complex feedback logic guarantees that almost all micro-ops/instructions execute at a rate of 1 every cycle.
 
-The only times a pipeline stalls is when (assume 100% cache hit rate):
+During typical code execution, the only times a pipeline stalls is when (assume 100% cache hit rate):
 
 * An instruction uses a register that is a data (not pointer) destination for a load instruction within 6 cycles (assuming a load hit).
 * The pipeline is executing any multiply/MAC instruction (3 cycle latency).
