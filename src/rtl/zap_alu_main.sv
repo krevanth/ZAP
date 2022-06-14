@@ -751,8 +751,16 @@ begin: flags_bp_feedback
                                 end
                                 else
                                 begin
+                                        //
                                         // Check predicted PC based on opcode...
-                                        if ( opcode == {2'd0, ADD} ? (i_ppc_ff == rm + rn) : 
+                                        // Two ways to branch:
+                                        // First line is for B/BL/ADD.
+                                        // Second line is for MOV PC, LR
+                                        // ALU will only check these conditions.
+                                        // i.e., MOV and ADD instructions which
+                                        // destine to PC.
+                                        //
+                                        if ( opcode == {2'd0, ADD} ? ({1'd0, i_ppc_ff} == {1'd0, rm} + {1'd0, rn}) : 
                                              opcode == {2'd0, MOV} ? (i_ppc_ff == rm) : 1'd0 )  
                                         begin
                                                 // No mode change, do not change anything.

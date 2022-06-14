@@ -469,15 +469,27 @@ begin:bprblk1
                   || 
                    // As is MOV PC, LR
                   (
-                   arm_instruction[34:0] ==?  { 3'd0, 4'b????, 2'b00, 1'd0, MOV, 1'd0, 
-                                                4'd0, ARCH_PC, 8'd0, 4'd15 }
+                   ( arm_instruction[34:0] ==?  { 3'd0, 4'b????, 2'b00, 1'd0, MOV, 1'd0, 
+                                                4'd0, ARCH_PC, 8'd0, 4'd15 } ) 
+                   && 
+                   arm_instruction_valid
                   ) ||
                   // As is load multiple with PC in register list.
                   (
                    arm_instruction[27:25] == 3'b100 && // LDM
                    arm_instruction[20]              && // Load
+                   arm_instruction_valid            &&
                    arm_instruction[15]                 // PC in reglist.
-                  ) 
+                  ) ||
+                  // As is load to PC from SP index.
+                  (
+                        (arm_instruction[31:0] ==? LS_INSTRUCTION_SPECIFIED_SHIFT ||
+                         arm_instruction[31:0] ==? LS_IMMEDIATE)                  &&
+                         arm_instruction[15:12] == ARCH_PC                        && 
+                         arm_instruction[20]                                      &&
+                         arm_instruction_valid                                    &&
+                         arm_instruction[19:16] == ARCH_SP
+                  )
                 )
         begin
                 dbg = 1'd1;
@@ -507,6 +519,28 @@ begin:bprblk1
                         w_pc_from_decode    = 32'd0;
                         ppc_nxt             = skid_pc_ff + (i_cpu_mode_t ? 32'd2 : 32'd4);
                 end
+        end
+        else if ( 
+                         arm_instruction_valid                                    && 
+                        (arm_instruction[31:0] ==? LS_INSTRUCTION_SPECIFIED_SHIFT ||
+                         arm_instruction[31:0] ==? LS_IMMEDIATE)                  &&
+                         arm_instruction[15:12] == ARCH_PC                        && 
+                         arm_instruction[20]                                
+                )
+        begin
+                // Jump table. Do what the BTB says. Dont correct it.
+        end
+        else if (
+                        // Data processing instructions for MOV/ADD with
+                        // PC as destination. CPU predicts that with a jump.
+                        arm_instruction_valid                                               &&
+                        arm_instruction[27:26] == 2'b00                                     &&
+                        arm_instruction[15:12] == ARCH_PC                                   &&
+                        (arm_instruction[25] || !arm_instruction[4] || !arm_instruction[7]) &&
+                        arm_instruction[24:21] inside {ADD, MOV}
+                )
+        begin
+                // Jump table. Do what the BTB says. Dont correct it.
         end
         else if (arm_instruction_valid) // Predict non supported as strongly not taken.
         begin

@@ -126,6 +126,7 @@ localparam BLX1_ARM_S5  = 13;
 localparam BLX2_ARM_S0  = 14;
 localparam LDRD_STRD_S0 = 16;
 localparam LDRD_STRD_S1 = 17;
+localparam LDR_TO_PC_S0 = 18;
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -154,6 +155,22 @@ begin:blk_a
         o_stall_from_decode     = 1'd0;
 
         case ( state_ff )
+                LDR_TO_PC_S0:
+                begin
+                        o_stall_from_decode = 1'd0;
+                        o_instruction_valid = 1'd1;
+
+                        // MOV PC, ARCH_DUMMY_REG0
+                        o_instruction[31:0] = { cc, 2'b00, 1'd0, MOV, 1'd0, 4'd0, ARCH_PC, 12'd0 };
+                        {o_instruction[`ZAP_DP_RB_EXTEND], o_instruction[`ZAP_DP_RB]}
+                                      = ARCH_DUMMY_REG0; 
+
+                        o_irq = 1'd0;
+                        o_fiq = 1'd0;
+
+                        state_nxt = IDLE;
+                end
+
                 BLX1_ARM_S0: // SCONST = ($signed(constant) << 2) + ( H << 1 ))
                 begin
                         o_stall_from_decode = 1'd1;
@@ -556,6 +573,22 @@ begin:blk_a
                                 // Allow interrupts to pass
                                 o_irq = i_irq;
                                 o_fiq = i_fiq;
+                        end
+                        else if ( (i_instruction[31:0] ==? LS_INSTRUCTION_SPECIFIED_SHIFT ||
+                                   i_instruction[31:0] ==? LS_IMMEDIATE)                  &&
+                                   i_instruction[15:12] == ARCH_PC                        && 
+                                   i_instruction[20] ) 
+                        // Load to PC. First load to local, then to PC.
+                        begin
+                                o_irq = i_irq;
+                                o_fiq = i_fiq;
+
+                                o_stall_from_decode = 1'd1;
+                                o_instruction_valid = 1'd1;
+                                {o_instruction[`ZAP_SRCDEST_EXTEND], o_instruction[`ZAP_SRCDEST]}
+                                 = ARCH_DUMMY_REG0;
+
+                                state_nxt = LDR_TO_PC_S0;
                         end
                         else
                         begin
