@@ -26,7 +26,7 @@ The ZAP is a high performance ARM® V5TE compliant processor. It is intended to 
 | Branch latency                                     | <p>12 or 18 cycles (wrong prediction or unrecognized branch)<br>3 cycles (taken, correctly predicted)<br>1 cycle    (not-taken, correctly predicted)<br>12 cycles (32-bit/16-bit switch)<br>18 cycles (Exception/Interrupt Entry/Exit)</p> |
 | Store Buffer                                       | FIFO, 16 x 32-bit.                                                                                                                                                                                                                         |
 | Fetch Buffer                                       | FIFO, 16 x 32-bit.                                                                                                                                                                                                                         |
-| DMIPS@MHz Rating                                   | 190DMIPS@143MHz                                                                                                                                                                                                                            |
+| DMIPS@MHz Rating                                   | 180DMIPS@143MHz                                                                                                                                                                                                                            |
 | Bus Interface                                      | Unified 32-Bit Wishbone B3 bus with CTI and BTE signals.                                                                                                                                                                                   |
 | FPGA Resource Utilization                          | <p>23K LUTs<br>116 LUTRAMs<br>15.3K FFs<br>29 BRAMs<br>4 DSP Blocks</p>                                                                                                                                                                    |
 
@@ -71,7 +71,7 @@ During normal operation:
 * The instruction before that is being decoded.
 * The instruction before that is being sequenced to micro-ops (possibly).
   * Most of the time, 1 ARM® instruction = 1 micro-op.
-  * The only ARM instructions requiring more than 1 micro-op generation are `BLX, BL, LDM, STM, SWAP, LDR loading to PC` and long multiply variants (They generate a 32-bit result per micro-op).
+  * The only ARM instructions requiring more than 1 micro-op generation are `BLX, BL, LDM, STM, SWAP, LDRD, STRD, LDR loading to PC` and long multiply variants (They generate a 32-bit result per micro-op).
   * All other ARM®/Thumb® instructions are decode to just a single micro-op.
   * Most micro-ops can be execute in a single cycle.
   * This stage also causes branches predicted as taken to be actually executed. The latency for a successfully predicted taken branch is 3 cycles.
