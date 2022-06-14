@@ -88,12 +88,18 @@ The deep pipeline, although uses more resources, allows the ZAP to run at high c
 
 The ZAP pipeline has an efficient automatic dual forwarding network with interlock detection hardware. This is done automatically and no software intervention is required. This complex feedback logic guarantees that almost all micro-ops/instructions execute at a rate of 1 every cycle.
 
-During typical code execution, the only times a pipeline stalls is when (assume 100% cache hit rate):
+Most of the time, the pipeline is able to process 1 instruction per clock cycle. The only times a pipeline stalls (bubbles inserted) is when (assume 100% cache hit rate and 100% branch prediction rate):
 
-* An instruction uses a register that is a data (not pointer) destination for a load instruction within 6 cycles (assuming a load hit).
-* The pipeline is executing any multiply/MAC instruction (3 cycle latency).
-  * An instruction that uses a register that is a destination for multiply/MAC adds +1 to the multiply/MAC operation's latency.
-* Two back to back instructions require non-zero shift and the second instruction's operand overlaps with the first instruction's destination.
+* An instruction uses a register that is a data (not pointer) destination for an `LDR`/`LDM` instruction within 6 cycles.
+* Two back to back instructions that require non-zero shift and the second instruction's operand overlaps with the first instruction's destination.
+* The pipeline is executing any multiply/MAC instruction:
+  * Introduces a 3 cycle bubble into the pipeline if  a single register is written out. (+1 if two registers are written out)
+  * An instruction that uses a register that is/are destination(s) for multiply/MAC adds +1 to the multiply/MAC operation's latency.
+* `B` is executed as it adds a 3 cycle bubble due to branch prediction. Takes +1 cycle if link bit is set.
+* `MOV`/`ADD` instructions with `pc/r15` as destination are executed. They will insert 3 cycle bubbles in the pipeline.
+* `LDM` with `pc/r15` in the register list is executed. This will insert a 9 cycle bubble in the pipeline.
+* Other instructions with `pc/r15` as destination will insert 12 cycle bubbles in the pipeline (+6 if instruction is `LDR`).
+* `MCR`/`MRC` / `SWI` are executed. These stall the pipeline for 18 cycles.
 
 This snippet of ARM code takes 6 cycles to execute:
 
