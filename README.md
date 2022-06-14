@@ -1,12 +1,12 @@
-# The ZAP Processor (ARMV5TE  Compatible)
+# The ZAP Processor (ARM® V5TE  Compatible)
 
-**ZAP : An Open Source High Performance ARM Processor for FPGA (ARMV5TE Compatible)**
+**ZAP : An Open Source High Performance ARM**® **Processor for FPGA (ARMV5TE Compatible)**
 
 **By**[ **Revanth Kamaraj** ](https://github.com/krevanth)**<**[**revanth91kamaraj@gmail.com**](mailto:revanth91kamaraj@gmail.com)**>**
 
 ### 1. Introduction
 
-The ZAP is a high performance ARMV5TE compliant processor. It is intended to be used in FPGA projects that need a high performance ARMV5TE soft processor core. Most aspects of the processor can be configured through HDL parameters. The default processor specification is as follows:
+The ZAP is a high performance ARM® V5TE compliant processor. It is intended to be used in FPGA projects that need a high performance ARM® V5TE soft processor core. Most aspects of the processor can be configured through HDL parameters. The default processor specification is as follows:
 
 | **Property**               | **Value**                                                                                                                                                                                                                                  |
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -42,10 +42,10 @@ ZAP includes several microarchitectural enhancements to improve instruction thro
 * Direct mapped instruction and data memory TLBs. Having separate translation buffers allows data and code translation to happen in parallel. The sizes of these TLBs can be set during synthesis. Six different TLB memories are provides, each providing direct mapped buffering for sections, large page and small page, each for instruction and data (3 x 2 = 6). The sizes of these 6 memories is parameterizable.
 * A parameterizable store buffer that helps buffer stores when the cache is disabled or if the data access is uncacheable. When the cache is enabled and data is cacheable, the store buffer helps buffer cache clean operations. This is slightly different from a write buffer.
 * A 4-state bimodal branch predictor that predicts the outcome of immediate branches and branch-and-link instructions. ZAP employs a BTB (Branch Target Buffer) to predict branch outcomes early.&#x20;
-* A 4 deep return address stack that stores the predicted return address of branch and link instructions function return. When a `BX LR`, `MOV PC,LR` or a block load with PC in register list, the processor pops off the return address. Note that switching between ARM and Thumb state has a penalty of 12 cycles.
+* A 4 deep return address stack that stores the predicted return address of branch and link instructions function return. When a `BX LR`, `MOV PC,LR` or a block load with PC in register list, the processor pops off the return address. Note that switching between ARM® and Thumb® state has a penalty of 12 cycles.
 * The ability to execute most ARM instructions in a single clock cycle. The only instructions that take multiple cycles include branch-and-link, 64-bit loads and stores, block loads and stores, swap instructions and `BLX2`.
 * A highly efficient superpipeline with dual feedback networks to minimize pipeline stalls as much as possible while allowing for high clock frequencies. A deep 17 stage superpipelined architecture that allows the CPU to run at relatively high FPGA speeds.
-* Support for single cycle saturating additions and subtractions for better signal processing performance. Result is available for immediate use in the next instruction itself. Do note that multiplication/MAC operations take 4 to 5 cycles per operation. Note that the multiplier inside the ZAP processor is not pipelined.
+* Support for single cycle saturating additions and subtractions for better signal processing performance. Result is available for immediate use in the next instruction itself. Do note that multiplication/MAC operations takes 3 cycles per operation (+1 is result is immediately used). Note that the multiplier inside the ZAP processor is not pipelined.
 * The abort model is base restored. This allows for the implementation of a demand based paging system if supporting software is available.
 
 ### 1.1. Superpipelined Microarchitecture
@@ -57,7 +57,7 @@ ZAP uses a 17 stage execution pipeline to increase the speed of the flow of inst
 During normal operation:
 
 * One instruction is writing out one or two results to the register bank.
-  * In case of LDR/STR with writeback, two results are being written to the register bank in a single cycle.
+  * In case of `LDR`/`STR` with writeback, two results are being written to the register bank in a single cycle.
   * All other instructions write out one result to the register bank per cycle.
   * A pending load might write another value. The RF has 3 write ports.
 * The instruction before that is accessing the cache/TLB RAM.
@@ -69,7 +69,7 @@ During normal operation:
 * The instruction before that is performing a register or pipeline read.
 * The instruction before that is being decoded.
 * The instruction before that is being sequenced to micro-ops (possibly).
-  * Most of the time, 1 ARM instruction = 1 micro-op.
+  * Most of the time, 1 ARM® instruction = 1 micro-op.
   * The only ARM instructions requiring more than 1 micro-op generation are `BLX, LDM, STM, SWAP` and LONG MULTIPLY (They generate a 32-bit result per micro-op).
   * All other ARM instruction decode to just a single micro-op.
   * This stage also causes branches predicted as taken to be actually executed. The latency for a successfully predicted taken branch is 6 cycles.
@@ -91,7 +91,7 @@ The ZAP pipeline has an efficient automatic dual forwarding network with interlo
 The only times a pipeline stalls is when (assume 100% cache hit rate):
 
 * An instruction uses a register that is a data (not pointer) destination for a load instruction within 6 cycles (assuming a load hit).
-* The pipeline is executing any multiply/MAC instruction (4 to 5 cycle latency).
+* The pipeline is executing any multiply/MAC instruction (3 cycle latency).
   * An instruction that uses a register that is a destination for multiply/MAC adds +1 to the multiply/MAC operation's latency.
 * Two back to back instructions require non-zero shift and the second instruction's operand overlaps with the first instruction's destination.
 
@@ -140,7 +140,7 @@ To improve performance, the ZAP processor uses a bimodal branch predictor. A bra
 
 `Bcc[L]`
 
-`BX LR` that does not switch ARM/Thumb state.
+`BX LR` that does not switch ARM®/Thumb® state.
 
 `LDM` with PC in register list&#x20;
 
@@ -170,7 +170,7 @@ the CPU treats them as function returns and will pop return address of the stack
 
 This results in some performance improvement and reduced branch latency. Correctly predicted return takes 2 cycles, while incorrectly or unpredicted returns takes 12 cycles.
 
-Returns that result in change from ARM to Thumb state or vice versa are unpredicted, and take 12 cycles. Performance optimization of returns is available only when no instruction set state change occurs i.e., for faster returns: ARM code should return to ARM code, Thumb code should return to Thumb code.&#x20;
+Returns that result in change from ARM® to Thumb® state or vice versa are unpredicted, and take 12 cycles. Performance optimization of returns is available only when no instruction set state change occurs i.e., for faster returns: ARM® code should return to ARM® code, Thumb® code should return to Thumb® code.&#x20;
 
 ### 1.2. External Bus Interface
 
@@ -190,7 +190,7 @@ Selective flushing of TLB will result in the entire TLB being flushed.&#x20;
 
 Selective cleaning of TLB will result in the entire TLB being cleaned.&#x20;
 
-The above rules are permitted as per the arch spec.
+The above rules are permitted as per the architecture spec \[1].
 
 * Register 1: Cache and MMU control.
 * Register 2: Translation Base.
@@ -302,7 +302,7 @@ Note that all parameters should be 2^n. Cache size should be multiple of line si
 
 ### 1.5. ARM Implementation Options
 
-ZAP implements the integer instruction set specified in ARMV5TE. T refers to the Thumb instruction set and E  refers to the enhanced DSP extensions. ZAP does not implement the optional floating point extension specified in Part C of \[1].&#x20;
+ZAP implements the integer instruction set specified in ARM® V5TE. T refers to the Thumb instruction set and E  refers to the enhanced DSP extensions. ZAP does not implement the optional floating point extension specified in Part C of \[1].&#x20;
 
 #### 1.5.1. Big and Little Endian
 
@@ -314,32 +314,32 @@ ZAP does not support the legacy 26-bit mode.
 
 #### 1.5.3. Thumb
 
-ZAP has support for the thumb (ARMV5T) instruction set.
+ZAP has support for the thumb (ARM® V5T) instruction set.
 
 #### 1.5.4. ARM DSP Enhanced Instruction Set
 
-The ZAP implements the ARM DSP-enhanced instruction set (ARMV5E). There are new multiply instructions that operate on 16-bit data values and new saturation instructions. Some of the new instructions are:&#x20;
+The ZAP implements the ARM DSP-enhanced instruction set (ARM® V5E). There are new multiply instructions that operate on 16-bit data values and new saturation instructions. Some of the new instructions are:&#x20;
 
-* SMLAxy 32<=16x16+32&#x20;
-* SMLAWy 32<=32x16+32
-* SMLALxy 64<=16x16+64
-* SMULxy 32<=16x16&#x20;
-* SMULWy 32<=32x16&#x20;
-* QADD adds two registers and saturates the result if an overflow occurred.
-* QDADD doubles and saturates one of the input registers then add and saturate.
-* QSUB subtracts two registers and saturates the result if an overflow occurred.
-* QDSUB doubles and saturates one of the input registers then subtract and saturate.
+* `SMLAxy` 32<=16x16+32&#x20;
+* `SMLAWy` 32<=32x16+32
+* `SMLALxy` 64<=16x16+64
+* `SMULxy` 32<=16x16&#x20;
+* `SMULWy` 32<=32x16&#x20;
+* `QADD` adds two registers and saturates the result if an overflow occurred.
+* `QDADD` doubles and saturates one of the input registers then add and saturate.
+* `QSUB` subtracts two registers and saturates the result if an overflow occurred.
+* `QDSUB` doubles and saturates one of the input registers then subtract and saturate.
 
-_**All of the multiplication and MAC operations in ZAP take a fixed 4 clock cycles (irrespective of 32x32=32, 32x32=64, 16x16+32 etc). Additional latency of 1 cycle is incurred if the result is required in the immediate next instruction.**_
+_**All of the multiplication and MAC operations in ZAP take a fixed 3 clock cycles (irrespective of 32x32=32, 32x32=64, 16x16+32 etc). Additional latency of 1 cycle is incurred if the result is required in the immediate next instruction.**_
 
-The ZAP also implements LDRD, STRD and PLD instructions with the following implementation notes:&#x20;
+The ZAP also implements `LDRD`, `STRD` and `PLD` instructions with the following implementation notes:&#x20;
 
-* PLD is interpreted as a NOP.
-* MCRR and MRRC are not intended to be used on coprocessor 15 (see \[1]). Since ZAP does not have an external coprocessor bus, these instructions should not be used.
+* `PLD` is interpreted as a `NOP`.
+* `MCRR` and `MRRC` are not intended to be used on coprocessor 15 (see \[1]). Since ZAP does not have an external coprocessor bus, these instructions should not be used.
 
 #### 1.5.5. Base Register Update
 
-If a data abort is signaled on a memory instruction that specifies writeback, the contents of the base register will not be updated. This holds for all load and store instructions. This behavior  is referred to in the ARM V5TE architecture as the Base Restored Abort Model.
+If a data abort is signaled on a memory instruction that specifies writeback, the contents of the base register will not be updated. This holds for all load and store instructions. This behavior  is referred to in the ARM® V5TE architecture as the Base Restored Abort Model.
 
 #### 1.5.6. Cache and TLB Lockdown
 
@@ -357,6 +357,8 @@ ZAP implements global cache cleaning and flushing. Cleaning and/or flushing spec
 
 ZAP implements a direct mapped cache and TLB. Separate caches and TLBs exist for instruction and data paths. Each MMU (I and D) has 4 TLBs, one each for sections, large pages, small pages and tiny pages. Each one is direct mapped.
 
+Thus, each cache uses 2 block RAMs (Tag and Data) and each MMU uses 4 RAMs. Functionally, the processor's memory subsystem requires 12 block RAMs. In practice, FPGA synthesis implements this using groups of smaller block RAMs (same overall function) so the BRAM count would be higher.
+
 #### 1.5.10. FCSE
 
 ZAP implements the FCSE.
@@ -372,9 +374,9 @@ ZAP allows the cache and MMU to have these combinations:&#x20;
 | OFF | OFF   | VA = PA. All addresses are treated as uncacheable.         |
 | OFF | ON    | All pages are treated as uncacheable. C bit is IGNORED.    |
 
-## 2. Project Environment (Docker)
+## 2. Project Environment (Docker®)
 
-The project environment requires Docker to be installed at your site. Click [here](https://docs.docker.com/engine/install/) for instructions on how to install Docker. The steps here assume that the user is a part of the `docker` group.
+The project environment requires Docker® to be installed at your site. Click [here](https://docs.docker.com/engine/install/) for instructions on how to install Docker®. The steps here assume that the user is a part of the `docker` group.
 
 ### 2.1. Running TCs
 
@@ -450,23 +452,23 @@ To run RTL lint, simply do:
 
 > make lint
 
-### 2.4. Running Vivado Synthesis
+### 2.4. Running Xilinx® Vivado® Synthesis
 
 Synthesis scripts can be found here: `src/syn/`
 
-Assuming you have Vivado installed, please do (in project root directory):
+Assuming you have Vivado® installed, please do (in project root directory):
 
 > make syn
 
 Timing report will be available in `obj/syn/syn_timing.rpt`
 
-If you had used Docker previously to run a test, or had run synth before, do a
+If you had used Docker® previously to run a test, or had run synth before, do a
 
 > make clean
 
 first.
 
-#### 2.4.1. XDC Setup (Vivado FPGA Synthesis)
+#### 2.4.1. XDC Setup (Vivado® FPGA Synthesis)
 
 * The XDC assumes a 200MHz clock for an Artix 7 FPGA part with -3 speed grade.
 * Input assume they receive data from a flop with Tcq = 50% of clock period.
@@ -475,11 +477,11 @@ first.
 
 ### 3. References
 
-\[1] ARM Architecture Specification (ARM DDI 0100E)
+\[1] [ARM Architecture Specification (ARM DDI 0100E)](https://www.intel.com/content/dam/support/us/en/programmable/support-resources/bulk-container/pdfs/literature/third-party/ddi0100e-arm-arm.pdf)
 
-### 4. Project Mentions
+### 4. Mentions
 
-The ZAP project was mentioned [here](https://researchgate.net/publication/347558929\_Free\_ARM\_Compatible\_Softcores\_on\_FPGA)
+The ZAP project was mentioned in a survey conducted [here](https://researchgate.net/publication/347558929\_Free\_ARM\_Compatible\_Softcores\_on\_FPGA).&#x20;
 
 ### 5. Acknowledgements
 
@@ -491,7 +493,13 @@ The testbench UART core in `src/testbench/uart.v` is taken from the [UART-16550]
 
 The testbench assembly code in `src/ts/arm_test*/arm_test*.s` is based on [this](https://github.com/freecores/arm4u/blob/master/test\_program/arm\_test.s) assembly file from the ARM4U project.
 
-### 6. License
+### 6. Trademarks&#x20;
+
+ARM is a registered trademark of ARM Ltd.
+
+Xilinx, Artix and Vivado are trademarks of Xilinx Inc.
+
+### 7. License
 
 Copyright (C) 2016-2022 Revanth Kamaraj
 

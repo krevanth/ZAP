@@ -1,3 +1,3 @@
 # Table of contents
 
-* [The ZAP Processor (ARMV5TE  Compatible)](README.md)
+* [The ZAP Processor (ARM® V5TE  Compatible)](README.md)
