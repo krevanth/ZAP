@@ -70,7 +70,7 @@ During normal operation:
 * The instruction before that is being decoded.
 * The instruction before that is being sequenced to micro-ops (possibly).
   * Most of the time, 1 ARM® instruction = 1 micro-op.
-  * The only ARM instructions requiring more than 1 micro-op generation are `BLX, LDM, STM, SWAP` and LONG MULTIPLY (They generate a 32-bit result per micro-op).
+  * The only ARM instructions requiring more than 1 micro-op generation are `BLX, LDM, STM, SWAP, LDR loading to PC` and LONG MULTIPLY (They generate a 32-bit result per micro-op).
   * All other ARM instruction decode to just a single micro-op.
   * This stage also causes branches predicted as taken to be actually executed. The latency for a successfully predicted taken branch is 6 cycles.
 * The instruction before that is being being decompressed. This is only required in the Thumb state, else the stage simply passes the instructions on.
@@ -97,8 +97,7 @@ Most of the time, the pipeline is able to process 1 instruction per clock cycle.
   * An instruction that uses a register that is/are destination(s) for multiply/MAC adds +1 to the multiply/MAC operation's latency.
 * `B` is executed as it adds a 3 cycle bubble due to branch prediction. Takes +1 cycle if link bit is set.
 * `MOV`/`ADD` instructions with `pc/r15` as destination are executed. They will insert 3 cycle bubbles in the pipeline.
-* `LDM` with `pc/r15` in the register list is executed. This will insert a 9 cycle bubble in the pipeline.
-* Other instructions with `pc/r15` as destination will insert 12 cycle bubbles in the pipeline (+6 if instruction is `LDR`).
+* `LDx` with `pc/r15` in the register list/data register is executed. This will insert a 9 cycle bubble in the pipeline.
 * `MCR`/`MRC` / `SWI` are executed. These stall the pipeline for 18 cycles.
 
 This snippet of ARM code takes 6 cycles to execute:
@@ -148,15 +147,15 @@ To improve performance, the ZAP processor uses a bimodal branch predictor. A bra
 
 `BX LR` that does not switch ARM®/Thumb® state.
 
+`ADD`/`MOV` instruction with destination as PC.
+
 `LDM` with PC in register list&#x20;
+
+`LDR` that loads to PC.
 
 `MOV PC, LR`&#x20;
 
-instructions. Some of these utilize the RAS for better prediction. Using an unlisted instruction to branch will result in 12 (or) 18 cycles of penalty.&#x20;
-
-* Correctly predicted instructions take 2 cycles (taken)/1 cycle (not taken) of latency. Misprediction latency is 12 cycles.
-* Prediction unsupported methods for PC changes takes 12 cycles. Unpredicted instructions include `BLX2` and `LDR` to PC, with the latter taking 18 cycles (see next point).
-* `LDR` to PC from memory takes 18 cycles.&#x20;
+instructions. Some of these utilize the RAS for better prediction. Using an unlisted instruction to branch will result in 12 cycles of penalty.&#x20;
 
 The processor implements a 4 deep return address stack. The RAS and the predictor cannot be disabled. They are transparent to software and self clearing if they predict a non branch instruction as a branch.
 
@@ -171,10 +170,11 @@ On encountering these ARM instructions (or equivalent 16-bit instructions):
 * `BX LR`,
 * `MOV PC, LR`
 * `LDM` with PC in register list.
+* `LDR` to PC with SP as base address register.
 
 the CPU treats them as function returns and will pop return address of the stack much earlier.&#x20;
 
-This results in some performance improvement and reduced branch latency. Correctly predicted return takes 2 cycles, while incorrectly or unpredicted returns takes 12 cycles.
+This results in some performance improvement and reduced branch latency. Correctly predicted return takes 2 cycles (first two in the above list) or 9 cycles(last two in the above list), while incorrectly or unpredicted returns takes 12 cycles.
 
 Returns that result in change from ARM® to Thumb® state or vice versa are unpredicted, and take 12 cycles. Performance optimization of returns is available only when no instruction set state change occurs i.e., for faster returns: ARM® code should return to ARM® code, Thumb® code should return to Thumb® code.&#x20;
 
