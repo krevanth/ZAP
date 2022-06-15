@@ -133,12 +133,15 @@ begin: mainBlk1
         // If an unrecognized instruction enters this, the output
         // signals an NV state i.e., invalid.
         o_condition_code                = NV;
-        o_destination_index             = 0;
-        o_alu_source                    = 0;
+        o_destination_index             = RAZ_REGISTER;
         o_alu_operation                 = 0;
-        o_shift_source                  = 0;
         o_shift_operation               = 0;
+        o_alu_source                    = 0;
+        o_shift_source                  = 0;
         o_shift_length                  = 0;
+        o_alu_source[32]                = IMMED_EN;
+        o_shift_source[32]              = IMMED_EN;
+        o_shift_length[32]              = IMMED_EN;
         o_flag_update                   = 0;
         o_mem_srcdest_index             = RAZ_REGISTER;
         o_mem_load                      = 0;

@@ -1032,7 +1032,6 @@ begin
                                         shifter_lock_check ( {27'd0, skid_mem_srcdest_index_ff}, o_destination_index_ff, o_condition_code_ff )  
                                 )
                         ) // If it is multiply (MAC). 
-
                         ||
                         (       // If the instruction is not LSL #0 and previous instruction has flag
                                 // updates, we stall.
@@ -1054,7 +1053,7 @@ begin
         // Shifter disable.
         o_shifter_disable_nxt = (       
                                         skid_shift_operation_ff    == {1'd0, LSL} && 
-                                        skid_shift_length_ff[31:0] == 32'd0 && 
+                                        skid_shift_length_ff[31:0] == 32'd0       && 
                                         skid_shift_length_ff[32]   == IMMED_EN
                                 ); 
         // If it is LSL #0, we can disable the shifter.
