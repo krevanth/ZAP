@@ -104,7 +104,7 @@ Most of the time, the pipeline is able to process 1 instruction per clock cycle.
 * `LDx` with `pc/r15` in the register list/data register is executed. This will insert a 9 cycle bubble in the pipeline.
 * `MCR`/`MRC` / `SWI` are executed. These will insert an 18 cycle bubble into the pipeline.
 
-This snippet of ARM code takes 6 cycles to execute:
+This snippet of ARM® code takes 6 cycles to execute:
 
 ```
     ADD  R1, R2, R2 LSL #10 (1 cycle)
@@ -133,6 +133,8 @@ The ZAP can execute `LDR`/`STR` with writeback in a single cycle. It will perfor
 Data cache accesses that are performing line fills will not block subsequent instructions from executing. In addition, the data cache supports hit under miss functionality i.e., the cache can service the next memory access (hit) while handing the current line fill (miss). Thus, the ZAP can change the order of completion of memory accesses with respect to other instructions, when possible, in a relatively simple way.
 
 If a store misses and is in the process of a line fill, a subsequent load at the same address will report as a hit during the line fill.
+
+Some examples are shown below.
 
 The unoptimized code below takes 15 cycles due to improperly optimized load latency (The code still works fine):
 
@@ -505,12 +507,6 @@ Assuming you have Vivado® installed, please do (in project root directory):
 > make syn
 
 Timing report will be available in `obj/syn/syn_timing.rpt`
-
-If you had used Docker® previously to run a test, or had run synth before, do a
-
-> make clean
-
-first.
 
 #### 2.4.1. XDC Setup (Vivado® FPGA Synthesis)
 
