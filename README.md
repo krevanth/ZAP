@@ -6,29 +6,29 @@
 
 ### 1. Introduction
 
-The ZAP is a high performance ARM® V5TE compliant processor. It is intended to be used in FPGA projects that need a high performance ARM® V5TE soft processor core. Most aspects of the processor can be configured through HDL parameters. The default processor specification is as follows:
+The ZAP is a high performance ARM® V5TE compliant processor. It is intended to be used in FPGA projects that need a high performance ARM® V5TE soft processor core. Most aspects of the processor can be configured through HDL parameters. The default processor specification is as follows (based on default parameters):
 
-| **Property**                                       | **Value**                                                                                                                                                                                                                            |
-| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Slow Corner Operating Frequency @ FPGA Part Number | <p>143MHz @ xc7a75tcsg324-3 <br></p>                                                                                                                                                                                                 |
-| Pipeline Depth                                     | 17                                                                                                                                                                                                                                   |
-| Issue and Execution Width                          | Single issue, in order core, with out-of-order completion for some loads/stores that miss in cache.                                                                                                                                  |
-| Data Width                                         | 32                                                                                                                                                                                                                                   |
-| Address Width                                      | 32                                                                                                                                                                                                                                   |
-| Virtual Address Width                              | 32                                                                                                                                                                                                                                   |
-| Instruction Set                                    | ARM® V5TE                                                                                                                                                                                                                            |
-| L1 I-Cache                                         | <p>16KB Direct Mapped VIVT Cache.<br>64 Byte Cache Line</p>                                                                                                                                                                          |
-| L1 D-Cache                                         | <p>16KB Direct Mapped VIVT Cache<br>64 Byte Cache Line</p>                                                                                                                                                                           |
-| I-TLB Structure                                    | <p>Direct mapped. 512 entries divided into <br>- 128 entry section TLB<br>- 128 entry large page TLB<br>- 128 entry small page TLB<br>- 128 entry tiny page TLB</p>                                                                  |
-| D-TLB Structure                                    | <p>Direct mapped. 512 entries divided into <br>- 128 entry section TLB<br>- 128 entry large page TLB<br>- 128 entry small page TLB<br>- 128 entry tiny page TLB</p>                                                                  |
-| Branch Prediction                                  | <p>Bimodal Predictor + BTB. Direct Mapped.<br>1K entries in Thumb® state. <br>512 entries in ARM® state. </p>                                                                                                                        |
-| RAS Depth                                          | 4 deep return address stack.                                                                                                                                                                                                         |
-| Branch latency                                     | <p>12 cycles (wrong prediction or unrecognized branch)<br>3 cycles (taken, correctly predicted)<br>1 cycle    (not-taken, correctly predicted)<br>12 cycles (32-bit/16-bit switch)<br>18 cycles (Exception/Interrupt Entry/Exit)</p> |
-| Store Buffer                                       | FIFO, 16 x 32-bit.                                                                                                                                                                                                                   |
-| Fetch Buffer                                       | FIFO, 16 x 32-bit.                                                                                                                                                                                                                   |
-| DMIPS@MHz Rating                                   | 180DMIPS@143MHz                                                                                                                                                                                                                      |
-| Bus Interface                                      | Unified 32-Bit Wishbone B3 bus with CTI and BTE signals.                                                                                                                                                                             |
-| FPGA Resource Utilization                          | <p>23K LUTs<br>116 LUTRAMs<br>15.3K FFs<br>29 BRAMs<br>4 DSP Blocks</p>                                                                                                                                                              |
+| **Property**                                       | **Value**                                                                                                                                                                                                                                                             |
+| -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Slow Corner Operating Frequency @ FPGA Part Number | <p>143MHz @ xc7a75tcsg324-3 <br></p>                                                                                                                                                                                                                                  |
+| Pipeline Depth                                     | 17                                                                                                                                                                                                                                                                    |
+| Issue and Execution Width                          | Single issue, in order core, with out-of-order completion for some loads/stores that miss in cache.                                                                                                                                                                   |
+| Data Width                                         | 32                                                                                                                                                                                                                                                                    |
+| Address Width                                      | 32                                                                                                                                                                                                                                                                    |
+| Virtual Address Width                              | 32                                                                                                                                                                                                                                                                    |
+| Instruction Set                                    | ARM® V5TE                                                                                                                                                                                                                                                             |
+| L1 I-Cache                                         | <p>16KB Direct Mapped VIVT Cache.<br>64 Byte Cache Line</p>                                                                                                                                                                                                           |
+| L1 D-Cache                                         | <p>16KB Direct Mapped VIVT Cache<br>64 Byte Cache Line</p>                                                                                                                                                                                                            |
+| I-TLB Structure                                    | <p>Direct mapped. 512 entries divided into <br>- 128 entry section TLB<br>- 128 entry large page TLB<br>- 128 entry small page TLB<br>- 128 entry tiny page TLB<br>Usually, section TLB size can be smaller, for example. Please override parameters as required.</p> |
+| D-TLB Structure                                    | <p>Direct mapped. 512 entries divided into <br>- 128 entry section TLB<br>- 128 entry large page TLB<br>- 128 entry small page TLB<br>- 128 entry tiny page TLB<br>Usually, section TLB size can be smaller, for example. Please override parameters as required.</p> |
+| Branch Prediction                                  | <p>Bimodal Predictor + BTB. Direct Mapped.<br>1K entries in Thumb® state. <br>512 entries in ARM® state. </p>                                                                                                                                                         |
+| RAS Depth                                          | 4 deep return address stack.                                                                                                                                                                                                                                          |
+| Branch latency                                     | <p>12 cycles (wrong prediction or unrecognized branch)<br>3 cycles (taken, correctly predicted)<br>1 cycle    (not-taken, correctly predicted)<br>12 cycles (32-bit/16-bit switch)<br>18 cycles (Exception/Interrupt Entry/Exit)</p>                                  |
+| Store Buffer                                       | FIFO, 16 x 32-bit.                                                                                                                                                                                                                                                    |
+| Fetch Buffer                                       | FIFO, 16 x 32-bit.                                                                                                                                                                                                                                                    |
+| DMIPS/MHz Rating                                   | 0.9 DMIPS/MHz                                                                                                                                                                                                                                                         |
+| Bus Interface                                      | Unified 32-Bit Wishbone B3 bus with CTI and BTE signals.                                                                                                                                                                                                              |
+| FPGA Resource Utilization                          | <p>23K LUTs<br>116 LUTRAMs<br>15.3K FFs<br>29 BRAMs<br>4 DSP Blocks</p>                                                                                                                                                                                               |
 
 A simplified block diagram of the ZAP pipeline is shown below:
 
@@ -92,7 +92,7 @@ The ZAP pipeline has an efficient automatic dual forwarding network with interlo
 
 Most of the time, the pipeline is able to process 1 instruction per clock cycle. The only times a pipeline stalls (bubbles inserted) is when (assume 100% cache hit rate and 100% branch prediction rate):
 
-* An instruction uses a register that is a data (not pointer) destination for an `LDR`/`LDM` instruction within 6 cycles.
+* An instruction uses a register that is a data (not pointer) destination for an `LDR`/`LDM` instruction within 7 cycles.
 * Two back to back instructions that require non-zero shift and the second instruction's operand overlaps with the first instruction's destination.
 * When a previous instruction modifies the flags and the current instruction requires a non-trivial shift operation. Note that `LSL #0` is considered a trivial shift operation.&#x20;
 * The pipeline is executing any multiply/MAC instruction:
@@ -133,6 +133,36 @@ The ZAP can execute `LDR`/`STR` with writeback in a single cycle. It will perfor
 Data cache accesses that are performing line fills will not block subsequent instructions from executing. In addition, the data cache supports hit under miss functionality i.e., the cache can service the next memory access (hit) while handing the current line fill (miss). Thus, the ZAP can change the order of completion of memory accesses with respect to other instructions, when possible, in a relatively simple way.
 
 If a store misses and is in the process of a line fill, a subsequent load at the same address will report as a hit during the line fill.
+
+The unoptimized code below takes 15 cycles due to improperly optimized load latency (The code still works fine):
+
+```
+LDR R1, [R2]
+// Load latency since value is used immediately = 7 cycles
+ADD R3, R2, R1 
+ADD R4, R4, R5
+ADD R5, R8, R7
+ADD R12, R4, R5
+ADD R13, R8, R7
+ADD R11, R4, R5
+ADD R10, R8, R7
+ADD R10, R10, R11
+```
+
+This can be reduced to 9 cycles by reordering the code:
+
+```
+LDR R1, [R2]
+// Load latency is hidden.
+ADD R4, R4, R5
+ADD R5, R8, R7
+ADD R12, R4, R5
+ADD R13, R8, R7
+ADD R11, R4, R5
+ADD R10, R8, R7
+ADD R10, R10, R11
+ADD R3, R2, R1 
+```
 
 #### 1.1.4. Multi Port Register File
 
