@@ -58,6 +58,7 @@ DLOAD        := "FROM archlinux:latest\nRUN  pacman -Syyu --noconfirm arm-none-e
 test:
 	docker info
 	$(MAKE) lint
+	mkdir -p obj/syn
 	docker image ls | grep $(TAG) || echo -e $(DLOAD) | docker build --no-cache --rm --tag $(TAG) -
 ifndef TC
 	for var in $(TEST); do $(MAKE) test TC=$$var HT=1 || exit 10 ; done; 
@@ -89,8 +90,8 @@ syn: obj/syn/syn_timing.rpt
 ############################################ Internal Targets #########################################################
 
 obj/syn/syn_timing.rpt: $(CPU_FILES) $(SYN_SCRIPTS)
-	rm -rf obj/syn
 	mkdir -p obj/syn
+	rm -rf obj/syn/syn_timing.rpt
 	cd obj/syn ; vivado -mode batch -source ../../src/syn/syn.tcl
 
 # Compile S files to OBJ.
