@@ -42,6 +42,7 @@ module zap_btb #(parameter BP_ENTRIES=1024) (
 );        
 
 `include "zap_localparams.svh"
+`include "zap_functions.svh"
 
 localparam TAG_WDT    =  32 - $clog2(BP_ENTRIES) - 1;
 localparam MAX_WDT    =  32 + 2 + TAG_WDT;
@@ -134,30 +135,5 @@ begin
                 end
         end
 end
-
-// Bimodal branch predictor. Used when writing to the BTB RAM.
-function [1:0] compute ( input [1:0] taken, input nok );
-begin
-                // Branch was predicted incorrectly. 
-                if ( nok )
-                begin
-                        case ( taken )
-                        SNT: compute = WNT;
-                        WNT: compute = WT;
-                        WT:  compute = WNT;
-                        ST:  compute = WT;
-                        endcase
-                end
-                else // Confirm that branch was correctly predicted.
-                begin
-                        case ( taken )
-                        SNT: compute = SNT;
-                        WNT: compute = SNT;
-                        WT:  compute = ST;
-                        ST:  compute = ST;
-                        endcase
-                end
-end
-endfunction
 
 endmodule

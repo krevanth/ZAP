@@ -87,6 +87,7 @@ output logic [32:0] o_pred
 
 `include "zap_defines.svh"
 `include "zap_localparams.svh"
+`include "zap_functions.svh"
 
 // If an instruction abort occurs, this unit sleeps until it is woken up.
 logic sleep_ff;
@@ -210,15 +211,12 @@ end
 
 // ----------------------------------------------------------------------------
 
-//
-// Branch State RAM.
-// Holds the 2-bit state for a range of branches. Whenever a branch is
-// either detected as correctly taken or incorrectly taken, this RAM is
-// updated. Each entry in the RAM corresponds to a virtual memory address
-// whether or not it be a legit branch or not. 
-//
-zap_ram_simple_nopipe
-#(.DEPTH(BP_ENTRIES), .WIDTH(2)) u_br_ram
+// Branch State RAM. Strictly not required as the BTB has us covered.
+// Modifying it would need some effort so this RAM is present  here
+// anyway. It is under 4 percent overhead of BRAM cost for 1K entries.
+// So not worth removing.
+
+zap_ram_simple_nopipe #(.DEPTH(BP_ENTRIES), .WIDTH(2)) u_br_ram
 (
         .i_clk(i_clk),
 
@@ -251,36 +249,6 @@ zap_ram_simple_nopipe
         // Send the read data over to o_taken_ff which is a 2-bit value.
         .o_rd_data(taken_v) 
 );
-
-// ----------------------------------------------------------------------------
-
-//
-// Branch Memory writes.
-// Implements a 4-state predictor. 
-//
-function [1:0] compute ( input [1:0] taken, input clear_from_alu );
-begin
-                // Branch was predicted incorrectly. 
-                if ( clear_from_alu )
-                begin
-                        case ( taken )
-                        SNT: compute = WNT;
-                        WNT: compute = WT;
-                        WT:  compute = WNT;
-                        ST:  compute = WT;
-                        endcase
-                end
-                else // Confirm from alu that branch was correctly predicted.
-                begin
-                        case ( taken )
-                        SNT: compute = SNT;
-                        WNT: compute = SNT;
-                        WT:  compute = ST;
-                        ST:  compute = ST;
-                        endcase
-                end
-end
-endfunction
 
 // ----------------------------------------------------------------------------
 
