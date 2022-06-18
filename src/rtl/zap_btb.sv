@@ -73,6 +73,7 @@ zap_ram_simple_nopipe #(.DEPTH(BP_ENTRIES), .WIDTH(MAX_WDT)) u_br_ram
         .i_wr_data({i_fb_branch_dest_address, 
                     i_fb_branch_src_address[$clog2(BP_ENTRIES)+1+TAG_WDT-1:$clog2(BP_ENTRIES)+1], 
                     compute(i_fb_current_branch_state, i_fb_nok)}),
+
         .i_rd_en  (!i_stall),
 
         //{target, tag, state}
@@ -105,7 +106,7 @@ begin
         end
 end
 
-// Tag check and clear generation logic.
+// Tag check and clear generation logic. Use RAM data.
 always_ff @ (posedge i_clk)
 begin
         if ( i_reset )  
@@ -116,8 +117,11 @@ begin
         else if ( !i_stall )
         begin
                 if ( (
-                        i_rd_addr_del[$clog2(BP_ENTRIES)+1+TAG_WDT-1:$clog2(BP_ENTRIES)+1] == rd_data[TAG_WDT + 1 : 2]) && 
-                        bp_dav                                                                                          && 
+                        i_rd_addr_del[$clog2(BP_ENTRIES)+1+TAG_WDT-1:$clog2(BP_ENTRIES)+1] == 
+                        rd_data[TAG_WDT + 1 : 2]) 
+                        && 
+                        bp_dav                                                                                          
+                        && 
                         (rd_data[1:0] == WT || rd_data[1:0] == ST) 
                 )
                 begin
@@ -131,7 +135,7 @@ begin
         end
 end
 
-// Bimodal branch predictor.
+// Bimodal branch predictor. Used when writing to the BTB RAM.
 function [1:0] compute ( input [1:0] taken, input nok );
 begin
                 // Branch was predicted incorrectly. 

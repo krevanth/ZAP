@@ -58,12 +58,14 @@ module zap_ram_simple_ben #(
 logic [WIDTH-1:0] mem [DEPTH-1:0];
 
 // Hazard detection.
-logic [WIDTH-1:0]         mem_data_st1;
-logic [WIDTH-1:0]         buffer_st1;
-logic [WIDTH/8-1:0]       sel_st1;
+logic [WIDTH-1:0]         mem_data_st1, mem_data_st2;
+logic [WIDTH-1:0]         buffer_st1, buffer_st2, buffer_st2_x;
+logic [WIDTH/8-1:0][1:0]  sel_st1;
+logic [WIDTH/8-1:0][2:0]  sel_st2;
 logic [$clog2(DEPTH)-1:0] rd_addr_st1, rd_addr_st2;
-logic [WIDTH-1:0]         rd_data_st1;
 
+// ----------------------------------------------------------------------------
+// High speed RAM logic
 // ----------------------------------------------------------------------------
 
 // Write logic.
@@ -76,6 +78,13 @@ begin
         end
 end
 
+// RAM Read logic.
+always_ff @ (posedge i_clk) if ( i_clken )
+begin
+        mem_data_st1 <= mem [ i_rd_addr ];
+        mem_data_st2 <= mem_data_st1;
+end
+
 // ----------------------------------------------------------------------------
 // Stage 1
 // ----------------------------------------------------------------------------
@@ -86,9 +95,9 @@ begin
         for(int i=0;i<WIDTH/8;i++)
         begin
                 if ( i_wr_addr == i_rd_addr && i_wr_en[i] )
-                        sel_st1[i] <= 1'd1;
+                        sel_st1[i] <= 2'd2;
                 else
-                        sel_st1[i] <= 1'd0;                
+                        sel_st1[i] <= 2'd1;  
         end
 end
 
@@ -97,26 +106,6 @@ always_ff @ ( posedge i_clk ) if ( i_clken )
 begin
         buffer_st1  <= i_wr_data;
         rd_addr_st1 <= i_rd_addr;
-end
-
-// RAM Read logic.
-always_ff @ (posedge i_clk) if ( i_clken )
-begin
-        mem_data_st1 <= mem [ i_rd_addr ];
-end
-
-// ----------------------------------------------------------------------------
-
-// Output logic.
-always_comb
-begin
-        for(int i=0;i<WIDTH/8;i++)
-        begin
-                if ( sel_st1[i] )
-                        rd_data_st1[i*8 +: 8] = buffer_st1[i*8 +: 8];
-                else
-                        rd_data_st1[i*8 +: 8] = mem_data_st1[i*8 +: 8];
-        end
 end
 
 // ----------------------------------------------------------------------------
@@ -128,15 +117,30 @@ begin
         for(int i=0;i<WIDTH/8;i++)
         begin
                 if ( i_wr_addr == rd_addr_st1 && i_wr_en[i] )
-                        o_rd_data_pre[i*8 +: 8] <= i_wr_data [i*8 +: 8] ;
+                        sel_st2[i] <= {1'd1, 2'd0};
                 else
-                        o_rd_data_pre[i*8 +: 8] <= rd_data_st1 [i*8 +: 8];
+                        sel_st2[i] <= {1'd0, sel_st1[i]};
         end
 end
 
 always_ff @ ( posedge i_clk ) if ( i_clken )
 begin
-        rd_addr_st2 <= rd_addr_st1;
+        buffer_st2   <= i_wr_data;
+        buffer_st2_x <= buffer_st1;
+        rd_addr_st2  <= rd_addr_st1;
+end
+
+always_comb
+begin
+        for(int i=0;i<WIDTH/8;i++)
+        begin   
+                casez ( sel_st2[i] )
+                3'b100 : o_rd_data_pre[i*8 +: 8] = buffer_st2   [i*8 +: 8];
+                3'b010 : o_rd_data_pre[i*8 +: 8] = buffer_st2_x [i*8 +: 8];
+                3'b001 : o_rd_data_pre[i*8 +: 8] = mem_data_st2 [i*8 +: 8];
+                default: o_rd_data_pre[i*8 +: 8] = {8{1'dx}}; // Synth will OPT.
+                endcase
+        end
 end
 
 // ----------------------------------------------------------------------------

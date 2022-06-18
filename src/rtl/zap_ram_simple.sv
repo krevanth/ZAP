@@ -54,23 +54,27 @@ module zap_ram_simple #(
 // Stage 1
 // ----------------------------------------------------------------------------
 
-// Memory array.
-logic [WIDTH-1:0] mem [DEPTH-1:0];
-
-// Hazard detection.
-logic [WIDTH-1:0]         mem_data_st1;
-logic [WIDTH-1:0]         buffer_st1;
-logic                     sel_st1;
+logic [WIDTH-1:0]         mem [DEPTH-1:0];
+logic [WIDTH-1:0]         mem_data_st1, mem_data_st2;
+logic [WIDTH-1:0]         buffer_st1, buffer_st2, buffer_st2_x;
+logic [1:0]               sel_st1;
+logic [2:0]               sel_st2;
 logic [$clog2(DEPTH)-1:0] rd_addr_st1, rd_addr_st2;
-logic [WIDTH-1:0]         rd_data_st1;
 
 // ----------------------------------------------------------------------------
+// High Performance RAM Model
+// ----------------------------------------------------------------------------
 
-// Write logic.
 always_ff @ (posedge i_clk) if ( i_clken )
 begin
         if ( i_wr_en )  
                 mem [ i_wr_addr ] <= i_wr_data;
+end
+
+always_ff @ (posedge i_clk) if ( i_clken )
+begin
+        mem_data_st1 <= mem [ i_rd_addr ];
+        mem_data_st2 <= mem_data_st1;
 end
 
 // ----------------------------------------------------------------------------
@@ -81,9 +85,9 @@ end
 always_ff @ ( posedge i_clk ) if ( i_clken )
 begin
         if ( i_wr_addr == i_rd_addr && i_wr_en )
-                sel_st1 <= 1'd1;
+                sel_st1 <= 2'd2;
         else
-                sel_st1 <= 1'd0;                
+                sel_st1 <= 2'd1;                
 end
 
 // Buffer update logic.
@@ -93,23 +97,6 @@ begin
         rd_addr_st1 <= i_rd_addr;
 end
 
-// RAM Read logic.
-always_ff @ (posedge i_clk) if ( i_clken )
-begin
-        mem_data_st1 <= mem [ i_rd_addr ];
-end
-
-// ----------------------------------------------------------------------------
-
-// Output logic.
-always_comb
-begin
-        if ( sel_st1 )
-                rd_data_st1 = buffer_st1;
-        else
-                rd_data_st1 = mem_data_st1;
-end
-
 // ----------------------------------------------------------------------------
 // Stage 2
 // ----------------------------------------------------------------------------
@@ -117,14 +104,30 @@ end
 always_ff @ ( posedge i_clk ) if ( i_clken )
 begin
         if ( i_wr_addr == rd_addr_st1 && i_wr_en )
-                o_rd_data_pre <= i_wr_data ;
+                sel_st2       <= 3'd4; 
         else
-                o_rd_data_pre <= rd_data_st1;
+                sel_st2       <= {1'd0, sel_st1};
 end
 
 always_ff @ ( posedge i_clk ) if ( i_clken )
 begin
         rd_addr_st2 <= rd_addr_st1;
+end
+
+always_ff @ ( posedge i_clk ) if ( i_clken )
+begin
+        buffer_st2   <= i_wr_data;
+        buffer_st2_x <= buffer_st1;
+end
+
+always_comb
+begin
+        case (sel_st2)
+        3'b100  : o_rd_data_pre = buffer_st2;
+        3'b010  : o_rd_data_pre = buffer_st2_x;
+        3'b001  : o_rd_data_pre = mem_data_st2;
+        default : o_rd_data_pre = {WIDTH{1'dx}}; // Synthesis will optimize.
+        endcase
 end
 
 // ----------------------------------------------------------------------------
