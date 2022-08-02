@@ -42,7 +42,7 @@ ZAP includes several microarchitectural enhancements to improve instruction thro
 * Direct mapped instruction and data memory TLBs. Having separate translation buffers allows data and code translation to happen in parallel. The sizes of these TLBs can be set during synthesis. Six different TLB memories are provides, each providing direct mapped buffering for sections, large page and small page, each for instruction and data (3 x 2 = 6). The sizes of these 6 memories is parameterizable.
 * A parameterizable store buffer that helps buffer stores when the cache is disabled or if the data access is uncacheable. When the cache is enabled and data is cacheable, the store buffer helps buffer cache clean operations. This is slightly different from a write buffer.
 * A 4-state bimodal branch predictor that predicts the outcome of immediate branches and branch-and-link instructions. ZAP employs a BTB (Branch Target Buffer) to predict branch outcomes early.&#x20;
-* A 4 deep return address stack that stores the predicted return address of branch and link instructions function return. When a `BX LR`, `MOV PC,LR` or a block load with PC in register list, the processor pops off the return address. Note that switching between ARM® and Thumb® state has a penalty of 12 cycles.
+* A 4 deep return address stack that stores the predicted return address of branch and link instructions function return. When a `BX LR`, `MOV PC,LR` or a block load with PC in register list, the processor pops off the return address. Note that switching between A (32-bit) and T state (16-bit) has a penalty of 12 cycles.
 * The ability to execute most 32-bit instructions in a single clock cycle. The only instructions that take multiple cycles include branch-and-link, 64-bit loads and stores, block loads and stores, swap instructions and `BLX/BLX2`.
 * A highly efficient superpipeline with dual feedback networks to minimize pipeline stalls as much as possible while allowing for high clock frequencies. A deep 17 stage superpipelined architecture that allows the CPU to run at relatively high FPGA speeds.
 * Support for single cycle saturating additions and subtractions with the result being available for immediate use in the next instruction itself.&#x20;
@@ -71,7 +71,7 @@ During normal operation:
 * The instruction before that is being decoded.
 * The instruction before that is being sequenced to micro-ops (possibly).
   * Most of the time, 1 x 32-bit instruction = 1 micro-op.
-  * The only ARM instructions requiring more than 1 micro-op generation are `BLX, BL, LDM, STM, SWAP, LDRD, STRD, LDR loading to PC` and long multiply variants (They generate a 32-bit result per micro-op).
+  * The only 32-bit instructions requiring more than 1 micro-op generation are `BLX, BL, LDM, STM, SWAP, LDRD, STRD, LDR loading to PC` and long multiply variants (They generate a 32-bit result per micro-op).
   * All other instructions are decode to just a single micro-op.
   * Most micro-ops can be execute in a single cycle.
   * This stage also causes branches predicted as taken to be actually executed. The latency for a successfully predicted taken branch is 3 cycles.
@@ -201,7 +201,7 @@ Upon calls to
 
 the potential return address is pushed to a stack in the processor.
 
-On encountering these ARM instructions (or equivalent 16-bit instructions):
+On encountering these 32-bit instructions (or equivalent 16-bit instructions):
 
 * `BX LR`,
 * `MOV PC, LR`
@@ -342,7 +342,7 @@ Note that all parameters should be 2^n. Cache size should be multiple of line si
 * The processor provides a Wishbone B3 bus. It is recommended that you use it in registered feedback cycle mode.
 * Interrupts are level sensitive and are internally synced to clock.
 
-### 1.5. ARM Implementation Options
+### 1.5. Implementation Options
 
 ZAP implements the integer instruction set specified in \[1]. T refers to the 16-bit instruction set and E  refers to the enhanced DSP extensions. ZAP does not implement the optional floating point extension specified in Part C of \[1].&#x20;
 
@@ -360,7 +360,7 @@ ZAP has support for the 16-bit (V5T) instruction set.
 
 #### 1.5.4. DSP Enhanced Instruction Set
 
-The ZAP implements the ARM DSP-enhanced instruction set (V5E). There are new multiply instructions that operate on 16-bit data values and new saturation instructions. Some of the new instructions are:&#x20;
+The ZAP implements the DSP-enhanced instruction set (V5E). There are new multiply instructions that operate on 16-bit data values and new saturation instructions. Some of the new instructions are:&#x20;
 
 * `SMLAxy` 32<=16x16+32&#x20;
 * `SMLAWy` 32<=32x16+32
@@ -381,7 +381,7 @@ The ZAP also implements `LDRD`, `STRD` and `PLD` instructions with the following
 
 #### 1.5.5. Base Register Update
 
-If a data abort is signaled on a memory instruction that specifies writeback, the contents of the base register will not be updated. This holds for all load and store instructions. This behavior  is referred to in the ARM® V5TE architecture as the Base Restored Abort Model.
+If a data abort is signaled on a memory instruction that specifies writeback, the contents of the base register will not be updated. This holds for all load and store instructions. This behavior  is referred to in the V5TE architecture \[1] as the Base Restored Abort Model.
 
 #### 1.5.6. Cache and TLB Lockdown
 
