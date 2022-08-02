@@ -1,12 +1,12 @@
-# The ZAP Processor (ARM® V5TE  Compatible)
+# The ZAP Processor (ARMV5TE  Compatible)
 
-**ZAP : An Open Source High Performance ARM**® **Processor for FPGA (ARM**® **V5TE Compatible)**
+**ZAP : An Open Source High Performance ARM Processor for FPGA**
 
 **By**[ **Revanth Kamaraj** ](https://github.com/krevanth)**<**[**revanth91kamaraj@gmail.com**](mailto:revanth91kamaraj@gmail.com)**>**
 
 ### 1. Introduction
 
-The ZAP is a high performance ARM® V5TE compliant processor. It is intended to be used in FPGA projects that need a high performance ARM® V5TE soft processor core. Most aspects of the processor can be configured through HDL parameters. The default processor specification is as follows (based on default parameters):
+The ZAP is a high performance ARM compliant processor. It is intended to be used in FPGA projects that need a high performance soft processor core. Most aspects of the processor can be configured through HDL parameters. The default processor specification is as follows (based on default parameters):
 
 | **Property**                                       | **Value**                                                                                                                                                                                                                                                             |
 | -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -16,12 +16,12 @@ The ZAP is a high performance ARM® V5TE compliant processor. It is intended to 
 | Data Width                                         | 32                                                                                                                                                                                                                                                                    |
 | Address Width                                      | 32                                                                                                                                                                                                                                                                    |
 | Virtual Address Width                              | 32                                                                                                                                                                                                                                                                    |
-| Instruction Set                                    | ARM® V5TE                                                                                                                                                                                                                                                             |
+| Instruction Set Version                            | V5TE (2000s)                                                                                                                                                                                                                                                          |
 | L1 I-Cache                                         | <p>16KB Direct Mapped VIVT Cache.<br>64 Byte Cache Line</p>                                                                                                                                                                                                           |
 | L1 D-Cache                                         | <p>16KB Direct Mapped VIVT Cache<br>64 Byte Cache Line</p>                                                                                                                                                                                                            |
 | I-TLB Structure                                    | <p>Direct mapped. 512 entries divided into <br>- 128 entry section TLB<br>- 128 entry large page TLB<br>- 128 entry small page TLB<br>- 128 entry tiny page TLB<br>Usually, section TLB size can be smaller, for example. Please override parameters as required.</p> |
 | D-TLB Structure                                    | <p>Direct mapped. 512 entries divided into <br>- 128 entry section TLB<br>- 128 entry large page TLB<br>- 128 entry small page TLB<br>- 128 entry tiny page TLB<br>Usually, section TLB size can be smaller, for example. Please override parameters as required.</p> |
-| Branch Prediction                                  | <p>Bimodal Predictor + BTB. Direct Mapped.<br>1K entries in Thumb® state. <br>512 entries in ARM® state. </p>                                                                                                                                                         |
+| Branch Prediction                                  | <p>Bimodal Predictor + BTB. Direct Mapped.<br>1K entries in T state (16-bit instructions). <br>512 entries in 32-bit instruction state. </p>                                                                                                                          |
 | RAS Depth                                          | 4 deep return address stack.                                                                                                                                                                                                                                          |
 | Branch latency                                     | <p>12 cycles (wrong prediction or unrecognized branch)<br>3 cycles (taken, correctly predicted)<br>1 cycle    (not-taken, correctly predicted)<br>12 cycles (32-bit/16-bit switch)<br>18 cycles (Exception/Interrupt Entry/Exit)</p>                                  |
 | Store Buffer                                       | FIFO, 16 x 32-bit.                                                                                                                                                                                                                                                    |
@@ -43,7 +43,7 @@ ZAP includes several microarchitectural enhancements to improve instruction thro
 * A parameterizable store buffer that helps buffer stores when the cache is disabled or if the data access is uncacheable. When the cache is enabled and data is cacheable, the store buffer helps buffer cache clean operations. This is slightly different from a write buffer.
 * A 4-state bimodal branch predictor that predicts the outcome of immediate branches and branch-and-link instructions. ZAP employs a BTB (Branch Target Buffer) to predict branch outcomes early.&#x20;
 * A 4 deep return address stack that stores the predicted return address of branch and link instructions function return. When a `BX LR`, `MOV PC,LR` or a block load with PC in register list, the processor pops off the return address. Note that switching between ARM® and Thumb® state has a penalty of 12 cycles.
-* The ability to execute most ARM instructions in a single clock cycle. The only instructions that take multiple cycles include branch-and-link, 64-bit loads and stores, block loads and stores, swap instructions and `BLX/BLX2`.
+* The ability to execute most 32-bit instructions in a single clock cycle. The only instructions that take multiple cycles include branch-and-link, 64-bit loads and stores, block loads and stores, swap instructions and `BLX/BLX2`.
 * A highly efficient superpipeline with dual feedback networks to minimize pipeline stalls as much as possible while allowing for high clock frequencies. A deep 17 stage superpipelined architecture that allows the CPU to run at relatively high FPGA speeds.
 * Support for single cycle saturating additions and subtractions with the result being available for immediate use in the next instruction itself.&#x20;
   * **NOTE:** Multiplication/MAC operations takes 3 cycles per operation (+1 is result is immediately used). Note that the multiplier inside the ZAP processor is not pipelined.&#x20;
@@ -53,7 +53,7 @@ ZAP includes several microarchitectural enhancements to improve instruction thro
 
 ZAP uses a 17 stage execution pipeline to increase the speed of the flow of instructions to the processor. The 17 stage pipeline consists of Address Generator, TLB Check, Cache Access, Memory, Fetch, Instruction Buffer, Thumb Decoder, Pre-Decoder, Decoder, Issue, Shift, Execute, TLB Check, Cache Access, Memory and Writeback.
 
-> To maintain compatibility with the ARM® v5TE standard, reading the program counter (PC) will return PC + 8 when read.
+> To maintain compatibility with the V5TE standard, reading the program counter (PC) will return PC + 8 when read.
 
 During normal operation:
 
@@ -70,9 +70,9 @@ During normal operation:
 * The instruction before that is performing a register or pipeline read.
 * The instruction before that is being decoded.
 * The instruction before that is being sequenced to micro-ops (possibly).
-  * Most of the time, 1 ARM® instruction = 1 micro-op.
+  * Most of the time, 1 x 32-bit instruction = 1 micro-op.
   * The only ARM instructions requiring more than 1 micro-op generation are `BLX, BL, LDM, STM, SWAP, LDRD, STRD, LDR loading to PC` and long multiply variants (They generate a 32-bit result per micro-op).
-  * All other ARM®/Thumb® instructions are decode to just a single micro-op.
+  * All other instructions are decode to just a single micro-op.
   * Most micro-ops can be execute in a single cycle.
   * This stage also causes branches predicted as taken to be actually executed. The latency for a successfully predicted taken branch is 3 cycles.
 * The instruction before that is being being decompressed. This is only required in the Thumb state, else the stage simply passes the instructions on.
@@ -104,7 +104,7 @@ Most of the time, the pipeline is able to process 1 instruction per clock cycle.
 * `LDx` with `pc/r15` in the register list/data register is executed. This will insert a 9 cycle bubble in the pipeline.
 * `MCR`/`MRC` / `SWI` are executed. These will insert an 18 cycle bubble into the pipeline.
 
-This snippet of ARM® code takes 6 cycles to execute:
+This snippet of 32-bit instruction code takes 6 cycles to execute:
 
 ```
     ADD  R1, R2, R2 LSL #10 (1 cycle)
@@ -114,7 +114,7 @@ This snippet of ARM® code takes 6 cycles to execute:
     MOV  R4, R3             (1 cycle)
 ```
 
-This snippet of ARM code takes only 5 cycles (Possible because of dual feedback network):
+This snippet of 32-bit instruction code takes only 5 cycles (Possible because of dual feedback network):
 
 ```
     ADD  R1, R2, R2, R2     (1 cycle)
@@ -177,11 +177,11 @@ ZAP implements the register file in flip-flops. The register file provides 4 rea
 
 #### 1.1.5. Branch Predictor and Return Address Stack
 
-To improve performance, the ZAP processor uses a bimodal branch predictor. A branch memory is maintained which stores the state of each branch and the target address and branch tag. Note that the predictor can only predict the listed ARM instructions (and equivalent 16-bit instructions in Thumb state):
+To improve performance, the ZAP processor uses a bimodal branch predictor. A branch memory is maintained which stores the state of each branch and the target address and branch tag. Note that the predictor can only predict the listed 32-bit instructions (and equivalent 16-bit instructions in T state):
 
 `Bcc[L]`
 
-`BX LR` that does not switch ARM®/Thumb® state.
+`BX LR` that does not switch 32/16-bit instruction state.
 
 `ADD`/`MOV` instruction with destination as PC.
 
@@ -212,7 +212,7 @@ the CPU treats them as function returns and will pop return address of the stack
 
 This results in some performance improvement and reduced branch latency. Correctly predicted return takes 2 cycles (first two in the above list) or 9 cycles(last two in the above list), while incorrectly or unpredicted returns takes 12 cycles.
 
-Returns that result in change from ARM® to Thumb® state or vice versa are unpredicted, and take 12 cycles. Performance optimization of returns is available only when no instruction set state change occurs i.e., for faster returns: ARM® code should return to ARM® code, Thumb® code should return to Thumb® code.&#x20;
+Returns that result in change from 32 to 16-bit instruction state or vice versa are unpredicted, and take 12 cycles. Performance optimization of returns is available only when no instruction set state change occurs i.e., for faster returns: 32-bit instruction code should return to 32-bit instruction code, 16-bit instruction code should return to 16-bit instruction code.&#x20;
 
 ### 1.2. External Bus Interface
 
@@ -344,7 +344,7 @@ Note that all parameters should be 2^n. Cache size should be multiple of line si
 
 ### 1.5. ARM Implementation Options
 
-ZAP implements the integer instruction set specified in ARM® V5TE. T refers to the Thumb instruction set and E  refers to the enhanced DSP extensions. ZAP does not implement the optional floating point extension specified in Part C of \[1].&#x20;
+ZAP implements the integer instruction set specified in \[1]. T refers to the 16-bit instruction set and E  refers to the enhanced DSP extensions. ZAP does not implement the optional floating point extension specified in Part C of \[1].&#x20;
 
 #### 1.5.1. Big and Little Endian
 
@@ -354,13 +354,13 @@ ZAP only supports little endian byte ordering.
 
 ZAP does not support the legacy 26-bit mode.
 
-#### 1.5.3. Thumb
+#### 1.5.3. 16-bit Compressed Support
 
-ZAP has support for the thumb (ARM® V5T) instruction set.
+ZAP has support for the 16-bit (V5T) instruction set.
 
-#### 1.5.4. ARM DSP Enhanced Instruction Set
+#### 1.5.4. DSP Enhanced Instruction Set
 
-The ZAP implements the ARM DSP-enhanced instruction set (ARM® V5E). There are new multiply instructions that operate on 16-bit data values and new saturation instructions. Some of the new instructions are:&#x20;
+The ZAP implements the ARM DSP-enhanced instruction set (V5E). There are new multiply instructions that operate on 16-bit data values and new saturation instructions. Some of the new instructions are:&#x20;
 
 * `SMLAxy` 32<=16x16+32&#x20;
 * `SMLAWy` 32<=32x16+32
@@ -420,9 +420,9 @@ ZAP allows the cache and MMU to have these combinations:&#x20;
 
 ZAP internally implements an internal CP15 coprocessor using its internal bus mechanism. The coprocessor interface is internal to the ZAP processor and is not exposed. Thus, ZAP only has access to its internal coprocessor 15. External coprocessors cannot be attached to the processor.
 
-## 2. Project Environment (Docker®)
+## 2. Project Environment (Docker)
 
-The project environment requires Docker® to be installed at your site. Click [here](https://docs.docker.com/engine/install/) for instructions on how to install Docker®. The steps here assume that the user is a part of the `docker` group.
+The project environment requires Docker to be installed at your site. Click [here](https://docs.docker.com/engine/install/) for instructions on how to install Docker. The steps here assume that the user is a part of the `docker` group.
 
 ### 2.1. Running TCs
 
@@ -498,17 +498,17 @@ To run RTL lint, simply do:
 
 > make lint
 
-### 2.4. Running Xilinx® Vivado® Synthesis
+### 2.4. Running Xilinx Vivado Synthesis
 
 Synthesis scripts can be found here: `src/syn/`
 
-Assuming you have Vivado® installed, please do (in project root directory):
+Assuming you have Vivado installed, please do (in project root directory):
 
 > make syn
 
 Timing report will be available in `obj/syn/syn_timing.rpt`
 
-#### 2.4.1. XDC Setup (Vivado® FPGA Synthesis)
+#### 2.4.1. XDC Setup (Vivado FPGA Synthesis)
 
 * The XDC assumes a 200MHz clock for an Artix 7 FPGA part with -3 speed grade.
 * Input assume they receive data from a flop with Tcq = 50% of clock period.
@@ -517,7 +517,7 @@ Timing report will be available in `obj/syn/syn_timing.rpt`
 
 ### 3. References
 
-\[1] [ARM](https://www.intel.com/content/dam/support/us/en/programmable/support-resources/bulk-container/pdfs/literature/third-party/ddi0100e-arm-arm.pdf)®[ Architecture Specification (ARM](https://www.intel.com/content/dam/support/us/en/programmable/support-resources/bulk-container/pdfs/literature/third-party/ddi0100e-arm-arm.pdf)®[ DDI 0100E)](https://www.intel.com/content/dam/support/us/en/programmable/support-resources/bulk-container/pdfs/literature/third-party/ddi0100e-arm-arm.pdf)
+\[1] [ DDI 0100E](https://www.intel.com/content/dam/support/us/en/programmable/support-resources/bulk-container/pdfs/literature/third-party/ddi0100e-arm-arm.pdf)
 
 ### 4. Mentions
 
@@ -533,13 +533,7 @@ The testbench UART core in `src/testbench/uart.v` is taken from the [UART-16550]
 
 The testbench assembly code in `src/ts/arm_test*/arm_test*.s` is based on [this](https://github.com/freecores/arm4u/blob/master/test\_program/arm\_test.s) external assembly file.
 
-### 6. Trademarks&#x20;
-
-ARM is a registered trademark of ARM Ltd.
-
-Xilinx, Artix and Vivado are trademarks of Xilinx Inc.
-
-### 7. License
+### 6. License
 
 Copyright (C) 2016-2022 Revanth Kamaraj
 
