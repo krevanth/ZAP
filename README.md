@@ -1,12 +1,10 @@
 # The ZAP Processor (ARMV5TE  Compatible)
 
-**ZAP : An Open Source High Performance ARM Processor for FPGA**
-
 **By**[ **Revanth Kamaraj** ](https://github.com/krevanth)**<**[**revanth91kamaraj@gmail.com**](mailto:revanth91kamaraj@gmail.com)**>**
 
 ### 1. Introduction
 
-The ZAP is a high performance ARM compliant processor. It is intended to be used in FPGA projects that need a high performance soft processor core. Most aspects of the processor can be configured through HDL parameters. The default processor specification is as follows (based on default parameters):
+The ZAP is intended to be used in FPGA projects that need a high performance soft processor core. Most aspects of the processor can be configured through HDL parameters. The default processor specification is as follows (based on default parameters):
 
 | **Property**                                       | **Value**                                                                                                                                                                                                                                                             |
 | -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -51,7 +49,7 @@ ZAP includes several microarchitectural enhancements to improve instruction thro
 
 ### 1.1. Superpipelined Microarchitecture
 
-ZAP uses a 17 stage execution pipeline to increase the speed of the flow of instructions to the processor. The 17 stage pipeline consists of Address Generator, TLB Check, Cache Access, Memory, Fetch, Instruction Buffer, Thumb Decoder, Pre-Decoder, Decoder, Issue, Shift, Execute, TLB Check, Cache Access, Memory and Writeback.
+ZAP uses a 17 stage execution pipeline to increase the speed of the flow of instructions to the processor. The 17 stage pipeline consists of Address Generator, TLB Check, Cache Access, Memory, Fetch, Instruction Buffer, T Decoder, Pre-Decoder, Decoder, Issue, Shift, Execute, TLB Check, Cache Access, Memory and Writeback.
 
 > To maintain compatibility with the V5TE standard, reading the program counter (PC) will return PC + 8 when read.
 
@@ -75,7 +73,7 @@ During normal operation:
   * All other instructions are decode to just a single micro-op.
   * Most micro-ops can be execute in a single cycle.
   * This stage also causes branches predicted as taken to be actually executed. The latency for a successfully predicted taken branch is 3 cycles.
-* The instruction before that is being being decompressed. This is only required in the Thumb state, else the stage simply passes the instructions on.
+* The instruction before that is being being decompressed. This is only required in the T state, else the stage simply passes the instructions on.
 * The instruction before that is popped off the instruction buffer.
 * The instruction before that is pushed onto the instruction buffer. Branches\
   are predicted using a bimodal predictor (if applicable).
