@@ -1,5 +1,8 @@
-### The ZAP Processor (ARMV5TE  Compatible)
+![Logo](https://github.com/krevanth/ZAP/blob/master/logo.png)
 
 **By**[ **Revanth Kamaraj** ](https://github.com/krevanth)**<**[**revanth91kamaraj@gmail.com**](mailto:revanth91kamaraj@gmail.com)**>**
 
-Wiki: https://github.com/krevanth/ZAP/wiki 
+Please see the wiki here: https://github.com/krevanth/ZAP/wiki 
+
+
+
