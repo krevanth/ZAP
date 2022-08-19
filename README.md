@@ -1,4 +1,4 @@
-![Logo](https://github.com/krevanth/ZAP/blob/master/logo.png)
+The ZAP Processor
 
 **By**[ **Revanth Kamaraj** ](https://github.com/krevanth)**<**[**revanth91kamaraj@gmail.com**](mailto:revanth91kamaraj@gmail.com)**>**
 
