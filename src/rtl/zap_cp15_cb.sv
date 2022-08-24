@@ -518,11 +518,11 @@ end
 // CPU info register.
 task automatic generate_r0;
 begin
-        r[0][3:0]   <= 4'd0;
-        r[0][15:4]  <= 12'hAAA;
-        r[0][19:16] <= 4'h4;
-        r[0][23:20] <= 4'd0;
-        r[0][31:24] <= 8'd0;
+        r[0][3:0]   <= 4'd0;    // Revision 0.
+        r[0][15:4]  <= 12'hAAA; // Primary part number.
+        r[0][19:16] <= 4'h5;    // Indicates V5TE.
+        r[0][23:20] <= 4'd0;    // Variant 0.
+        r[0][31:24] <= 8'd0;    // Implementor code = ZAP (Code = 0x0)
 end
 endtask
 
