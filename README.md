@@ -515,7 +515,7 @@ Timing report will be available in `obj/syn/syn_timing.rpt`
 
 ## 4. References
 
-\[1] [ DDI 0100E](https://www.intel.com/content/dam/support/us/en/programmable/support-resources/bulk-container/pdfs/literature/third-party/ddi0100e-arm-arm.pdf)
+\[1\] [DDI 0100E](https://github.com/krevanth/ZAP/blob/master/ddi0100e-arm-arm.zip)
 
 ## 5. Mentions
 
