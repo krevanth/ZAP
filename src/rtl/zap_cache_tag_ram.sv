@@ -171,20 +171,22 @@ end
 
 always_ff @ (posedge i_clk)
 begin
-        if ( !i_hold || tag_ram_clean )
+        if ( i_reset )
+        begin
+                o_cache_tag_dirty     <= '0;
+                cache_tag_dirty_del   <= '0;
+                cache_tag_dirty       <= '0;
+                dirty                 <= '0;
+        end
+        else if ( !i_hold || tag_ram_clean )
         begin
                 o_cache_tag_dirty  <= tag_ram_rd_addr_del2 == tag_ram_wr_addr && tag_ram_wr_en ? i_cache_tag_dirty : cache_tag_dirty_del;
                 cache_tag_dirty_del<= tag_ram_rd_addr_del  == tag_ram_wr_addr && tag_ram_wr_en ? i_cache_tag_dirty : cache_tag_dirty;
                 cache_tag_dirty    <= tag_ram_rd_addr      == tag_ram_wr_addr && tag_ram_wr_en ? i_cache_tag_dirty : dirty [ tag_ram_rd_addr ];
         
-                if ( i_reset )
-                begin
-                        dirty <= 0;
-                end
-                else if ( tag_ram_wr_en )
+                if ( tag_ram_wr_en )
                 begin
                         dirty [ tag_ram_wr_addr ]   <= i_cache_tag_dirty;
-                        
                 end
                 else if ( tag_ram_clean )
                 begin
@@ -195,15 +197,22 @@ end
 
 always_ff @ (posedge i_clk)
 begin
-        if ( !i_hold || tag_ram_clear )
+        if ( i_reset )
+        begin
+                o_cache_tag_valid   <= '0;
+                cache_tag_valid_del <= '0;
+                cache_tag_valid     <= '0;
+                valid               <= '0;
+        end
+        else if ( !i_hold || tag_ram_clear )
         begin
                 o_cache_tag_valid   <= tag_ram_rd_addr_del2 == tag_ram_wr_addr && tag_ram_wr_en ? 1'd1 : cache_tag_valid_del;
                 cache_tag_valid_del <= tag_ram_rd_addr_del  == tag_ram_wr_addr && tag_ram_wr_en ? 1'd1 : cache_tag_valid;
                 cache_tag_valid     <= tag_ram_rd_addr      == tag_ram_wr_addr && tag_ram_wr_en ? 1'd1 : valid [ tag_ram_rd_addr ];
 
-                if ( tag_ram_clear || !i_cache_en || i_reset )
+                if ( tag_ram_clear || !i_cache_en )
                 begin
-                        valid <= 0;
+                        valid <= '0;
                 end
                 else if ( tag_ram_wr_en )
                 begin

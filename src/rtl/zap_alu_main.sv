@@ -434,6 +434,18 @@ end
 
 always_ff @ ( posedge i_clk ) // Wishbone flops.
 begin
+        if ( i_reset )
+        begin
+                // Wishbone updates.    
+                o_data_wb_cyc_ff                <= 1'd0;
+                o_data_wb_stb_ff                <= 1'd0;
+                o_data_wb_we_ff                 <= '0;
+                o_data_wb_dat_ff                <= '0;
+                o_data_wb_sel_ff                <= '0;
+                o_mem_address_ff                <= '0; 
+        end
+        else
+        begin
                 // Wishbone updates.    
                 o_data_wb_cyc_ff                <= o_data_wb_cyc_nxt;
                 o_data_wb_stb_ff                <= o_data_wb_stb_nxt;
@@ -446,6 +458,7 @@ begin
                 begin
                         o_mem_address_ff  <= mem_address_nxt; 
                 end
+        end
 end
 
 // -----------------------------------------------------------------------------
@@ -461,12 +474,7 @@ begin
         o_data_wb_dat_nxt = o_data_wb_dat_ff;
         o_data_wb_sel_nxt = o_data_wb_sel_ff;
 
-        if ( i_reset )  // Synchronous reset to only those flops that need it. 
-        begin 
-                o_data_wb_cyc_nxt = 1'd0;
-                o_data_wb_stb_nxt = 1'd0;
-        end 
-        else if ( i_clear_from_writeback ) 
+        if ( i_clear_from_writeback ) 
         begin 
                 o_data_wb_cyc_nxt = 0;
                 o_data_wb_stb_nxt = 0;

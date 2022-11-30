@@ -93,8 +93,12 @@ zap_sync_fifo #(.WIDTH(WDT), .DEPTH(DEPTH), .FWFT(32'd1)) USF (
 // Pipeline register.
 always_ff @ (posedge i_clk)
 begin
-        if ( i_reset || clear )
+        if ( i_reset )
         begin   
+                o_valid <= 1'd0;
+        end
+        else if ( clear )
+        begin
                 o_valid <= 1'd0;
         end
         else if ( rd_en )

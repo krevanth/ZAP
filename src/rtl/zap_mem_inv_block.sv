@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////////
 //                                                                              //                                    
-//Copyright (C) 2016-2022 Revanth Kamaraj(krevanth) <revanth91kamaraj@gmail.com)//
+//Copyright (C) 2016-2022 Revanth Kamaraj(krevanth) <revanth91kamaraj@gmail.com>//
 //                                                                              // 
 // This program is free software; you can redistribute it and/or                //
 // modify it under the terms of the GNU General Public License                  //
@@ -22,9 +22,6 @@
 // Tag RAMs with single cycle clear. Finds the greatest use in TLBs.            //
 //                                                                              //
 //////////////////////////////////////////////////////////////////////////////////
-
-
-
 
 module zap_mem_inv_block #(
         parameter DEPTH = 32,
@@ -84,7 +81,9 @@ zap_ram_simple #(.WIDTH(WIDTH), .DEPTH(DEPTH)) u_ram_simple (
 
 always_ff @ (posedge i_clk)
 begin
-        if ( i_reset | i_inv )
+        if ( i_reset )
+               dav_ff <= '0;
+        else if ( i_inv )
                dav_ff <= {DEPTH{1'd0}};
         else if ( i_wen && i_clken )
               dav_ff [ i_waddr ] <= 1'd1;
@@ -92,7 +91,9 @@ end
 
 always @ ( posedge i_clk )
 begin
-        if ( i_reset || i_inv )
+        if ( i_reset )
+                rdav_st1 <= '0;
+        else if ( i_inv )
                 rdav_st1 <= 1'd0;
         else if ( i_clken )
                 rdav_st1 <= i_raddr == i_waddr && i_wen ? 1'd1 : dav_ff [ i_raddr ];
@@ -100,7 +101,9 @@ end
 
 always_ff @ ( posedge i_clk )
 begin
-        if ( i_reset || i_inv )
+        if ( i_reset )
+                raddr_del <= '0;
+        else if ( i_inv )
                 raddr_del <= '0;
         else if ( i_clken )
                 raddr_del <= i_raddr;
@@ -112,7 +115,9 @@ end
 
 always_ff @ ( posedge i_clk )
 begin
-        if ( i_reset || i_inv )
+        if ( i_reset )
+                o_rdav_pre <= 1'd0;
+        else if ( i_inv )
                 o_rdav_pre <= 1'd0;
         else if  ( i_clken )
                 o_rdav_pre <= i_waddr == raddr_del && i_wen ? 1'd1 : rdav_st1;
@@ -120,7 +125,9 @@ end
 
 always_ff @ ( posedge i_clk )
 begin
-        if ( i_reset || i_inv )
+        if ( i_reset )
+                raddr_del2 <= '0;
+        else if ( i_inv )
                 raddr_del2 <= '0;
         else if ( i_clken )
                 raddr_del2 <= raddr_del;
@@ -132,7 +139,9 @@ end
 
 always_ff @  (posedge i_clk )
 begin   
-        if ( i_reset || i_inv )
+        if ( i_reset )
+                o_rdav <= '0;
+        else if ( i_inv )
                 o_rdav <= 1'd0;
         else if ( i_clken )
                 o_rdav <= i_waddr == raddr_del2 && i_wen ? 1'd1 : o_rdav_pre;
