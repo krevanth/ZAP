@@ -2271,20 +2271,20 @@ reg     [width-1:0]             flop_0;
 always @ (posedge clk_i or posedge rst_i)
 begin
     if (rst_i)
-        flop_0 <= #Tp {width{init_value}};
+        flop_0 <= {width{init_value}};
     else
-        flop_0 <= #Tp async_dat_i;    
+        flop_0 <= async_dat_i;    
 end
 
 // second stage
 always @ (posedge clk_i or posedge rst_i)
 begin
     if (rst_i)
-        sync_dat_o <= #Tp {width{init_value}};
+        sync_dat_o <= {width{init_value}};
     else if (stage1_rst_i)
-        sync_dat_o <= #Tp {width{init_value}};
+        sync_dat_o <= {width{init_value}};
     else if (stage1_clk_en_i)
-        sync_dat_o <= #Tp flop_0;       
+        sync_dat_o <= flop_0;       
 end
 
 endmodule
