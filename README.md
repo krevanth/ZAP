@@ -515,7 +515,7 @@ Timing report will be available in `obj/syn/syn_timing.rpt`
 
 ## 4. References
 
-\[1\] [DDI 0100E](https://github.com/krevanth/ZAP/blob/master/ddi0100e-arm-arm.zip)
+\[1\] [DDI 0100E](https://github.com/krevanth/ZAP/blob/master/ddi0100e-arm-arm.fodg.gz)
 
 ## 5. Mentions
 
