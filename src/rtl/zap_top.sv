@@ -163,14 +163,13 @@ logic           cpu_dwe_check;
 logic           s_reset, s_fiq, s_irq;
 logic           code_stall;
 
-// Reason for not using a traditional reset synchronizer:
-// 1. External reset (i_reset) IS guaranteed to be longer 1 clock cycle. 
-// 2. Therefore, a dual rank synchronizer is sufficient to generate a fully 
-// synchronous reset signal.
-zap_dual_rank_synchronizer #(.WIDTH(3)) u_sync (
+assign          s_reset = i_reset;
+
+zap_dual_rank_synchronizer #(.WIDTH(2)) u_sync (
         .i_clk(i_clk),
-        .in({i_reset, i_fiq, i_irq}),
-        .out({s_reset, s_fiq, s_irq})
+        .i_reset(i_reset),
+        .in( {i_fiq, i_irq}),
+        .out({s_fiq, s_irq})
 );
 
 zap_core #(

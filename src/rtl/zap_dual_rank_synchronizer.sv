@@ -27,14 +27,15 @@ module zap_dual_rank_synchronizer
 ) 
 (
         input logic i_clk, 
+        input logic i_reset,
         input logic [WIDTH-1:0] in, 
         output logic [WIDTH-1:0] out
 );
 
 logic [WIDTH-1:0] meta;
 
-always @ ( posedge i_clk )  meta <= in;
-always @ ( posedge i_clk )  out  <= meta;
+always @ ( posedge i_clk )  meta <= i_reset ? '0 : in;
+always @ ( posedge i_clk )  out  <= i_reset ? '0 : meta;
 
 endmodule
 
