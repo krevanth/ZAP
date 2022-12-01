@@ -34,8 +34,8 @@ module zap_dual_rank_synchronizer
 
 logic [WIDTH-1:0] meta;
 
-always @ ( posedge i_clk )  meta <= i_reset ? '0 : in;
-always @ ( posedge i_clk )  out  <= i_reset ? '0 : meta;
+always_ff @ ( posedge i_clk )  meta <= i_reset ? '0 : in;
+always_ff @ ( posedge i_clk )  out  <= i_reset ? '0 : meta;
 
 endmodule
 
