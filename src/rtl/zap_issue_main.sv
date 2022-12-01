@@ -330,7 +330,7 @@ begin
 end
 endtask
 
-always_ff @ (posedge i_clk)
+always_ff @ ( posedge i_clk )
 begin
         if ( i_reset )
         begin

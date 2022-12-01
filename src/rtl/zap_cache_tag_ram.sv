@@ -160,7 +160,7 @@ zap_ram_simple #(.WIDTH(`ZAP_CACHE_TAG_WDT), .DEPTH(CACHE_SIZE/CACHE_LINE)) u_za
 
 // ----------------------------------------------------------------------------
 
-always_ff @ (posedge i_clk)
+always_ff @ ( posedge i_clk )
 begin
         if ( !i_hold )
         begin
@@ -169,7 +169,7 @@ begin
         end
 end
 
-always_ff @ (posedge i_clk)
+always_ff @ ( posedge i_clk )
 begin
         if ( i_reset )
         begin
@@ -195,7 +195,7 @@ begin
         end
 end
 
-always_ff @ (posedge i_clk)
+always_ff @ ( posedge i_clk )
 begin
         if ( i_reset )
         begin
@@ -223,7 +223,7 @@ end
 
 // ----------------------------------------------------------------------------
 
-always_ff @ (posedge i_clk)
+always_ff @ ( posedge i_clk )
 begin
         if ( i_reset )
         begin

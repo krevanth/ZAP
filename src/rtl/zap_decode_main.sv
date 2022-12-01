@@ -266,7 +266,7 @@ always_comb
 logic [64*8-1:0] decompile_tmp;
 
 // Flop the outputs to break the pipeline at this point.
-always_ff @ (posedge i_clk)
+always_ff @ ( posedge i_clk )
 begin
         if ( i_reset )
         begin

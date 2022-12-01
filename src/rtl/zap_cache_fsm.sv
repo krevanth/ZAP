@@ -180,16 +180,22 @@ always_comb cache_cmp   = (i_cache_tag[`ZAP_CACHE_TAG__TAG] == i_address[`ZAP_VA
 always_comb cache_dirty = i_cache_tag_dirty;
 
 /* Buffers */
-always_ff @ ( posedge i_clk ) if ( state_ff == IDLE ) address         <= i_address ;
-always_ff @ ( posedge i_clk ) if ( state_ff == IDLE ) wr              <= i_wr;
-always_ff @ ( posedge i_clk ) if ( state_ff == IDLE ) din             <= i_din;
-always_ff @ ( posedge i_clk ) if ( state_ff == IDLE ) ben             <= i_ben;
-always_ff @ ( posedge i_clk ) if ( state_ff == IDLE ) cache_line      <= i_cache_line;
-always_ff @ ( posedge i_clk ) if ( state_ff == IDLE ) cache_tag       <= i_cache_tag;
-always_ff @ ( posedge i_clk ) if ( state_ff == IDLE ) phy_addr        <= i_phy_addr;
+always_ff @ ( posedge i_clk ) 
+begin
+        if ( state_ff == IDLE ) 
+        begin
+                address         <= i_address ;
+                wr              <= i_wr;
+                din             <= i_din;
+                ben             <= i_ben;
+                cache_line      <= i_cache_line;
+                cache_tag       <= i_cache_tag;
+                phy_addr        <= i_phy_addr;
+        end
+end
 
 /* Sequential Block */
-always_ff @ (posedge i_clk)
+always_ff @ ( posedge i_clk )
 begin
         if ( i_reset )
         begin

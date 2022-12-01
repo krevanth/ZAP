@@ -79,7 +79,7 @@ zap_ram_simple #(.WIDTH(WIDTH), .DEPTH(DEPTH)) u_ram_simple (
 // Stage 1
 // ----------------------------------------------------------------------------
 
-always_ff @ (posedge i_clk)
+always_ff @ ( posedge i_clk )
 begin
         if ( i_reset )
                dav_ff <= '0;

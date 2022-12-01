@@ -137,6 +137,7 @@ begin
         end
         else if ( i_data_stall )
         begin
+                // Save state
         end
         else if ( i_clear_from_alu )
         begin
@@ -146,9 +147,12 @@ begin
                 o_und <= 0;       
                 o_iabort <= 0; 
         end
-        else if ( i_stall_from_shifter ) begin end
-        else if ( i_stall_from_issue )   begin end
-        else if ( i_stall_from_decode )  begin end
+        else if ( i_stall_from_shifter || 
+                  i_stall_from_issue   ||   
+                  i_stall_from_decode  )  
+        begin
+                // Save state
+        end
         else if ( i_clear_from_decode )
         begin
                 o_instruction_valid <= 1'd0;

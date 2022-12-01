@@ -119,7 +119,7 @@ always_comb unused = |{i_pc_from_alu[0], i_pc_from_alu[31:$clog2(BP_ENTRIES)+1]}
 // This stage simply forwards data from the
 // I-cache downwards.
 //
-always_ff @ (posedge i_clk)
+always_ff @ ( posedge i_clk )
 begin
         if (  i_reset )                          
         begin
@@ -138,15 +138,38 @@ begin
 
                 o_pred          <= 33'd0;
         end
-        else if ( i_clear_from_writeback )       clear_unit;
-        else if ( i_data_stall)                  begin end // Save state.
-        else if ( i_clear_from_alu )             clear_unit;
-        else if ( i_stall_from_shifter )         begin end // Save state.
-        else if ( i_stall_from_issue )           begin end // Save state.
-        else if ( i_stall_from_decode)           begin end // Save state.
-        else if ( i_clear_from_decode )          clear_unit;
-        else if ( i_code_stall )                 begin end // Save state.
-
+        else if ( i_clear_from_writeback )       
+        begin
+                clear_unit;
+        end
+        else if ( i_data_stall)                  
+        begin 
+                // Save state
+        end 
+        else if ( i_clear_from_alu )             
+        begin
+                clear_unit;
+        end
+        else if ( i_stall_from_shifter )         
+        begin 
+                // Save state
+        end 
+        else if ( i_stall_from_issue )           
+        begin 
+                // Save state
+        end 
+        else if ( i_stall_from_decode)           
+        begin 
+                // Save state
+        end 
+        else if ( i_clear_from_decode )          
+        begin
+                clear_unit;
+        end
+        else if ( i_code_stall )                 
+        begin 
+                // Save state
+        end 
         // If unit is sleeping.
         else if ( sleep_ff ) 
         begin

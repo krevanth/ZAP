@@ -108,7 +108,7 @@ begin
 end
 
 // Tag check and clear generation logic. Use RAM data.
-always_ff @ (posedge i_clk)
+always_ff @ ( posedge i_clk )
 begin
         if ( i_reset )  
         begin

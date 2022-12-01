@@ -824,12 +824,30 @@ endfunction
        
 always_ff @ (posedge i_clk)
 begin
-        if      ( i_reset )                             clear;
-        else if ( i_clear_from_writeback)               clear;
-        else if ( i_data_stall )                        begin end // Stall CPU.
-        else if ( i_clear_from_alu )                    clear;
-        else if ( i_stall_from_shifter )                begin end
-        else if ( i_issue_stall )                       begin end
+        if      ( i_reset )                             
+        begin
+                clear;
+        end
+        else if ( i_clear_from_writeback)               
+        begin
+                clear;
+        end
+        else if ( i_data_stall )                        
+        begin 
+                // Save state
+        end 
+        else if ( i_clear_from_alu )
+        begin
+                clear;
+        end
+        else if ( i_stall_from_shifter )                
+        begin 
+                // Save state
+        end
+        else if ( i_issue_stall )                       
+        begin 
+                // Save state
+        end
         else
         begin
                 state_ff   <= state_nxt;

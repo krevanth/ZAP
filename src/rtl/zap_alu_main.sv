@@ -347,7 +347,7 @@ end
 // Sequential logic.
 // -----------------------------------------------------------------------------
 
-always_ff @ (posedge i_clk)
+always_ff @ ( posedge i_clk )
 begin
         if ( i_reset )
         begin
@@ -833,24 +833,74 @@ begin: adder_ip_mux
         op         = i_alu_operation_ff;
 
         case ( op )
-       {1'd0, FMOV}: begin              op1 = i_pc_plus_8_ff ; op2 = ~32'd4 ; cin =   1'd1;              end
+        {1'd0, FMOV}:
+        begin              
+                op1 = i_pc_plus_8_ff    ; 
+                op2 = ~32'd4            ; 
+                cin = 1'd1              ;              
+        end
         {2'd0, ADD}, 
         {1'd0, OP_QADD}, 
-        {1'd0, OP_QDADD}: begin         op1 = rn             ; op2 = rm     ; cin =   1'd0;              end
-        {2'd0, ADC}: begin              op1 = rn             ; op2 = rm     ; cin =   flag;              end
+        {1'd0, OP_QDADD}: 
+        begin         
+                op1 = rn        ; 
+                op2 = rm        ;   
+                cin = 1'd0      ;              
+        end
+        {2'd0, ADC}: 
+        begin              
+                op1 = rn        ; 
+                op2 = rm        ; 
+                cin = flag      ;              
+        end
         {2'd0, SUB}, 
         {1'd0, OP_QSUB}, 
-        {1'd0, OP_QDSUB}: begin         op1 = rn             ; op2 = not_rm ; cin =   1'd1;               end
-        {2'd0, RSB}: begin              op1 = rm             ; op2 = not_rn ; cin =   1'd1;               end
-        {2'd0, SBC}: begin              op1 = rn             ; op2 = not_rm ; cin =   !flag;              end
-        {2'd0, RSC}: begin              op1 = rm             ; op2 = not_rn ; cin =   !flag;              end
+        {1'd0, OP_QDSUB}: 
+        begin         
+                op1 = rn     ; 
+                op2 = not_rm ; 
+                cin =   1'd1 ;               
+        end
+        {2'd0, RSB}: 
+        begin              
+                op1 = rm     ; 
+                op2 = not_rn ; 
+                cin =   1'd1 ;                     
+        end
+        {2'd0, SBC}: 
+        begin              
+                op1 = rn     ; 
+                op2 = not_rm ; 
+                cin = !flag  ;              
+        end
+        {2'd0, RSC}: 
+        begin              
+                op1 = rm     ; 
+                op2 = not_rn ; 
+                cin = !flag  ;              
+        end
 
         // Target is not written.
-        {2'd0, CMP}: begin              op1 = rn             ; op2 = not_rm ; cin =   1'd1;               end 
-        {2'd0, CMN}: begin              op1 = rn             ; op2 = rm     ; cin =   1'd0;               end 
+        {2'd0, CMP}: 
+        begin
+                op1 = rn  ;     
+                op2 = not_rm ; 
+                cin = 1'd1;               
+        end 
+        {2'd0, CMN}:    
+        begin 
+                op1 = rn  ; 
+                op2 = rm  ; 
+                cin = 1'd0;               
+        end 
 
         // Default.
-        default:     begin              op1 = 0;              op2 = 0;        cin = 0;                    end
+        default: 
+        begin 
+                op1 = 0; 
+                op2 = 0; 
+                cin = 0; 
+        end
         endcase
 end
 
