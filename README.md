@@ -36,7 +36,7 @@ The ZAP is intended to be used in FPGA projects that need a high performance sof
 
 A simplified block diagram of the ZAP pipeline is shown below:
 
-![Pipeline](Pipeline.drawio.svg)
+![Pipeline](./Pipeline.drawio.svg)
 
 ZAP includes several microarchitectural enhancements to improve instruction throughput, hide external bus and memory latency and boost performance:
 
