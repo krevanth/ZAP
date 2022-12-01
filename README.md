@@ -1,36 +1,38 @@
-# The ZAP Processor (ARMV5TE  Compatible)
+# The ZAP Processor (ARMV5TE Compatible)
 
 **By**[ **Revanth Kamaraj** ](https://github.com/krevanth)**<**[**revanth91kamaraj@gmail.com**](mailto:revanth91kamaraj@gmail.com)**>**
+
+#### IMPORTANT NOTE: Please read this document thoroughly before going through the code, in order to understand the design decisions taken.
 
 ## 1. Introduction
 
 The ZAP is intended to be used in FPGA projects that need a high performance soft processor core. Most aspects of the processor can be configured through HDL parameters. The default processor specification is as follows (based on default parameters):
 
-| **Property**                                       | **Value**                                                                                                                                                                                                                                                             |
-| -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Slow Corner Operating Frequency @ FPGA Part Number | <p>143MHz @ xc7a75tcsg324-3 <br></p>                                                                                                                                                                                                                                  |
-| Pipeline Depth                                     | 17                                                                                                                                                                                                                                                                    |
-| Issue and Execution Width                          | Single issue, in order core, with out-of-order completion for some loads/stores that miss in cache.                                                                                                                                                                   |
-| Data Width                                         | 32                                                                                                                                                                                                                                                                    |
-| Address Width                                      | 32                                                                                                                                                                                                                                                                    |
-| Virtual Address Width                              | 32                                                                                                                                                                                                                                                                    |
-| Instruction Set Version                            | V5TE (2000s)                                                                                                                                                                                                                                                          |
-| L1 I-Cache                                         | <p>16KB Direct Mapped VIVT Cache.<br>64 Byte Cache Line</p>                                                                                                                                                                                                           |
-| L1 D-Cache                                         | <p>16KB Direct Mapped VIVT Cache<br>64 Byte Cache Line</p>                                                                                                                                                                                                            |
-| I-TLB Structure                                    | <p>Direct mapped. 512 entries divided into <br>- 128 entry section TLB<br>- 128 entry large page TLB<br>- 128 entry small page TLB<br>- 128 entry tiny page TLB<br>Usually, section TLB size can be smaller, for example. Please override parameters as required.</p> |
-| D-TLB Structure                                    | <p>Direct mapped. 512 entries divided into <br>- 128 entry section TLB<br>- 128 entry large page TLB<br>- 128 entry small page TLB<br>- 128 entry tiny page TLB<br>Usually, section TLB size can be smaller, for example. Please override parameters as required.</p> |
-| Branch Prediction                                  | <p>Bimodal Predictor + BTB. Direct Mapped.<br>1K entries in T state (16-bit instructions). <br>512 entries in 32-bit instruction state. </p>                                                                                                                          |
-| RAS Depth                                          | 4 deep return address stack.                                                                                                                                                                                                                                          |
-| Branch latency                                     | <p>12 cycles (wrong prediction or unrecognized branch)<br>3 cycles (taken, correctly predicted)<br>1 cycle    (not-taken, correctly predicted)<br>12 cycles (32-bit/16-bit switch)<br>18 cycles (Exception/Interrupt Entry/Exit)</p>                                  |
-| Store Buffer                                       | FIFO, 16 x 32-bit.                                                                                                                                                                                                                                                    |
-| Fetch Buffer                                       | FIFO, 16 x 32-bit.                                                                                                                                                                                                                                                    |
-| DMIPS/MHz Rating                                   | 0.9 DMIPS/MHz                                                                                                                                                                                                                                                         |
-| Bus Interface                                      | Unified 32-Bit Wishbone B3 bus with CTI and BTE signals.                                                                                                                                                                                                              |
-| FPGA Resource Utilization                          | <p>23K LUTs<br>116 LUTRAMs<br>15.3K FFs<br>29 BRAMs<br>4 DSP Blocks</p>                                                                                                                                                                                               |
+| **Property**                                       | **Value**                                                                                                                                                                                                                                                            |
+| -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Slow Corner Operating Frequency @ FPGA Part Number | <p>143MHz @ xc7a75tcsg324-3<br></p>                                                                                                                                                                                                                                  |
+| Pipeline Depth                                     | 17                                                                                                                                                                                                                                                                   |
+| Issue and Execution Width                          | Single issue, in order core, with out-of-order completion for some loads/stores that miss in cache.                                                                                                                                                                  |
+| Data Width                                         | 32                                                                                                                                                                                                                                                                   |
+| Address Width                                      | 32                                                                                                                                                                                                                                                                   |
+| Virtual Address Width                              | 32                                                                                                                                                                                                                                                                   |
+| Instruction Set Version                            | V5TE (2000s)                                                                                                                                                                                                                                                         |
+| L1 I-Cache                                         | <p>16KB Direct Mapped VIVT Cache.<br>64 Byte Cache Line</p>                                                                                                                                                                                                          |
+| L1 D-Cache                                         | <p>16KB Direct Mapped VIVT Cache<br>64 Byte Cache Line</p>                                                                                                                                                                                                           |
+| I-TLB Structure                                    | <p>Direct mapped. 512 entries divided into<br>- 128 entry section TLB<br>- 128 entry large page TLB<br>- 128 entry small page TLB<br>- 128 entry tiny page TLB<br>Usually, section TLB size can be smaller, for example. Please override parameters as required.</p> |
+| D-TLB Structure                                    | <p>Direct mapped. 512 entries divided into<br>- 128 entry section TLB<br>- 128 entry large page TLB<br>- 128 entry small page TLB<br>- 128 entry tiny page TLB<br>Usually, section TLB size can be smaller, for example. Please override parameters as required.</p> |
+| Branch Prediction                                  | <p>Bimodal Predictor + BTB. Direct Mapped.<br>1K entries in T state (16-bit instructions).<br>512 entries in 32-bit instruction state.</p>                                                                                                                           |
+| RAS Depth                                          | 4 deep return address stack.                                                                                                                                                                                                                                         |
+| Branch latency                                     | <p>12 cycles (wrong prediction or unrecognized branch)<br>3 cycles (taken, correctly predicted)<br>1 cycle (not-taken, correctly predicted)<br>12 cycles (32-bit/16-bit switch)<br>18 cycles (Exception/Interrupt Entry/Exit)</p>                                    |
+| Store Buffer                                       | FIFO, 16 x 32-bit.                                                                                                                                                                                                                                                   |
+| Fetch Buffer                                       | FIFO, 16 x 32-bit.                                                                                                                                                                                                                                                   |
+| DMIPS/MHz Rating                                   | 0.9 DMIPS/MHz                                                                                                                                                                                                                                                        |
+| Bus Interface                                      | Unified 32-Bit Wishbone B3 bus with CTI and BTE signals.                                                                                                                                                                                                             |
+| FPGA Resource Utilization                          | <p>23K LUTs<br>116 LUTRAMs<br>15.3K FFs<br>29 BRAMs<br>4 DSP Blocks</p>                                                                                                                                                                                              |
 
 A simplified block diagram of the ZAP pipeline is shown below:
 
-![Pipeline](https://github.com/krevanth/ZAP/blob/master/Pipeline.drawio.svg)
+![Pipeline](Pipeline.drawio.svg)
 
 ZAP includes several microarchitectural enhancements to improve instruction throughput, hide external bus and memory latency and boost performance:
 
@@ -39,12 +41,12 @@ ZAP includes several microarchitectural enhancements to improve instruction thro
 * The D-cache also stores the physical address of the cache line on write as this allows subsequent cache clean operations to avoid having to walk the page table again. This feature does increase resource usage but can significantly reduce cache clean latency.
 * Direct mapped instruction and data memory TLBs. Having separate translation buffers allows data and code translation to happen in parallel. The sizes of these TLBs can be set during synthesis. Six different TLB memories are provides, each providing direct mapped buffering for sections, large page and small page, each for instruction and data (3 x 2 = 6). The sizes of these 6 memories is parameterizable.
 * A parameterizable store buffer that helps buffer stores when the cache is disabled or if the data access is uncacheable. When the cache is enabled and data is cacheable, the store buffer helps buffer cache clean operations. This is slightly different from a write buffer.
-* A 4-state bimodal branch predictor that predicts the outcome of immediate branches and branch-and-link instructions. ZAP employs a BTB (Branch Target Buffer) to predict branch outcomes early.&#x20;
+* A 4-state bimodal branch predictor that predicts the outcome of immediate branches and branch-and-link instructions. ZAP employs a BTB (Branch Target Buffer) to predict branch outcomes early.
 * A 4 deep return address stack that stores the predicted return address of branch and link instructions function return. When a `BX LR`, `MOV PC,LR` or a block load with PC in register list, the processor pops off the return address. Note that switching between A (32-bit) and T state (16-bit) has a penalty of 12 cycles.
 * The ability to execute most 32-bit instructions in a single clock cycle. The only instructions that take multiple cycles include branch-and-link, 64-bit loads and stores, block loads and stores, swap instructions and `BLX/BLX2`.
 * A highly efficient superpipeline with dual feedback networks to minimize pipeline stalls as much as possible while allowing for high clock frequencies. A deep 17 stage superpipelined architecture that allows the CPU to run at relatively high FPGA speeds.
-* Support for single cycle saturating additions and subtractions with the result being available for immediate use in the next instruction itself.&#x20;
-  * **NOTE:** Multiplication/MAC operations takes 3 cycles per operation (+1 is result is immediately used). Note that the multiplier inside the ZAP processor is not pipelined.&#x20;
+* Support for single cycle saturating additions and subtractions with the result being available for immediate use in the next instruction itself.
+  * **NOTE:** Multiplication/MAC operations takes 3 cycles per operation (+1 is result is immediately used). Note that the multiplier inside the ZAP processor is not pipelined.
 * The abort model is base restored. This allows for the implementation of a demand based paging system if supporting software is available.
 
 ### 1.1. Superpipelined Microarchitecture
@@ -92,9 +94,9 @@ Most of the time, the pipeline is able to process 1 instruction per clock cycle.
 
 * An instruction uses a register that is a data (not pointer) destination for an `LDR`/`LDM` instruction within 7 cycles.
 * Two back to back instructions that require non-zero shift and the second instruction's operand overlaps with the first instruction's destination.
-* When a previous instruction modifies the flags and the current instruction requires a non-trivial shift operation. Note that `LSL #0` is considered a trivial shift operation.&#x20;
+* When a previous instruction modifies the flags and the current instruction requires a non-trivial shift operation. Note that `LSL #0` is considered a trivial shift operation.
 * The pipeline is executing any multiply/MAC instruction:
-  * Introduces a 3 cycle bubble into the pipeline if  a single register is written out. (+1 if two registers are written out)
+  * Introduces a 3 cycle bubble into the pipeline if a single register is written out. (+1 if two registers are written out)
   * An instruction that uses a register that is/are destination(s) for multiply/MAC adds +1 to the multiply/MAC operation's latency.
 * `B` is executed as it adds a 3 cycle bubble due to branch prediction. Takes +1 cycle if link bit is set.
 * `MOV`/`ADD` instructions with `pc/r15` as destination are executed. They will insert a 3 cycle bubble in the pipeline.
@@ -183,13 +185,13 @@ To improve performance, the ZAP processor uses a bimodal branch predictor. A bra
 
 `ADD`/`MOV` instruction with destination as PC.
 
-`LDM` with PC in register list&#x20;
+`LDM` with PC in register list
 
 `LDR` that loads to PC.
 
-`MOV PC, LR`&#x20;
+`MOV PC, LR`
 
-instructions. Some of these utilize the RAS for better prediction. Using an unlisted instruction to branch will result in 12 cycles of penalty.&#x20;
+instructions. Some of these utilize the RAS for better prediction. Using an unlisted instruction to branch will result in 12 cycles of penalty.
 
 The processor implements a 4 deep return address stack. The RAS and the predictor cannot be disabled. They are transparent to software and self clearing if they predict a non branch instruction as a branch.
 
@@ -206,17 +208,17 @@ On encountering these 32-bit instructions (or equivalent 16-bit instructions):
 * `LDM` with PC in register list.
 * `LDR` to PC with SP as base address register.
 
-the CPU treats them as function returns and will pop return address of the stack much earlier.&#x20;
+the CPU treats them as function returns and will pop return address of the stack much earlier.
 
 This results in some performance improvement and reduced branch latency. Correctly predicted return takes 2 cycles (first two in the above list) or 9 cycles(last two in the above list), while incorrectly or unpredicted returns takes 12 cycles.
 
-Returns that result in change from 32 to 16-bit instruction state or vice versa are unpredicted, and take 12 cycles. Performance optimization of returns is available only when no instruction set state change occurs i.e., for faster returns: 32-bit instruction code should return to 32-bit instruction code, 16-bit instruction code should return to 16-bit instruction code.&#x20;
+Returns that result in change from 32 to 16-bit instruction state or vice versa are unpredicted, and take 12 cycles. Performance optimization of returns is available only when no instruction set state change occurs i.e., for faster returns: 32-bit instruction code should return to 32-bit instruction code, 16-bit instruction code should return to 16-bit instruction code.
 
 ### 1.2. External Bus Interface
 
 ZAP features a common 32-bit Wishbone B3 bus to access external resources (like DRAM/SRAM/IO etc). The processor can generate byte, halfword or word accesses. The processor uses CTI and BTE signals to allow the bus to function more efficiently. Registered feedback mode is supported for higher performance. Note that multiprocessing is not readily supported and hence, `SWAP` instructions do not actually perform locked transfers.
 
-The 32-bit standard Wishbone bus makes it easy to interface to other components over a typical 32-bit FPGA SoC bus, without the need for up/down converters.&#x20;
+The 32-bit standard Wishbone bus makes it easy to interface to other components over a typical 32-bit FPGA SoC bus, without the need for up/down converters.
 
 **The bus interface is efficient for burst transfers and hence, cache and MMU must be enabled as soon as possible for good performance.**
 
@@ -224,11 +226,11 @@ The 32-bit standard Wishbone bus makes it easy to interface to other components 
 
 Please refer to ref \[1] for CP15 CSR architectural requirements. The ZAP implements the following software accessible registers within its CP15 coprocessor.
 
-NOTE: Cleaning and flushing cache and TLB is only supported for the entire memory.&#x20;
+NOTE: Cleaning and flushing cache and TLB is only supported for the entire memory.
 
-Selective flushing of TLB will result in the entire TLB being flushed.&#x20;
+Selective flushing of TLB will result in the entire TLB being flushed.
 
-Selective cleaning of TLB will result in the entire TLB being cleaned.&#x20;
+Selective cleaning of TLB will result in the entire TLB being cleaned.
 
 The above rules are permitted as per the architecture spec \[1].
 
@@ -254,7 +256,7 @@ The above rules are permitted as per the architecture spec \[1].
 
 ### 1.4. Implementation Options
 
-ZAP implements the integer instruction set specified in \[1]. T refers to the 16-bit instruction set and E  refers to the enhanced DSP extensions. ZAP does not implement the optional floating point extension specified in Part C of \[1].&#x20;
+ZAP implements the integer instruction set specified in \[1]. T refers to the 16-bit instruction set and E refers to the enhanced DSP extensions. ZAP does not implement the optional floating point extension specified in Part C of \[1].
 
 #### 1.4.1. Big and Little Endian
 
@@ -270,13 +272,13 @@ ZAP has support for the 16-bit (V5T) instruction set.
 
 #### 1.4.4. DSP Enhanced Instruction Set
 
-The ZAP implements the DSP-enhanced instruction set (V5E). There are new multiply instructions that operate on 16-bit data values and new saturation instructions. Some of the new instructions are:&#x20;
+The ZAP implements the DSP-enhanced instruction set (V5E). There are new multiply instructions that operate on 16-bit data values and new saturation instructions. Some of the new instructions are:
 
-* `SMLAxy` 32<=16x16+32&#x20;
+* `SMLAxy` 32<=16x16+32
 * `SMLAWy` 32<=32x16+32
 * `SMLALxy` 64<=16x16+64
-* `SMULxy` 32<=16x16&#x20;
-* `SMULWy` 32<=32x16&#x20;
+* `SMULxy` 32<=16x16
+* `SMULWy` 32<=32x16
 * `QADD` adds two registers and saturates the result if an overflow occurred.
 * `QDADD` doubles and saturates one of the input registers then add and saturate.
 * `QSUB` subtracts two registers and saturates the result if an overflow occurred.
@@ -284,14 +286,14 @@ The ZAP implements the DSP-enhanced instruction set (V5E). There are new multipl
 
 **NOTE:** All of the multiplication and MAC operations in ZAP take a fixed 3 clock cycles (irrespective of 32x32=32, 32x32=64, 16x16+32 etc). Additional latency of 1 cycle is incurred if the result is required in the immediate next instruction. A further additional latency of 1 cycle is incurred if two registers must be updated (long multiply/MAC operations).
 
-The ZAP also implements `LDRD`, `STRD` and `PLD` instructions with the following implementation notes:&#x20;
+The ZAP also implements `LDRD`, `STRD` and `PLD` instructions with the following implementation notes:
 
 * `PLD` is interpreted as a `NOP`.
 * `MCRR` and `MRRC` are not intended to be used on coprocessor 15 (see \[1]). Since ZAP does not have an external coprocessor bus, these instructions should not be used.
 
 #### 1.4.5. Base Register Update
 
-If a data abort is signaled on a memory instruction that specifies writeback, the contents of the base register will not be updated. This holds for all load and store instructions. This behavior  is referred to in the V5TE architecture \[1] as the Base Restored Abort Model.
+If a data abort is signaled on a memory instruction that specifies writeback, the contents of the base register will not be updated. This holds for all load and store instructions. This behavior is referred to in the V5TE architecture \[1] as the Base Restored Abort Model.
 
 #### 1.4.6. Cache and TLB Lockdown
 
@@ -317,7 +319,7 @@ ZAP implements the FCSE.
 
 #### 1.4.11. Cache/MMU Enabling
 
-ZAP allows the cache and MMU to have these combinations:&#x20;
+ZAP allows the cache and MMU to have these combinations:
 
 | MMU | Cache | Behavior                                                   |
 | --- | ----- | ---------------------------------------------------------- |
@@ -357,22 +359,22 @@ Note that all parameters should be 2^n. Cache size should be multiple of line si
 
 ### 2.2. IO
 
-| Port       | Description                                                                                                                                         |
-| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| i\_clk     | Clock. All logic is clocked on the rising edge of this signal.                                                                                      |
-| i\_reset   | Active high global reset signal. Assert for a duration >= 1 clock cycle (not necessarily synchronously to clock edge). Signal is internally synced. |
-| i\_irq     | Interrupt. Level Sensitive. Signal is internally synced.                                                                                            |
-| i\_fiq     | Fast Interrupt. Level Sensitive. Signal is internally synced.                                                                                       |
-| o\_wb\_cyc | Wishbone CYC signal.                                                                                                                                |
-| o\_wb\_stb | Wishbone STB signal.                                                                                                                                |
-| o\_wb\_adr | Wishbone address signal. (32)                                                                                                                       |
-| o\_wb\_we  | Wishbone write enable signal.                                                                                                                       |
-| o\_wb\_dat | Wishbone data output signal. (32)                                                                                                                   |
-| o\_wb\_sel | Wishbone byte select signal. (4)                                                                                                                    |
-| o\_wb\_cti | Wishbone CTI (Classic, Incrementing Burst, EOB) (3)                                                                                                 |
-| o\_wb\_bte | Wishbone BTE (Linear) (2)                                                                                                                           |
-| i\_wb\_ack | Wishbone acknowledge signal. Wishbone registered cycles recommended.                                                                                |
-| i\_wb\_dat | Wishbone data input signal. (32)                                                                                                                    |
+| Port       | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| i\_clk     | Clock. All logic is clocked on the rising edge of this signal. The CPU is a fully synchronous device.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| i\_reset   | Active high global reset signal. The ZAP CPU is intended for FPGA and thus uses a fully synchronous reset scheme. This means that the reset signal to the CPU should assert and deassert synchronously to clock. Simply put, it means that this reset should come purely from a Q pin of a flip-flop running on i\_clk. However, to allow said flip-flop to be far away from the CPU, a two flop (dual rank) synchronizer is placed. In the FPGA world, synchronous resets can give better performance, and is often recommended. To emphasize again, the purpose of re-synchronizing the synchronous reset is to relax placement on the FPGA. Simply put, the integrator should generator a purely synchronous pulse on i\_clk and then connect it to this port. The integrator is then allowed to set a false path constraint between the two points. The output of the sychronizer is considered as the single source of truth for the reset. |
+| i\_irq     | Interrupt. Level Sensitive. Signal is internally synced by a dual rank synchronizer. The output of the synchronizer is considered as the single source of truth of the IRQ.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| i\_fiq     | Fast Interrupt. Level Sensitive. Signal is internally synced by a dual rank synchronizer. The output of the synchronizer is considered as the single source of truth of the FIQ.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| o\_wb\_cyc | Wishbone CYC signal.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| o\_wb\_stb | Wishbone STB signal.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| o\_wb\_adr | Wishbone address signal. (32)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| o\_wb\_we  | Wishbone write enable signal.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| o\_wb\_dat | Wishbone data output signal. (32)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| o\_wb\_sel | Wishbone byte select signal. (4)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| o\_wb\_cti | Wishbone CTI (Classic, Incrementing Burst, EOB) (3)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| o\_wb\_bte | Wishbone BTE (Linear) (2)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| i\_wb\_ack | Wishbone acknowledge signal. Wishbone registered cycles recommended.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| i\_wb\_dat | Wishbone data input signal. (32)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 
 ### 2.3. Integration
 
@@ -515,11 +517,11 @@ Timing report will be available in `obj/syn/syn_timing.rpt`
 
 ## 4. References
 
-\[1\] [DDI 0100E](https://github.com/krevanth/ZAP/blob/master/ddi0100e-arm-arm.fodg.gz)
+\[1] [DDI 0100E](ddi0100e-arm-arm.fodg.gz)
 
 ## 5. Mentions
 
-The ZAP project was mentioned in a survey conducted [here](https://researchgate.net/publication/347558929\_Free\_ARM\_Compatible\_Softcores\_on\_FPGA).&#x20;
+The ZAP project was mentioned in a survey conducted [here](https://researchgate.net/publication/347558929\_Free\_ARM\_Compatible\_Softcores\_on\_FPGA).
 
 ## 6. Acknowledgements
 
@@ -539,6 +541,6 @@ This program is free software; you can redistribute it and/or modify it under th
 
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.&#x20;
+You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ##
