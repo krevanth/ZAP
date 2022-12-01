@@ -677,6 +677,7 @@ begin
         if ( i_reset )
         begin
                 o_stall_from_issue <= 1'd0;
+                skid               <= 1'd0;
         end
         else if ( i_clear_from_writeback )
         begin
