@@ -50,6 +50,15 @@ _Reset:
 enable_cache:
    // Enable cache (Uses a single bit to enable both caches).
    .set ENABLE_CP_WORD, 4100
+
+   // Check if unaligned loads work.
+   mov r0, #4
+   ldr r1, [r0, #2]
+   ldr r2, [r0]
+   mov r2, r2, ror #16
+   cmp r1, r2
+   bne enable_cache 
+
    mov r0, #4
    ldr r1, [r0]
    mcr p15, 0, r1, c1, c1, 0

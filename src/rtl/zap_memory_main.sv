@@ -275,7 +275,13 @@ begin: transform_function
         end
         else // Default. Typically, a word.
         begin
-                transform = data;
+                // Rotate data based on byte targetted.
+                case ( address[1:0] )
+                2'b00: transform = data;
+                2'b01: transform = data >> 8  | data << 24;
+                2'b10: transform = data >> 16 | data << 16;
+                2'b11: transform = data >> 24 | data << 8;
+                endcase
         end
 
         // Override above computation if not a memory load.
