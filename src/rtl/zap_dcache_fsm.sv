@@ -352,10 +352,19 @@ begin:blk1
                                 o_wb_stb_nxt    = 1'd1;
                                 o_wb_cyc_nxt    = 1'd1;
                                 o_wb_adr_nxt    = i_address;  
-                                o_wb_dat_nxt    = i_din;
                                 o_wb_wen_nxt    = i_wr;
-                                o_wb_sel_nxt    = i_ben; 
                                 o_wb_cti_nxt    = CTI_CLASSIC;
+
+                                if ( BE_32_ENABLE && (i_ben != 4'b1111) )
+                                begin
+                                        o_wb_dat_nxt = {i_din[7:0], i_din[15:8], i_din[23:16], i_din[31:24]};
+                                        o_wb_sel_nxt = {  i_ben[0],    i_ben[1],     i_ben[2],     i_ben[3]};
+                                end
+                                else
+                                begin
+                                        o_wb_dat_nxt = i_din;
+                                        o_wb_sel_nxt = i_ben;
+                                end
                         end
                         else if ( i_cacheable )
                         begin
