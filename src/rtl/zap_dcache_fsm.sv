@@ -355,12 +355,12 @@ begin:blk1
                                 o_wb_wen_nxt    = i_wr;
                                 o_wb_cti_nxt    = CTI_CLASSIC;
 
-                                if ( BE_32_ENABLE && (i_ben != 4'b1111) )
+                                if ( BE_32_ENABLE && (i_ben inside {4'b0001, 4'b0010, 4'b0100, 4'b1000} ))
                                 begin
                                         o_wb_dat_nxt = {i_din[7:0], i_din[15:8], i_din[23:16], i_din[31:24]};
                                         o_wb_sel_nxt = {  i_ben[0],    i_ben[1],     i_ben[2],     i_ben[3]};
                                 end
-                                else if ( BE_32_ENABLE && (i_ben == 4'b1100 || i_ben == 4'b0011) )
+                                else if ( BE_32_ENABLE && (i_ben inside {4'b1100, 4'b0011}) )
                                 begin
                                         o_wb_dat_nxt = {i_din[15:0], i_din[31:16]};
                                         o_wb_sel_nxt = {i_ben[3:2],  i_ben[1:0]}; 
@@ -482,7 +482,7 @@ begin:blk1
                 o_wb_wen_nxt    = i_wr;
                 o_wb_cti_nxt    = CTI_CLASSIC;
 
-                if ( BE_32_ENABLE && (i_ben != 4'b1111) )
+                if ( BE_32_ENABLE && (i_ben inside {4'b0001, 4'b0010, 4'b0100, 4'b1000}) )
                 begin
                         o_wb_dat_nxt = {i_din[7:0], i_din[15:8], i_din[23:16], i_din[31:24]};
                         o_wb_sel_nxt = {  i_ben[0],    i_ben[1],     i_ben[2],     i_ben[3]};
@@ -501,7 +501,7 @@ begin:blk1
 
         UNCACHEABLE: /* Uncacheable reads and writes definitely go through this. */
         begin
-                if ( BE_32_ENABLE && (o_wb_sel_ff != 4'b1111) )
+                if ( BE_32_ENABLE && (o_wb_sel_ff inside {4'b0001, 4'b0010, 4'b0100, 4'b1000}) )
                 begin
                         o_dat = {i_wb_dat[7:0], i_wb_dat[15:8], i_wb_dat[23:16], i_wb_dat[31:24]};
                 end

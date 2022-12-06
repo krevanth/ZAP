@@ -51,6 +51,8 @@ int uart1_ctr = 0;
 int main(int argc, char** argv, char** env) {
     srand((unsigned int)time(0));
 
+    printf("SYS_SETUP: Two calls of rand() gave %d and %d\n", rand(), rand());
+
     seq      = 0;
     end_nxt  = 0; 
 
