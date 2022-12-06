@@ -259,7 +259,8 @@ parameter CODE_FPAGE_TLB_ENTRIES        = 32,
 parameter CODE_CACHE_SIZE               = 1024,
 parameter FIFO_DEPTH                    = 4,
 parameter BP_ENTRIES                    = 1024,
-parameter STORE_BUFFER_DEPTH            = 32
+parameter STORE_BUFFER_DEPTH            = 32,
+parameter BE_32_EN                      = 0
 
 )(
         // Clk and rst 
@@ -406,6 +407,7 @@ end
 // =========================
 
 zap_top #(
+        .BE_32_EN(BE_32_EN),
         .FIFO_DEPTH(FIFO_DEPTH),
         .BP_ENTRIES(BP_ENTRIES),
         .STORE_BUFFER_DEPTH(STORE_BUFFER_DEPTH),

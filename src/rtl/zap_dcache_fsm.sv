@@ -360,6 +360,11 @@ begin:blk1
                                         o_wb_dat_nxt = {i_din[7:0], i_din[15:8], i_din[23:16], i_din[31:24]};
                                         o_wb_sel_nxt = {  i_ben[0],    i_ben[1],     i_ben[2],     i_ben[3]};
                                 end
+                                else if ( BE_32_ENABLE && (i_ben == 4'b1100 || i_ben == 4'b0011) )
+                                begin
+                                        o_wb_dat_nxt = {i_din[15:0], i_din[31:16]};
+                                        o_wb_sel_nxt = {i_ben[3:2],  i_ben[1:0]}; 
+                                end
                                 else
                                 begin
                                         o_wb_dat_nxt = i_din;
@@ -482,6 +487,11 @@ begin:blk1
                         o_wb_dat_nxt = {i_din[7:0], i_din[15:8], i_din[23:16], i_din[31:24]};
                         o_wb_sel_nxt = {  i_ben[0],    i_ben[1],     i_ben[2],     i_ben[3]};
                 end
+                else if ( BE_32_ENABLE && (i_ben == 4'b1100 || i_ben == 4'b0011) )
+                begin
+                        o_wb_dat_nxt = {i_din[15:0], i_din[31:16]}; 
+                        o_wb_sel_nxt = {i_ben[3:2],  i_ben[1:0]};
+                end
                 else
                 begin
                         o_wb_dat_nxt = i_din;
@@ -494,6 +504,10 @@ begin:blk1
                 if ( BE_32_ENABLE && (o_wb_sel_ff != 4'b1111) )
                 begin
                         o_dat = {i_wb_dat[7:0], i_wb_dat[15:8], i_wb_dat[23:16], i_wb_dat[31:24]};
+                end
+                else if ( BE_32_ENABLE && (o_wb_sel_ff == 4'b1100 || o_wb_sel_ff == 4'b0011) )
+                begin
+                        o_dat = {i_wb_dat[15:0], i_wb_dat[31:16]};
                 end
                 else
                 begin
