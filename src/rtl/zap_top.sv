@@ -32,6 +32,12 @@
 module zap_top #(
 
 // -----------------------------------
+// Enable BE-32
+// -----------------------------------
+
+parameter               BE_32_ENABLE       = 1'd0,
+
+// -----------------------------------
 // BP entries, FIFO depths
 // -----------------------------------
 
@@ -175,7 +181,8 @@ zap_dual_rank_synchronizer #(.WIDTH(2)) u_sync (
 zap_core #(
         .BP_ENTRIES(BP_ENTRIES),
         .FIFO_DEPTH(FIFO_DEPTH),
-        .RAS_DEPTH(RAS_DEPTH)
+        .RAS_DEPTH(RAS_DEPTH),
+        .BE_32_ENABLE(BE_32_ENABLE)
 ) u_zap_core
 (
 // Clock and reset.
@@ -274,7 +281,8 @@ zap_dcache #(
         .LPAGE_TLB_ENTRIES(DATA_LPAGE_TLB_ENTRIES), 
         .SECTION_TLB_ENTRIES(DATA_SECTION_TLB_ENTRIES),
         .FPAGE_TLB_ENTRIES(DATA_FPAGE_TLB_ENTRIES),
-        .CACHE_LINE(CODE_CACHE_LINE)
+        .CACHE_LINE(CODE_CACHE_LINE),
+        .BE_32_ENABLE(BE_32_ENABLE)
 )
 u_data_cache (
 .i_clk                  (i_clk),

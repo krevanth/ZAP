@@ -32,6 +32,7 @@
 
 
 module zap_cp15_cb #(
+        parameter BE_32_ENABLE = 0,
         parameter PHY_REGS = 64
 )
 (
@@ -241,6 +242,7 @@ begin
                 r[1][1]         <= 1'd1;
                 r[1][3]         <= 1'd1;    
                 r[1][6:4]       <= 3'b111; 
+                r[1][7]         <= BE_32_ENABLE ? 1'd1 : 1'd0;
                 r[1][11]        <= 1'd1;                
         end
         else
@@ -509,7 +511,9 @@ begin
 
                 r[1][1]         <= 1'd1;
                 r[1][3]         <= 1'd1;    // Write buffer always enabled.
-                r[1][6:4]       <= 3'b111;  // 0 = Little Endian, 0 = 0, 1 = 32-bit address range, 
+                r[1][7]         <= BE_32_ENABLE ? 1'd1 : 1'd0;
+                r[1][6:4]       <= 3'b111;  // 1 = Base updated abort model.
+                                            // 1 = 32-bit address range, 
                                             // 1 = 32-bit handlers enabled.
                 r[1][11]        <= 1'd1;                
         end

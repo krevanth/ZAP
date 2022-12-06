@@ -29,6 +29,8 @@
 
 
 module zap_core #(
+        parameter BE_32_ENABLE     = 0,
+
         // Number of branch predictor entries.
         parameter [31:0] BP_ENTRIES = 1024,
 
@@ -1470,7 +1472,7 @@ u_zap_writeback
 // CP15 CB
 // ==================================
 
-zap_cp15_cb u_zap_cp15_cb (
+zap_cp15_cb #(.BE_32_ENABLE(BE_32_ENABLE), .PHY_REGS(PHY_REGS)) u_zap_cp15_cb (
         .i_clk                  (i_clk),
         .i_reset                (i_reset),
         .i_cp_word              (copro_word),

@@ -33,7 +33,8 @@ parameter [31:0] SPAGE_TLB_ENTRIES      = 8,
 parameter [31:0] LPAGE_TLB_ENTRIES      = 8,
 parameter [31:0] SECTION_TLB_ENTRIES    = 8,
 parameter [31:0] FPAGE_TLB_ENTRIES      = 8,
-parameter [31:0] CACHE_LINE             = 8
+parameter [31:0] CACHE_LINE             = 8,
+parameter        BE_32_ENABLE           = 0
 
 ) /* Port List */ (
 
@@ -136,7 +137,7 @@ logic                            idle;
 always_comb wb_cti[2] = 3'd0;
 
 // Basic cache FSM - serves as Master 0.
-zap_dcache_fsm #(.CACHE_SIZE(CACHE_SIZE), .CACHE_LINE(CACHE_LINE)) u_zap_cache_fsm (
+zap_dcache_fsm #(.CACHE_SIZE(CACHE_SIZE), .CACHE_LINE(CACHE_LINE), .BE_32_ENABLE(BE_32_ENABLE)) u_zap_cache_fsm (
         .i_clk                  (i_clk),
         .i_reset                (i_reset),
         .i_address              (i_address),

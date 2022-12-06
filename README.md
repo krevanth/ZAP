@@ -264,7 +264,7 @@ ZAP implements the integer instruction set specified in \[1]. T refers to the 16
 
 #### 1.4.1. Big and Little Endian
 
-ZAP only supports little endian byte ordering.
+ZAP supports little endian byte ordering or BE-32 big endian byte ordering.
 
 #### 1.4.2. 26-Bit Architecture
 
@@ -344,6 +344,7 @@ Note that all parameters should be 2^n. Cache size should be multiple of line si
 
 | Parameter                   | Default | Description                                                                |
 | --------------------------- | ------- | -------------------------------------------------------------------------- |
+| BE\_32\_EN                  | 0       | Enable BE-32 Big Endian Mode. Active high.                                 |
 | BP\_ENTRIES                 | 1024    | Predictor RAM depth. Each RAM row also contains the branch target address. |
 | FIFO\_DEPTH                 | 16      | Command FIFO depth.                                                        |
 | STORE\_BUFFER\_DEPTH        | 16      | Depth of the store buffer. Keep multiple of cache line size in bytes / 4.  |

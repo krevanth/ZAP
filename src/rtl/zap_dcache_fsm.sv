@@ -31,7 +31,8 @@
 
 module zap_dcache_fsm   #(
         parameter CACHE_SIZE    = 1024,  // Bytes.
-        parameter CACHE_LINE    = 8
+        parameter CACHE_LINE    = 8,
+        parameter BE_32_ENABLE  = 0
 ) 
 
 // ---------------------------------------------- 
@@ -464,15 +465,32 @@ begin:blk1
                 o_wb_stb_nxt    = 1'd1;
                 o_wb_cyc_nxt    = 1'd1;
                 o_wb_adr_nxt    = i_phy_addr;
-                o_wb_dat_nxt    = i_din;
                 o_wb_wen_nxt    = i_wr;
-                o_wb_sel_nxt    = i_ben; 
                 o_wb_cti_nxt    = CTI_CLASSIC;
+
+                if ( BE_32_ENABLE && (i_ben != 4'b1111) )
+                begin
+                        o_wb_dat_nxt = {i_din[7:0], i_din[15:8], i_din[23:16], i_din[31:24]};
+                        o_wb_sel_nxt = {  i_ben[0],    i_ben[1],     i_ben[2],     i_ben[3]};
+                end
+                else
+                begin
+                        o_wb_dat_nxt = i_din;
+                        o_wb_sel_nxt = i_ben;
+                end
         end
 
         UNCACHEABLE: /* Uncacheable reads and writes definitely go through this. */
         begin
-                o_dat  = i_wb_dat;
+                if ( BE_32_ENABLE && (o_wb_sel_ff != 4'b1111) )
+                begin
+                        o_dat = {i_wb_dat[7:0], i_wb_dat[15:8], i_wb_dat[23:16], i_wb_dat[31:24]};
+                end
+                else
+                begin
+                        o_dat = i_wb_dat;
+                end
+
                 o_ack  = 1'd0;
                 o_hold = 1'd1;
 
