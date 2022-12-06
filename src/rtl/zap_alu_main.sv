@@ -265,7 +265,7 @@ always_comb not_rn = ~rn;
 
 /*
    For memory stores, we must generate correct byte enables. This is done
-   by examining access type inputs. For loads, always 1111 is generated.
+   by examining access type inputs.Same for loads too.
    If there is neither a load or a store, the old value is preserved.
 */
 always_comb ben_nxt =                generate_ben (
