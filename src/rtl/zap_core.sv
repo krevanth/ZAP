@@ -69,6 +69,7 @@ output logic [31:0]                      o_data_wb_adr_nxt,
 // Check.
 output logic [31:0]                      o_data_wb_adr_check,
 output logic                             o_data_wb_we_check,
+output logic                             o_data_wb_re_check,
 
 // Force user view.
 output logic                             o_mem_translate,
@@ -510,7 +511,8 @@ end
 always_comb
 begin
         o_data_wb_adr_check  =  {postalu1_address_ff[31:2], 2'd0};
-        o_data_wb_we_check   =   postalu1_data_wb_we;
+        o_data_wb_we_check   =    postalu1_data_wb_we && postalu1_data_wb_cyc;
+        o_data_wb_re_check   =   !postalu1_data_wb_we && postalu1_data_wb_cyc;
         o_code_stall         =   code_stall;
         o_dc_reg_idx         =   64'd1 << {58'd0, postalu_mem_srcdest_index_ff};
 end

@@ -164,7 +164,7 @@ logic [63:0]     dc_lock;
 logic [31:0]     dc_reg_data;
 
 logic           icache_err2, dcache_err2;
-logic           cpu_dwe_check;
+logic           cpu_dwe_check, cpu_dre_check;
 
 logic           s_reset, s_fiq, s_irq;
 logic           code_stall;
@@ -259,6 +259,7 @@ zap_core #(
 .o_data_wb_adr_nxt      (cpu_daddr_nxt), // Data addr nxt. Used to drive address of data tag RAM.
 .o_data_wb_adr_check    (cpu_daddr_check),
 .o_data_wb_we_check     (cpu_dwe_check),
+.o_data_wb_re_check     (cpu_dre_check),
 
 // Code access prpr.
 .o_instr_wb_adr_nxt     (cpu_iaddr_nxt), // PC addr nxt. Drives read address of code tag RAM.
@@ -293,6 +294,7 @@ u_data_cache (
 
 .i_address_check        (cpu_daddr_check + ({24'd0, cpu_pid[7:0]} << 32'd25)),
 .i_wr_check             (cpu_dwe_check),
+.i_rd_check             (cpu_dre_check),
 
 .i_rd                   (!cpu_dc_we && cpu_dc_stb),
 .i_wr                   ( cpu_dc_we && cpu_dc_stb),
@@ -362,6 +364,7 @@ u_code_cache (
 
 .i_address_check    ((cpu_iaddr_check & 32'hFFFF_FFFC) + ({24'd0, cpu_pid[7:0]} << 32'd25)),
 .i_wr_check         (1'd0),
+.i_rd_check         (1'd1),
 
 .i_rd              (cpu_instr_stb),
 .i_wr              (1'd0),
