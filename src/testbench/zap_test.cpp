@@ -48,10 +48,15 @@ char word1[] = "";
 int uart0_ctr = 0;
 int uart1_ctr = 0;
 
-int main(int argc, char** argv, char** env) {
-    srand((unsigned int)time(0));
+unsigned int seed;
 
-    printf("SYS_SETUP: Two calls of rand() gave %d and %d\n", rand(), rand());
+int main(int argc, char** argv, char** env) {
+    
+    seed = (unsigned int)time(0);
+
+    printf("\n############# Simulator seed is 'd%d ###############\n", seed);
+
+    srand(seed);
 
     seq      = 0;
     end_nxt  = 0; 
@@ -127,7 +132,8 @@ int main(int argc, char** argv, char** env) {
             // Simulate a Wishbone RAM.
             if ( zap_test->o_wb_cyc && zap_test->o_wb_stb && !zap_test -> i_reset ) 
             {
-                    if ( rand() & 0x1 )
+                    // If seed is odd, give immediate response WB RAM.
+                    if ( (rand() & 0x1) && (seed % 2 == 0) )
                     {
                             zap_test->i_wb_ack = 0;
                             zap_test->i_wb_dat = rand();

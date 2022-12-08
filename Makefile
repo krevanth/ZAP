@@ -58,7 +58,7 @@ ifndef DOCKER
 
 test:
 ifdef TC
-	$(MAKE) runsim TC=$(TC) || exit 10
+	$(MAKE) runsim TC=$(TC) HT=1 || exit 10
 else
 	for var in $(TEST); do $(MAKE) test TC=$$var HT=1 || exit 10 ; done;
 endif
