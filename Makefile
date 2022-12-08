@@ -54,6 +54,23 @@ DLOAD        := "FROM archlinux:latest\nRUN  pacman -Syyu --noconfirm arm-none-e
 
 .DEFAULT_GOAL = test
 
+ifndef DOCKER
+
+test:
+ifdef TC
+	$(MAKE) runsim TC=$(TC) || exit 10
+else
+	for var in $(TEST); do $(MAKE) test TC=$$var HT=1 || exit 10 ; done;
+endif
+
+clean:
+	rm -rf obj/
+
+lint:
+	$(MAKE) runlint || exit 10
+
+else
+
 # Run all tests. Default goal.
 test:
 	docker info
@@ -82,6 +99,8 @@ lint:
 	docker info
 	docker image ls | grep $(TAG) || echo -e $(DLOAD) | docker build --no-cache --rm --tag $(TAG) -
 	docker run --interactive --tty --volume `pwd`:`pwd` --workdir `pwd` $(TAG) $(MAKE) runlint || exit 10
+
+endif
 
 # Synthesis
 syn: obj/syn/syn_timing.rpt
