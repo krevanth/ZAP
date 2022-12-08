@@ -434,13 +434,13 @@ The project environment requires Docker to be installed at your site. Click [her
 
 To run all/a specific TC, do:
 
-> `make [TC=test_name]`
+> `make DOCKER=1 [TC=test_name]`
 
 See `src/ts` for a list of test names. Not providing a testname will run all tests.
 
 To remove existing object/simulation/synthesis files, do:
 
-> `make clean`
+> `make DOCKER=1 clean`
 
 ### 3.2. Adding TCs
 
@@ -503,7 +503,7 @@ To remove existing object/simulation/synthesis files, do:
 
 To run RTL lint, simply do:
 
-> make lint
+> make DOCKER=1 lint
 
 ### 3.4. Running Xilinx Vivado Synthesis
 
