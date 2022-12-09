@@ -347,6 +347,7 @@ begin:blk1
                 begin
                         if ( !i_cache_en )
                         begin
+                                o_hold          = 1'd1;
                                 state_nxt       = UNCACHEABLE;
                                 o_ack           = 1'd0; /* Wait...*/
                                 o_wb_stb_nxt    = 1'd1;
