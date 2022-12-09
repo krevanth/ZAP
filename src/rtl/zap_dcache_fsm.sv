@@ -354,20 +354,23 @@ begin:blk1
                                 o_wb_adr_nxt    = i_address;  
                                 o_wb_wen_nxt    = i_wr;
                                 o_wb_cti_nxt    = CTI_CLASSIC;
+                                o_wb_dat_nxt    = i_din;
 
-                                if ( BE_32_ENABLE && (i_ben inside {4'b0001, 4'b0010, 4'b0100, 4'b1000} ))
+                                if ( BE_32_ENABLE )
                                 begin
-                                        o_wb_dat_nxt = {i_din[7:0], i_din[15:8], i_din[23:16], i_din[31:24]};
-                                        o_wb_sel_nxt = {  i_ben[0],    i_ben[1],     i_ben[2],     i_ben[3]};
-                                end
-                                else if ( BE_32_ENABLE && (i_ben inside {4'b1100, 4'b0011}) )
-                                begin
-                                        o_wb_dat_nxt = {i_din[15:0], i_din[31:16]};
-                                        o_wb_sel_nxt = {i_ben[3:2],  i_ben[1:0]}; 
+                                        case(i_ben)
+                                        4'b0001: o_wb_sel_nxt = 4'b1000;
+                                        4'b0010: o_wb_sel_nxt = 4'b0100;
+                                        4'b0100: o_wb_sel_nxt = 4'b0010;
+                                        4'b1000: o_wb_sel_nxt = 4'b0001;
+                                        4'b0011: o_wb_sel_nxt = 4'b1100;
+                                        4'b1100: o_wb_sel_nxt = 4'b0011;
+                                        4'b1111: o_wb_sel_nxt = i_ben;
+                                        default: o_wb_sel_nxt = {4{1'dx}}; // Synthesis will optimize.
+                                        endcase
                                 end
                                 else
                                 begin
-                                        o_wb_dat_nxt = i_din;
                                         o_wb_sel_nxt = i_ben;
                                 end
                         end
@@ -481,33 +484,40 @@ begin:blk1
                 o_wb_adr_nxt    = i_phy_addr;
                 o_wb_wen_nxt    = i_wr;
                 o_wb_cti_nxt    = CTI_CLASSIC;
+                o_wb_dat_nxt    = i_din;
 
-                if ( BE_32_ENABLE && (i_ben inside {4'b0001, 4'b0010, 4'b0100, 4'b1000}) )
+                if ( BE_32_ENABLE )
                 begin
-                        o_wb_dat_nxt = {i_din[7:0], i_din[15:8], i_din[23:16], i_din[31:24]};
-                        o_wb_sel_nxt = {  i_ben[0],    i_ben[1],     i_ben[2],     i_ben[3]};
-                end
-                else if ( BE_32_ENABLE && (i_ben == 4'b1100 || i_ben == 4'b0011) )
-                begin
-                        o_wb_dat_nxt = {i_din[15:0], i_din[31:16]}; 
-                        o_wb_sel_nxt = {i_ben[3:2],  i_ben[1:0]};
+                        case(i_ben)
+                        4'b0001: o_wb_sel_nxt = 4'b1000;
+                        4'b0010: o_wb_sel_nxt = 4'b0100;
+                        4'b0100: o_wb_sel_nxt = 4'b0010;
+                        4'b1000: o_wb_sel_nxt = 4'b0001;
+                        4'b0011: o_wb_sel_nxt = 4'b1100;
+                        4'b1100: o_wb_sel_nxt = 4'b0011;
+                        4'b1111: o_wb_sel_nxt = i_ben;
+                        default: o_wb_sel_nxt = {4{1'dx}}; // Synthesis will optimize.
+                        endcase
                 end
                 else
                 begin
-                        o_wb_dat_nxt = i_din;
                         o_wb_sel_nxt = i_ben;
                 end
         end
 
         UNCACHEABLE: /* Uncacheable reads and writes definitely go through this. */
         begin
-                if ( BE_32_ENABLE && (o_wb_sel_ff inside {4'b0001, 4'b0010, 4'b0100, 4'b1000}) )
+                if ( BE_32_ENABLE )
                 begin
-                        o_dat = {i_wb_dat[7:0], i_wb_dat[15:8], i_wb_dat[23:16], i_wb_dat[31:24]};
-                end
-                else if ( BE_32_ENABLE && (o_wb_sel_ff == 4'b1100 || o_wb_sel_ff == 4'b0011) )
-                begin
-                        o_dat = {i_wb_dat[15:0], i_wb_dat[31:16]};
+                        case(o_wb_sel_ff)
+                        4'b1000: o_dat = {24'd0, i_wb_dat[31:24]};
+                        4'b0100: o_dat = {16'd0, i_wb_dat[23:16], 8'd0};
+                        4'b0010: o_dat =  {8'd0, i_wb_dat[15:8], 16'd0};
+                        4'b0001: o_dat = {i_wb_dat[7:0], 24'd0};
+                        4'b1100: o_dat = {16'd0, i_wb_dat[31:16]};
+                        4'b0011: o_dat = {i_wb_dat[15:0], 16'd0};
+                        default: o_dat = i_wb_dat;
+                        endcase
                 end
                 else
                 begin

@@ -344,7 +344,7 @@ Note that all parameters should be 2^n. Cache size should be multiple of line si
 
 | Parameter                   | Default | Description                                                                |
 | --------------------------- | ------- | -------------------------------------------------------------------------- |
-| BE\_32\_EN                  | 0       | Enable BE-32 Big Endian Mode. Active high.                                 |
+| BE\_32\_ENABLE              | 0       | Enable BE-32 Big Endian Mode. Active high. Applies to I and D fetches.     |
 | BP\_ENTRIES                 | 1024    | Predictor RAM depth. Each RAM row also contains the branch target address. |
 | FIFO\_DEPTH                 | 16      | Command FIFO depth.                                                        |
 | STORE\_BUFFER\_DEPTH        | 16      | Depth of the store buffer. Keep multiple of cache line size in bytes / 4.  |
@@ -392,7 +392,7 @@ Note that all parameters should be 2^n. Cache size should be multiple of line si
   * Instantiate the ZAP processor in your project using this template:
 
 ```
-       zap_top #(.BE_32_EN                (),
+       zap_top #(.BE_32_ENABLE            (),
                  .FIFO_DEPTH              (),
                  .BP_ENTRIES              (),
                  .STORE_BUFFER_DEPTH      (),
@@ -458,8 +458,7 @@ To remove existing object/simulation/synthesis files, do:
 
 ```
        %Config = ( 
-               # CPU configuration.
-               BE_32_EN                    => 0,
+               # CPU configuration. Currently, testbench only supports LE.
                DATA_CACHE_SIZE             => 4096,    
                CODE_CACHE_SIZE             => 4096,    
                CODE_SECTION_TLB_ENTRIES    => 8,       
