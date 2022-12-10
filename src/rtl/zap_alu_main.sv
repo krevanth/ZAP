@@ -255,6 +255,9 @@ logic [31:0]                     w_pc_from_alu_0, w_pc_from_alu_1, w_pc_from_alu
 logic [1:0]                      r_clear_from_alu;
 logic                            w_confirm_from_alu;
 
+// Precompute adder
+logic [31:0]                     quick_sum;
+
 // -------------------------------------------------------------------------------
 // Assigns
 // -------------------------------------------------------------------------------
@@ -262,6 +265,7 @@ logic                            w_confirm_from_alu;
 always_comb opcode = i_alu_operation_ff;
 always_comb not_rm = ~rm;
 always_comb not_rn = ~rn;
+always_comb quick_sum = rm + rn;
 
 /*
    For memory stores, we must generate correct byte enables. This is done
@@ -768,7 +772,7 @@ begin: flags_bp_feedback
                                         // i.e., MOV and ADD instructions which
                                         // destine to PC.
                                         //
-                                        if ( opcode == {2'd0, ADD} ? (i_ppc_ff == ((rm + rn) & 32'hFFFF_FFFF)) : 
+                                        if ( opcode == {2'd0, ADD} ? (i_ppc_ff == quick_sum) : 
                                              opcode == {2'd0, MOV} ? (i_ppc_ff == rm) : 1'd0 )  
                                         begin
                                                 // No mode change, do not change anything.

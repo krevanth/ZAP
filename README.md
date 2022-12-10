@@ -2,39 +2,41 @@
 
 **By**[ **Revanth Kamaraj** ](https://github.com/krevanth)**<**[**revanth91kamaraj@gmail.com**](mailto:revanth91kamaraj@gmail.com)**>**
 
-#### IMPORTANT NOTE: Please read this document thoroughly before going through the code, in order to understand the design decisions taken.
-
 ## 1. Introduction
 
-The ZAP is intended to be used in FPGA projects that need a high performance soft processor core. Most aspects of the processor can be configured through HDL parameters. The default processor specification is as follows (based on default parameters):
+The ZAP is intended to be used in FPGA projects that need a high performance application class soft processor core. Most aspects of the processor can be configured through HDL parameters.  The processor can reach clock speeds of up to 145MHz on Artix-7/Spartan-7 series devices.
 
-| **Property**                                       | **Value**                                                                                                                                                                                                                                                            |
-| -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Clock                                              | Purely synchronous rising edge design.                                                                                                                                                                                                                               |
-| Reset                                              | Purely synchronous reset scheme.                                                                                                                                                                                                                                     |
-| IRQ                                                | Supported. Level sensitive interrupt signal. CPU uses a dual rank synchronizer to sample this and make it synchronous to the rising edge of clock.                                                                                                                   |
-| FIQ                                                | Supported. Level sensitive interrupt signal. CPU uses a dual rank synchronizer to sample this and make it synchronous to the rising edge of clock.                                                                                                                   |
-| Slow Corner Operating Frequency @ FPGA Part Number | <p>143MHz @ xc7a75tcsg324-3<br></p>                                                                                                                                                                                                                                  |
-| Pipeline Depth                                     | 17                                                                                                                                                                                                                                                                   |
-| Issue and Execution Width                          | Single issue, in order core, with out-of-order completion for some loads/stores that miss in cache.                                                                                                                                                                  |
-| Data Width                                         | 32                                                                                                                                                                                                                                                                   |
-| Address Width                                      | 32                                                                                                                                                                                                                                                                   |
-| Virtual Address Width                              | 32                                                                                                                                                                                                                                                                   |
-| Instruction Set Version                            | V5TE (2000s)                                                                                                                                                                                                                                                         |
-| L1 I-Cache                                         | <p>16KB Direct Mapped VIVT Cache.<br>64 Byte Cache Line</p>                                                                                                                                                                                                          |
-| L1 D-Cache                                         | <p>16KB Direct Mapped VIVT Cache<br>64 Byte Cache Line</p>                                                                                                                                                                                                           |
-| I-TLB Structure                                    | <p>Direct mapped. 512 entries divided into<br>- 128 entry section TLB<br>- 128 entry large page TLB<br>- 128 entry small page TLB<br>- 128 entry tiny page TLB<br>Usually, section TLB size can be smaller, for example. Please override parameters as required.</p> |
-| D-TLB Structure                                    | <p>Direct mapped. 512 entries divided into<br>- 128 entry section TLB<br>- 128 entry large page TLB<br>- 128 entry small page TLB<br>- 128 entry tiny page TLB<br>Usually, section TLB size can be smaller, for example. Please override parameters as required.</p> |
-| Branch Prediction                                  | <p>Bimodal Predictor + BTB. Direct Mapped.<br>1K entries in T state (16-bit instructions).<br>512 entries in 32-bit instruction state.</p>                                                                                                                           |
-| RAS Depth                                          | 4 deep return address stack.                                                                                                                                                                                                                                         |
-| Branch latency                                     | <p>12 cycles (wrong prediction or unrecognized branch)<br>3 cycles (taken, correctly predicted)<br>1 cycle (not-taken, correctly predicted)<br>12 cycles (32-bit/16-bit switch)<br>18 cycles (Exception/Interrupt Entry/Exit)</p>                                    |
-| Store Buffer                                       | FIFO, 16 x 32-bit.                                                                                                                                                                                                                                                   |
-| Fetch Buffer                                       | FIFO, 16 x 32-bit.                                                                                                                                                                                                                                                   |
-| DMIPS/MHz Rating                                   | 0.9 DMIPS/MHz                                                                                                                                                                                                                                                        |
-| Bus Interface                                      | Unified 32-Bit Wishbone B3 bus with CTI and BTE signals.                                                                                                                                                                                                             |
-| FPGA Resource Utilization                          | <p>23K LUTs<br>116 LUTRAMs<br>15.3K FFs<br>29 BRAMs<br>4 DSP Blocks</p>                                                                                                                                                                                              |
+The default processor specification is as follows (based on default parameters):
 
-A simplified block diagram of the ZAP pipeline is shown below:
+| **Property**               | **Value**                                                                                                                                                                                                                  |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Performance                | 145MHz @ xc7a75tcsg324-3 <br/>When synthesized with Vivado 2021.2 with `synth_design` issued with default options.<br/><br/>100 DMIPS @ 145MHz with cache enabled. **Cache must be enabled for good performance.**         |
+| Clock and Reset            | Purely synchronous reset scheme. Purely rising edge clock driven design.                                                                                                                                                   |
+| IRQ                        | Supported. Level sensitive interrupt signal. CPU uses a dual rank synchronizer to sample this and make it synchronous to the rising edge of clock.                                                                         |
+| FIQ                        | Supported. Level sensitive interrupt signal. CPU uses a dual rank synchronizer to sample this and make it synchronous to the rising edge of clock.                                                                         |
+| Pipeline Depth             | 17                                                                                                                                                                                                                         |
+| Issue and Execution Width  | Single issue, in order, scalar core, with out-of-order completion for some loads/stores that miss in cache.                                                                                                                |
+| Data Width                 | 32                                                                                                                                                                                                                         |
+| Address Width              | 32                                                                                                                                                                                                                         |
+| Virtual Address Width      | 32                                                                                                                                                                                                                         |
+| Instruction Set Version    | V5TE (1999)                                                                                                                                                                                                                |
+| L1 I-Cache                 | 16KB Direct Mapped VIVT Cache.<br/>64 Byte Cache Line                                                                                                                                                                      |
+| L1 D-Cache                 | 16KB Direct Mapped VIVT Cache<br>64 Byte Cache Line                                                                                                                                                                        |
+| Section I-TLB Structure    | Direct mapped 128 entries.                                                                                                                                                                                                 |
+| Small Page I-TLB Structure | Direct mapped 128 entries.                                                                                                                                                                                                 |
+| Large Page I-TLB Structure | Direct mapped 128 entries.                                                                                                                                                                                                 |
+| Section D-TLB Structure    | Direct mapped 128 entries.                                                                                                                                                                                                 |
+| Small Page D-TLB Structure | Direct mapped 128 entries.                                                                                                                                                                                                 |
+| Large Page D-TLB Structure | Direct mapped 128 entries.                                                                                                                                                                                                 |
+| Branch Prediction          | Direct Mapped Bimodal Predictor. <br/>Direct Mapped BTB.<br>1K entries in T state (16-bit instructions).<br>512 entries in 32-bit instruction state.                                                                       |
+| RAS Depth                  | 4 deep return address stack.                                                                                                                                                                                               |
+| Branch latency             | 12 cycles (wrong prediction or unrecognized branch)<br>3 cycles (taken, correctly predicted)<br>1 cycle (not-taken, correctly predicted)<br>12 cycles (32-bit/16-bit switch)<br>18 cycles (Exception/Interrupt Entry/Exit) |
+| Store Buffer               | FIFO, 16 x 32-bit.                                                                                                                                                                                                         |
+| Fetch Buffer               | FIFO, 16 x 32-bit.                                                                                                                                                                                                         |
+| Bus Interface              | Unified 32-Bit Wishbone B3 bus with CTI and BTE signals.<br/>BTE and CTI signals are used only when cache is enabled.                                                                                                      |
+| FPGA Resource Utilization  | 23K LUTs<br>116 LUTRAMs<br>15.3K FFs<br>29 BRAMs<br>4 DSP Blocks                                                                                                                                                           |
+
+A simplified block diagram of the ZAP pipeline is shown below. Note that ZAP is mostly a single issue scalar processor.
 
 ![Pipeline](Pipeline.drawio.svg)
 
@@ -218,13 +220,33 @@ This results in some performance improvement and reduced branch latency. Correct
 
 Returns that result in change from 32 to 16-bit instruction state or vice versa are unpredicted, and take 12 cycles. Performance optimization of returns is available only when no instruction set state change occurs i.e., for faster returns: 32-bit instruction code should return to 32-bit instruction code, 16-bit instruction code should return to 16-bit instruction code.
 
-### 1.2. External Bus Interface
+### 1.2. Wishbone Bus Interface
 
-ZAP features a common 32-bit Wishbone B3 bus to access external resources (like DRAM/SRAM/IO etc). The processor can generate byte, halfword or word accesses. The processor uses CTI and BTE signals to allow the bus to function more efficiently. Registered feedback mode is supported for higher performance. Note that multiprocessing is not readily supported and hence, `SWAP` instructions do not actually perform locked transfers.
+ZAP features a common 32-bit Wishbone B3 bus to access external resources (like DRAM/SRAM/IO etc). The processor can generate byte, halfword or word accesses. The processor uses CTI and BTE for efficient bus transfers. Registered feedback mode is supported for higher performance. Note that multiprocessing is not readily supported and hence, `SWAP/SWAPB` instructions do not **actually** perform locked transfers.
 
 The 32-bit standard Wishbone bus makes it easy to interface to other components over a typical 32-bit FPGA SoC bus, without the need for up/down converters.
 
-**The bus interface is efficient for burst transfers and hence, cache and MMU must be enabled as soon as possible for good performance.**
+**The bus interface is efficient for burst transfers and hence, cache and MMU must be enabled as soon as possible for good performance. ZAP will issue burst transfers only if the cache is enabled.**
+
+The diagram below shows 16 x 4 byte = 64 bytes of memory being fetched for a cache linefill. Note that the full bandwidth of the bus is utilized by using an efficient burst type transfer. With cache enabled, the processor is able to communicate with the memory at a peak rate of 568MB/s when running at 142MHz clock.
+
+![](mem_read_burst.png)
+
+The diagram below shows 16 x 4 byte = 64 bytes of cache (1 cacheline) being written back to memory. Note that the full bandwidth of the bus is utilized by using an efficient burst type transfer. With cache enabled, the processor is able to communicate with the memory at a peak rate of 568MB/s when running at 142MHz clock.
+
+![](mem_write_burst.png)
+
+Accesses to uncacheable locations are done using Wishbone classic cycles. These cycles are also used when the cache is disabled. The processor can issue a non-cacheable Wishbone access once every 5 cycles. With cache disabled, the processor is only able to communicate at a peak rate of 113.6MB/s when running at 142MHz clock.
+
+<img title="" src="peripheral_access.png" alt="" width="679">
+
+The table below summarizes the bandwidth utilization in various modes:
+
+| Cache  State | Access Type                                         | Write Bandwidth | Read Bandwidth | CPU Clock Speed | Comments                                                                          |
+| ------------ | --------------------------------------------------- | --------------- | -------------- | --------------- | --------------------------------------------------------------------------------- |
+| Enabled      | Cacheable                                           | 568MB/s MAX     | 568MB/s MAX    | 142MHz          | RECOMMENDED. Use this mode most of the time. This mode gives maximum performance. |
+| Enabled      | Uncacheable <br/>(Intended for Slow IO Peripherals) | 113.6MB/s MAX   | 113.6MB/s MAX  | 142MHz          | Use only for IO peripherals.                                                      |
+| Disabled     | Any                                                 | 113.6MB/s MAX   | 113.6MB/s MAX  | 142MHz          | Not recommended to use. Will impact performance greatly.                          |
 
 ### 1.3. System Control
 
@@ -239,23 +261,32 @@ Selective cleaning of TLB will result in the entire TLB being cleaned.
 The above rules are permitted as per the architecture spec \[1].
 
 * Register 1: Cache and MMU control.
-* Register 2: Translation Base.
-* Register 3: Domain Access Control.
-* Register 5: FSR.
-* Register 6: FAR.
-* Register 8: TLB functions.
-* Register 7: Cache functions.
-  * The arch spec allows for a subset of the functions to be implemented for register 7.
-  *   These below are valid value supported in ZAP for register 7. Using other operations will result in UNDEFINED operation.
 
-      | Cache Operation                                      | Opcode2 | CRM    |
-      | ---------------------------------------------------- | ------- | ------ |
-      | Flush instruction and data cache                     | 0b000   | 0b0111 |
-      | Flush instruction cache                              | 0b000   | 0b0101 |
-      | Flush data cache                                     | 0b000   | 0b0110 |
-      | Clean data cache                                     | 0b000   | 0b101x |
-      | Clean and flush data cache. Flush instruction cache. | 0b000   | 0b1111 |
-      | Clean and flush data cache                           | 0b000   | 0b1110 |
+* Register 2: Translation Base.
+
+* Register 3: Domain Access Control.
+
+* Register 5: FSR.
+
+* Register 6: FAR.
+
+* Register 8: TLB functions.
+
+* Register 7: Cache functions.
+  
+  * The arch spec allows for a subset of the functions to be implemented for register 7.
+  
+  * These below are valid value supported in ZAP for register 7. Using other operations will result in UNDEFINED operation.
+    
+    | Cache Operation                                      | Opcode2 | CRM    |
+    | ---------------------------------------------------- | ------- | ------ |
+    | Flush instruction and data cache                     | 0b000   | 0b0111 |
+    | Flush instruction cache                              | 0b000   | 0b0101 |
+    | Flush data cache                                     | 0b000   | 0b0110 |
+    | Clean data cache                                     | 0b000   | 0b101x |
+    | Clean and flush data cache. Flush instruction cache. | 0b000   | 0b1111 |
+    | Clean and flush data cache                           | 0b000   | 0b1110 |
+
 * Register 13: FCSE Register.
 
 ### 1.4. Implementation Options
@@ -264,7 +295,7 @@ ZAP implements the integer instruction set specified in \[1]. T refers to the 16
 
 #### 1.4.1. Big and Little Endian
 
-ZAP supports little endian byte ordering or BE-32 big endian byte ordering.
+ZAP supports little endian byte ordering or BE-32 big endian byte ordering. The endianness is fixed by a parameter. The appropriate bit in CP15 that indicates endianness is read-only, and reflects the parameter set during synthesis.
 
 #### 1.4.2. 26-Bit Architecture
 
@@ -272,7 +303,7 @@ ZAP does not support the legacy 26-bit mode.
 
 #### 1.4.3. 16-bit Compressed Support
 
-ZAP has support for the 16-bit (V5T) instruction set.
+ZAP has support for the 16-bit V5T compressed instruction set.
 
 #### 1.4.4. DSP Enhanced Instruction Set
 
@@ -305,7 +336,7 @@ ZAP does not support lockdown of cache and TLB entries.
 
 #### 1.4.7. TLB Flush
 
-ZAP implements global TLB flushing. If software tries to invalidate selective TLB entries, the entire TLB will be invalidated. This behavior is acceptable as per the arch specification.
+ZAP implements global TLB flushing. If software tries to invalidate selective TLB entries, the entire TLB will be invalidated. This behavior is acceptable as per the architecture specification.
 
 #### 1.4.8. Cache Clean and Flush
 
@@ -330,7 +361,7 @@ ZAP allows the cache and MMU to have these combinations:
 | ON  | OFF   | All pages are treated as uncacheable. C bit is IGNORED.    |
 | ON  | ON    | **Caching and paging enabled. Recommended configuration.** |
 | OFF | OFF   | VA = PA. All addresses are treated as uncacheable.         |
-| OFF | ON    | All pages are treated as uncacheable. C bit is IGNORED.    |
+| OFF | ON    | INVALID CONFIGURATION.                                     |
 
 #### 1.4.12. Coprocessor Interface
 
@@ -384,11 +415,15 @@ Note that all parameters should be 2^n. Cache size should be multiple of line si
 ### 2.3. Integration
 
 * To use the ZAP processor in your project:
-  *   Get the project files:
-
-      > git clone https://github.com/krevanth/ZAP.git
+  
+  * Get the project files:
+    
+    > `git clone https://github.com/krevanth/ZAP.git`
+  
   * Add all the files in `src/rtl/*.sv` to your project.
+  
   * Add `src/rtl/` to your tool's search path to allow it to pick up SV headers.
+  
   * Instantiate the ZAP processor in your project using this template:
 
 ```
@@ -426,34 +461,42 @@ Note that all parameters should be 2^n. Cache size should be multiple of line si
 * The processor provides a Wishbone B3 bus. It is recommended that you use it in registered feedback cycle mode.
 * Interrupts are level sensitive and are internally synced to clock.
 
-## 3. Project Environment (Docker)
+## 3. Project Environment
 
-The project environment requires Docker to be installed at your site. Click [here](https://docs.docker.com/engine/install/) for instructions on how to install Docker. The steps here assume that the user is a part of the `docker` group.
+The recommended project environment requires Docker to be installed at your site. Click [here](https://docs.docker.com/engine/install/) for instructions on how to install Docker. The steps here assume that the user is a part of the `docker` group.
+
+If your site has the latest EDA tools required (Verilator, GTKWave, GCC Cross Compiler) installed, and if you do not wish to use Docker, then you should not pass the `DOCKER=1` argument when invoking `make`, hence the argument is shown as optional in the examples below.  
 
 ### 3.1. Running TCs
 
 To run all/a specific TC, do:
 
-> `make DOCKER=1 [TC=test_name]`
+> `make [DOCKER=1] [TC=test_name]`
 
 See `src/ts` for a list of test names. Not providing a testname will run all tests.
 
 To remove existing object/simulation/synthesis files, do:
 
-> `make DOCKER=1 clean`
+> `make [DOCKER=1] clean`
 
 ### 3.2. Adding TCs
 
 * Create a folder `src/ts/<test_name>`
+
 * Please note that these will be run on the sample TB SOC platform.
+  
   * See `src/testbench/testbench.v` for more information.
+
 * Tests will produce wave files in the `obj/src/ts/<test_name>/zap.vcd`.
+
 * Add a C file (.c), an assembly file (.s) and a linker script (.ld).
-*   Create a `Config.cfg`. This is a Perl hash that must be edited to meet requirements. Note that the registers in the `REG_CHECK` are indexed registers. To find those, please do:
 
-    > `cat src/rtl/zap_localparams.svh | grep PHY`
+* Create a `Config.cfg`. This is a Perl hash that must be edited to meet requirements. Note that the registers in the `REG_CHECK` are indexed registers. To find those, please do:
+  
+  > `cat src/rtl/zap_localparams.svh | grep PHY`
+  
+  For example, if a check requires a certain value of R13 in IRQ mode, the hash will mention the register number as r25.
 
-    For example, if a check requires a certain value of R13 in IRQ mode, the hash will mention the register number as r25.
 * Here is a sample `Config.cfg`:
 
 ```
@@ -470,22 +513,22 @@ To remove existing object/simulation/synthesis files, do:
                BP_DEPTH                    => 1024,    
                INSTR_FIFO_DEPTH            => 4,       
                STORE_BUFFER_DEPTH          => 8,      
-      
+
                # Debug helpers. 
                DEBUG_EN                    => 1,       
                                               # Enables debug print messages. 
                                               # Set DEBUG_EN=0 for synthesis.        
-      
+
                # Testbench configuration.
                MAX_CLOCK_CYCLES            => 100000,  
                                               # Clock cycles to run the 
                                               # simulation for.
-      
+
                REG_CHECK                   => {"r1" => "32'h4", 
                                                "r2" => "32'd3"},      
                                               # Make this an anonymous has with 
                                               # entries like "r10" => "32'h0". 
-      
+
                FINAL_CHECK                 => {"32'h100" => "32'd4", 
                                                "32'h104" => "32'h12345678",
                                                "32'h66" =>  "32'h4"}   
@@ -502,7 +545,7 @@ To remove existing object/simulation/synthesis files, do:
 
 To run RTL lint, simply do:
 
-> make DOCKER=1 lint
+> `make [DOCKER=1] lint`
 
 ### 3.4. Running Xilinx Vivado Synthesis
 
@@ -510,7 +553,7 @@ Synthesis scripts can be found here: `src/syn/`
 
 Assuming you have Vivado installed, please do (in project root directory):
 
-> make syn
+> `make syn`
 
 Timing report will be available in `obj/syn/syn_timing.rpt`
 
@@ -549,4 +592,4 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 
 You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-##
+## 
