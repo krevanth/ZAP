@@ -585,7 +585,7 @@ zap_fifo #( .WDT(67 + 33), .DEPTH(FIFO_DEPTH) ) U_ZAP_FIFO (
         .i_stall_from_shifter           (stall_from_shifter && thumb_valid && fifo_valid ),
         .i_stall_from_issue             (stall_from_issue   && thumb_valid && fifo_valid ),  
         .i_stall_from_decode            (stall_from_decode  && thumb_valid && fifo_valid ),
-        .i_clear_from_decode            (clear_from_decode  && thumb_valid && fifo_valid ),
+        .i_clear_from_decode            (clear_from_decode),
 
         .i_instr                        ({fetch_pc_plus_8_ff, fetch_instr_abort, fetch_instruction, fetch_bp_state, fetch_pred}),
         .i_valid                        (fetch_valid),

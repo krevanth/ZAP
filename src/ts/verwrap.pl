@@ -28,6 +28,7 @@ use warnings;
 my $TEST                        = $ARGV[0]; 
 my $HT                          = $ARGV[1];
 my %Config                      = do "./src/ts/$TEST/Config.cfg";
+my $ONLY_CORE                   = $Config{'ONLY_CORE'};
 my $DEBUG_EN                    = $Config{'DEBUG_EN'};
 my $DUMP_SIZE                   = $Config{'DUMP_SIZE'};
 my $MAX_CLOCK_CYCLES            = $Config{'MAX_CLOCK_CYCLES'};
@@ -61,6 +62,7 @@ my $IVL_OPTIONS  = " -Isrc/rtl ";
    $IVL_OPTIONS .= " -GCODE_LPAGE_TLB_ENTRIES=$CODE_LPAGE_TLB_ENTRIES "; 
    $IVL_OPTIONS .= " -GCODE_SPAGE_TLB_ENTRIES=$CODE_SPAGE_TLB_ENTRIES ";
    $IVL_OPTIONS .= " -GCODE_CACHE_SIZE=$CODE_CACHE_SIZE ";
+   $IVL_OPTIONS .= " -GONLY_CORE=$ONLY_CORE ";
    $IVL_OPTIONS .= " +define+MAX_CLOCK_CYCLES=$MAX_CLOCK_CYCLES ";
    $IVL_OPTIONS .= " +define+IRQ_EN "      if ( $IRQ_EN    );
    $IVL_OPTIONS .= " +define+FIQ_EN "      if ( $FIQ_EN    );                       
@@ -122,6 +124,7 @@ if ( $HT == 1 )
 my $cmd = 
 "verilator $HT -Wno-lint --cc --exe  --build ../../../src/testbench/zap_test.cpp --Mdir obj/ts/$TEST --top zap_test $IVL_OPTIONS --trace --x-assign unique --x-initial unique --error-limit 1 ";
 
+print "$cmd\n";
 die "Error: Failed to build executable." if system("$cmd");
 
 exit 0;

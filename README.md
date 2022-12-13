@@ -371,10 +371,12 @@ ZAP internally implements an internal CP15 coprocessor using its internal bus me
 
 ### 2.1. Parameters
 
-Note that all parameters should be 2^n. Cache size should be multiple of line size and at least 16 x line width. Caches/TLBs consume majority of the resources so should be tuned as required. The default parameters give you quite large caches.
+Note that all parameters should be 2^n. Cache size should be multiple of line size and at least 16 x line width. Caches/TLBs consume majority of the resources so should be tuned as required. The default parameters give you quite large caches. Note
+that WB inputs are flopped only when ONLY\_CORE=0 i.e., when the CPU is synthesized with cache and MMU.
 
 | Parameter                   | Default | Description                                                                |
 | --------------------------- | ------- | -------------------------------------------------------------------------- |
+| ONLY\_CORE                  | 0       | When 1, the core is presented without cache/MMU.                           |
 | BE\_32\_ENABLE              | 0       | Enable BE-32 Big Endian Mode. Active high. Applies to I and D fetches.     |
 | BP\_ENTRIES                 | 1024    | Predictor RAM depth. Each RAM row also contains the branch target address. |
 | FIFO\_DEPTH                 | 16      | Command FIFO depth.                                                        |
