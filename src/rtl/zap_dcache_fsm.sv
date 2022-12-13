@@ -123,6 +123,7 @@ input   logic    [31:0]   i_wb_dat
 
 `include "zap_localparams.svh"
 `include "zap_defines.svh"
+`include "zap_functions.svh"
 
 /* States */
 localparam IDLE                 = 0; /* Resting state. */
@@ -359,16 +360,7 @@ begin:blk1
 
                                 if ( BE_32_ENABLE )
                                 begin
-                                        case(i_ben)
-                                        4'b0001: o_wb_sel_nxt = 4'b1000;
-                                        4'b0010: o_wb_sel_nxt = 4'b0100;
-                                        4'b0100: o_wb_sel_nxt = 4'b0010;
-                                        4'b1000: o_wb_sel_nxt = 4'b0001;
-                                        4'b0011: o_wb_sel_nxt = 4'b1100;
-                                        4'b1100: o_wb_sel_nxt = 4'b0011;
-                                        4'b1111: o_wb_sel_nxt = i_ben;
-                                        default: o_wb_sel_nxt = {4{1'dx}}; // Synthesis will optimize.
-                                        endcase
+                                        o_wb_sel_nxt = be_sel_32(i_ben);
                                 end
                                 else
                                 begin
@@ -489,16 +481,7 @@ begin:blk1
 
                 if ( BE_32_ENABLE )
                 begin
-                        case(i_ben)
-                        4'b0001: o_wb_sel_nxt = 4'b1000;
-                        4'b0010: o_wb_sel_nxt = 4'b0100;
-                        4'b0100: o_wb_sel_nxt = 4'b0010;
-                        4'b1000: o_wb_sel_nxt = 4'b0001;
-                        4'b0011: o_wb_sel_nxt = 4'b1100;
-                        4'b1100: o_wb_sel_nxt = 4'b0011;
-                        4'b1111: o_wb_sel_nxt = i_ben;
-                        default: o_wb_sel_nxt = {4{1'dx}}; // Synthesis will optimize.
-                        endcase
+                        o_wb_sel_nxt = be_sel_32(i_ben);
                 end
                 else
                 begin
@@ -510,15 +493,7 @@ begin:blk1
         begin
                 if ( BE_32_ENABLE )
                 begin
-                        case(o_wb_sel_ff)
-                        4'b1000: o_dat = {24'd0, i_wb_dat[31:24]};
-                        4'b0100: o_dat = {16'd0, i_wb_dat[23:16], 8'd0};
-                        4'b0010: o_dat =  {8'd0, i_wb_dat[15:8], 16'd0};
-                        4'b0001: o_dat = {i_wb_dat[7:0], 24'd0};
-                        4'b1100: o_dat = {16'd0, i_wb_dat[31:16]};
-                        4'b0011: o_dat = {i_wb_dat[15:0], 16'd0};
-                        default: o_dat = i_wb_dat;
-                        endcase
+                        o_dat = be_32(i_wb_dat, o_wb_sel_ff);
                 end
                 else
                 begin

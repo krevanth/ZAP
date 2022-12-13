@@ -108,6 +108,7 @@ always_comb o_wb_bte = 2'b00; // Linear Burst.
 
 `include "zap_defines.svh"
 `include "zap_localparams.svh"
+`include "zap_functions.svh"
 
 logic            wb_cyc, wb_stb, wb_we;
 logic [3:0]      wb_sel;
@@ -188,7 +189,8 @@ zap_core #(
 .o_instr_wb_sel         (),
 /* verilator lint_on PINCONNECTEMPTY */
 .o_code_stall           (code_stall),
-.i_instr_wb_dat         (!ONLY_CORE ? ic_data   : i_wb_dat),
+.i_instr_wb_dat         (!ONLY_CORE ? ic_data   : 
+                         BE_32_ENABLE ? be_32(i_wb_dat, o_wb_sel) : i_wb_dat), // Swap data into CPU.
 .i_instr_wb_ack         (instr_ack),
 .i_instr_wb_err         (!ONLY_CORE ? instr_err : 1'd0),
 
@@ -201,7 +203,8 @@ zap_core #(
 .o_data_wb_cyc          (),
 /* verilator lint_on PINCONNECTEMPTY */
 .o_data_wb_stb          (cpu_dc_stb),
-.i_data_wb_dat          (!ONLY_CORE ? dc_data : i_wb_dat),
+.i_data_wb_dat          (!ONLY_CORE ? dc_data : 
+                         BE_32_ENABLE ? be_32(i_wb_dat, o_wb_sel) : i_wb_dat), // Swap data into CPU.
 .i_data_wb_ack          (data_ack),
 .i_data_wb_err          (data_err),
 
@@ -381,7 +384,8 @@ zap_wb_merger #(.ONLY_CORE(ONLY_CORE)) u_zap_wb_merger (
 .i_d_wb_stb(!ONLY_CORE ? d_wb_stb : cpu_dc_stb),
 .i_d_wb_cyc(!ONLY_CORE ? d_wb_cyc : cpu_dc_stb),
 .i_d_wb_wen(!ONLY_CORE ? d_wb_wen : cpu_dc_we),
-.i_d_wb_sel(!ONLY_CORE ? d_wb_sel : cpu_dc_sel),
+.i_d_wb_sel(!ONLY_CORE ? d_wb_sel : 
+          BE_32_ENABLE ? be_sel_32(cpu_dc_sel) : cpu_dc_sel), // Swap sel from CPU.
 .i_d_wb_dat(!ONLY_CORE ? d_wb_dat : cpu_dc_dat),
 .i_d_wb_adr(!ONLY_CORE ? d_wb_adr : cpu_daddr),
 .i_d_wb_cti(!ONLY_CORE ? d_wb_cti : 3'b111),
