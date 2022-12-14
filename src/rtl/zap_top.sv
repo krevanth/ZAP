@@ -189,8 +189,7 @@ zap_core #(
 .o_instr_wb_sel         (),
 /* verilator lint_on PINCONNECTEMPTY */
 .o_code_stall           (code_stall),
-.i_instr_wb_dat         (!ONLY_CORE ? ic_data   : 
-                         BE_32_ENABLE ? be_32(i_wb_dat, o_wb_sel) : i_wb_dat), // Swap data into CPU.
+.i_instr_wb_dat         (!ONLY_CORE ? ic_data   : i_wb_dat),
 .i_instr_wb_ack         (instr_ack),
 .i_instr_wb_err         (!ONLY_CORE ? instr_err : 1'd0),
 
@@ -204,7 +203,8 @@ zap_core #(
 /* verilator lint_on PINCONNECTEMPTY */
 .o_data_wb_stb          (cpu_dc_stb),
 .i_data_wb_dat          (!ONLY_CORE ? dc_data : 
-                         BE_32_ENABLE ? be_32(i_wb_dat, o_wb_sel) : i_wb_dat), // Swap data into CPU.
+                         BE_32_ENABLE ? be_32(i_wb_dat, o_wb_sel) : i_wb_dat), 
+                        // Swap data into CPU based on current o_wb_sel.
 .i_data_wb_ack          (data_ack),
 .i_data_wb_err          (data_err),
 
