@@ -427,22 +427,24 @@ that WB inputs are flopped only when ONLY\_CORE=0 i.e., when the CPU is synthesi
 
 ### 2.2. IO
 
-| Port       | Description                                                                                                                                                                      |
-| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| i\_clk     | Clock. All logic is clocked on the rising edge of this signal. The CPU is a fully synchronous device.                                                                            |
-| i\_reset   | Active high global reset signal. Fully synchronous.                                                                                                                              |
-| i\_irq     | Interrupt. Level Sensitive. Signal is internally synced by a dual rank synchronizer. The output of the synchronizer is considered as the single source of truth of the IRQ.      |
-| i\_fiq     | Fast Interrupt. Level Sensitive. Signal is internally synced by a dual rank synchronizer. The output of the synchronizer is considered as the single source of truth of the FIQ. |
-| o\_wb\_cyc | Wishbone CYC signal.                                                                                                                                                             |
-| o\_wb\_stb | Wishbone STB signal.                                                                                                                                                             |
-| o\_wb\_adr | Wishbone address signal. (32)                                                                                                                                                    |
-| o\_wb\_we  | Wishbone write enable signal.                                                                                                                                                    |
-| o\_wb\_dat | Wishbone data output signal. (32)                                                                                                                                                |
-| o\_wb\_sel | Wishbone byte select signal. (4)                                                                                                                                                 |
-| o\_wb\_cti | Wishbone CTI (Classic, Incrementing Burst, EOB) (3)                                                                                                                              |
-| o\_wb\_bte | Wishbone BTE (Linear) (2)                                                                                                                                                        |
-| i\_wb\_ack | Wishbone acknowledge signal. Wishbone registered cycles recommended.                                                                                                             |
-| i\_wb\_dat | Wishbone data input signal. (32)                                                                                                                                                 |
+| Port            | Description                                                                                                                                                                             |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| i\_clk          | Clock. All logic is clocked on the rising edge of this signal. The CPU is a fully synchronous device.                                                                                   |
+| i\_reset        | Active high global reset signal. Fully synchronous.                                                                                                                                     |
+| i\_irq          | Interrupt. Level Sensitive. Signal is internally synced by a dual rank synchronizer. The output of the synchronizer is considered as the single source of truth of the IRQ.             |
+| i\_fiq          | Fast Interrupt. Level Sensitive. Signal is internally synced by a dual rank synchronizer. The output of the synchronizer is considered as the single source of truth of the FIQ.        |
+| o\_wb\_cyc      | Wishbone CYC signal.                                                                                                                                                                    |
+| o\_wb\_stb      | Wishbone STB signal.                                                                                                                                                                    |
+| o\_wb\_adr      | Wishbone address signal. (32)                                                                                                                                                           |
+| o\_wb\_we       | Wishbone write enable signal.                                                                                                                                                           |
+| o\_wb\_dat      | Wishbone data output signal. (32)                                                                                                                                                       |
+| o\_wb\_sel      | Wishbone byte select signal. (4)                                                                                                                                                        |
+| o\_wb\_cti      | Wishbone CTI (Classic, Incrementing Burst, EOB) (3)                                                                                                                                     |
+| o\_wb\_bte      | Wishbone BTE (Linear) (2)                                                                                                                                                               |
+| i\_wb\_ack      | Wishbone acknowledge signal. Wishbone registered cycles recommended.                                                                                                                    |
+| i\_wb\_dat      | Wishbone data input signal. (32)                                                                                                                                                        |
+| o_trace         | Generates trace information over a 1024-bit bus. This signal is only intended for DV and is meant to be used only in simulation. When DEBUG_EN is not defined, this signal reads 0x0.   |
+| o_trace_trigger | Sample trace information when this signal toggles. This signal is only intended for DV and is meant to be used only in simulation. When DEBUG_EN is not defined, this signal reads 0x0. |
 
 ### 2.3. Integration
 
@@ -580,6 +582,8 @@ To run RTL lint, simply do:
 > `make [DOCKER=1] lint`
 
 ### 3.4. Running Xilinx Vivado Synthesis
+
+**IMPORTANT NOTE: Do NOT define DEBUG_EN when performig synthesis.**
 
 Synthesis scripts can be found here: `src/syn/`
 

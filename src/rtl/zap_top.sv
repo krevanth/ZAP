@@ -73,6 +73,13 @@ parameter [31:0] CODE_CACHE_LINE          =  32'd64    // Ccahe line size in byt
 
 )(
         // --------------------------------------
+        // Trace. Only for DV. Leave open.
+        // --------------------------------------
+
+        output  logic  [1023:0]    o_trace,
+        output  logic              o_trace_trigger,
+
+        // --------------------------------------
         // Clock and reset
         // --------------------------------------
 
@@ -176,6 +183,10 @@ zap_core #(
         .BE_32_ENABLE(BE_32_ENABLE)
 ) u_zap_core
 (
+// Trace
+.o_trace                (o_trace),
+.o_trace_trigger        (o_trace_trigger),
+
 // Clock and reset.
 .i_clk                  (i_clk),
 .i_reset                (s_reset),
