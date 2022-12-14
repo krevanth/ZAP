@@ -46,7 +46,7 @@ module zap_core #(
 // Trace port
 // ------------------------------------------------
 
-output logic [1023:0]                    o_trace,
+output logic [2047:0]                    o_trace,
 output logic                             o_trace_trigger,
 
 // ------------------------------------------------

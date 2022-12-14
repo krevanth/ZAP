@@ -76,7 +76,7 @@ parameter [31:0] CODE_CACHE_LINE          =  32'd64    // Ccahe line size in byt
         // Trace. Only for DV. Leave open.
         // --------------------------------------
 
-        output  logic  [1023:0]    o_trace,
+        output  logic  [2047:0]    o_trace,
         output  logic              o_trace_trigger,
 
         // --------------------------------------

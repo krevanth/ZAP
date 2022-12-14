@@ -120,7 +120,7 @@ module zap_writeback #(
         output logic                         o_wb_cyc,
 
         // Trace
-        output logic [1023:0]                o_trace,
+        output logic [2047:0]                o_trace,
         output logic                         o_trace_trigger
 );
 
