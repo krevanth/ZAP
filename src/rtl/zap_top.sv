@@ -367,40 +367,77 @@ generate
         end
 endgenerate
 
-zap_wb_merger #(.ONLY_CORE(ONLY_CORE)) u_zap_wb_merger (
+generate 
+if ( !ONLY_CORE )
+        zap_wb_merger #(.ONLY_CORE(1'd0)) u_zap_wb_merger (
+        
+        .i_clk(i_clk),
+        .i_reset(s_reset),
+        
+        .i_c_wb_stb(c_wb_stb ),
+        .i_c_wb_cyc(c_wb_cyc ),
+        .i_c_wb_wen(c_wb_wen ), 
+        .i_c_wb_sel(c_wb_sel ),
+        .i_c_wb_dat(c_wb_dat ),
+        .i_c_wb_adr(c_wb_adr ),
+        .i_c_wb_cti(c_wb_cti ),
+        .o_c_wb_ack(c_wb_ack ),
+        
+        .i_d_wb_stb(d_wb_stb ),
+        .i_d_wb_cyc(d_wb_cyc ),
+        .i_d_wb_wen(d_wb_wen ),
+        .i_d_wb_sel(d_wb_sel ),
+        .i_d_wb_dat(d_wb_dat ),
+        .i_d_wb_adr(d_wb_adr ),
+        .i_d_wb_cti(d_wb_cti ),
+        .o_d_wb_ack(d_wb_ack ),
+        
+        .o_wb_cyc  (wb_cyc   ),
+        .o_wb_stb  (wb_stb   ),
+        .o_wb_wen  (wb_we    ),
+        .o_wb_sel  (wb_sel   ),
+        .o_wb_dat  (wb_idat  ),
+        .o_wb_adr  (wb_adr   ),
+        .o_wb_cti  (wb_cti   ),
+        .i_wb_ack  (wb_ack   )
+        
+        );
+else // if ( ONLY_CORE )
+        zap_wb_merger #(.ONLY_CORE(1'd1)) u_zap_wb_merger (
+        
+        .i_clk(i_clk),
+        .i_reset(s_reset),
+        
+        .i_c_wb_stb(cpu_instr_stb),
+        .i_c_wb_cyc(cpu_instr_stb),
+        .i_c_wb_wen(1'h0),
+        .i_c_wb_sel(4'hF),
+        .i_c_wb_dat(32'd0),
+        .i_c_wb_adr(cpu_iaddr),
+        .i_c_wb_cti(3'b111),
+        .o_c_wb_ack(instr_ack),
+        
+        .i_d_wb_stb(cpu_dc_stb),
+        .i_d_wb_cyc(cpu_dc_stb),
+        .i_d_wb_wen(cpu_dc_we),
+        .i_d_wb_sel(BE_32_ENABLE ? be_sel_32(cpu_dc_sel) : cpu_dc_sel), // Swap sel from CPU.
+        .i_d_wb_dat(cpu_dc_dat),
+        .i_d_wb_adr(cpu_daddr),
+        .i_d_wb_cti(3'b111),
+        .o_d_wb_ack(data_ack),
+        
+        .o_wb_cyc  (o_wb_cyc ),
+        .o_wb_stb  (o_wb_stb ),
+        .o_wb_wen  (o_wb_we  ),
+        .o_wb_sel  (o_wb_sel ),
+        .o_wb_dat  (o_wb_dat ),
+        .o_wb_adr  (o_wb_adr ),
+        .o_wb_cti  (o_wb_cti ),
+        .i_wb_ack  (i_wb_ack )
+        
+        );
 
-.i_clk(i_clk),
-.i_reset(s_reset),
-
-.i_c_wb_stb(!ONLY_CORE ? c_wb_stb : cpu_instr_stb),
-.i_c_wb_cyc(!ONLY_CORE ? c_wb_cyc : cpu_instr_stb),
-.i_c_wb_wen(!ONLY_CORE ? c_wb_wen : 1'h0),
-.i_c_wb_sel(!ONLY_CORE ? c_wb_sel : 4'hF),
-.i_c_wb_dat(!ONLY_CORE ? c_wb_dat : 32'd0),
-.i_c_wb_adr(!ONLY_CORE ? c_wb_adr : cpu_iaddr),
-.i_c_wb_cti(!ONLY_CORE ? c_wb_cti : 3'b111),
-.o_c_wb_ack(!ONLY_CORE ? c_wb_ack : instr_ack),
-
-.i_d_wb_stb(!ONLY_CORE ? d_wb_stb : cpu_dc_stb),
-.i_d_wb_cyc(!ONLY_CORE ? d_wb_cyc : cpu_dc_stb),
-.i_d_wb_wen(!ONLY_CORE ? d_wb_wen : cpu_dc_we),
-.i_d_wb_sel(!ONLY_CORE ? d_wb_sel : 
-          BE_32_ENABLE ? be_sel_32(cpu_dc_sel) : cpu_dc_sel), // Swap sel from CPU.
-.i_d_wb_dat(!ONLY_CORE ? d_wb_dat : cpu_dc_dat),
-.i_d_wb_adr(!ONLY_CORE ? d_wb_adr : cpu_daddr),
-.i_d_wb_cti(!ONLY_CORE ? d_wb_cti : 3'b111),
-.o_d_wb_ack(!ONLY_CORE ? d_wb_ack : data_ack),
-
-.o_wb_cyc  (!ONLY_CORE ? wb_cyc : o_wb_cyc ),
-.o_wb_stb  (!ONLY_CORE ? wb_stb : o_wb_stb ),
-.o_wb_wen  (!ONLY_CORE ? wb_we  : o_wb_we  ),
-.o_wb_sel  (!ONLY_CORE ? wb_sel : o_wb_sel ),
-.o_wb_dat  (!ONLY_CORE ? wb_idat: o_wb_dat ),
-.o_wb_adr  (!ONLY_CORE ? wb_adr : o_wb_adr ),
-.o_wb_cti  (!ONLY_CORE ? wb_cti : o_wb_cti ),
-.i_wb_ack  (!ONLY_CORE ? wb_ack : i_wb_ack )
-
-);
+endgenerate
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Put cache and MMU only if ONLY_CORE == 0

@@ -222,9 +222,15 @@ Returns that result in change from 32 to 16-bit instruction state or vice versa 
 
 ### 1.2. Wishbone Bus Interface
 
-ZAP features a common 32-bit Wishbone B3 bus to access external resources (like DRAM/SRAM/IO etc). The processor can generate byte, halfword or word accesses. The processor uses CTI and BTE for efficient bus transfers. Registered feedback mode is supported for higher performance. Note that multiprocessing is not readily supported and hence, `SWAP/SWAPB` instructions do not **actually** perform locked transfers.
+ZAP features a common 32-bit Wishbone B3 bus to access external resources (like DRAM/SRAM/IO etc). The processor can generate byte, halfword or word accesses. The processor uses CTI and BTE for efficient bus transfers. Note that multiprocessing is not readily supported and hence, `SWAP/SWAPB` instructions do not **actually** perform locked transfers.
 
 The 32-bit standard Wishbone bus makes it easy to interface to other components over a typical 32-bit FPGA SoC bus, without the need for up/down converters.
+
+#### 1.2.1. ONLY_CORE = 0x0 Configuration
+
+In this configuration, the CPU is synthesized with cache and MMU. Use this mode for high performance. The performance benefits especially come from the cache, which provides a very low latency, high speed access path. Split caches allow code and data fetches to be paralleled. 
+
+It is recommended to use WB registered feedback cycles. However, ZAP supports non registered feedback cycles in this mode too, but it is not recommended to use.
 
 **The bus interface is efficient for burst transfers and hence, cache and MMU must be enabled as soon as possible for good performance. ZAP will issue burst transfers only if the cache is enabled.**
 
@@ -240,13 +246,37 @@ Accesses to uncacheable locations are done using Wishbone classic cycles. These 
 
 <img title="" src="peripheral_access.png" alt="" width="679">
 
-The table below summarizes the bandwidth utilization in various modes:
+The table below summarizes the bus bandwidth utilization in this configuration.  The table below assumes WB registered feedback cycles, when accessing the bus.
 
-| Cache  State | Access Type                                         | Write Bandwidth | Read Bandwidth | CPU Clock Speed | Comments                                                                          |
-| ------------ | --------------------------------------------------- | --------------- | -------------- | --------------- | --------------------------------------------------------------------------------- |
-| Enabled      | Cacheable                                           | 568MB/s MAX     | 568MB/s MAX    | 142MHz          | RECOMMENDED. Use this mode most of the time. This mode gives maximum performance. |
-| Enabled      | Uncacheable <br/>(Intended for Slow IO Peripherals) | 113.6MB/s MAX   | 113.6MB/s MAX  | 142MHz          | Use only for IO peripherals.                                                      |
-| Disabled     | Any                                                 | 113.6MB/s MAX   | 113.6MB/s MAX  | 142MHz          | Not recommended to use. Will impact performance greatly.                          |
+| Access Type      | Parameter                                             | Value    |
+| ---------------- | ----------------------------------------------------- | -------- |
+| Cacheable Region | Instruction Fetch Rate (I$ Hit)                       | 568 MB/s |
+| Cacheable Region | Data Access Rate (D$ Hit)                             | 568 MB/s |
+| IO Region        | Instruction Fetch Rate (Interleaved with data access) | 28 MB/s  |
+| IO Region        | Data Read Rate (Interleaved with instruction access)  | 28 MB/s  |
+| IO Region        | Data Write Rate (Interleaved with instruction access) | 28 MB/s  |
+
+#### 1.2.2. ONLY_CORE=0x1 Configuration
+
+In this configuration, the CPU is synthesized without a cache and MMU. This mode exclusively generates BLOCK cycles. They typically require registered feedback cycles. However, ZAP supports non registered feedback cycles in this mode too, but it is not recommended to use. The table below assumes registered feedback cycles, as it would be the  most likely case in this scenario.
+
+This configuration gives lower performance because:
+
+- The WB bus may have high latency. And it's impact is magnified since every access needs to go to the bus.
+
+- Contention between data and instruction fetches eats away throughput.
+
+- Registered feedback cycles are required for BLOCK transfers (See Wishbone specification). 
+  
+  - This is because the bus cannot prepare ahead of time for the next address, as per definition of BLOCK transfer.
+  
+  - This further reduces throughput on the bus.
+
+| Access Type | Parameter                                             | Value    |
+| ----------- | ----------------------------------------------------- | -------- |
+| IO Region   | Instruction Fetch Rate (Interleaved with data access) | 117 MB/s |
+| IO Region   | Data Read Rate (Interleaved with instruction access)  | 117 MB/s |
+| IO Region   | Data Write Rate (Interleaved with instruction access) | 117 MB/s |
 
 ### 1.3. System Control
 
