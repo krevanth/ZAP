@@ -43,6 +43,13 @@ module zap_core #(
 (
 
 // ------------------------------------------------
+// Trace port
+// ------------------------------------------------
+
+output logic [1023:0]                    o_trace,
+output logic                             o_trace_trigger,
+
+// ------------------------------------------------
 // Clock and reset. Reset is synchronous.
 // ------------------------------------------------
 
@@ -1393,6 +1400,9 @@ zap_writeback #(
 )
 u_zap_writeback
 (
+        .o_trace                (o_trace),
+        .o_trace_trigger        (o_trace_trigger),
+
         .i_decompile            (memory_decompile),
         .o_decompile            (rb_decompile),
 

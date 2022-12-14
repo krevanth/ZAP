@@ -117,7 +117,11 @@ module zap_writeback #(
 
         // STB and CYC
         output logic                         o_wb_stb,
-        output logic                         o_wb_cyc
+        output logic                         o_wb_cyc,
+
+        // Trace
+        output logic [1023:0]                o_trace,
+        output logic                         o_trace_trigger
 );
 
 `include "zap_defines.svh"
@@ -478,6 +482,132 @@ begin
         cpsr_nxt[T]             = 1'd0; // Go to ARM mode.
 end
 endfunction
+
+`ifdef DEBUG_EN
+
+        /* For simulation only */
+        logic [31:0] prev_pc;
+        logic [1023:0] msg_nxt;
+
+        always @*
+        begin
+                msg_nxt = o_trace;
+
+                if ( i_reset )
+                begin
+                        msg_nxt = "IGNORE";
+                end
+                else if ( i_data_abt[1] )
+                begin
+                        // Empty.
+                end
+                else if ( i_data_abt[0] )
+                begin
+                        msg_nxt = "TRACE-->          DABT vector taken.";
+                end
+                else if ( i_fiq )
+                begin
+                        msg_nxt = "TRACE-->          FIQ vector taken.";
+                end
+                else if ( i_irq  )
+                begin
+                        msg_nxt = "TRACE-->          IRQ vector taken.";
+                end
+                else if ( i_instr_abt  )
+                begin
+                        msg_nxt = "TRACE-->          IABT vector taken.";
+                end
+                else if ( i_swi )
+                begin
+                        msg_nxt = "TRACE-->          SWI vector taken.";
+                end
+                else if ( i_und )
+                begin
+                        msg_nxt = "TRACE-->          UND vector taken.";
+                end
+                else if ( i_copro_reg_en  )
+                begin
+                        $sformat(msg_nxt, 
+                                "TRACE-->            COPROCESSOR WRITE IDX=%x DATA=%x", 
+                                                                       i_copro_reg_wr_index,
+                                                                       i_copro_reg_wr_data);                       
+                end
+                else if ( i_valid )
+                begin
+                        if ( prev_pc != (i_pc_plus_8_buf_ff - (arm_mode ? 4 : 2)) )
+                        begin
+                                $sformat(msg_nxt, 
+                                "TRACE--> JUMPED TO::PC: %x %s (wa1=%x wdata1=%x wa2=%x wdata2=%x cpsr=%x)", 
+                                i_pc_plus_8_buf_ff - 8, i_decompile, wa1, wdata1, wa2, wdata2, i_flags);
+                        end
+                        else
+                        begin
+                                $sformat(msg_nxt, 
+                                "TRACE-->            PC: %x %s (wa1=%x wdata1=%x wa2=%x wdata2=%x cpsr=%x)", 
+                                i_pc_plus_8_buf_ff - 8, i_decompile, wa1, wdata1, wa2, wdata2, i_flags);
+                        end
+                end               
+        end
+
+        always @ ( posedge i_clk ) 
+        begin
+                o_trace <= msg_nxt;
+        end
+
+        always @ (posedge i_clk)
+        begin
+                if ( i_reset )
+                begin
+                        o_trace_trigger <= 0;
+                        prev_pc         <= 4;
+                end
+                else if ( i_data_abt[1] )
+                begin
+                        // Empty.
+                end
+                else if ( i_data_abt[0] )
+                begin
+                        o_trace_trigger <= o_trace_trigger + 1;
+                end
+                else if ( i_fiq )
+                begin
+                        o_trace_trigger <= o_trace_trigger + 1;
+                end
+                else if ( i_irq  )
+                begin
+                        o_trace_trigger <= o_trace_trigger + 1;
+                end
+                else if ( i_instr_abt  )
+                begin
+                        o_trace_trigger <= o_trace_trigger + 1;
+                end
+                else if ( i_swi )
+                begin
+                        o_trace_trigger <= o_trace_trigger + 1;
+                end
+                else if ( i_und )
+                begin
+                        o_trace_trigger <= o_trace_trigger + 1;
+                end
+                else if ( i_copro_reg_en  )
+                begin
+                        o_trace_trigger <= o_trace_trigger + 1;
+                end
+                else if ( i_valid )
+                begin
+                        o_trace_trigger <= o_trace_trigger + 1;
+                        prev_pc         <= i_pc_plus_8_buf_ff;
+                end
+        end
+
+        /* Above block is for simulation only */ 
+`else
+
+// Tie off trace to 0.
+assign o_trace         = '0;
+assign o_trace_trigger = '0;
+
+`endif
 
 endmodule // zap_register_file.v
 
