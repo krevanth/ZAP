@@ -503,47 +503,46 @@ endfunction
                 end
                 else if ( i_data_abt[0] )
                 begin
-                        msg_nxt = "TRACE-->          DABT vector taken.";
+                        msg_nxt = "DABT";
                 end
                 else if ( i_fiq )
                 begin
-                        msg_nxt = "TRACE-->          FIQ vector taken.";
+                        msg_nxt = "FIQ";
                 end
                 else if ( i_irq  )
                 begin
-                        msg_nxt = "TRACE-->          IRQ vector taken.";
+                        msg_nxt = "IRQ";
                 end
                 else if ( i_instr_abt  )
                 begin
-                        msg_nxt = "TRACE-->          IABT vector taken.";
+                        msg_nxt = "IABT";
                 end
                 else if ( i_swi )
                 begin
-                        msg_nxt = "TRACE-->          SWI vector taken.";
+                        msg_nxt = "SWI";
                 end
                 else if ( i_und )
                 begin
-                        msg_nxt = "TRACE-->          UND vector taken.";
+                        msg_nxt = "UND";
                 end
                 else if ( i_copro_reg_en  )
                 begin
                         $sformat(msg_nxt, 
-                                "TRACE-->            COPROCESSOR WRITE IDX=%x DATA=%x", 
-                                                                       i_copro_reg_wr_index,
-                                                                       i_copro_reg_wr_data);                       
+                                "COW idx=%x data=%x", i_copro_reg_wr_index,
+                                                      i_copro_reg_wr_data);
                 end
                 else if ( i_valid )
                 begin
                         if ( prev_pc != (i_pc_plus_8_buf_ff - (arm_mode ? 4 : 2)) )
                         begin
                                 $sformat(msg_nxt, 
-                                "TRACE--> JUMPED TO::PC: %x %s (wa1=%x wdata1=%x wa2=%x wdata2=%x cpsr=%x)", 
+                                "<JUMP>\n%x %s %x@%x %x@%x %x", 
                                 i_pc_plus_8_buf_ff - 8, i_decompile, wa1, wdata1, wa2, wdata2, i_flags);
                         end
                         else
                         begin
                                 $sformat(msg_nxt, 
-                                "TRACE-->            PC: %x %s (wa1=%x wdata1=%x wa2=%x wdata2=%x cpsr=%x)", 
+                                "%x %s %x@%x %x@%x %x", 
                                 i_pc_plus_8_buf_ff - 8, i_decompile, wa1, wdata1, wa2, wdata2, i_flags);
                         end
                 end               
