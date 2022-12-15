@@ -363,6 +363,7 @@ logic                            alu_data_wb_cyc;
 logic                            alu_data_wb_stb;
 logic [31:0]                     alu_data_wb_dat;
 logic [3:0]                      alu_data_wb_sel;
+logic                            alu_decompile_valid;
 
 // Post ALU 0
 logic [31:0]                     postalu0_alu_result_ff;
@@ -388,6 +389,7 @@ logic                            postalu0_data_wb_cyc;
 logic                            postalu0_data_wb_stb;
 logic [31:0]                     postalu0_data_wb_dat;
 logic [3:0]                      postalu0_data_wb_sel;
+logic                            postalu0_decompile_valid;
 
 // Post ALU 1
 logic [31:0]                     postalu1_alu_result_ff;
@@ -413,8 +415,7 @@ logic                            postalu1_data_wb_cyc;
 logic                            postalu1_data_wb_stb;
 logic [31:0]                     postalu1_data_wb_dat;
 logic [3:0]                      postalu1_data_wb_sel;
-
-
+logic                            postalu1_decompile_valid;
 
 // Post ALU
 logic [31:0]                     postalu_alu_result_ff;
@@ -435,6 +436,7 @@ logic                            postalu_shalf_ff;
 logic                            postalu_uhalf_ff;
 logic [31:0]                     postalu_address_ff;
 logic                            postalu_mem_translate_ff;
+logic                            postalu_decompile_valid;
 
 // Memory
 logic [31:0]                     memory_alu_result_ff;
@@ -451,6 +453,7 @@ logic  [FLAG_WDT-1:0]            memory_flags_ff;
 logic  [31:0]                    memory_mem_rd_data;
 logic                            memory_und_ff;
 logic  [1:0]                     memory_data_abt_ff;
+logic                            memory_decompile_valid;
 
 // Writeback
 logic [31:0]                     rd_data_0;
@@ -1100,6 +1103,7 @@ u_zap_alu_main
          .o_clear_from_alu                 (clear_from_alu),
          .o_confirm_from_alu               (confirm_from_alu),
          .o_decompile                      (alu_decompile),             
+         .o_decompile_valid                (alu_decompile_valid),
          .o_alu_result_ff                  (alu_alu_result_ff),         
          .o_und_ff                         (alu_und_ff),                
          .o_abt_ff                         (alu_abt_ff),
@@ -1142,6 +1146,7 @@ zap_postalu_main #(
          .i_clear_from_writeback           (clear_from_writeback),
          .i_data_mem_fault                 (i_data_wb_err | i_dcache_err2),
 
+         .i_decompile_valid                (alu_decompile_valid),
          .i_decompile                      (alu_decompile),             
          .i_alu_result_ff                  (alu_alu_result_ff),         
          .i_und_ff                         (alu_und_ff),                
@@ -1169,6 +1174,7 @@ zap_postalu_main #(
          .i_data_wb_sel_ff                 (alu_data_wb_sel),
 
          .o_decompile                      (postalu0_decompile),             
+         .o_decompile_valid                (postalu0_decompile_valid),
          .o_alu_result_ff                  (postalu0_alu_result_ff),         
          .o_und_ff                         (postalu0_und_ff),                
          .o_abt_ff                         (postalu0_abt_ff),
@@ -1209,6 +1215,7 @@ zap_postalu_main #(
          .i_data_mem_fault                 (i_data_wb_err | i_dcache_err2),
 
          .i_decompile                      (postalu0_decompile),             
+         .i_decompile_valid                (postalu0_decompile_valid),
          .i_alu_result_ff                  (postalu0_alu_result_ff),         
          .i_und_ff                         (postalu0_und_ff),                
          .i_abt_ff                         (postalu0_abt_ff),
@@ -1234,6 +1241,7 @@ zap_postalu_main #(
          .i_data_wb_sel_ff                 (postalu0_data_wb_sel),
 
          .o_decompile                      (postalu1_decompile),             
+         .o_decompile_valid                (postalu1_decompile_valid),
          .o_alu_result_ff                  (postalu1_alu_result_ff),         
          .o_und_ff                         (postalu1_und_ff),                
          .o_abt_ff                         (postalu1_abt_ff),
@@ -1276,6 +1284,7 @@ zap_postalu_main #(
          .i_data_mem_fault                 (i_data_wb_err | i_dcache_err2),
 
          .i_decompile                      (postalu1_decompile),             
+         .i_decompile_valid                (postalu1_decompile_valid),
          .i_alu_result_ff                  (postalu1_alu_result_ff),         
          .i_und_ff                         (postalu1_und_ff),                
          .i_abt_ff                         (postalu1_abt_ff),
@@ -1301,6 +1310,7 @@ zap_postalu_main #(
          .i_data_wb_sel_ff                 (postalu1_data_wb_sel),
 
          .o_decompile                      (postalu_decompile),             
+         .o_decompile_valid                (postalu_decompile_valid),
          .o_alu_result_ff                  (postalu_alu_result_ff),         
          .o_und_ff                         (postalu_und_ff),                
          .o_abt_ff                         (postalu_abt_ff),
@@ -1337,15 +1347,13 @@ zap_memory_main #(
 u_zap_memory_main
 (
         .o_decompile                    (memory_decompile),
-        .o_und_ff                       (memory_und_ff),
-
-       
+        .o_decompile_valid              (memory_decompile_valid),
+        .i_decompile                    (postalu_decompile),    
+        .i_decompile_valid              (postalu_decompile_valid),
         .i_clk                          (i_clk),                      
         .i_reset                        (reset),
         .i_clear_from_writeback         (clear_from_writeback),
         .i_data_stall                   (data_stall),
-
-        .i_decompile                    (postalu_decompile),
         .i_alu_result_ff                (postalu_alu_result_ff),
         .i_und_ff                       (postalu_und_ff),
         .i_mem_address_ff               (postalu_address_ff[1:0]),
@@ -1383,6 +1391,7 @@ u_zap_memory_main
         .o_irq_ff                       (memory_irq_ff),
         .o_fiq_ff                       (memory_fiq_ff),
         .o_swi_ff                       (memory_swi_ff),
+        .o_und_ff                       (memory_und_ff),
         .o_instr_abort_ff               (memory_instr_abort_ff),
          
         .o_mem_load_ff                  (memory_mem_load_ff),
@@ -1404,7 +1413,9 @@ u_zap_writeback
         .o_trace_trigger        (o_trace_trigger),
 
         .i_decompile            (memory_decompile),
-        .o_decompile            (rb_decompile),
+        .i_decompile_valid      (memory_decompile_valid),
+
+        .o_decompile            (rb_decompile), // Unused.
 
         .i_clear_btb            (predecode_clear_btb),
 
@@ -1414,9 +1425,9 @@ u_zap_writeback
 
         .o_shelve               (shelve),
 
-        .i_clk                  (i_clk), // ZAP clock.
+        .i_clk                  (i_clk),        // ZAP clock.
+        .i_reset                (reset),        // ZAP reset.
 
-        .i_reset                (reset),           // ZAP reset.
         .i_valid                (memory_dav_ff),
         .i_clear_from_alu       (clear_from_alu),
         .i_pc_from_alu          (pc_from_alu),

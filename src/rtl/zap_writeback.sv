@@ -29,6 +29,8 @@ module zap_writeback #(
 (
         // Decompile.
         input   logic    [64*8-1:0]           i_decompile,
+        input   logic                         i_decompile_valid,
+
         output  logic    [64*8-1:0]           o_decompile,
 
         // Shelve output.
@@ -486,7 +488,6 @@ endfunction
 `ifdef DEBUG_EN
 
         /* For simulation only */
-        logic [31:0] prev_pc;
         logic [1023:0] msg_nxt;
 
         always @*
@@ -533,19 +534,16 @@ endfunction
                 end
                 else if ( i_valid )
                 begin
-                        if ( prev_pc != (i_pc_plus_8_buf_ff - (arm_mode ? 4 : 2)) )
-                        begin
-                                $sformat(msg_nxt, 
-                                "<JUMP>\n%x %s %x@%x %x@%x %x", 
-                                i_pc_plus_8_buf_ff - 8, i_decompile, wa1, wdata1, wa2, wdata2, i_flags);
-                        end
-                        else
-                        begin
-                                $sformat(msg_nxt, 
-                                "%x %s %x@%x %x@%x %x", 
-                                i_pc_plus_8_buf_ff - 8, i_decompile, wa1, wdata1, wa2, wdata2, i_flags);
-                        end
-                end               
+                        $sformat(msg_nxt, 
+                        "%x %s %x@%x %x@%x %x", 
+                        i_pc_plus_8_buf_ff - 8, i_decompile, wa1, wdata1, wa2, wdata2, i_flags);
+                end              
+                else if ( i_decompile_valid )
+                begin
+                         $sformat(msg_nxt, 
+                        "%x %s <COND FAIL>", 
+                        i_pc_plus_8_buf_ff - 8, i_decompile);
+                end 
         end
 
         always @ ( posedge i_clk ) 
@@ -558,7 +556,6 @@ endfunction
                 if ( i_reset )
                 begin
                         o_trace_trigger <= 0;
-                        prev_pc         <= 4;
                 end
                 else if ( i_data_abt[1] )
                 begin
@@ -595,7 +592,10 @@ endfunction
                 else if ( i_valid )
                 begin
                         o_trace_trigger <= o_trace_trigger + 1;
-                        prev_pc         <= i_pc_plus_8_buf_ff;
+                end
+                else if ( i_decompile_valid )
+                begin
+                        o_trace_trigger <= o_trace_trigger + 1;
                 end
         end
 
@@ -605,6 +605,7 @@ endfunction
 // Tie off trace to 0.
 assign o_trace         = '0;
 assign o_trace_trigger = '0;
+wire   unused          = i_decompile_valid;
 
 `endif
 

@@ -43,6 +43,7 @@ module zap_alu_main #(
 
         input logic      [64*8-1:0]              i_decompile,
         output logic      [64*8-1:0]             o_decompile,
+        output logic                             o_decompile_valid,
 
         // ------------------------------------------------------------------
         // Clock and reset
@@ -258,6 +259,9 @@ logic                            w_confirm_from_alu;
 // Precompute adder
 logic [31:0]                     quick_sum;
 
+// Decompile valid.
+logic                            o_decompile_valid_nxt;
+
 // -------------------------------------------------------------------------------
 // Assigns
 // -------------------------------------------------------------------------------
@@ -375,6 +379,7 @@ begin
                 clear ( flags_ff );
                 sleep_ff                         <= 1'd1; 
                 o_dav_ff                         <= 1'd0; // Don't give any output.
+                o_decompile_valid                <= 1'd0;
         end
         else if ( o_clear_from_alu )
         begin
@@ -420,6 +425,7 @@ begin
                 o_confirm_from_alu              <= w_confirm_from_alu;
 
                 o_decompile                     <= i_decompile;
+                o_decompile_valid               <= o_decompile_valid_nxt;
         end
 end
 
@@ -702,6 +708,12 @@ begin: flags_bp_feedback
          // Check if condition is satisfied.
         o_dav_nxt = is_cc_satisfied ( i_condition_code_ff, flags_ff[31:28] );
 
+        // Decompile valid. Valid condition code but unqualified.
+        if ( i_condition_code_ff != NV && !o_dav_nxt )
+                o_decompile_valid_nxt = 1'd1;
+        else
+                o_decompile_valid_nxt = 1'd0;
+
         if ( i_irq_ff || i_fiq_ff || i_abt_ff || i_swi_ff || i_und_ff ) 
         begin
                 //
@@ -978,6 +990,7 @@ endfunction
  */
 task automatic clear ( input [31:0] flags );
 begin
+                o_decompile_valid                <= 1'd0;
                 o_clear_from_alu                 <= 0;
                 o_dav_ff                         <= 0;
                 flags_ff                         <= flags;
