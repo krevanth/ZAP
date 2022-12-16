@@ -31,7 +31,6 @@ The default processor specification is as follows (based on default parameters):
 | Branch Prediction          | Direct Mapped Bimodal Predictor. <br/>Direct Mapped BTB.<br>1K entries in T state (16-bit instructions).<br>512 entries in 32-bit instruction state.                                                                       |
 | RAS Depth                  | 4 deep return address stack.                                                                                                                                                                                               |
 | Branch latency             | 12 cycles (wrong prediction or unrecognized branch)<br>3 cycles (taken, correctly predicted)<br>1 cycle (not-taken, correctly predicted)<br>12 cycles (32-bit/16-bit switch)<br>18 cycles (Exception/Interrupt Entry/Exit) |
-| Store Buffer               | FIFO, 16 x 32-bit.                                                                                                                                                                                                         |
 | Fetch Buffer               | FIFO, 16 x 32-bit.                                                                                                                                                                                                         |
 | Bus Interface              | Unified 32-Bit Wishbone B3 bus with CTI and BTE signals.<br/>BTE and CTI signals are used only when cache is enabled.                                                                                                      |
 | FPGA Resource Utilization  | 23K LUTs<br>116 LUTRAMs<br>15.3K FFs<br>29 BRAMs<br>4 DSP Blocks                                                                                                                                                           |
@@ -226,61 +225,52 @@ ZAP features a common 32-bit Wishbone B3 bus to access external resources (like 
 
 The 32-bit standard Wishbone bus makes it easy to interface to other components over a typical 32-bit FPGA SoC bus, without the need for up/down converters.
 
+For single and block transfers, BUS_LATENCY refers to the number of cycles the bus takes to generate an ACK=1 after seeing a STB=1. Provide the worst case number.
+
+For burst transfers, BUS_LATENCY refers to the initial bus delay before serving the burst, plus the number of cycles for which ACK=0 during the burst. Provide the worst case number.
+
+All numbers assume a 64B cache line where relevant. 
+
 #### 1.2.1. ONLY_CORE = 0x0 Configuration
 
-In this configuration, the CPU is synthesized with cache and MMU. Use this mode for high performance. The performance benefits especially come from the cache, which provides a very low latency, high speed access path. Split caches allow code and data fetches to be paralleled. 
+In this configuration, the CPU is synthesized with cache and MMU. 
 
-It is recommended to use WB registered feedback cycles. However, ZAP supports non registered feedback cycles in this mode too, but it is not recommended to use.
+**The bus interface is efficient for burst transfers and hence, cache and MMU must be enabled as soon as possible for good performance. In this mode, ZAP will issue Wishbone burst transfers only if the cache is enabled.**
 
-**The bus interface is efficient for burst transfers and hence, cache and MMU must be enabled as soon as possible for good performance. ZAP will issue burst transfers only if the cache is enabled.**
-
-The diagram below shows 16 x 4 byte = 64 bytes of memory being fetched for a cache linefill. Note that the full bandwidth of the bus is utilized by using an efficient burst type transfer. With cache enabled, the processor is able to communicate with the memory at a peak rate of 568MB/s when running at 142MHz clock.
+The diagram below shows 16 x 4 byte = 64 bytes of memory being fetched for a cache linefill. 
 
 ![](mem_read_burst.png)
 
-The diagram below shows 16 x 4 byte = 64 bytes of cache (1 cacheline) being written back to memory. Note that the full bandwidth of the bus is utilized by using an efficient burst type transfer. With cache enabled, the processor is able to communicate with the memory at a peak rate of 568MB/s when running at 142MHz clock.
+The diagram below shows 16 x 4 byte = 64 bytes of cache (1 cacheline) being written back to memory. 
 
 ![](mem_write_burst.png)
 
-Accesses to uncacheable locations are done using Wishbone classic cycles. These cycles are also used when the cache is disabled. The processor can issue a non-cacheable Wishbone access once every 5 cycles. With cache disabled, the processor is only able to communicate at a peak rate of 113.6MB/s when running at 142MHz clock.
+Accesses to uncacheable locations are done using Wishbone classic cycles. These cycles are also used when the cache is disabled. The processor can issue a non-cacheable Wishbone access once every 5 cycles. 
 
 <img title="" src="peripheral_access.png" alt="" width="679">
 
-The table below summarizes the bus bandwidth utilization in this configuration.  The table below assumes WB registered feedback cycles, when accessing the bus.
+The table below summarizes the bus performance:
 
-| Access Type      | Parameter                                             | Value    |
-| ---------------- | ----------------------------------------------------- | -------- |
-| Cacheable Region | Instruction Fetch Rate (I$ Hit)                       | 568 MB/s |
-| Cacheable Region | Data Access Rate (D$ Hit)                             | 568 MB/s |
-| IO Region        | Instruction Fetch Rate (Interleaved with data access) | 28 MB/s  |
-| IO Region        | Data Read Rate (Interleaved with instruction access)  | 28 MB/s  |
-| IO Region        | Data Write Rate (Interleaved with instruction access) | 28 MB/s  |
+| Access Type      | Cycles/DWORD (Max) | Transfer Type |
+| ---------------- | ------------------ | ------------- |
+| Cacheable Region | BUS_LATENCY/16 + 1 | Burst         |
+| IO Region        | BUS_LATENCY + 5    | Single        |
 
-#### 1.2.2. ONLY_CORE=0x1 Configuration
+#### 1.2.2. ONLY_CORE = 0x1 Configuration
 
-In this configuration, the CPU is synthesized without a cache and MMU. This mode exclusively generates BLOCK cycles. They typically require registered feedback cycles. However, ZAP supports non registered feedback cycles in this mode too, but it is not recommended to use. The table below assumes registered feedback cycles, as it would be the  most likely case in this scenario.
+In this configuration, the CPU is synthesized without a cache and MMU. This mode exclusively generates Wishbone BLOCK cycles. Shown below is a waveform for this configuration. It is followed by a table that summarizes transfer rate over the bus.
 
-This configuration gives lower performance because:
+![](./block_access.png)
 
-- The WB bus may have high latency. And it's impact is magnified since every access needs to go to the bus.
-
-- Contention between data and instruction fetches eats away throughput.
-
-- Registered feedback cycles are required for BLOCK transfers (See Wishbone specification). 
-  
-  - This is because the bus cannot prepare ahead of time for the next address, as per definition of BLOCK transfer.
-  
-  - This further reduces throughput on the bus.
-
-| Access Type | Parameter                                             | Value    |
-| ----------- | ----------------------------------------------------- | -------- |
-| IO Region   | Instruction Fetch Rate (Interleaved with data access) | 117 MB/s |
-| IO Region   | Data Read Rate (Interleaved with instruction access)  | 117 MB/s |
-| IO Region   | Data Write Rate (Interleaved with instruction access) | 117 MB/s |
+| Access Type   | Cycles/DWORD (Max) | Transfer Type |
+| ------------- | ------------------ | ------------- |
+| Any/IO Region | BUS_LATENCY        | Block         |
 
 ### 1.3. System Control
 
-Please refer to ref \[1] for CP15 CSR architectural requirements. The ZAP implements the following software accessible registers within its CP15 coprocessor.
+Please refer to ref \[1] for CP15 CSR architectural requirements. The ZAP implements the following software accessible registers within its CP15 coprocessor.  The system control subsystem in ZAP is intended primarily to be used  only when ONLY_CORE = 0x0.
+
+When ONLY_CORE = 0x1, attempting to perform cache/MMU operations can result in **UNPREDICTABLE** behavior.
 
 NOTE: Cleaning and flushing cache and TLB is only supported for the entire memory.
 
@@ -290,34 +280,52 @@ Selective cleaning of TLB will result in the entire TLB being cleaned.
 
 The above rules are permitted as per the architecture spec \[1].
 
-* Register 1: Cache and MMU control.
+Register 0: Information Register.
 
-* Register 2: Translation Base.
+Register 1: Cache and MMU control. 
 
-* Register 3: Domain Access Control.
+| Bit | Meaning                                                 |
+| --- | ------------------------------------------------------- |
+| 0   | MMU Enable                                              |
+| 1   | RO, RAZ. 0x0: Alignment fault never checked.            |
+| 2   | D$ Enable                                               |
+| 3   | RAZ. No write buffer.                                   |
+| 4   | RAO. No 26-bit compatibility.                           |
+| 5   | RAO. No 26-bit compatibility.                           |
+| 6   | RAO. Base updated abort model.                          |
+| 7   | Big Endian Enable. Reflects BE_32_ENABLE parameter. RO. |
+| 8   | S Bit                                                   |
+| 9   | R Bit                                                   |
+| 10  | RESERVED                                                |
+| 11  | RAO. Branch predictor enabled.                          |
+| 12  | I$ Enable.                                              |
+| 13  | RAZ. Normal exception vectors.                          |
+| 14  | RAO. Predictive direct mapped strategy.                 |
+| 15  | RAO. No v4T compatibility.                              |
 
-* Register 5: FSR.
+- Register 2: Translation Base.
+- Register 3: Domain Access Control.
 
-* Register 6: FAR.
+- Register 5: FSR.
 
-* Register 8: TLB functions.
+- Register 6: FAR.
 
-* Register 7: Cache functions.
+- Register 8: TLB functions.
+
+- Register 7: Cache functions.
   
-  * The arch spec allows for a subset of the functions to be implemented for register 7.
-  
-  * These below are valid value supported in ZAP for register 7. Using other operations will result in UNDEFINED operation.
-    
-    | Cache Operation                                      | Opcode2 | CRM    |
-    | ---------------------------------------------------- | ------- | ------ |
-    | Flush instruction and data cache                     | 0b000   | 0b0111 |
-    | Flush instruction cache                              | 0b000   | 0b0101 |
-    | Flush data cache                                     | 0b000   | 0b0110 |
-    | Clean data cache                                     | 0b000   | 0b101x |
-    | Clean and flush data cache. Flush instruction cache. | 0b000   | 0b1111 |
-    | Clean and flush data cache                           | 0b000   | 0b1110 |
+  - The arch spec allows for a subset of the functions to be implemented for register 7. These below are valid value supported in ZAP for register 7. Using other operations will result in UNDEFINED operation.
 
-* Register 13: FCSE Register.
+| Cache Operation                                      | Opcode2 | CRM    |
+| ---------------------------------------------------- | ------- | ------ |
+| Flush instruction and data cache                     | 0b000   | 0b0111 |
+| Flush instruction cache                              | 0b000   | 0b0101 |
+| Flush data cache                                     | 0b000   | 0b0110 |
+| Clean data cache                                     | 0b000   | 0b101x |
+| Clean and flush data cache. Flush instruction cache. | 0b000   | 0b1111 |
+| Clean and flush data cache                           | 0b000   | 0b1110 |
+
+- Register 13: FCSE Register.
 
 ### 1.4. Implementation Options
 
