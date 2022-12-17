@@ -53,7 +53,7 @@ module zap_decompile #(parameter [31:0] INS_WDT = 32'd36) (
                                         end
                                         else if ( i_instruction ==? BLX1 )
                                         begin
-                                                $sformat(o_decompile, "BLX1 H=%b %x", i_instruction[24], i_instruction[23:0]);
+                                                $sformat(o_decompile, "BLX1 H=%0d %x", i_instruction[24], i_instruction[23:0]);
                                         end
                                         else if ( i_instruction ==? BLX2 )
                                         begin
@@ -69,10 +69,10 @@ module zap_decompile #(parameter [31:0] INS_WDT = 32'd36) (
                                         else if ( i_instruction[27:25] == 3'b100 ) // LDM/STM
                                         begin
                                                 if ( i_instruction[20] ) // Load
-                                                        $sformat(o_decompile, "LDM%s %b %b %b", `ZAP_DECOMPILE_CCC, i_instruction[24:20], 
+                                                        $sformat(o_decompile, "LDM%s %0d %0d %0d", `ZAP_DECOMPILE_CCC, i_instruction[24:20], 
                                                                                 i_instruction[19:16], i_instruction[15:0]); 
                                                 else
-                                                        $sformat(o_decompile, "STM%s %b %b %b", `ZAP_DECOMPILE_CCC, i_instruction[24:20], 
+                                                        $sformat(o_decompile, "STM%s %0d %0d %0d", `ZAP_DECOMPILE_CCC, i_instruction[24:20], 
                                                                                 i_instruction[19:16], i_instruction[15:0]); 
                                         end
                                         else 
@@ -299,38 +299,38 @@ module zap_decompile #(parameter [31:0] INS_WDT = 32'd36) (
                                         if ( !i_instruction[22] ) 
                                         begin
                                         case ( {i_instruction[24], i_instruction[21]} ) 
-                                        {1'd1, 1'd1}: $sformat(o_decompile,"LDR%s  %s[U=%b %s,%s]!", `ZAP_DECOMPILE_CCC,`ZAP_DECOMPILE_CRD1,U,`ZAP_DECOMPILE_CRN1, ls_iss_offset); // Preindex with writeback
-                                        {1'd1, 1'd0}: $sformat(o_decompile,"LDR%s  %s[U=%b %s,%s]" , `ZAP_DECOMPILE_CCC,`ZAP_DECOMPILE_CRD1,U,`ZAP_DECOMPILE_CRN1, ls_iss_offset); // Preindex without writeback
-                                        {1'd0, 1'd0}: $sformat(o_decompile,"LDR%s  %s[U=%b %s],%s" , `ZAP_DECOMPILE_CCC,`ZAP_DECOMPILE_CRD1,U,`ZAP_DECOMPILE_CRN1, ls_iss_offset); // Post index
-                                        {1'd1, 1'd1}: $sformat(o_decompile,"LDR%s T%s[U=%b %s],%s",  `ZAP_DECOMPILE_CCC,`ZAP_DECOMPILE_CRD1,U,`ZAP_DECOMPILE_CRN1, ls_iss_offset);// Force user view of memory.
+                                        {1'd1, 1'd1}: $sformat(o_decompile,"LDR%s  %s[U=%0d %s,%s]!", `ZAP_DECOMPILE_CCC,`ZAP_DECOMPILE_CRD1,U,`ZAP_DECOMPILE_CRN1, ls_iss_offset); // Preindex with writeback
+                                        {1'd1, 1'd0}: $sformat(o_decompile,"LDR%s  %s[U=%0d %s,%s]" , `ZAP_DECOMPILE_CCC,`ZAP_DECOMPILE_CRD1,U,`ZAP_DECOMPILE_CRN1, ls_iss_offset); // Preindex without writeback
+                                        {1'd0, 1'd0}: $sformat(o_decompile,"LDR%s  %s[U=%0d %s],%s" , `ZAP_DECOMPILE_CCC,`ZAP_DECOMPILE_CRD1,U,`ZAP_DECOMPILE_CRN1, ls_iss_offset); // Post index
+                                        {1'd1, 1'd1}: $sformat(o_decompile,"LDR%s T%s[U=%0d %s],%s",  `ZAP_DECOMPILE_CCC,`ZAP_DECOMPILE_CRD1,U,`ZAP_DECOMPILE_CRN1, ls_iss_offset);// Force user view of memory.
                                         endcase
                                         end
                                         else
                                         begin
                                         case( {i_instruction[24], i_instruction[21]}  )
-                                        {1'd1, 1'd1}: $sformat(o_decompile,"LDR%sB  %s[U=%b %s,%s]!", `ZAP_DECOMPILE_CCC,`ZAP_DECOMPILE_CRD1,U,`ZAP_DECOMPILE_CRN1, ls_iss_offset); // Preindex with writeback
-                                        {1'd1, 1'd0}: $sformat(o_decompile,"LDR%sB  %s[U=%b %s,%s]" , `ZAP_DECOMPILE_CCC,`ZAP_DECOMPILE_CRD1,U,`ZAP_DECOMPILE_CRN1, ls_iss_offset); // Preindex without writeback
-                                        {1'd0, 1'd0}: $sformat(o_decompile,"LDR%sB  %s[U=%b %s],%s" , `ZAP_DECOMPILE_CCC,`ZAP_DECOMPILE_CRD1,U,`ZAP_DECOMPILE_CRN1, ls_iss_offset); // Post index
-                                        {1'd1, 1'd1}: $sformat(o_decompile,"LDR%sB T%s[U=%b %s],%s",  `ZAP_DECOMPILE_CCC,`ZAP_DECOMPILE_CRD1,U,`ZAP_DECOMPILE_CRN1, ls_iss_offset);// Force user view of memory.
+                                        {1'd1, 1'd1}: $sformat(o_decompile,"LDR%sB  %s[U=%0d %s,%s]!", `ZAP_DECOMPILE_CCC,`ZAP_DECOMPILE_CRD1,U,`ZAP_DECOMPILE_CRN1, ls_iss_offset); // Preindex with writeback
+                                        {1'd1, 1'd0}: $sformat(o_decompile,"LDR%sB  %s[U=%0d %s,%s]" , `ZAP_DECOMPILE_CCC,`ZAP_DECOMPILE_CRD1,U,`ZAP_DECOMPILE_CRN1, ls_iss_offset); // Preindex without writeback
+                                        {1'd0, 1'd0}: $sformat(o_decompile,"LDR%sB  %s[U=%0d %s],%s" , `ZAP_DECOMPILE_CCC,`ZAP_DECOMPILE_CRD1,U,`ZAP_DECOMPILE_CRN1, ls_iss_offset); // Post index
+                                        {1'd1, 1'd1}: $sformat(o_decompile,"LDR%sB T%s[U=%0d %s],%s",  `ZAP_DECOMPILE_CCC,`ZAP_DECOMPILE_CRD1,U,`ZAP_DECOMPILE_CRN1, ls_iss_offset);// Force user view of memory.
                                         endcase
                                         end
                                 else
                                         if ( !i_instruction[22] ) 
                                         begin
                                         case ( {i_instruction[24], i_instruction[21]} ) 
-                                        {1'd1, 1'd1}: $sformat(o_decompile,"STR%s  %s[U=%b %s,%s]!", `ZAP_DECOMPILE_CCC,`ZAP_DECOMPILE_CRD1,U,`ZAP_DECOMPILE_CRN1, ls_iss_offset); // Preindex with writeback
-                                        {1'd1, 1'd0}: $sformat(o_decompile,"STR%s  %s[U=%b %s,%s]",  `ZAP_DECOMPILE_CCC,`ZAP_DECOMPILE_CRD1,U,`ZAP_DECOMPILE_CRN1, ls_iss_offset); // Preindex without writeback
-                                        {1'd0, 1'd0}: $sformat(o_decompile,"STR%s  %s[U=%b %s],%s",  `ZAP_DECOMPILE_CCC,`ZAP_DECOMPILE_CRD1,U,`ZAP_DECOMPILE_CRN1, ls_iss_offset); // Post index
-                                        {1'd1, 1'd1}: $sformat(o_decompile,"STR%s T%s[U=%b %s],%s",  `ZAP_DECOMPILE_CCC,`ZAP_DECOMPILE_CRD1,U,`ZAP_DECOMPILE_CRN1, ls_iss_offset);// Force user view of memory.
+                                        {1'd1, 1'd1}: $sformat(o_decompile,"STR%s  %s[U=%0d %s,%s]!", `ZAP_DECOMPILE_CCC,`ZAP_DECOMPILE_CRD1,U,`ZAP_DECOMPILE_CRN1, ls_iss_offset); // Preindex with writeback
+                                        {1'd1, 1'd0}: $sformat(o_decompile,"STR%s  %s[U=%0d %s,%s]",  `ZAP_DECOMPILE_CCC,`ZAP_DECOMPILE_CRD1,U,`ZAP_DECOMPILE_CRN1, ls_iss_offset); // Preindex without writeback
+                                        {1'd0, 1'd0}: $sformat(o_decompile,"STR%s  %s[U=%0d %s],%s",  `ZAP_DECOMPILE_CCC,`ZAP_DECOMPILE_CRD1,U,`ZAP_DECOMPILE_CRN1, ls_iss_offset); // Post index
+                                        {1'd1, 1'd1}: $sformat(o_decompile,"STR%s T%s[U=%0d %s],%s",  `ZAP_DECOMPILE_CCC,`ZAP_DECOMPILE_CRD1,U,`ZAP_DECOMPILE_CRN1, ls_iss_offset);// Force user view of memory.
                                         endcase
                                         end
                                         else
                                         begin
                                         case( {i_instruction[24], i_instruction[21]} )
-                                        {1'd1, 1'd1}: $sformat(o_decompile,"STR%sB  %s[U=%b %s,%s]!", `ZAP_DECOMPILE_CCC,`ZAP_DECOMPILE_CRD1,U,`ZAP_DECOMPILE_CRN1, ls_iss_offset); // Preindex with writeback
-                                        {1'd1, 1'd0}: $sformat(o_decompile,"STR%sB  %s[U=%b %s,%s]",  `ZAP_DECOMPILE_CCC,`ZAP_DECOMPILE_CRD1,U,`ZAP_DECOMPILE_CRN1, ls_iss_offset); // Preindex without writeback
-                                        {1'd0, 1'd0}: $sformat(o_decompile,"STR%sB  %s[U=%b %s],%s",  `ZAP_DECOMPILE_CCC,`ZAP_DECOMPILE_CRD1,U,`ZAP_DECOMPILE_CRN1, ls_iss_offset); // Post index
-                                        {1'd1, 1'd1}: $sformat(o_decompile,"STR%sB T%s[U=%b %s],%s",  `ZAP_DECOMPILE_CCC,`ZAP_DECOMPILE_CRD1,U,`ZAP_DECOMPILE_CRN1, ls_iss_offset);// Force user view of memory.
+                                        {1'd1, 1'd1}: $sformat(o_decompile,"STR%sB  %s[U=%0d %s,%s]!", `ZAP_DECOMPILE_CCC,`ZAP_DECOMPILE_CRD1,U,`ZAP_DECOMPILE_CRN1, ls_iss_offset); // Preindex with writeback
+                                        {1'd1, 1'd0}: $sformat(o_decompile,"STR%sB  %s[U=%0d %s,%s]",  `ZAP_DECOMPILE_CCC,`ZAP_DECOMPILE_CRD1,U,`ZAP_DECOMPILE_CRN1, ls_iss_offset); // Preindex without writeback
+                                        {1'd0, 1'd0}: $sformat(o_decompile,"STR%sB  %s[U=%0d %s],%s",  `ZAP_DECOMPILE_CCC,`ZAP_DECOMPILE_CRD1,U,`ZAP_DECOMPILE_CRN1, ls_iss_offset); // Post index
+                                        {1'd1, 1'd1}: $sformat(o_decompile,"STR%sB T%s[U=%0d %s],%s",  `ZAP_DECOMPILE_CCC,`ZAP_DECOMPILE_CRD1,U,`ZAP_DECOMPILE_CRN1, ls_iss_offset);// Force user view of memory.
                                         endcase
                                         end
                         end
@@ -408,10 +408,11 @@ module zap_decompile #(parameter [31:0] INS_WDT = 32'd36) (
                               endcase 
                         end
                         endtask
-                        
+                       
+                        // For halfword/signed byte instrcutions, just show the instruction. 
                         task automatic decode_halfword_ls ( input [INS_WDT-1:0] i_instruction );
                         begin
-                              o_decompile = "***HALFWORD LD/ST***"; 
+                              $sformat(o_decompile, "LDRSB/STRSB/LDRH/STRH %x", i_instruction);
                         end
                         endtask
                         

@@ -22,9 +22,11 @@
 // -----------------------------------------------------------------------------
 
 module zap_writeback #(
-        parameter BP_ENTRIES = 1024,
-        parameter FLAG_WDT = 32, // Flags width a.k.a CPSR.
-        parameter PHY_REGS = 46  // Number of physical registers.
+        parameter BP_ENTRIES = 1024,    // BP entries.
+        parameter FLAG_WDT = 32,        // Flags width a.k.a CPSR.
+        parameter PHY_REGS = 46,        // Number of physical registers.
+        parameter CPSR_INIT = 0,        // Initial value of CPSR.
+        parameter RESET_VECTOR = 0      // Reset vector.
 )
 (
         // Decompile.
@@ -401,17 +403,13 @@ begin
                 // supervisor mode.
                 shelve_ff                  <= 1'd0;
 
-                pc_ff                      <= {1'd1, 32'd0};
+                pc_ff                      <= {1'd1, RESET_VECTOR};
                 pc_del_ff                  <= 33'd0;
                 pc_del2_ff                 <= 33'd0;
                 pc_del3_ff                 <= 33'd0;
 
                 // CPSR reset logic.
-                cpsr_ff                    <= 32'd0;
-                cpsr_ff[`ZAP_CPSR_MODE]    <= SVC;
-                cpsr_ff[I]                 <= 1'd1; // Mask IRQ.
-                cpsr_ff[F]                 <= 1'd1; // Mask FIQ.
-                cpsr_ff[T]                 <= 1'd0; // Start CPU in ARM mode.
+                cpsr_ff                    <= CPSR_INIT;
         end
         else
         begin
@@ -529,19 +527,19 @@ endfunction
                 else if ( i_copro_reg_en  )
                 begin
                         $sformat(msg_nxt, 
-                                "COW idx=%x data=%x", i_copro_reg_wr_index,
+                                "CP Write idx=%x data=%x", i_copro_reg_wr_index,
                                                       i_copro_reg_wr_data);
                 end
                 else if ( i_valid )
                 begin
                         $sformat(msg_nxt, 
-                        "%x %s %x@%x %x@%x %x", 
+                        "%x:<%s> %x@%x %x@%x %x", 
                         i_pc_plus_8_buf_ff - 8, i_decompile, wa1, wdata1, wa2, wdata2, i_flags);
                 end              
                 else if ( i_decompile_valid )
                 begin
                          $sformat(msg_nxt, 
-                        "%x %s <COND FAIL>", 
+                        "%x:<%s>*", 
                         i_pc_plus_8_buf_ff - 8, i_decompile);
                 end 
         end

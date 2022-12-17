@@ -34,7 +34,8 @@ module zap_alu_main #(
 
         parameter [31:0] PHY_REGS  = 32'd46, // Number of physical registers.
         parameter [31:0] ALU_OPS   = 32'd32, // Number of arithmetic operations.
-        parameter [31:0] FLAG_WDT  = 32'd32  // Width of active CPSR.
+        parameter [31:0] FLAG_WDT  = 32'd32, // Width of active CPSR.
+        parameter [31:0] CPSR_INIT = 32'd0   // Initial value of CPSR.
 )
 (
         // ------------------------------------------------------------------
@@ -362,7 +363,7 @@ begin
                 // On reset, processor enters supervisory mode with interrupts
                 // masked.
                 reset;
-                clear ( {24'd0, 1'd1,1'd1,1'd0,SVC} );
+                clear ( CPSR_INIT );
         end
         else if ( i_clear_from_writeback ) 
         begin
