@@ -37,6 +37,18 @@ module zap_top #(
 parameter    [0:0]      ONLY_CORE          = 1'd0,
 
 // -----------------------------------
+// Set reset vector here
+// -----------------------------------
+
+parameter   [31:0]       RESET_VECTOR      = 32'd0,
+
+// -----------------------------------
+// Set initial value of CPSR here.
+// -----------------------------------
+
+parameter [31:0]        CPSR_INIT          = {24'd0, 1'd1,1'd1,1'd0,5'b10011},
+
+// -----------------------------------
 // Enable BE-32
 // -----------------------------------
 
@@ -180,7 +192,9 @@ zap_core #(
         .BP_ENTRIES(BP_ENTRIES),
         .FIFO_DEPTH(FIFO_DEPTH),
         .RAS_DEPTH(RAS_DEPTH),
-        .BE_32_ENABLE(BE_32_ENABLE)
+        .BE_32_ENABLE(BE_32_ENABLE),
+        .RESET_VECTOR(RESET_VECTOR),
+        .CPSR_INIT(CPSR_INIT)
 ) u_zap_core
 (
 // Trace

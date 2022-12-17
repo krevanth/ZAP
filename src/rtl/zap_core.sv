@@ -29,6 +29,9 @@
 
 
 module zap_core #(
+        parameter [31:0] RESET_VECTOR     = 32'd0,
+        parameter [31:0] CPSR_INIT        = {24'd0, 1'd1,1'd1,1'd0,5'b10011},
+
         parameter BE_32_ENABLE     = 0,
 
         // Number of branch predictor entries.
@@ -1055,7 +1058,8 @@ u_zap_shifter_main
 
 zap_alu_main #(
         .PHY_REGS(PHY_REGS),
-        .ALU_OPS(ALU_OPS) 
+        .ALU_OPS(ALU_OPS),
+        .CPSR_INIT(CPSR_INIT)
 )
 u_zap_alu_main
 (
@@ -1405,7 +1409,9 @@ u_zap_memory_main
 zap_writeback #(
         .BP_ENTRIES(BP_ENTRIES),
         .PHY_REGS(PHY_REGS),
-        .FLAG_WDT(FLAG_WDT)
+        .FLAG_WDT(FLAG_WDT),
+        .RESET_VECTOR(RESET_VECTOR),
+        .CPSR_INIT(CPSR_INIT)
 )
 u_zap_writeback
 (
