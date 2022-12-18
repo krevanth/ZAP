@@ -4,13 +4,13 @@
 
 ## 1. Introduction
 
-The ZAP is intended to be used in FPGA projects that need a high performance application class soft processor core. Most aspects of the processor can be configured through HDL parameters.  The processor can reach clock speeds of up to 145MHz on Artix-7/Spartan-7 series devices.
+The ZAP is intended to be used in FPGA projects that need a high performance application class soft processor core. Most aspects of the processor can be configured through HDL parameters.  The processor can reach clock speeds of up to 150MHz on Artix-7/Spartan-7 series devices.
 
 The default processor specification is as follows (based on default parameters):
 
 | **Property**               | **Value**                                                                                                                                                                                                                  |
 | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Performance                | 145MHz @ xc7a75tcsg324-3 <br/>When synthesized with Vivado 2021.2 with `synth_design` issued with default options.<br/><br/>100 DMIPS @ 145MHz with cache enabled. **Cache must be enabled for good performance.**         |
+| Performance                | 150MHz @ xc7a75tcsg324-3 <br/>When synthesized with Vivado 2021.2 with `synth_design` issued with High Performance mode.<br/><br/>100 DMIPS @ 150MHz with cache enabled. **Cache must be enabled for good performance.**   |
 | Clock and Reset            | Purely synchronous reset scheme. Purely rising edge clock driven design.                                                                                                                                                   |
 | IRQ                        | Supported. Level sensitive interrupt signal. CPU uses a dual rank synchronizer to sample this and make it synchronous to the rising edge of clock.                                                                         |
 | FIQ                        | Supported. Level sensitive interrupt signal. CPU uses a dual rank synchronizer to sample this and make it synchronous to the rising edge of clock.                                                                         |
@@ -225,11 +225,7 @@ ZAP features a common 32-bit Wishbone B3 bus to access external resources (like 
 
 The 32-bit standard Wishbone bus makes it easy to interface to other components over a typical 32-bit FPGA SoC bus, without the need for up/down converters.
 
-For single and block transfers, BUS_LATENCY refers to the number of cycles the bus takes to generate an ACK=1 after seeing a STB=1. Provide the worst case number.
 
-For burst transfers, BUS_LATENCY refers to the initial bus delay before serving the burst, plus the number of cycles for which ACK=0 during the burst. Provide the worst case number.
-
-All numbers assume a 64B cache line where relevant. 
 
 #### 1.2.1. ONLY_CORE = 0x0 Configuration
 
@@ -249,22 +245,13 @@ Accesses to uncacheable locations are done using Wishbone classic cycles. These 
 
 <img title="" src="peripheral_access.png" alt="" width="679">
 
-The table below summarizes the bus performance:
 
-| Access Type      | Cycles/DWORD (Max) | Transfer Type |
-| ---------------- | ------------------ | ------------- |
-| Cacheable Region | BUS_LATENCY/16 + 1 | Burst         |
-| IO Region        | BUS_LATENCY + 5    | Single        |
 
 #### 1.2.2. ONLY_CORE = 0x1 Configuration
 
 In this configuration, the CPU is synthesized without a cache and MMU. This mode exclusively generates Wishbone BLOCK cycles. Shown below is a waveform for this configuration. It is followed by a table that summarizes transfer rate over the bus.
 
 ![](./block_access.png)
-
-| Access Type   | Cycles/DWORD (Max) | Transfer Type |
-| ------------- | ------------------ | ------------- |
-| Any/IO Region | BUS_LATENCY        | Block         |
 
 ### 1.3. System Control
 
@@ -406,35 +393,47 @@ ZAP allows the cache and MMU to have these combinations:
 
 ZAP internally implements an internal CP15 coprocessor using its internal bus mechanism. The coprocessor interface is internal to the ZAP processor and is not exposed. Thus, ZAP only has access to its internal coprocessor 15. External coprocessors cannot be attached to the processor.
 
-## 2. System Integration
+### 1.5. Performance
+
+For single and block transfers, PEAK_BUS_LATENCY refers to the number of cycles the bus takes to generate an ACK=1 after seeing a STB=1. Provide the worst case number for calculation purpose.
+
+For burst transfers, PEAK_BUS_LATENCY refers to the initial bus delay before serving the burst, plus the number of cycles for which ACK=0 during the burst. Provide the worst case number for calculation purpose.
+
+| Access Type                     | Cycles/DWORD (Max)                       | Transfer Type |
+| ------------------------------- | ---------------------------------------- | ------------- |
+| Cacheable Region, ONLY_CORE=0x0 | 1 + (PEAK_BUS_LATENCY/CACHE_LINE_DWORDS) | Burst         |
+| IO Region, ONLY_CORE=0x0        | PEAK_BUS_LATENCY + 5                     | Single        |
+| Any, ONLY_CORE=0x1              | PEAK_BUS_LATENCY                         | Block         |
+
+## System Integration
 
 ### 2.1. Parameters
 
 Note that all parameters should be 2^n. Cache size should be multiple of line size and at least 16 x line width. Caches/TLBs consume majority of the resources so should be tuned as required. The default parameters give you quite large caches. Note
 that WB inputs are flopped only when ONLY\_CORE=0 i.e., when the CPU is synthesized with cache and MMU.
 
-| Parameter                   | Default                            | Description                                                                |
-| --------------------------- | ---------------------------------- | -------------------------------------------------------------------------- |
-| ONLY\_CORE                  | 0                                  | When 1, the core is presented without cache/MMU.                           |
-| RESET_VECTOR                | 0                                  | Initial PC out of reset.                                                   |
-| CPSR_INIT                   | {24'd0, 1'd1, 1'd, 1'd0, 5'b10011} | Initial CPSR out of reset.                                                 |
-| BE\_32\_ENABLE              | 0                                  | Enable BE-32 Big Endian Mode. Active high. Applies to I and D fetches.     |
-| BP\_ENTRIES                 | 1024                               | Predictor RAM depth. Each RAM row also contains the branch target address. |
-| FIFO\_DEPTH                 | 16                                 | Command FIFO depth.                                                        |
-| STORE\_BUFFER\_DEPTH        | 16                                 | Depth of the store buffer. Keep multiple of cache line size in bytes / 4.  |
-| DATA\_SECTION\_TLB\_ENTRIES | 128                                | Section TLB entries (Data).                                                |
-| DATA\_LPAGE\_TLB\_ENTRIES   | 128                                | Large page TLB entries (Data).                                             |
-| DATA\_SPAGE\_TLB\_ENTRIES   | 128                                | Small page TLB entries (Data).                                             |
-| DATA\_FPAGE\_TLB\_ENTRIES   | 128                                | Tiny page TLB entries (Data).                                              |
-| DATA\_CACHE\_SIZE           | 16384                              | Cache size in bytes. Should be at least 16 x line size.                    |
-| CODE\_SECTION\_TLB\_ENTRIES | 128                                | Section TLB entries.                                                       |
-| CODE\_LPAGE\_TLB\_ENTRIES   | 128                                | Large page TLB entries.                                                    |
-| CODE\_SPAGE\_TLB\_ENTRIES   | 128                                | Small page TLB entries.                                                    |
-| CODE\_FPAGE\_TLB\_ENTRIES   | 128                                | Tiny page TLB entries.                                                     |
-| CODE\_CACHE\_SIZE           | 16384                              | Cache size in bytes. Should be at least 16 x line size.                    |
-| DATA\_CACHE\_LINE           | 64                                 | Cache Line for Data (Byte). Keep > 8                                       |
-| CODE\_CACHE\_LINE           | 64                                 | Cache Line for Code (Byte). Keep > 8                                       |
-| RAS\_DEPTH                  | 4                                  | Depth of Return Address Stack                                              |
+| Parameter                   | Default                            | Description                                                                               |
+| --------------------------- | ---------------------------------- | ----------------------------------------------------------------------------------------- |
+| ONLY\_CORE                  | 0                                  | When 1, the core is stripped of the cache/MMU. When 0, the core comes with cache and MMU. |
+| RESET_VECTOR                | 0                                  | Initial PC out of reset. Often, it is OK to leave it with the default value.              |
+| CPSR_INIT                   | {24'd0, 1'd1, 1'd, 1'd0, 5'b10011} | Initial CPSR out of reset. Often, it is OK to leave it with the default value.            |
+| BE\_32\_ENABLE              | 0                                  | Enable BE-32 Big Endian Mode. Active high. Applies to I and D fetches.                    |
+| BP\_ENTRIES                 | 1024                               | Predictor RAM depth. Each RAM row also contains the branch target address.                |
+| FIFO\_DEPTH                 | 16                                 | Command FIFO depth.                                                                       |
+| STORE\_BUFFER\_DEPTH        | 16                                 | Depth of the store buffer. Keep multiple of cache line size in bytes / 4.                 |
+| DATA\_SECTION\_TLB\_ENTRIES | 128                                | Section TLB entries (Data).                                                               |
+| DATA\_LPAGE\_TLB\_ENTRIES   | 128                                | Large page TLB entries (Data).                                                            |
+| DATA\_SPAGE\_TLB\_ENTRIES   | 128                                | Small page TLB entries (Data).                                                            |
+| DATA\_FPAGE\_TLB\_ENTRIES   | 128                                | Tiny page TLB entries (Data).                                                             |
+| DATA\_CACHE\_SIZE           | 16384                              | Cache size in bytes. Should be at least 16 x line size.                                   |
+| CODE\_SECTION\_TLB\_ENTRIES | 128                                | Section TLB entries.                                                                      |
+| CODE\_LPAGE\_TLB\_ENTRIES   | 128                                | Large page TLB entries.                                                                   |
+| CODE\_SPAGE\_TLB\_ENTRIES   | 128                                | Small page TLB entries.                                                                   |
+| CODE\_FPAGE\_TLB\_ENTRIES   | 128                                | Tiny page TLB entries.                                                                    |
+| CODE\_CACHE\_SIZE           | 16384                              | Cache size in bytes. Should be at least 16 x line size.                                   |
+| DATA\_CACHE\_LINE           | 64                                 | Cache Line for Data (Byte). Keep > 8                                                      |
+| CODE\_CACHE\_LINE           | 64                                 | Cache Line for Code (Byte). Keep > 8                                                      |
+| RAS\_DEPTH                  | 4                                  | Depth of Return Address Stack                                                             |
 
 ### 2.2. IO
 
@@ -473,8 +472,7 @@ that WB inputs are flopped only when ONLY\_CORE=0 i.e., when the CPU is synthesi
   * Instantiate the ZAP processor in your project using this template:
 
 ```
-       zap_top #(.BE_32_ENABLE            (),
-                 .FIFO_DEPTH              (),
+       zap_top #(.FIFO_DEPTH              (),
                  .BP_ENTRIES              (),
                  .STORE_BUFFER_DEPTH      (),
                  .DATA_SECTION_TLB_ENTRIES(),
