@@ -261,7 +261,7 @@ always_comb  o_mem_srcdest_index_nxt = // Always a register so no need for IMMED
 // At this point, we don't do anything with the SWI except take note.
 //
 always_comb
-        o_swi_nxt = &i_instruction[27:24]; 
+        o_swi_nxt = (&i_instruction[27:24]) && !(i_irq || i_fiq || i_abt); 
 
 // ----------------------------------------------------------------------------
 

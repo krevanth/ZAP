@@ -403,7 +403,7 @@ begin
                 o_taken_ff                       <= i_taken_ff;
                 o_irq_ff                         <= i_irq_ff;
                 o_fiq_ff                         <= i_fiq_ff;
-                o_swi_ff                         <= i_swi_ff;
+                o_swi_ff                         <= i_swi_ff && o_dav_nxt;
                 o_mem_srcdest_index_ff           <= i_mem_srcdest_index_ff;
                 o_mem_srcdest_index_ff           <= i_mem_srcdest_index_ff;           
 
@@ -726,7 +726,7 @@ begin: flags_bp_feedback
                 o_uop_last_nxt        = o_dav_nxt ? i_uop_last : 1'd0;
         end
 
-        if ( i_irq_ff || i_fiq_ff || i_abt_ff || i_swi_ff || i_und_ff ) 
+        if ( i_irq_ff || i_fiq_ff || i_abt_ff || (i_swi_ff && o_dav_nxt) || i_und_ff ) 
         begin
                 //
                 // Any sign of an interrupt is present, put unit to sleep.
