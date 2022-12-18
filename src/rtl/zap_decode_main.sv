@@ -43,6 +43,8 @@ module zap_decode_main #(
 )
 (
         output logic  [64*8-1:0]                  o_decompile, // For debug purposes.
+        input  logic                              i_uop_last,
+        output logic                              o_uop_last,
 
         // -------------------
         // Inputs.      
@@ -327,6 +329,7 @@ begin
 
                 // For debug
                 o_decompile                             <= decompile_tmp;
+                o_uop_last                              <= i_uop_last;
         end
 end
 
@@ -339,7 +342,7 @@ begin
                 o_swi_ff                                <= 0; 
                 o_abt_ff                                <= 0; 
                 o_und_ff                                <= 0; 
-                o_condition_code_ff                     <= 0; 
+                o_condition_code_ff                     <= NV; 
                 o_destination_index_ff                  <= 0; 
                 o_alu_source_ff                         <= 0; 
                 o_alu_operation_ff                      <= 0; 
@@ -362,12 +365,13 @@ begin
                 o_force32align_ff                       <= 0; 
                 o_taken_ff                              <= 0; 
                 o_decompile                             <= 0; 
+                o_uop_last                              <= 0;
                 o_ppc_ff                                <= 0;
 end
 endtask
 
 task automatic clear; // Clear and refresh the unit. Clear everything and a set a dummy
-            // output to NV acting like a reset.
+                      // output to NV acting like a reset.
 begin
                 o_irq_ff                                <= 0;
                 o_fiq_ff                                <= 0;
@@ -376,6 +380,7 @@ begin
                 o_condition_code_ff                     <= NV;
                 o_und_ff                                <= 0;
                 o_taken_ff                              <= 0;
+                o_uop_last                              <= 0;
 end
 endtask
 
