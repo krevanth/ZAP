@@ -4,36 +4,36 @@
 
 ## 1. Introduction
 
-The ZAP is intended to be used in FPGA projects that need a high performance application class soft processor core. Most aspects of the processor can be configured through HDL parameters.  The processor can reach clock speeds of up to 150MHz on Artix-7/Spartan-7 series devices.
+The ZAP is intended to be used in FPGA projects that need a high performance application class soft processor core. Most aspects of the processor can be configured through HDL parameters.  The processor can be synthesized  with 0 slack at 150MHz on Artix-7/Spartan-7 series devices in the slow-slow (SS) corner. 
 
 The default processor specification is as follows (based on default parameters):
 
-| **Property**               | **Value**                                                                                                                                                                                                                  |
-| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Performance                | 150MHz @ xc7a75tcsg324-3 <br/>When synthesized with Vivado 2021.2 with `synth_design` issued with High Performance mode.<br/><br/>100 DMIPS @ 150MHz with cache enabled. **Cache must be enabled for good performance.**   |
-| Clock and Reset            | Purely synchronous reset scheme. Purely rising edge clock driven design.                                                                                                                                                   |
-| IRQ                        | Supported. Level sensitive interrupt signal. CPU uses a dual rank synchronizer to sample this and make it synchronous to the rising edge of clock.                                                                         |
-| FIQ                        | Supported. Level sensitive interrupt signal. CPU uses a dual rank synchronizer to sample this and make it synchronous to the rising edge of clock.                                                                         |
-| Pipeline Depth             | 17                                                                                                                                                                                                                         |
-| Issue and Execution Width  | Single issue, in order, scalar core, with out-of-order completion for some loads/stores that miss in cache.                                                                                                                |
-| Data Width                 | 32                                                                                                                                                                                                                         |
-| Address Width              | 32                                                                                                                                                                                                                         |
-| Virtual Address Width      | 32                                                                                                                                                                                                                         |
-| Instruction Set Version    | V5TE (1999)                                                                                                                                                                                                                |
-| L1 I-Cache                 | 16KB Direct Mapped VIVT Cache.<br/>64 Byte Cache Line                                                                                                                                                                      |
-| L1 D-Cache                 | 16KB Direct Mapped VIVT Cache<br>64 Byte Cache Line                                                                                                                                                                        |
-| Section I-TLB Structure    | Direct mapped 128 entries.                                                                                                                                                                                                 |
-| Small Page I-TLB Structure | Direct mapped 128 entries.                                                                                                                                                                                                 |
-| Large Page I-TLB Structure | Direct mapped 128 entries.                                                                                                                                                                                                 |
-| Section D-TLB Structure    | Direct mapped 128 entries.                                                                                                                                                                                                 |
-| Small Page D-TLB Structure | Direct mapped 128 entries.                                                                                                                                                                                                 |
-| Large Page D-TLB Structure | Direct mapped 128 entries.                                                                                                                                                                                                 |
-| Branch Prediction          | Direct Mapped Bimodal Predictor. <br/>Direct Mapped BTB.<br>1K entries in T state (16-bit instructions).<br>512 entries in 32-bit instruction state.                                                                       |
-| RAS Depth                  | 4 deep return address stack.                                                                                                                                                                                               |
-| Branch latency             | 12 cycles (wrong prediction or unrecognized branch)<br>3 cycles (taken, correctly predicted)<br>1 cycle (not-taken, correctly predicted)<br>12 cycles (32-bit/16-bit switch)<br>18 cycles (Exception/Interrupt Entry/Exit) |
-| Fetch Buffer               | FIFO, 16 x 32-bit.                                                                                                                                                                                                         |
-| Bus Interface              | Unified 32-Bit Wishbone B3 bus with CTI and BTE signals.<br/>BTE and CTI signals are used only when cache is enabled.                                                                                                      |
-| FPGA Resource Utilization  | 23K LUTs<br>116 LUTRAMs<br>15.3K FFs<br>29 BRAMs<br>4 DSP Blocks                                                                                                                                                           |
+| **Property**               | **Value**                                                                                                                                                                                                                              |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Performance                | 150MHz @ xc7a75tcsg324-3 <br/>When synthesized with Vivado 2021.2 Build 3367213 with `synth_design` issued with High Performance mode.<br/><br/>100 DMIPS @ 150MHz with cache enabled. **Cache must be enabled for good performance.** |
+| Clock and Reset            | Purely synchronous reset scheme. Purely rising edge clock driven design.                                                                                                                                                               |
+| IRQ                        | Supported. Level sensitive interrupt signal. CPU uses a dual rank synchronizer to sample this and make it synchronous to the rising edge of clock.                                                                                     |
+| FIQ                        | Supported. Level sensitive interrupt signal. CPU uses a dual rank synchronizer to sample this and make it synchronous to the rising edge of clock.                                                                                     |
+| Pipeline Depth             | 17                                                                                                                                                                                                                                     |
+| Issue and Execution Width  | Single issue, in order, scalar core, with out-of-order completion for some loads/stores that miss in cache.                                                                                                                            |
+| Data Width                 | 32                                                                                                                                                                                                                                     |
+| Address Width              | 32                                                                                                                                                                                                                                     |
+| Virtual Address Width      | 32                                                                                                                                                                                                                                     |
+| Instruction Set Version    | V5TE (1999)                                                                                                                                                                                                                            |
+| L1 I-Cache                 | 16KB Direct Mapped VIVT Cache.<br/>64 Byte Cache Line                                                                                                                                                                                  |
+| L1 D-Cache                 | 16KB Direct Mapped VIVT Cache<br>64 Byte Cache Line                                                                                                                                                                                    |
+| Section I-TLB Structure    | Direct mapped 128 entries.                                                                                                                                                                                                             |
+| Small Page I-TLB Structure | Direct mapped 128 entries.                                                                                                                                                                                                             |
+| Large Page I-TLB Structure | Direct mapped 128 entries.                                                                                                                                                                                                             |
+| Section D-TLB Structure    | Direct mapped 128 entries.                                                                                                                                                                                                             |
+| Small Page D-TLB Structure | Direct mapped 128 entries.                                                                                                                                                                                                             |
+| Large Page D-TLB Structure | Direct mapped 128 entries.                                                                                                                                                                                                             |
+| Branch Prediction          | Direct Mapped Bimodal Predictor. <br/>Direct Mapped BTB.<br>1K entries in T state (16-bit instructions).<br>512 entries in 32-bit instruction state.                                                                                   |
+| RAS Depth                  | 4 deep return address stack.                                                                                                                                                                                                           |
+| Branch latency             | 12 cycles (wrong prediction or unrecognized branch)<br>3 cycles (taken, correctly predicted)<br>1 cycle (not-taken, correctly predicted)<br>12 cycles (32-bit/16-bit switch)<br>18 cycles (Exception/Interrupt Entry/Exit)             |
+| Fetch Buffer               | FIFO, 16 x 32-bit.                                                                                                                                                                                                                     |
+| Bus Interface              | Unified 32-Bit Wishbone B3 bus with CTI and BTE signals.<br/>BTE and CTI signals are used only when cache is enabled.                                                                                                                  |
+| FPGA Resource Utilization  | 23K LUTs<br>116 LUTRAMs<br>15.3K FFs<br>29 BRAMs<br>4 DSP Blocks                                                                                                                                                                       |
 
 A simplified block diagram of the ZAP pipeline is shown below. Note that ZAP is mostly a single issue scalar processor.
 
@@ -225,15 +225,9 @@ ZAP features a common 32-bit Wishbone B3 bus to access external resources (like 
 
 The 32-bit standard Wishbone bus makes it easy to interface to other components over a typical 32-bit FPGA SoC bus, without the need for up/down converters.
 
+#### 1.2.1. Wishbone BURST Cycles
 
-
-#### 1.2.1. ONLY_CORE = 0x0 Configuration
-
-In this configuration, the CPU is synthesized with cache and MMU. 
-
-**The bus interface is efficient for burst transfers and hence, cache and MMU must be enabled as soon as possible for good performance. In this mode, ZAP will issue Wishbone burst transfers only if the cache is enabled.**
-
-The diagram below shows 16 x 4 byte = 64 bytes of memory being fetched for a cache linefill. 
+When ONLY_CORE=0x0, cache maintenance operations (linefetch and writeback) are performed using burst cycles. The diagram below shows 16 x 4 byte = 64 bytes of memory being fetched for a cache linefill. The target application of ZAP is in an apps environment where cache is extensively used.
 
 ![](mem_read_burst.png)
 
@@ -241,15 +235,15 @@ The diagram below shows 16 x 4 byte = 64 bytes of cache (1 cacheline) being writ
 
 ![](mem_write_burst.png)
 
-Accesses to uncacheable locations are done using Wishbone classic cycles. These cycles are also used when the cache is disabled. The processor can issue a non-cacheable Wishbone access once every 5 cycles. 
+#### 1.2.2. Wishbone CLASSIC Cycles
+
+When ONLY_CORE = 0x0, accesses to uncacheable locations are done using Wishbone classic cycles. These cycles are also used when the cache is disabled. The processor can issue a non-cacheable Wishbone access once every 5 cycles. The performance of these types of accesses are not critical, since most apps enviroments rely on cache and MMU subsystems.
 
 <img title="" src="peripheral_access.png" alt="" width="679">
 
+#### 1.2.3. Wishbone BLOCK Cycles
 
-
-#### 1.2.2. ONLY_CORE = 0x1 Configuration
-
-In this configuration, the CPU is synthesized without a cache and MMU. This mode exclusively generates Wishbone BLOCK cycles. Shown below is a waveform for this configuration. It is followed by a table that summarizes transfer rate over the bus.
+When ONLY_CORE=0x1, the CPU is synthesized without a cache and MMU. This mode exclusively generates Wishbone BLOCK cycles. The bus latency for BLOCK cycles it typically higher than burst cycles, because block cycles do not provide a hint if the next address is consecutive or not. ZAP will freely intermix instruction and data accesses within BLOCK cycles.
 
 ![](./block_access.png)
 
@@ -257,50 +251,42 @@ In this configuration, the CPU is synthesized without a cache and MMU. This mode
 
 Please refer to ref \[1] for CP15 CSR architectural requirements. The ZAP implements the following software accessible registers within its CP15 coprocessor.  The system control subsystem in ZAP is intended primarily to be used  only when ONLY_CORE = 0x0.
 
-When ONLY_CORE = 0x1, attempting to perform cache/MMU operations can result in **UNPREDICTABLE** behavior.
+> When ONLY_CORE = 0x1, attempting to perform cache/MMU operations can result in **UNPREDICTABLE** behavior. 
 
-NOTE: Cleaning and flushing cache and TLB is only supported for the entire memory.
+Register 0: **Information Register.**
 
-Selective flushing of TLB will result in the entire TLB being flushed.
+Register 1: **Cache and MMU control.** 
 
-Selective cleaning of TLB will result in the entire TLB being cleaned.
+| Bit | Meaning                                                                          |
+| --- | -------------------------------------------------------------------------------- |
+| 0   | MMU Enable                                                                       |
+| 1   | RO, RAZ. 0x0: Alignment fault never checked.                                     |
+| 2   | D$ Enable                                                                        |
+| 3   | RAZ. No write buffer.                                                            |
+| 4   | RAO. No 26-bit compatibility.                                                    |
+| 5   | RAO. No 26-bit compatibility.                                                    |
+| 6   | RAO. Base updated abort model. ZAP only supports the base updated restore model. |
+| 7   | Big Endian Enable. Reflects BE_32_ENABLE parameter. RO.                          |
+| 8   | S Bit. Used by the ZAP MMU.                                                      |
+| 9   | R Bit. Used by the ZAP MMU.                                                      |
+| 10  | RESERVED                                                                         |
+| 11  | RAO. Branch predictor enabled. Always enabled.                                   |
+| 12  | I$ Enable.                                                                       |
+| 13  | RAZ. Normal exception vectors.                                                   |
+| 14  | RAO. Predictive direct mapped strategy.                                          |
+| 15  | RAO. No v4T compatibility.                                                       |
 
-The above rules are permitted as per the architecture spec \[1].
+- Register 2: **Translation Base.**
 
-Register 0: Information Register.
+- Register 3: **Domain Access Control**.
 
-Register 1: Cache and MMU control. 
+- Register 5: **FSR**.
 
-| Bit | Meaning                                                 |
-| --- | ------------------------------------------------------- |
-| 0   | MMU Enable                                              |
-| 1   | RO, RAZ. 0x0: Alignment fault never checked.            |
-| 2   | D$ Enable                                               |
-| 3   | RAZ. No write buffer.                                   |
-| 4   | RAO. No 26-bit compatibility.                           |
-| 5   | RAO. No 26-bit compatibility.                           |
-| 6   | RAO. Base updated abort model.                          |
-| 7   | Big Endian Enable. Reflects BE_32_ENABLE parameter. RO. |
-| 8   | S Bit                                                   |
-| 9   | R Bit                                                   |
-| 10  | RESERVED                                                |
-| 11  | RAO. Branch predictor enabled.                          |
-| 12  | I$ Enable.                                              |
-| 13  | RAZ. Normal exception vectors.                          |
-| 14  | RAO. Predictive direct mapped strategy.                 |
-| 15  | RAO. No v4T compatibility.                              |
+- Register 6: **FAR**.
 
-- Register 2: Translation Base.
+- Register 8: **TLB functions**.
 
-- Register 3: Domain Access Control.
-
-- Register 5: FSR.
-
-- Register 6: FAR.
-
-- Register 8: TLB functions.
-
-- Register 7: Cache functions.
+- Register 7: **Cache functions**.
   
   - The arch spec allows for a subset of the functions to be implemented for register 7. These below are valid value supported in ZAP for register 7. Using other operations will result in UNDEFINED operation.
 
@@ -399,18 +385,17 @@ For single and block transfers, PEAK_BUS_LATENCY refers to the number of cycles 
 
 For burst transfers, PEAK_BUS_LATENCY refers to the initial bus delay before serving the burst, plus the number of cycles for which ACK=0 during the burst. Provide the worst case number for calculation purpose.
 
-| Access Type                     | Cycles/DWORD (Max)                       | Transfer Type |
-| ------------------------------- | ---------------------------------------- | ------------- |
-| Cacheable Region, ONLY_CORE=0x0 | 1 + (PEAK_BUS_LATENCY/CACHE_LINE_DWORDS) | Burst         |
-| IO Region, ONLY_CORE=0x0        | PEAK_BUS_LATENCY + 5                     | Single        |
-| Any, ONLY_CORE=0x1              | PEAK_BUS_LATENCY                         | Block         |
+| Access Type                     | Cycles/DWORD (Max)                   | Transfer Type |
+| ------------------------------- | ------------------------------------ | ------------- |
+| Cacheable Region, ONLY_CORE=0x0 | (PEAK_BUS_LATENCY/CACHE_LINE_DWORDS) | Burst         |
+| IO Region, ONLY_CORE=0x0        | PEAK_BUS_LATENCY + 5                 | Single        |
+| Any, ONLY_CORE=0x1              | PEAK_BUS_LATENCY                     | Block         |
 
 ## System Integration
 
 ### 2.1. Parameters
 
-Note that all parameters should be 2^n. Cache size should be multiple of line size and at least 16 x line width. Caches/TLBs consume majority of the resources so should be tuned as required. The default parameters give you quite large caches. Note
-that WB inputs are flopped only when ONLY\_CORE=0 i.e., when the CPU is synthesized with cache and MMU.
+Note that all parameters should be 2^n. Cache size should be multiple of line size and at least 16 x line width. Caches/TLBs consume majority of the resources so should be tuned as required. The default parameters give you quite large caches. 
 
 | Parameter                   | Default                            | Description                                                                               |
 | --------------------------- | ---------------------------------- | ----------------------------------------------------------------------------------------- |
