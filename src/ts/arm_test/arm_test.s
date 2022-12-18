@@ -115,6 +115,7 @@ disable_cache:
 fail_teq:
         mov r0, #1
         teq r0, #0
+        swieq #0xFF
         beq fail_teq
         teq r0, #1
         bne fail_teq
