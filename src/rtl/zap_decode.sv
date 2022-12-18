@@ -383,7 +383,7 @@ function void decode_swi ();
 begin: tskDecodeSWI
 
         // Generate LR = PC - 4
-        o_condition_code    = AL;
+        o_condition_code    = i_instruction[31:28];
         o_alu_operation     = {2'd0, SUB};
         o_alu_source        = {29'd0, ARCH_PC};
         o_alu_source[32]    = INDEX_EN; 

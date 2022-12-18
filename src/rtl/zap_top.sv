@@ -89,7 +89,8 @@ parameter [31:0] CODE_CACHE_LINE          =  32'd64    // Ccahe line size in byt
         // --------------------------------------
 
         output  logic  [2047:0]    o_trace,
-        output  logic              o_trace_trigger,
+        output  logic              o_trace_valid,  
+        output  logic              o_trace_uop_last,
 
         // --------------------------------------
         // Clock and reset
@@ -199,7 +200,8 @@ zap_core #(
 (
 // Trace
 .o_trace                (o_trace),
-.o_trace_trigger        (o_trace_trigger),
+.o_trace_valid          (o_trace_valid),
+.o_trace_uop_last       (o_trace_uop_last),
 
 // Clock and reset.
 .i_clk                  (i_clk),
