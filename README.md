@@ -6,7 +6,7 @@
 
 The ZAP is intended to be used in FPGA projects that need a high performance application class soft processor core. Most aspects of the processor can be configured through HDL parameters.  The processor can be synthesized  with 0 slack at 150MHz on Artix-7/Spartan-7 series devices in the slow-slow (SS) corner. 
 
-The default processor specification is as follows (based on default parameters):
+The default processor specification is as follows (The table below is based on default parameters):
 
 | **Property**               | **Value**                                                                                                                                                                                                                              |
 | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -223,72 +223,164 @@ Returns that result in change from 32 to 16-bit instruction state or vice versa 
 
 ZAP features a common 32-bit Wishbone B3 bus to access external resources (like DRAM/SRAM/IO etc). The processor can generate byte, halfword or word accesses. The processor uses CTI and BTE for efficient bus transfers. Note that multiprocessing is not readily supported and hence, `SWAP/SWAPB` instructions do not **actually** perform locked transfers.
 
-The 32-bit standard Wishbone bus makes it easy to interface to other components over a typical 32-bit FPGA SoC bus, without the need for up/down converters.
+The 32-bit standard Wishbone bus makes it easy to interface to other components over a typical 32-bit FPGA SoC bus, without the need for up/down converters. A future enhancement may be to add wider busses.
+
+ZAP can issue three kinds of transactions:
+
+- Wishbone BURST Cycles.
+
+- Wishbone CLASSIC Cycles.
+
+- Wishbone BLOCK Cycles.
+
+They are described below.
 
 #### 1.2.1. Wishbone BURST Cycles
 
-When ONLY_CORE=0x0, cache maintenance operations (linefetch and writeback) are performed using burst cycles. The diagram below shows 16 x 4 byte = 64 bytes of memory being fetched for a cache linefill. The target application of ZAP is in an apps environment where cache is extensively used.
+> The recommended way to transfer data to MMIO peripherals is through DMA. The cache can be cleaned by loading an address that maps to the same block. Then, a DMA transfer can be setup from the newly written back memory to the peripheral.
+
+- When **ONLY_CORE=0x0**, the following operations will result in Wishbone **BURST** cycles:
+  
+  - Cache line writeback to memory.
+  
+  - Cache line download from memory.
+
+- Caches offer a huge performance benefit, and allow instruction and data streams to be accessed in parallel, and quickly.
+
+- Cache must be enabled as soon as possible for good performance.
+
+- The timing paths on the WB inputs are short, and hence will not impact timing closure.
+
+- The CTI signal indicates this operation by indicating 0x010 for the burst, and 0x111 for the EOB (end-of-burst).
+
+- The diagram below shows 16 x 4 byte = 64 bytes of memory being fetched for a cache linefill. The target application of ZAP is in an apps environment where cache is extensively used.
 
 ![](mem_read_burst.png)
 
-The diagram below shows 16 x 4 byte = 64 bytes of cache (1 cacheline) being written back to memory. 
+- The diagram below shows 16 x 4 byte = 64 bytes of cache (1 cacheline) being written back to memory. 
 
 ![](mem_write_burst.png)
 
 #### 1.2.2. Wishbone CLASSIC Cycles
 
-When ONLY_CORE = 0x0, accesses to uncacheable locations are done using Wishbone classic cycles. These cycles are also used when the cache is disabled. The processor can issue a non-cacheable Wishbone access once every 5 cycles. The performance of these types of accesses are not critical, since most apps enviroments rely on cache and MMU subsystems.
+- When **ONLY_CORE = 0x0**, the following types of accesses can result in Wishbone **CLASSIC** cycles:
+  
+  - Access to uncacheable regions.
+  
+  - Cache is turned OFF.
+  
+  - MMU page table walk.
+
+- The processor can issue a non-cacheable Wishbone access once every 5 cycles. Note that the design does not optimize MMIO paths.
+
+- The recommended way to transfer data to MMIO peripherals is through DMA. The cache can be cleaned by loading an address that maps to the same block. Then, a DMA transfer can be setup from the newly written back memory to the peripheral.
+
+- The timing paths on the WB inputs are short, and hence will not impact timing closure.
 
 <img title="" src="peripheral_access.png" alt="" width="679">
 
 #### 1.2.3. Wishbone BLOCK Cycles
 
-When ONLY_CORE=0x1, the CPU is synthesized without a cache and MMU. This mode exclusively generates Wishbone BLOCK cycles. The bus latency for BLOCK cycles it typically higher than burst cycles, because block cycles do not provide a hint if the next address is consecutive or not. ZAP will freely intermix instruction and data accesses within BLOCK cycles.
+- When **ONLY_CORE=0x1**, the CPU is synthesized without a cache and MMU. 
+
+- This mode exclusively generates Wishbone **BLOCK** cycles.  
+
+- The external bus latency for BLOCK cycles it typically higher than burst cycles, because block cycles do not provide a hint if the next address is consecutive or not. 
+
+- ZAP will freely intermix instruction and data accesses within BLOCK cycles. 
+
+- The processor can issue a BLOCK Wishbone access every cycle.
+
+> **NOTE: In this mode, there is a timing arc from ACK to internal CPU logic. This might prevent the CPU from reaching its rated 150MHz timing closure. Using registered feedback might help alleviate this problem.**
 
 ![](./block_access.png)
 
 ### 1.3. System Control
 
-Please refer to ref \[1] for CP15 CSR architectural requirements. The ZAP implements the following software accessible registers within its CP15 coprocessor.  The system control subsystem in ZAP is intended primarily to be used  only when ONLY_CORE = 0x0.
+Please refer to ref \[1] for CP15 CSR architectural requirements. The ZAP implements the following software accessible registers within its CP15 coprocessor.  
 
-> When ONLY_CORE = 0x1, attempting to perform cache/MMU operations can result in **UNPREDICTABLE** behavior. 
+#### 1.3.1. Register 0: **ID Code Register (Opcode2 = 0x0).**
 
-Register 0: **Information Register.**
+| Bit   | Meaning      |
+| ----- | ------------ |
+| 3:0   | RAZ          |
+| 15:4  | Reads 0xAAAA |
+| 19:16 | Reads 0x5    |
+| 23:20 | RAZ          |
+| 31:24 | RAZ          |
 
-Register 1: **Cache and MMU control.** 
+#### 1.3.2. Register 0: **CTPYE Register (Opcode2 = 0x1).**
 
-| Bit | Meaning                                                                          |
-| --- | -------------------------------------------------------------------------------- |
-| 0   | MMU Enable                                                                       |
-| 1   | RO, RAZ. 0x0: Alignment fault never checked.                                     |
-| 2   | D$ Enable                                                                        |
-| 3   | RAZ. No write buffer.                                                            |
-| 4   | RAO. No 26-bit compatibility.                                                    |
-| 5   | RAO. No 26-bit compatibility.                                                    |
-| 6   | RAO. Base updated abort model. ZAP only supports the base updated restore model. |
-| 7   | Big Endian Enable. Reflects BE_32_ENABLE parameter. RO.                          |
-| 8   | S Bit. Used by the ZAP MMU.                                                      |
-| 9   | R Bit. Used by the ZAP MMU.                                                      |
-| 10  | RESERVED                                                                         |
-| 11  | RAO. Branch predictor enabled. Always enabled.                                   |
-| 12  | I$ Enable.                                                                       |
-| 13  | RAZ. Normal exception vectors.                                                   |
-| 14  | RAO. Predictive direct mapped strategy.                                          |
-| 15  | RAO. No v4T compatibility.                                                       |
+| Bit   | Meaning                                                                                                                                                                                                                             |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 11:0  | Reads out instruction cache size and other info.<br/>1:0 = Cache is 2^LEN + 1 words wide<br/>2 = M bit. Reads 0x0.<br/>5:3 = Reads 0x0 for direct mapped.<br/>8:6 = Cache is 2^SIZE KB<br/>When **ONLY_CORE=0x1**, bit 2 reads 0x1. |
+| 23:12 | Reads out instruction cache size and other info.<br/>1:0 = Cache is 2^LEN + 1 words wide<br/>2 = M bit. Reads 0x0.<br/>5:3 = Reads 0x0 for direct mapped.<br/>8:6 = Cache is 2^SIZE KB<br/>When **ONLY_CORE=0x1**, bit 2 reads 0x1. |
+| 24    | RAO. Separate I/D caches.                                                                                                                                                                                                           |
+| 28:25 | The CTYPE field. Reads out 0x1.                                                                                                                                                                                                     |
 
-- Register 2: **Translation Base.**
+#### 1.3.3. Register 1: **Cache and MMU control.**
 
-- Register 3: **Domain Access Control**.
+| Bit | Meaning                                                                                          |
+| --- | ------------------------------------------------------------------------------------------------ |
+| 0   | 0x1: MMU Enable<br/>0x0: MMU Disable<br/>When **ONLY_CORE=0x1**, this bit always reads 0.        |
+| 1   | RO, RAZ. 0x0: Alignment fault never checked.                                                     |
+| 2   | 0x1: DCache Enable<br/>0x0: DCache Disable<br/>When **ONLY_CORE=0x1**, this bit always reads 0.  |
+| 3   | RAZ. No write buffer.                                                                            |
+| 4   | RAO. No 26-bit compatibility.                                                                    |
+| 5   | RAO. No 26-bit compatibility.                                                                    |
+| 6   | RAO. Base updated abort model. ZAP only supports the base updated restore model.                 |
+| 7   | Big Endian Enable. Reflects BE_32_ENABLE parameter. RO.                                          |
+| 8   | S Bit. Used by the ZAP MMU. Has an impact only when **ONLY_CORE=0x0**.                           |
+| 9   | R Bit. Used by the ZAP MMU. Has an impact only when **ONLY_CORE=0x0**.                           |
+| 10  | RESERVED                                                                                         |
+| 11  | RAO. Branch predictor enabled. Always enabled.                                                   |
+| 12  | 0x1: ICache Enable.<br/>0x0: ICache Disable<br/>When **ONLY_CORE=0x1**, this bit always reads 0. |
+| 13  | RAZ. Normal exception vectors.                                                                   |
+| 14  | RAO. Predictive direct mapped strategy.                                                          |
+| 15  | RAO. No v4T compatibility. Compressed instruction support is v5T.                                |
 
-- Register 5: **FSR**.
+#### 1.3.4. Register 2: **Translation Base.**
 
-- Register 6: **FAR**.
+Provide a 16KB aligned translation base address here.
 
-- Register 8: **TLB functions**.
+| Bit   | Meaning                |
+| ----- | ---------------------- |
+| 31:14 | Translation Table Base |
+| 13:0  | RESERVED               |
 
-- Register 7: **Cache functions**.
-  
-  - The arch spec allows for a subset of the functions to be implemented for register 7. These below are valid value supported in ZAP for register 7. Using other operations will result in UNDEFINED operation.
+#### 1.3.5. Register 3: **Domain Access Control**.
+
+| Bit     | Meaning  |
+| ------- | -------- |
+| 2k+1:2k | DAC bits |
+
+#### 1.3.6. Register 5: **FSR.**
+
+| Bit  | Meaning                                                            |
+| ---- | ------------------------------------------------------------------ |
+| 3:0  | Status bits. Can read:<br/>Translation, Domain or Permission Fault |
+| 7:4  | Domain                                                             |
+| 8    | RAZ                                                                |
+| 31:9 | --                                                                 |
+
+#### 1.3.7. Register 6: **FAR**.
+
+| Bit  | Meaning                |
+| ---- | ---------------------- |
+| 31:0 | Fault Address Register |
+
+#### 1.3.8. Register 8: **TLB functions**.
+
+| TLB Operation    | Opcode2 | CRM    |
+| ---------------- | ------- | ------ |
+| Invalidate TLB   | 0b00x   | 0b0111 |
+| Invalidate I-TLB | 0b00x   | 0b0101 |
+| Invalidate D-TLB | 0b00x   | 0b0110 |
+
+#### 1.3.9. Register 7: **Cache functions**.
+
+- The arch spec allows for a subset of the functions to be implemented for register 7. 
+- These below are valid value supported in ZAP for register 7. Using other operations will result in UNDEFINED operation.
 
 | Cache Operation                                      | Opcode2 | CRM    |
 | ---------------------------------------------------- | ------- | ------ |
@@ -299,7 +391,12 @@ Register 1: **Cache and MMU control.**
 | Clean and flush data cache. Flush instruction cache. | 0b000   | 0b1111 |
 | Clean and flush data cache                           | 0b000   | 0b1110 |
 
-- Register 13: FCSE Register.
+#### 1.3.10. Register 13: **FCSE Register.**
+
+| Bit   | Meaning  |
+| ----- | -------- |
+| 31:25 | PID      |
+| 24:0  | RESERVED |
 
 ### 1.4. Implementation Options
 
@@ -385,11 +482,11 @@ For single and block transfers, PEAK_BUS_LATENCY refers to the number of cycles 
 
 For burst transfers, PEAK_BUS_LATENCY refers to the initial bus delay before serving the burst, plus the number of cycles for which ACK=0 during the burst. Provide the worst case number for calculation purpose.
 
-| Access Type                     | Cycles/DWORD (Max)                   | Transfer Type |
-| ------------------------------- | ------------------------------------ | ------------- |
-| Cacheable Region, ONLY_CORE=0x0 | (PEAK_BUS_LATENCY/CACHE_LINE_DWORDS) | Burst         |
-| IO Region, ONLY_CORE=0x0        | PEAK_BUS_LATENCY + 5                 | Single        |
-| Any, ONLY_CORE=0x1              | PEAK_BUS_LATENCY                     | Block         |
+| Access Type                         | Bus Cycles/DWORD (Max)               | Transfer Type                      |
+| ----------------------------------- | ------------------------------------ | ---------------------------------- |
+| Cacheable Region, **ONLY_CORE=0x0** | (PEAK_BUS_LATENCY/CACHE_LINE_DWORDS) | Burst                              |
+| IO Region (MMIO), **ONLY_CORE=0x0** | PEAK_BUS_LATENCY + 5                 | Single                             |
+| Any, **ONLY_CORE=0x1**              | PEAK_BUS_LATENCY + 1                 | Block, Registered Feedback Cycles. |
 
 ## System Integration
 
@@ -410,12 +507,12 @@ Note that all parameters should be 2^n. Cache size should be multiple of line si
 | DATA\_LPAGE\_TLB\_ENTRIES   | 128                                | Large page TLB entries (Data).                                                            |
 | DATA\_SPAGE\_TLB\_ENTRIES   | 128                                | Small page TLB entries (Data).                                                            |
 | DATA\_FPAGE\_TLB\_ENTRIES   | 128                                | Tiny page TLB entries (Data).                                                             |
-| DATA\_CACHE\_SIZE           | 16384                              | Cache size in bytes. Should be at least 16 x line size.                                   |
+| DATA\_CACHE\_SIZE           | 16384                              | Cache size in bytes. Should be at least 16 x line size. Cannot exceed 64KB.               |
 | CODE\_SECTION\_TLB\_ENTRIES | 128                                | Section TLB entries.                                                                      |
 | CODE\_LPAGE\_TLB\_ENTRIES   | 128                                | Large page TLB entries.                                                                   |
 | CODE\_SPAGE\_TLB\_ENTRIES   | 128                                | Small page TLB entries.                                                                   |
 | CODE\_FPAGE\_TLB\_ENTRIES   | 128                                | Tiny page TLB entries.                                                                    |
-| CODE\_CACHE\_SIZE           | 16384                              | Cache size in bytes. Should be at least 16 x line size.                                   |
+| CODE\_CACHE\_SIZE           | 16384                              | Cache size in bytes. Should be at least 16 x line size. Cannot exceed 64KB.               |
 | DATA\_CACHE\_LINE           | 64                                 | Cache Line for Data (Byte). Keep > 8                                                      |
 | CODE\_CACHE\_LINE           | 64                                 | Cache Line for Code (Byte). Keep > 8                                                      |
 | RAS\_DEPTH                  | 4                                  | Depth of Return Address Stack                                                             |
@@ -425,20 +522,20 @@ Note that all parameters should be 2^n. Cache size should be multiple of line si
 | Port             | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | i\_clk           | Clock. All logic is clocked on the rising edge of this signal. The CPU is a fully synchronous device.                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| i\_reset         | Active high global reset signal. Fully synchronous.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| i\_reset         | Active high global reset signal. Fully synchronous.  The assertion and deassertion of this reset must be synchronous to the clock's rising edge.                                                                                                                                                                                                                                                                                                                                                                                                 |
 | i\_irq           | Interrupt. Level Sensitive. Signal is internally synced by a dual rank synchronizer. The output of the synchronizer is considered as the single source of truth of the IRQ.                                                                                                                                                                                                                                                                                                                                                                      |
 | i\_fiq           | Fast Interrupt. Level Sensitive. Signal is internally synced by a dual rank synchronizer. The output of the synchronizer is considered as the single source of truth of the FIQ.                                                                                                                                                                                                                                                                                                                                                                 |
-| o\_wb\_cyc       | Wishbone CYC signal.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| o\_wb\_stb       | Wishbone STB signal.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| o\_wb\_adr       | Wishbone address signal. (32)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| o\_wb\_cyc       | Wishbone CYC signal. The processor always drives CYC and STB together.                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| o\_wb\_stb       | Wishbone STB signal. The processor always drives CYC and STB together.                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| o\_wb\_adr[31:0] | Wishbone address signal. The lower 2-bits are always driven to 0x0.                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | o\_wb\_we        | Wishbone write enable signal.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| o\_wb\_dat       | Wishbone data output signal. (32)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| o\_wb\_sel       | Wishbone byte select signal. (4)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| o\_wb\_cti       | Wishbone CTI (Classic, Incrementing Burst, EOB) (3)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| o\_wb\_bte       | Wishbone BTE (Linear) (2)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| o\_wb\_dat[31:0] | Wishbone data output signal.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| o\_wb\_sel[3:0]  | Wishbone byte select signal.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| o\_wb\_cti[2:0]  | Wishbone CTI (Classic, Incrementing Burst and EOB are supported)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| o\_wb\_bte[1:0]  | Wishbone BTE (Always reads "linear" i.e., 0x0)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | i\_wb\_ack       | Wishbone acknowledge signal. Wishbone registered cycles MUST be used when ONLY_CORE=0x1, because in this mode (ONLY_CORE=0x1), there is significant logic on the I-to-R path. On the other hand, when ONLY_CORE=0x0, there is not much logic on the Wishbone I-to-R path, so either registered or non-registered is acceptable, and in this case (ONLY_CORE=0x0), non registered feedback may be used, as it may provide better performance, especially in IO region accesses.                                                                   |
-| i\_wb\_dat       | Wishbone data input signal. See advice above on registered vs non-registered feedback cycles. (32)                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| o_trace          | Generates trace information over a 1024-bit bus. This signal is only intended for DV and is meant to be used only in simulation. When DEBUG_EN is not defined, this signal reads 0x0.<br/>The format of the trace string is as follows:<br/>PC_ADDRESS:\<INSTRUCTION\> WA1\@WDATA2 WA2\@WDATA2 CPSR<br/>(or)<br/>PC_ADDRESS:\<INSTRUCTION\>\* for an instruction whose condition code failed.<br/>If an exception is taken, the words, DABT, FIQ, IRQ, IABT, SWI and UND are display inplace of the above formats. Out of reset, RESET is shown. |
+| i\_wb\_dat[31:0] | Wishbone data input signal. See advice above on registered vs non-registered feedback cycles.                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| o_trace[1023:0]  | Generates trace information over a 1024-bit bus. This signal is only intended for DV and is meant to be used only in simulation. When DEBUG_EN is not defined, this signal reads 0x0.<br/>The format of the trace string is as follows:<br/>PC_ADDRESS:\<INSTRUCTION\> WA1\@WDATA2 WA2\@WDATA2 CPSR<br/>(or)<br/>PC_ADDRESS:\<INSTRUCTION\>\* for an instruction whose condition code failed.<br/>If an exception is taken, the words, DABT, FIQ, IRQ, IABT, SWI and UND are display inplace of the above formats. Out of reset, RESET is shown. |
 | o_trace_valid    | Sample trace information when this signal is 1. This signal is only intended for DV and is meant to be used only in simulation. When DEBUG_EN is not defined, this signal reads 0x0.                                                                                                                                                                                                                                                                                                                                                             |
 | o_trace_uop_last | Used to identify a uop end boundary. This signal is intended only for DV and is meant to be used only in simulation. When DEBUG_EN is not defined, this signal reads 0x0.                                                                                                                                                                                                                                                                                                                                                                        |
 
@@ -457,7 +554,10 @@ Note that all parameters should be 2^n. Cache size should be multiple of line si
   * Instantiate the ZAP processor in your project using this template:
 
 ```
-       zap_top #(.FIFO_DEPTH              (),
+       zap_top #(.BE_32_ENABLE            (),
+                 .CPSR_INIT               (),
+                 .RESET_VECTOR            (),
+                 .FIFO_DEPTH              (),
                  .BP_ENTRIES              (),
                  .STORE_BUFFER_DEPTH      (),
                  .DATA_SECTION_TLB_ENTRIES(),

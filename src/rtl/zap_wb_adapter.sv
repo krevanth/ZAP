@@ -102,12 +102,19 @@ zap_sync_fifo #(.WIDTH(32'd70), .DEPTH(DEPTH), .FWFT(32'd1)) U_STORE_FIFO (
 /* verilator lint_on PINCONNECTEMPTY */
 );
 
-// FIFO output is basically registered.
+// FIFO output is basically registered. See comments.
 always_comb
 begin
-        o_wb_stb = !w_emp;
-        o_wb_cyc = !w_emp;
-        o_wb_cti = w_eob ? CTI_EOB : CTI_BURST;
+        o_wb_stb = !w_emp; // Inverter can be absorbed into flop.
+        o_wb_cyc = !w_emp; // Inverter can be absorbed into flop.
+
+        // All basically constant or registered.
+        assign o_wb_cti[0] = w_eob;
+        assign o_wb_cti[1] = 1'd1;
+        assign o_wb_cti[2] = w_eob;
+
+        // High level assertion.
+        assert (o_wb_cti == (w_eob ? CTI_EOB : CTI_BURST)) else $fatal(2, "CTI generation incorrect.");
 end
 
 // Flip flop clocking block.
