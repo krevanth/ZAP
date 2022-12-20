@@ -60,7 +60,6 @@ parameter   [0:0]       BE_32_ENABLE       = 1'd0,
 
 parameter  [31:0]       BP_ENTRIES         = 32'd1024, // Predictor depth.
 parameter  [31:0]       FIFO_DEPTH         = 32'd16,   // FIFO depth.
-parameter  [31:0]       STORE_BUFFER_DEPTH = 32'd16,   // Depth of the store buffer.
 parameter  [31:0]       RAS_DEPTH          = 32'd4,    // Depth of RAS.
 
 // ----------------------------------
@@ -585,13 +584,12 @@ u_code_cache (
 .i_cache_clean_req (cpu_ic_clean),
 .o_cache_inv_done  (ic_inv_done),
 .o_cache_clean_done(ic_clean_done),
-.i_cpsr         (cpu_mem_translate ? USR : cpu_cpsr[`ZAP_CPSR_MODE]),
-.i_sr           (cpu_sr),
-.i_baddr        (cpu_baddr),
-.i_dac_reg      (cpu_dac_reg),
-.i_tlb_inv      (cpu_itlb_inv),
-
-.o_err2         (icache_err2),
+.i_cpsr            (cpu_mem_translate ? USR : cpu_cpsr[`ZAP_CPSR_MODE]),
+.i_sr              (cpu_sr),
+.i_baddr           (cpu_baddr),
+.i_dac_reg         (cpu_dac_reg),
+.i_tlb_inv         (cpu_itlb_inv),
+.o_err2            (icache_err2),
 
 /* verilator lint_off PINCONNECTEMPTY */
 .o_wb_stb       (),
@@ -615,35 +613,15 @@ u_code_cache (
 .o_wb_cti_nxt   (c_wb_cti)
 );
 
-zap_wb_adapter 
-#(.DEPTH(STORE_BUFFER_DEPTH), .BURST_LEN(CODE_CACHE_LINE < DATA_CACHE_LINE ? 
-        CODE_CACHE_LINE/4 : 
-        DATA_CACHE_LINE/4))
-u_zap_wb_adapter (
-.i_clk(i_clk),
-.i_reset(s_reset),
-
-.I_WB_CYC(wb_cyc),
-.I_WB_STB(wb_stb),
-.I_WB_WE(wb_we),
-.I_WB_DAT(wb_idat),
-.I_WB_SEL(wb_sel),
-.I_WB_CTI(wb_cti),
-.O_WB_ACK(wb_ack),
-.O_WB_DAT(wb_dat),
-.I_WB_ADR(wb_adr),
-
-.o_wb_cyc(o_wb_cyc),
-.o_wb_stb(o_wb_stb),
-.o_wb_we(o_wb_we),
-.o_wb_sel(o_wb_sel),
-.o_wb_dat(o_wb_dat),
-.o_wb_adr(o_wb_adr),
-.o_wb_cti(o_wb_cti),
-.i_wb_dat(i_wb_dat),
-.i_wb_ack(i_wb_ack)
-
-);
+assign o_wb_cyc = wb_cyc;
+assign o_wb_stb = wb_stb;
+assign o_wb_we  = wb_we;
+assign o_wb_sel = wb_sel;
+assign o_wb_dat = wb_idat;
+assign o_wb_adr = wb_adr;
+assign o_wb_cti = wb_cti;
+assign wb_dat   = i_wb_dat;
+assign wb_ack   = i_wb_ack;
 
 end:genblk1
 endgenerate

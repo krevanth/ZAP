@@ -34,34 +34,34 @@ input logic i_clk,
 input logic i_reset,
 
 // Wishbone bus 1
-input logic i_c_wb_stb,
-input logic i_c_wb_cyc,
-input logic i_c_wb_wen,
-input logic [3:0] i_c_wb_sel,
-input logic [31:0] i_c_wb_dat,
-input logic [31:0] i_c_wb_adr,
-input logic [2:0] i_c_wb_cti,
-output logic o_c_wb_ack,
+input logic             i_c_wb_stb,
+input logic             i_c_wb_cyc,
+input logic             i_c_wb_wen,
+input logic [3:0]       i_c_wb_sel,
+input logic [31:0]      i_c_wb_dat,
+input logic [31:0]      i_c_wb_adr,
+input logic [2:0]       i_c_wb_cti,
+output logic            o_c_wb_ack,
 
 // Wishbone bus 2
-input logic i_d_wb_stb,
-input logic i_d_wb_cyc,
-input logic i_d_wb_wen,
-input logic [3:0] i_d_wb_sel,
-input logic [31:0] i_d_wb_dat,
-input logic [31:0] i_d_wb_adr,
-input logic [2:0] i_d_wb_cti,
-output logic o_d_wb_ack,
+input logic             i_d_wb_stb,
+input logic             i_d_wb_cyc,
+input logic             i_d_wb_wen,
+input logic [3:0]       i_d_wb_sel,
+input logic [31:0]      i_d_wb_dat,
+input logic [31:0]      i_d_wb_adr,
+input logic [2:0]       i_d_wb_cti,
+output logic            o_d_wb_ack,
 
 // Common bus
-output logic o_wb_cyc,
-output logic o_wb_stb,
-output logic o_wb_wen,
-output logic [3:0] o_wb_sel,
-output logic [31:0] o_wb_dat,
-output logic [31:0] o_wb_adr,
-output logic [2:0] o_wb_cti,
-input logic i_wb_ack
+output logic            o_wb_cyc,
+output logic            o_wb_stb,
+output logic            o_wb_wen,
+output logic [3:0]      o_wb_sel,
+output logic [31:0]     o_wb_dat,
+output logic [31:0]     o_wb_adr,
+output logic [2:0]      o_wb_cti,
+input logic             i_wb_ack
 
 );
 
@@ -124,6 +124,8 @@ end
 
 generate if ( !ONLY_CORE )
 begin: genblk1
+
+        // We can flop these, because we're using NXT ports.
         always_ff @ (posedge i_clk)
         begin
                 if ( i_reset )
@@ -157,9 +159,13 @@ begin: genblk1
                         o_wb_cti <= i_d_wb_cti; 
                 end
         end
+
 end: genblk1
 else
 begin: genblk2
+
+        // Not requires to flop these since the sources are flops themselves.
+        // Just a 2:1 MUX on the path - very little delay - won't affect timing.
         always_comb
         begin
                 if ( sel_ff == CODE )

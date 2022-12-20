@@ -73,7 +73,6 @@ parameter CODE_FPAGE_TLB_ENTRIES        = 32;
 parameter CODE_CACHE_SIZE               = 1024;
 parameter FIFO_DEPTH                    = 4;
 parameter BP_ENTRIES                    = 1024;
-parameter STORE_BUFFER_DEPTH            = 32;
 parameter ONLY_CORE                     = 0;
 parameter BE_32_ENABLE                  = 0;
 
@@ -158,7 +157,6 @@ uart_tx_dumper u_uart_tx_dumper_dev1 (  .i_clk(i_clk), .i_line(o_uart[1]),
 chip_top #(
         .FIFO_DEPTH(FIFO_DEPTH),
         .BP_ENTRIES(BP_ENTRIES),
-        .STORE_BUFFER_DEPTH(STORE_BUFFER_DEPTH),
         .DATA_SECTION_TLB_ENTRIES(DATA_SECTION_TLB_ENTRIES),
         .DATA_LPAGE_TLB_ENTRIES(DATA_LPAGE_TLB_ENTRIES),
         .DATA_SPAGE_TLB_ENTRIES(DATA_SPAGE_TLB_ENTRIES),
@@ -264,7 +262,6 @@ parameter CODE_FPAGE_TLB_ENTRIES        = 32,
 parameter CODE_CACHE_SIZE               = 1024,
 parameter FIFO_DEPTH                    = 4,
 parameter BP_ENTRIES                    = 1024,
-parameter STORE_BUFFER_DEPTH            = 32,
 parameter BE_32_ENABLE                  = 0,
 parameter ONLY_CORE                     = 0
 
@@ -417,7 +414,6 @@ zap_top #(
         .ONLY_CORE(ONLY_CORE),
         .FIFO_DEPTH(FIFO_DEPTH),
         .BP_ENTRIES(BP_ENTRIES),
-        .STORE_BUFFER_DEPTH(STORE_BUFFER_DEPTH),
         .DATA_SECTION_TLB_ENTRIES(DATA_SECTION_TLB_ENTRIES),
         .DATA_LPAGE_TLB_ENTRIES(DATA_LPAGE_TLB_ENTRIES),
         .DATA_SPAGE_TLB_ENTRIES(DATA_SPAGE_TLB_ENTRIES),

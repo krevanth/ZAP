@@ -502,7 +502,6 @@ Note that all parameters should be 2^n. Cache size should be multiple of line si
 | BE\_32\_ENABLE              | 0                                  | Enable BE-32 Big Endian Mode. Active high. Applies to I and D fetches.                    |
 | BP\_ENTRIES                 | 1024                               | Predictor RAM depth. Each RAM row also contains the branch target address.                |
 | FIFO\_DEPTH                 | 16                                 | Command FIFO depth.                                                                       |
-| STORE\_BUFFER\_DEPTH        | 16                                 | Depth of the store buffer. Keep multiple of cache line size in bytes / 4.                 |
 | DATA\_SECTION\_TLB\_ENTRIES | 128                                | Section TLB entries (Data).                                                               |
 | DATA\_LPAGE\_TLB\_ENTRIES   | 128                                | Large page TLB entries (Data).                                                            |
 | DATA\_SPAGE\_TLB\_ENTRIES   | 128                                | Small page TLB entries (Data).                                                            |
@@ -559,7 +558,6 @@ Note that all parameters should be 2^n. Cache size should be multiple of line si
                  .RESET_VECTOR            (),
                  .FIFO_DEPTH              (),
                  .BP_ENTRIES              (),
-                 .STORE_BUFFER_DEPTH      (),
                  .DATA_SECTION_TLB_ENTRIES(),
                  .DATA_LPAGE_TLB_ENTRIES  (),
                  .DATA_SPAGE_TLB_ENTRIES  (),
@@ -641,7 +639,6 @@ To remove existing object/simulation/synthesis files, do:
                DATA_LPAGE_TLB_ENTRIES      => 16,      
                BP_DEPTH                    => 1024,    
                INSTR_FIFO_DEPTH            => 4,       
-               STORE_BUFFER_DEPTH          => 8,      
 
                # Debug helpers. 
                DEBUG_EN                    => 1,       
