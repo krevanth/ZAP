@@ -109,9 +109,9 @@ begin
         o_wb_cyc = !w_emp; // Inverter can be absorbed into flop.
 
         // All basically constant or registered.
-        assign o_wb_cti[0] = w_eob;
-        assign o_wb_cti[1] = 1'd1;
-        assign o_wb_cti[2] = w_eob;
+        o_wb_cti[0] = w_eob;
+        o_wb_cti[1] = 1'd1;
+        o_wb_cti[2] = w_eob;
 
         // High level assertion.
         assert (o_wb_cti == (w_eob ? CTI_EOB : CTI_BURST)) else $fatal(2, "CTI generation incorrect.");

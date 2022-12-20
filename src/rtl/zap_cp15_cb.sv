@@ -183,8 +183,8 @@ localparam CASE_FLUSH_ID_TLB         = 7'b00?_0111;
 localparam CASE_FLUSH_I_TLB          = 7'b00?_0101;
 localparam CASE_FLUSH_D_TLB          = 7'b00?_0110;
 
-wire [1:0][11:0] xCACHE_TYPE_WORD;
-wire [31:0]      CACHE_TYPE_WORD ; // Provides cache info.
+logic [1:0][11:0] xCACHE_TYPE_WORD;
+logic [31:0]      CACHE_TYPE_WORD ; // Provides cache info.
 
 ///////////////////////////////////////////////////////////////////////////
 
