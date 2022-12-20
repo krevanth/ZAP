@@ -607,6 +607,7 @@ task automatic generate_r1;
         begin
                 r[1][2]  <= 1'd0;
                 r[1][12] <= 1'd0;
+                r[1][0]  <= 1'd0;
         end
 endtask
 
