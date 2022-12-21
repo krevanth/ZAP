@@ -129,6 +129,9 @@ always_comb o_wb_bte = 2'b00; // Linear Burst.
 `include "zap_localparams.svh"
 `include "zap_functions.svh"
 
+// Assertion.
+always@(posedge i_clk) if (!i_reset && o_wb_cyc) assert ( |o_wb_cti ) else  $fatal(2, "O_WB_CTI is not EOB.");
+
 logic            wb_cyc, wb_stb, wb_we;
 logic [3:0]      wb_sel;
 logic [31:0]     wb_dat, wb_idat;
@@ -310,7 +313,7 @@ generate
                 assign wb_sel          = '0;
                 assign wb_idat         = '0;
                 assign wb_adr          = '0;
-                assign wb_cti          = '0;
+                assign wb_cti          = CTI_EOB;
                 assign wb_ack          = '0;
                 assign c_wb_stb        = '0;
                 assign c_wb_cyc        = '0;
@@ -318,14 +321,14 @@ generate
                 assign c_wb_sel        = '0;
                 assign c_wb_dat        = '0;
                 assign c_wb_adr        = '0;
-                assign c_wb_cti        = '0; 
+                assign c_wb_cti        = CTI_EOB; 
                 assign d_wb_stb        = '0;
                 assign d_wb_cyc        = '0;
                 assign d_wb_wen        = '0;
                 assign d_wb_sel        = '0;
                 assign d_wb_dat        = '0;
                 assign d_wb_adr        = '0;
-                assign d_wb_cti        = '0; 
+                assign d_wb_cti        = CTI_EOB; 
                 assign wb_dat          = '0;
 
                 wire unused =

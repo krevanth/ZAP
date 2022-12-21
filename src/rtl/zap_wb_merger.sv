@@ -102,7 +102,7 @@ begin
         case(sel_ff)
         CODE:
         begin
-                if ( i_wb_ack && (o_wb_cti == CTI_CLASSIC || o_wb_cti == CTI_EOB) && i_d_wb_stb )
+                if ( i_wb_ack && (o_wb_cti == CTI_EOB) && i_d_wb_stb )
                         sel_nxt = DATA;
                 else if ( !i_c_wb_stb && i_d_wb_stb )
                         sel_nxt = DATA;
@@ -112,7 +112,7 @@ begin
 
         DATA:
         begin
-                if ( i_wb_ack && (o_wb_cti == CTI_CLASSIC || o_wb_cti == CTI_EOB) && i_c_wb_stb )
+                if ( i_wb_ack && (o_wb_cti == CTI_EOB) && i_c_wb_stb )
                         sel_nxt = CODE;
                 else if ( i_c_wb_stb && !i_d_wb_stb )
                         sel_nxt = CODE;
@@ -136,7 +136,7 @@ begin: genblk1
                         o_wb_sel <= 0;
                         o_wb_dat <= 0;                                
                         o_wb_adr <= 0;
-                        o_wb_cti <= 0;
+                        o_wb_cti <= CTI_EOB;
                 end
                 else if ( sel_nxt == CODE )
                 begin
