@@ -83,6 +83,8 @@ parameter [31:0] CODE_CACHE_SIZE          =  32'd16384,// Cache size in bytes.
 parameter [31:0] CODE_CACHE_LINE          =  32'd64    // Ccahe line size in bytes.
 
 )(
+        `ifdef DEBUG_EN
+
         // --------------------------------------
         // Trace. Only for DV. Leave open.
         // --------------------------------------
@@ -90,6 +92,8 @@ parameter [31:0] CODE_CACHE_LINE          =  32'd64    // Ccahe line size in byt
         output  logic  [2047:0]    o_trace,
         output  logic              o_trace_valid,  
         output  logic              o_trace_uop_last,
+
+        `endif
 
         // --------------------------------------
         // Clock and reset
@@ -113,14 +117,14 @@ parameter [31:0] CODE_CACHE_LINE          =  32'd64    // Ccahe line size in byt
 
         output  logic            o_wb_cyc,
         output  logic            o_wb_stb,
-        output  logic [31:0]     o_wb_adr,
+        output  logic  [31:0]    o_wb_adr,
         output  logic            o_wb_we,
-        output logic  [31:0]     o_wb_dat,
-        output  logic [3:0]      o_wb_sel,
-        output logic [2:0]       o_wb_cti,
-        output logic [1:0]       o_wb_bte,
+        output  logic  [31:0]    o_wb_dat,
+        output  logic  [3:0]     o_wb_sel,
+        output  logic  [2:0]     o_wb_cti,
+        output  logic  [1:0]     o_wb_bte,
         input   logic            i_wb_ack,
-        input   logic [31:0]     i_wb_dat
+        input   logic  [31:0]    i_wb_dat
 );
 
 always_comb o_wb_bte = 2'b00; // Linear Burst.
@@ -190,6 +194,18 @@ zap_dual_rank_synchronizer #(.WIDTH(2)) u_sync (
         .in( {i_fiq, i_irq}),
         .out({s_fiq, s_irq})
 );
+
+`ifndef DEBUG_EN
+
+/* verilator lint_off UNUSEDSIGNAL */
+
+wire [2047:0] o_trace;
+wire          o_trace_valid;
+wire          o_trace_uop_last;
+
+/* verilator lint_on UNUSEDSIGNAL */
+
+`endif
 
 zap_core #(
         .BP_ENTRIES(BP_ENTRIES),
@@ -286,7 +302,7 @@ zap_core #(
 generate
         if ( !ONLY_CORE )
         begin
-                // Normal case.
+                 // Normal case - with cache and MMU.
         end
         else
         begin
@@ -396,7 +412,6 @@ generate
                  | (    |cpu_dre_check     )
                  | (    |code_stall        )
                  ;
-
         end
 endgenerate
 
