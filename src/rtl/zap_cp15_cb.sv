@@ -232,7 +232,7 @@ begin
         2048 : xCACHE_TYPE_WORD[1][8:6] = 3'd2;
         4096 : xCACHE_TYPE_WORD[1][8:6] = 3'd3;
         8192 : xCACHE_TYPE_WORD[1][8:6] = 3'd4;
-        16536: xCACHE_TYPE_WORD[1][8:6] = 3'd5;
+        16384: xCACHE_TYPE_WORD[1][8:6] = 3'd5;
         32768: xCACHE_TYPE_WORD[1][8:6] = 3'd6;
         65536: xCACHE_TYPE_WORD[1][8:6] = 3'd7;
         default:
