@@ -8,32 +8,32 @@ The ZAP is intended to be used in FPGA projects that need a high performance app
 
 The default processor specification is as follows (The table below is based on default parameters):
 
-| **Property**               | **Value**                                                                                                                                                                                                                              |
-| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Performance                | 150MHz @ xc7a75tcsg324-3 <br/>When synthesized with Vivado 2021.2 Build 3367213 with `synth_design` issued with High Performance mode.<br/><br/>100 DMIPS @ 150MHz with cache enabled. **Cache must be enabled for good performance.** |
-| Clock and Reset            | Purely synchronous reset scheme. Purely rising edge clock driven design.                                                                                                                                                               |
-| IRQ                        | Supported. Level sensitive interrupt signal. CPU uses a dual rank synchronizer to sample this and make it synchronous to the rising edge of clock.                                                                                     |
-| FIQ                        | Supported. Level sensitive interrupt signal. CPU uses a dual rank synchronizer to sample this and make it synchronous to the rising edge of clock.                                                                                     |
-| Pipeline Depth             | 17                                                                                                                                                                                                                                     |
-| Issue and Execution Width  | Single issue, in order, scalar core, with out-of-order completion for some loads/stores that miss in cache.                                                                                                                            |
-| Data Width                 | 32                                                                                                                                                                                                                                     |
-| Address Width              | 32                                                                                                                                                                                                                                     |
-| Virtual Address Width      | 32                                                                                                                                                                                                                                     |
-| Instruction Set Version    | V5TE (1999)                                                                                                                                                                                                                            |
-| L1 I-Cache                 | 16KB Direct Mapped VIVT Cache.<br/>64 Byte Cache Line                                                                                                                                                                                  |
-| L1 D-Cache                 | 16KB Direct Mapped VIVT Cache<br>64 Byte Cache Line                                                                                                                                                                                    |
-| Section I-TLB Structure    | Direct mapped 128 entries.                                                                                                                                                                                                             |
-| Small Page I-TLB Structure | Direct mapped 128 entries.                                                                                                                                                                                                             |
-| Large Page I-TLB Structure | Direct mapped 128 entries.                                                                                                                                                                                                             |
-| Section D-TLB Structure    | Direct mapped 128 entries.                                                                                                                                                                                                             |
-| Small Page D-TLB Structure | Direct mapped 128 entries.                                                                                                                                                                                                             |
-| Large Page D-TLB Structure | Direct mapped 128 entries.                                                                                                                                                                                                             |
-| Branch Prediction          | Direct Mapped Bimodal Predictor. <br/>Direct Mapped BTB.<br>1K entries in T state (16-bit instructions).<br>512 entries in 32-bit instruction state.                                                                                   |
-| RAS Depth                  | 4 deep return address stack.                                                                                                                                                                                                           |
-| Branch latency             | 12 cycles (wrong prediction or unrecognized branch)<br>3 cycles (taken, correctly predicted)<br>1 cycle (not-taken, correctly predicted)<br>12 cycles (32-bit/16-bit switch)<br>18 cycles (Exception/Interrupt Entry/Exit)             |
-| Fetch Buffer               | FIFO, 16 x 32-bit.                                                                                                                                                                                                                     |
-| Bus Interface              | Unified 32-Bit Wishbone B3 bus with CTI and BTE signals.<br/>BTE and CTI signals are used only when cache is enabled.                                                                                                                  |
-| FPGA Resource Utilization  | 23K LUTs<br>116 LUTRAMs<br>15.3K FFs<br>29 BRAMs<br>4 DSP Blocks                                                                                                                                                                       |
+| **Property**               | **Value**                                                                                                                                                                                                                                                                         |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Performance                | Synthesized at 150MHz @ xc7a75tcsg324-3 with 0 slack. <br/>When synthesized with Vivado 2021.2 Build 3367213 with `synth_design` with default options.<br/><br/>100 DMIPS @ 150MHz with cache enabled. **Cache must be enabled, and utilized effectively, for peak performance.** |
+| Clock and Reset            | Purely synchronous reset scheme. Purely rising edge clock driven design.                                                                                                                                                                                                          |
+| IRQ                        | Supported. Level sensitive interrupt signal. CPU uses a dual rank synchronizer to sample this and make it synchronous to the rising edge of clock.                                                                                                                                |
+| FIQ                        | Supported. Level sensitive interrupt signal. CPU uses a dual rank synchronizer to sample this and make it synchronous to the rising edge of clock.                                                                                                                                |
+| Pipeline Depth             | 17                                                                                                                                                                                                                                                                                |
+| Issue and Execution Width  | Single issue, in order, scalar core, with very limited out-of-order completion for some loads/stores that miss in cache.                                                                                                                                                          |
+| Data Width                 | 32                                                                                                                                                                                                                                                                                |
+| Address Width              | 32                                                                                                                                                                                                                                                                                |
+| Virtual Address Width      | 32                                                                                                                                                                                                                                                                                |
+| Instruction Set Version    | V5TE (1999)                                                                                                                                                                                                                                                                       |
+| L1 I-Cache                 | 16KB Direct Mapped VIVT Cache.<br/>64 Byte Cache Line                                                                                                                                                                                                                             |
+| L1 D-Cache                 | 16KB Direct Mapped VIVT Cache<br>64 Byte Cache Line                                                                                                                                                                                                                               |
+| Section I-TLB Structure    | Direct mapped 128 entries.                                                                                                                                                                                                                                                        |
+| Small Page I-TLB Structure | Direct mapped 128 entries.                                                                                                                                                                                                                                                        |
+| Large Page I-TLB Structure | Direct mapped 128 entries.                                                                                                                                                                                                                                                        |
+| Section D-TLB Structure    | Direct mapped 128 entries.                                                                                                                                                                                                                                                        |
+| Small Page D-TLB Structure | Direct mapped 128 entries.                                                                                                                                                                                                                                                        |
+| Large Page D-TLB Structure | Direct mapped 128 entries.                                                                                                                                                                                                                                                        |
+| Branch Prediction          | Direct Mapped Bimodal Predictor. <br/>Direct Mapped BTB.<br>1K entries in T state (16-bit instructions).<br>512 entries in 32-bit instruction state.                                                                                                                              |
+| RAS Depth                  | 4 deep return address stack.                                                                                                                                                                                                                                                      |
+| Branch latency             | 12 cycles (wrong prediction or unrecognized branch)<br>3 cycles (taken, correctly predicted)<br>1 cycle (not-taken, correctly predicted)<br>12 cycles (32-bit/16-bit switch)<br>18 cycles (Exception/Interrupt Entry/Exit)                                                        |
+| Fetch Buffer               | FIFO, 16 x 32-bit.                                                                                                                                                                                                                                                                |
+| Bus Interface              | Unified 32-Bit Wishbone B3 bus with CTI and BTE signals.<br/>BTE and CTI signals are used only when cache is enabled.                                                                                                                                                             |
+| FPGA Resource Utilization  | 23K LUTs<br>116 LUTRAMs<br>15.3K FFs<br>29 BRAMs<br>4 DSP Blocks                                                                                                                                                                                                                  |
 
 A simplified block diagram of the ZAP pipeline is shown below. Note that ZAP is mostly a single issue scalar processor.
 
@@ -235,11 +235,13 @@ ZAP can issue three kinds of transactions:
 
 They are described below.
 
-#### 1.2.1. Wishbone BURST Cycles
+#### 1.2.1. CPU with Cache and MMU (ONLY_CORE=0x0)
+
+##### 1.2.1.1. Cache Maintenance Operations
 
 > The recommended way to transfer data to MMIO peripherals is through DMA. The cache can be cleaned by loading an address that maps to the same block. Then, a DMA transfer can be setup from the newly written back memory to the peripheral.
 
-- When **ONLY_CORE=0x0**, the following operations will result in Wishbone **BURST** cycles:
+- When **ONLY_CORE=0x0**, the following operations will result exclusively in Wishbone **BURST** cycles:
   
   - Cache line writeback to memory.
   
@@ -249,11 +251,9 @@ They are described below.
 
 - Cache must be enabled as soon as possible for good performance.
 
-- The timing paths on the WB inputs are short, and hence will not impact timing closure.
-
 - The CTI signal indicates this operation by indicating 0x010 for the burst, and 0x111 for the EOB (end-of-burst).
 
-- The diagram below shows 16 x 4 byte = 64 bytes of memory being fetched for a cache linefill. The target application of ZAP is in an apps environment where cache is extensively used.
+- The diagram below shows 16 x 4 byte = 64 bytes of memory being fetched for a cache linefill.
 
 ![](mem_read_burst.png)
 
@@ -261,9 +261,9 @@ They are described below.
 
 ![](mem_write_burst.png)
 
-#### 1.2.2. Wishbone CLASSIC Cycles
+##### 1.2.2. Uncacheable Operations
 
-- When **ONLY_CORE = 0x0**, the following types of accesses can result in Wishbone **CLASSIC** cycles:
+- When **ONLY_CORE = 0x0**, the following types of accesses can result in mostly Wishbone **CLASSIC** cycles. Note that few transfers may still be issued as **BLOCK** transfers occasionally.
   
   - Access to uncacheable regions.
   
@@ -271,27 +271,19 @@ They are described below.
   
   - MMU page table walk.
 
-- The processor can issue a non-cacheable Wishbone access once every 5 cycles. Note that the design does not optimize MMIO paths.
-
-- The recommended way to transfer data to MMIO peripherals is through DMA. The cache can be cleaned by loading an address that maps to the same block. Then, a DMA transfer can be setup from the newly written back memory to the peripheral.
-
-- The timing paths on the WB inputs are short, and hence will not impact timing closure.
-
 <img title="" src="peripheral_access.png" alt="" width="679">
 
-#### 1.2.3. Wishbone BLOCK Cycles
+#### 1.2.2. Cache-less and MMU-less Configuration (ONLY_CORE = 0x1)
 
 - When **ONLY_CORE=0x1**, the CPU is synthesized without a cache and MMU. 
 
 - This mode exclusively generates Wishbone **BLOCK** cycles.  
 
-- The external bus latency for BLOCK cycles it typically higher than burst cycles, because block cycles do not provide a hint if the next address is consecutive or not. 
+- The external bus latency for CLASSIC/BLOCK cycles it typically higher than burst cycles, because block cycles do not provide a hint if the next address is consecutive or not. 
 
 - ZAP will freely intermix instruction and data accesses within BLOCK cycles. 
 
 - The processor can issue a BLOCK Wishbone access every cycle.
-
-> **NOTE: In this mode, there is a timing arc from ACK to internal CPU logic. This might prevent the CPU from reaching its rated 150MHz timing closure. Using registered feedback might help alleviate this problem.**
 
 ![](./block_access.png)
 
@@ -356,12 +348,12 @@ Provide a 16KB aligned translation base address here.
 
 #### 1.3.6. Register 5: **FSR.**
 
-| Bit  | Meaning                                                            |
-| ---- | ------------------------------------------------------------------ |
-| 3:0  | Status bits. Can read:<br/>Translation, Domain or Permission Fault |
-| 7:4  | Domain                                                             |
-| 8    | RAZ                                                                |
-| 31:9 | --                                                                 |
+| Bit  | Meaning                                                                                                                              |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| 3:0  | Status bits. <br/>Supported faults: Translation, Domain or Permission Fault.<br/>**NOTE: The CPU does not support EXTERNAL aborts.** |
+| 7:4  | Domain                                                                                                                               |
+| 8    | RAZ                                                                                                                                  |
+| 31:9 | --                                                                                                                                   |
 
 #### 1.3.7. Register 6: **FAR**.
 
@@ -381,6 +373,7 @@ Provide a 16KB aligned translation base address here.
 
 - The arch spec allows for a subset of the functions to be implemented for register 7. 
 - These below are valid value supported in ZAP for register 7. Using other operations will result in UNDEFINED operation.
+- A more efficient way to clean the cache is to load another block into it. Since ZAP offers direct mapped caches, this can easily be done. In fact, triggering loading a new block into cache (using an LDR) is the recommended way to clean the cache.
 
 | Cache Operation                                      | Opcode2 | CRM    |
 | ---------------------------------------------------- | ------- | ------ |
@@ -478,15 +471,18 @@ ZAP internally implements an internal CP15 coprocessor using its internal bus me
 
 ### 1.5. Performance
 
-For single and block transfers, PEAK_BUS_LATENCY refers to the number of cycles the bus takes to generate an ACK=1 after seeing a STB=1. Provide the worst case number for calculation purpose.
+For single and block transfers, BUS_LATENCY refers to the average number of cycles the bus takes to generate an ACK=1 after seeing a STB=1. 
 
-For burst transfers, PEAK_BUS_LATENCY refers to the initial bus delay before serving the burst, plus the number of cycles for which ACK=0 during the burst. Provide the worst case number for calculation purpose.
+For burst transfers, BUS_LATENCY refers to the initial bus delay (average) before serving the burst, plus the number of cycles for which ACK=0 during the burst (average). 
 
-| Access Type                         | Bus Cycles/DWORD (Max)               | Transfer Type                      |
-| ----------------------------------- | ------------------------------------ | ---------------------------------- |
-| Cacheable Region, **ONLY_CORE=0x0** | (PEAK_BUS_LATENCY/CACHE_LINE_DWORDS) | Burst                              |
-| IO Region (MMIO), **ONLY_CORE=0x0** | PEAK_BUS_LATENCY + 5                 | Single                             |
-| Any, **ONLY_CORE=0x1**              | PEAK_BUS_LATENCY + 1                 | Block, Registered Feedback Cycles. |
+The table below assumes a BUS_LATENCY= 20 cycles and a 64 byte cache line. An average bus latency of 20 cycles is a reasonable estimate.
+
+| Access Type                                     | Supply Rate                | Type                                                            |
+| ----------------------------------------------- | -------------------------- | --------------------------------------------------------------- |
+| Cacheable Region, CACHE HIT, **ONLY_CORE=0x0**  | 1 cycle/DWORD (Fixed)      | Internal cache hit.                                             |
+| Cacheable Region, CACHE MISS, **ONLY_CORE=0x0** | 3.2 cycles/DWORD (Average) | Wishbone Burst, Registered Feedback Cycles.                     |
+| IO Region (MMIO), **ONLY_CORE=0x0**             | 22 cycles/DWORD (Average)  | Wishbone Single (Occasional Block), Registered Feedback Cycles. |
+| Any, **ONLY_CORE=0x1**                          | 21 cycles/DWORD (Average)  | Wishbone Block, Registered Feedback Cycles.                     |
 
 ## System Integration
 
@@ -502,7 +498,6 @@ Note that all parameters should be 2^n. Cache size should be multiple of line si
 | BE\_32\_ENABLE              | 0                                  | Enable BE-32 Big Endian Mode. Active high. Applies to I and D fetches.                    |
 | BP\_ENTRIES                 | 1024                               | Predictor RAM depth. Each RAM row also contains the branch target address.                |
 | FIFO\_DEPTH                 | 16                                 | Command FIFO depth.                                                                       |
-| STORE\_BUFFER\_DEPTH        | 16                                 | Depth of the store buffer. Keep multiple of cache line size in bytes / 4.                 |
 | DATA\_SECTION\_TLB\_ENTRIES | 128                                | Section TLB entries (Data).                                                               |
 | DATA\_LPAGE\_TLB\_ENTRIES   | 128                                | Large page TLB entries (Data).                                                            |
 | DATA\_SPAGE\_TLB\_ENTRIES   | 128                                | Small page TLB entries (Data).                                                            |
@@ -519,10 +514,12 @@ Note that all parameters should be 2^n. Cache size should be multiple of line si
 
 ### 2.2. IO
 
+**NOTE: The CPU does not support EXTERNAL aborts.**
+
 | Port             | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | i\_clk           | Clock. All logic is clocked on the rising edge of this signal. The CPU is a fully synchronous device.                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| i\_reset         | Active high global reset signal. Fully synchronous.  The assertion and deassertion of this reset must be synchronous to the clock's rising edge.                                                                                                                                                                                                                                                                                                                                                                                                 |
+| i\_reset         | Active high global reset signal. Fully synchronous.  The assertion and deassertion of this reset must be synchronous to the clock's rising edge. <br/>**RECOMMENDATION**: This should be directly driven from a flip-flop, placed close to the processor.                                                                                                                                                                                                                                                                                        |
 | i\_irq           | Interrupt. Level Sensitive. Signal is internally synced by a dual rank synchronizer. The output of the synchronizer is considered as the single source of truth of the IRQ.                                                                                                                                                                                                                                                                                                                                                                      |
 | i\_fiq           | Fast Interrupt. Level Sensitive. Signal is internally synced by a dual rank synchronizer. The output of the synchronizer is considered as the single source of truth of the FIQ.                                                                                                                                                                                                                                                                                                                                                                 |
 | o\_wb\_cyc       | Wishbone CYC signal. The processor always drives CYC and STB together.                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
@@ -531,10 +528,10 @@ Note that all parameters should be 2^n. Cache size should be multiple of line si
 | o\_wb\_we        | Wishbone write enable signal.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | o\_wb\_dat[31:0] | Wishbone data output signal.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | o\_wb\_sel[3:0]  | Wishbone byte select signal.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| o\_wb\_cti[2:0]  | Wishbone CTI (Classic, Incrementing Burst and EOB are supported)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| o\_wb\_cti[2:0]  | Wishbone CTI (Incrementing Burst and EOB are supported)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | o\_wb\_bte[1:0]  | Wishbone BTE (Always reads "linear" i.e., 0x0)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| i\_wb\_ack       | Wishbone acknowledge signal. Wishbone registered cycles MUST be used when ONLY_CORE=0x1, because in this mode (ONLY_CORE=0x1), there is significant logic on the I-to-R path. On the other hand, when ONLY_CORE=0x0, there is not much logic on the Wishbone I-to-R path, so either registered or non-registered is acceptable, and in this case (ONLY_CORE=0x0), non registered feedback may be used, as it may provide better performance, especially in IO region accesses.                                                                   |
-| i\_wb\_dat[31:0] | Wishbone data input signal. See advice above on registered vs non-registered feedback cycles.                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| i\_wb\_ack       | Wishbone acknowledge signal. <br/>**RECOMMENDATION**: This should come from a flip-flop placed close to the processor.                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| i\_wb\_dat[31:0] | Wishbone data input signal. <br/>**RECOMMENDATION**: This should come from a register placed close to the processor.                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | o_trace[1023:0]  | Generates trace information over a 1024-bit bus. This signal is only intended for DV and is meant to be used only in simulation. When DEBUG_EN is not defined, this signal reads 0x0.<br/>The format of the trace string is as follows:<br/>PC_ADDRESS:\<INSTRUCTION\> WA1\@WDATA2 WA2\@WDATA2 CPSR<br/>(or)<br/>PC_ADDRESS:\<INSTRUCTION\>\* for an instruction whose condition code failed.<br/>If an exception is taken, the words, DABT, FIQ, IRQ, IABT, SWI and UND are display inplace of the above formats. Out of reset, RESET is shown. |
 | o_trace_valid    | Sample trace information when this signal is 1. This signal is only intended for DV and is meant to be used only in simulation. When DEBUG_EN is not defined, this signal reads 0x0.                                                                                                                                                                                                                                                                                                                                                             |
 | o_trace_uop_last | Used to identify a uop end boundary. This signal is intended only for DV and is meant to be used only in simulation. When DEBUG_EN is not defined, this signal reads 0x0.                                                                                                                                                                                                                                                                                                                                                                        |
@@ -559,7 +556,6 @@ Note that all parameters should be 2^n. Cache size should be multiple of line si
                  .RESET_VECTOR            (),
                  .FIFO_DEPTH              (),
                  .BP_ENTRIES              (),
-                 .STORE_BUFFER_DEPTH      (),
                  .DATA_SECTION_TLB_ENTRIES(),
                  .DATA_LPAGE_TLB_ENTRIES  (),
                  .DATA_SPAGE_TLB_ENTRIES  (),
@@ -641,7 +637,6 @@ To remove existing object/simulation/synthesis files, do:
                DATA_LPAGE_TLB_ENTRIES      => 16,      
                BP_DEPTH                    => 1024,    
                INSTR_FIFO_DEPTH            => 4,       
-               STORE_BUFFER_DEPTH          => 8,      
 
                # Debug helpers. 
                DEBUG_EN                    => 1,       
@@ -691,7 +686,9 @@ Timing report will be available in `obj/syn/syn_timing.rpt`
 #### 3.4.1. XDC Setup (Vivado FPGA Synthesis)
 
 * The XDC assumes a 200MHz clock for an Artix 7 FPGA part with -3 speed grade.
-* Input assume they receive data from a flop with Tcq = 50% of clock period.
+* IRQ and FIQ inputs are set to false path due to internal synchronizers.
+* Reset is assumed to be driven directly from a DFF (Tcq ~ 100ps).
+* Wishbone response signals are assumed to be directly driven from a register (Tcq ~ 100ps).
 * Outputs assume they are driving a flop with Tsu = 2ns Th=1ns.
 * Setting FPGA synthesis clock to an unreasonably high FPGA design frequency may result in better timing closure (but will result in a larger FPGA design).
 

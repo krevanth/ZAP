@@ -44,14 +44,12 @@ my $DATA_SPAGE_TLB_ENTRIES      = $Config{'DATA_SPAGE_TLB_ENTRIES'};
 my $DATA_LPAGE_TLB_ENTRIES      = $Config{'DATA_LPAGE_TLB_ENTRIES'};
 my $BP                          = $Config{'BP_DEPTH'};
 my $FIFO                        = $Config{'INSTR_FIFO_DEPTH'};
-my $SBUF_DEPTH                  = $Config{'STORE_BUFFER_DEPTH'};
 my $REG_HIER                    = "u_chip_top.u_zap_top.u_zap_core.u_zap_writeback.u_zap_register_file";
 
 my $IVL_OPTIONS  = " -Isrc/rtl ";
    $IVL_OPTIONS .= "   src/rtl/*.sv ";
    $IVL_OPTIONS .= " -Iobj/ts/$TEST ";
    $IVL_OPTIONS .= "   src/testbench/*.v "; 
-   $IVL_OPTIONS .= " -GSTORE_BUFFER_DEPTH=$SBUF_DEPTH ";
    $IVL_OPTIONS .= " -GBP_ENTRIES=$BP ";
    $IVL_OPTIONS .= " -GFIFO_DEPTH=$FIFO ";
    $IVL_OPTIONS .= " -GDATA_SECTION_TLB_ENTRIES=$DATA_SECTION_TLB_ENTRIES ";
