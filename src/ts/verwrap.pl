@@ -113,7 +113,7 @@ my $MAKE_THREADS = $THREADS + 1;
 
 if ( $HT == 1 ) 
 {
-        $HT = "-j $MAKE_THREADS --threads $THREADS";
+        $HT = "-j $MAKE_THREADS --threads 1";
 } else 
 {
         $HT = "-j 1 --threads 1";

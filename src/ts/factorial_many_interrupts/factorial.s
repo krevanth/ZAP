@@ -103,13 +103,50 @@ str r1, [r0]                // Clear all interrupt pending status
 ldmfd sp!, {r0-r12, pc}^
 
 FIQ:
-# Return from FIQ after writing to FIQ registers - shouldn't affect other things.
+
+# Correct return address and push to stack.
+sub r14, r14, #4
+stmfd sp!, {r0-r7, r14}
+
+# Corrupt registers. Note that R8-R14 wont corrupt - so no need to push to stack.
+mov r0, #1
+mov r1, #2
+mov r2, #3
+mov r3, #4
+mov r4, #5
+mov r5, #6
+mov r6, #7
+mov r7, #8
+
+#--Safe--#
 mov r8,  #9
 mov r9,  #10
 mov r10, #12
 mov r11, #13
 mov r12, #14
-subs pc, r14, #4
+
+# Corrupt return address. OK to do since we pushed to stack.
+mov r14, #15
+
+.set TIMER_BASE_ADDRESS, 0xFFFFFFC0
+
+# Restart timer
+ldr r0,=TIMER_BASE_ADDRESS    // Timer base address.
+add r0, r0, #12
+mov r1, #1
+str r1, [r0]                  // Restart the timer.
+
+.set VIC_BASE_ADDRESS,  0xFFFFFFA0
+.set CLEAR_ALL_PENDING, 0xFFFFFFFF
+
+# Clear interrupt in VIC.
+ldr r0, =VIC_BASE_ADDRESS   // VIC base address
+add r0, r0, #8  
+ldr r1, =CLEAR_ALL_PENDING    
+str r1, [r0]                // Clear all interrupt pending status
+
+# Restore corrupted registers. Restore PC from stack.
+ldmfd sp!, {r0-r7, pc}^
 
 SWI:
 .set SWI_SP_VALUE,  2500
@@ -152,6 +189,15 @@ msr cpsr_c, r2
 .set IRQ_SP_VALUE, 3000
 ldr sp,=IRQ_SP_VALUE
 
+// Switch to FIQ mode.
+mrs r2, cpsr
+bic r2, r2, #31
+orr r2, r2, #17
+msr cpsr_c, r2
+
+.set FIQ_SP_VALUE, 3500
+ldr sp, =FIQ_SP_VALUE
+
 // Switch to UND mode.
 mrs r3, cpsr
 bic r3, r3, #31
@@ -159,7 +205,7 @@ orr r3, r3, #27
 msr cpsr_c, r3
 mov r4, #1
 
-.set UND_SP_VALUE, 3500
+.set UND_SP_VALUE, 4000
 ldr sp, =UND_SP_VALUE
 
 // Enable interrupts (FIQ and IRQ).
@@ -235,7 +281,7 @@ mov r1 , #1
 str r1, [r0]                    // Enable timer
 add r0, r0, #4
 
-mov r1, #128                     // Program to N=128 CC
+mov r1, #512                     // Program to N=512 CC
 str r1, [r0]                    
 
 add r0, r0, #8
