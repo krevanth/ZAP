@@ -4,36 +4,36 @@
 
 ## 1. Introduction
 
-The ZAP is intended to be used in FPGA projects that need a high performance application class soft processor core. Most aspects of the processor can be configured through HDL parameters.  The processor can be synthesized  with 0 slack at 150MHz on Artix-7/Spartan-7 series devices in the slow-slow (SS) corner. 
+The ZAP is intended to be used in FPGA projects that need a high performance application class soft processor core. Most aspects of the processor can be configured through HDL parameters.  The processor can be synthesized  with 0 slack at 160MHz on Artix-7/Spartan-7 series devices in the slow-slow (SS) corner. 
 
 The default processor specification is as follows (The table below is based on default parameters):
 
-| **Property**               | **Value**                                                                                                                                                                                                                                                                         |
-| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Performance                | Synthesized at 140MHz @ xc7a75tcsg324-3 with 0 slack. <br/>When synthesized with Vivado 2021.2 Build 3367213 with `synth_design` with default options.<br/><br/>100 DMIPS @ 140MHz with cache enabled. **Cache must be enabled, and utilized effectively, for peak performance.** |
-| Clock and Reset            | Purely synchronous reset scheme. Purely rising edge clock driven design.                                                                                                                                                                                                          |
-| IRQ                        | Supported. Level sensitive interrupt signal. CPU uses a dual rank synchronizer to sample this and make it synchronous to the rising edge of clock.                                                                                                                                |
-| FIQ                        | Supported. Level sensitive interrupt signal. CPU uses a dual rank synchronizer to sample this and make it synchronous to the rising edge of clock.                                                                                                                                |
-| Pipeline Depth             | 17                                                                                                                                                                                                                                                                                |
-| Issue and Execution Width  | Single issue, in order, scalar core, with very limited out-of-order completion for some loads/stores that miss in cache.                                                                                                                                                          |
-| Data Width                 | 32                                                                                                                                                                                                                                                                                |
-| Address Width              | 32                                                                                                                                                                                                                                                                                |
-| Virtual Address Width      | 32                                                                                                                                                                                                                                                                                |
-| Instruction Set Version    | V5TE (1999)                                                                                                                                                                                                                                                                       |
-| L1 I-Cache                 | 16KB Direct Mapped VIVT Cache.<br/>64 Byte Cache Line                                                                                                                                                                                                                             |
-| L1 D-Cache                 | 16KB Direct Mapped VIVT Cache<br>64 Byte Cache Line                                                                                                                                                                                                                               |
-| Section I-TLB Structure    | Direct mapped 128 entries.                                                                                                                                                                                                                                                        |
-| Small Page I-TLB Structure | Direct mapped 128 entries.                                                                                                                                                                                                                                                        |
-| Large Page I-TLB Structure | Direct mapped 128 entries.                                                                                                                                                                                                                                                        |
-| Section D-TLB Structure    | Direct mapped 128 entries.                                                                                                                                                                                                                                                        |
-| Small Page D-TLB Structure | Direct mapped 128 entries.                                                                                                                                                                                                                                                        |
-| Large Page D-TLB Structure | Direct mapped 128 entries.                                                                                                                                                                                                                                                        |
-| Branch Prediction          | Direct Mapped Bimodal Predictor. <br/>Direct Mapped BTB.<br>1K entries in T state (16-bit instructions).<br>512 entries in 32-bit instruction state.                                                                                                                              |
-| RAS Depth                  | 4 deep return address stack.                                                                                                                                                                                                                                                      |
-| Branch latency             | 12 cycles (wrong prediction or unrecognized branch)<br>3 cycles (taken, correctly predicted)<br>1 cycle (not-taken, correctly predicted)<br>12 cycles (32-bit/16-bit switch)<br>18 cycles (Exception/Interrupt Entry/Exit)                                                        |
-| Fetch Buffer               | FIFO, 16 x 32-bit.                                                                                                                                                                                                                                                                |
-| Bus Interface              | Unified 32-Bit Wishbone B3 bus with CTI and BTE signals.<br/>BTE and CTI signals are used only when cache is enabled.                                                                                                                                                             |
-| FPGA Resource Utilization  | 23K LUTs<br>116 LUTRAMs<br>15.3K FFs<br>29 BRAMs<br>4 DSP Blocks                                                                                                                                                                                                                  |
+| **Property**               | **Value**                                                                                                                                                                                                                  |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Performance                | Synthesized at 160MHz @ xc7a75tcsg324-3 with 0 slack. <br/>120 DMIPS @ 160MHz with cache enabled. **Cache must be enabled, and utilized effectively, for peak performance.**                                               |
+| Clock and Reset            | Purely synchronous reset scheme. Purely rising edge clock driven design.                                                                                                                                                   |
+| IRQ                        | Supported. Level sensitive interrupt signal. CPU uses a dual rank synchronizer to sample this and make it synchronous to the rising edge of clock.                                                                         |
+| FIQ                        | Supported. Level sensitive interrupt signal. CPU uses a dual rank synchronizer to sample this and make it synchronous to the rising edge of clock.                                                                         |
+| Pipeline Depth             | 17                                                                                                                                                                                                                         |
+| Issue and Execution Width  | Single issue, in order, scalar core, with very limited out-of-order completion for some loads/stores that miss in cache.                                                                                                   |
+| Data Width                 | 32                                                                                                                                                                                                                         |
+| Address Width              | 32                                                                                                                                                                                                                         |
+| Virtual Address Width      | 32                                                                                                                                                                                                                         |
+| Instruction Set Version    | V5TE (1999)                                                                                                                                                                                                                |
+| L1 I-Cache                 | 16KB Direct Mapped VIVT Cache.<br/>64 Byte Cache Line                                                                                                                                                                      |
+| L1 D-Cache                 | 16KB Direct Mapped VIVT Cache<br>64 Byte Cache Line                                                                                                                                                                        |
+| Section I-TLB Structure    | Direct mapped 128 entries.                                                                                                                                                                                                 |
+| Small Page I-TLB Structure | Direct mapped 128 entries.                                                                                                                                                                                                 |
+| Large Page I-TLB Structure | Direct mapped 128 entries.                                                                                                                                                                                                 |
+| Section D-TLB Structure    | Direct mapped 128 entries.                                                                                                                                                                                                 |
+| Small Page D-TLB Structure | Direct mapped 128 entries.                                                                                                                                                                                                 |
+| Large Page D-TLB Structure | Direct mapped 128 entries.                                                                                                                                                                                                 |
+| Branch Prediction          | Direct Mapped Bimodal Predictor. <br/>Direct Mapped BTB.<br>1K entries in T state (16-bit instructions).<br>512 entries in 32-bit instruction state.                                                                       |
+| RAS Depth                  | 4 deep return address stack.                                                                                                                                                                                               |
+| Branch latency             | 12 cycles (wrong prediction or unrecognized branch)<br>3 cycles (taken, correctly predicted)<br>1 cycle (not-taken, correctly predicted)<br>12 cycles (32-bit/16-bit switch)<br>18 cycles (Exception/Interrupt Entry/Exit) |
+| Fetch Buffer               | FIFO, 16 x 32-bit.                                                                                                                                                                                                         |
+| Bus Interface              | Unified 32-Bit Wishbone B3 bus with CTI and BTE signals.<br/>BTE and CTI signals are used only when cache is enabled.                                                                                                      |
+| FPGA Resource Utilization  | 23K LUTs<br>116 LUTRAMs<br>15.3K FFs<br>29 BRAMs<br>4 DSP Blocks                                                                                                                                                           |
 
 A simplified block diagram of the ZAP pipeline is shown below. Note that ZAP is mostly a single issue scalar processor.
 
@@ -108,6 +108,7 @@ Most of the time, the pipeline is able to process 1 instruction per clock cycle.
 * `MSR` when writing to CPSR. This will insert a 12 cycle bubble into the pipeline.
 * `LDx` with `pc/r15` in the register list/data register is executed. This will insert a 9 cycle bubble in the pipeline.
 * `MCR`/`MRC` / `SWI` are executed. These will insert an 18 cycle bubble into the pipeline.
+* `CLZ` and saturating arithmetic(`QADD`/`QSUB`/`QDADD`/`QDSUB`) operations take 3 clock cycles per instruction.
 
 This snippet of 32-bit instruction code takes 6 cycles to execute:
 
@@ -115,7 +116,7 @@ This snippet of 32-bit instruction code takes 6 cycles to execute:
     ADD  R1, R2, R2 LSL #10 (1 cycle)
     ADD  R1, R1, R1 LSL #20 (2 cycles)
     ADD  R3, R4, R5, LSR #3 (1 cycle)
-    QADD R3, R3, R3         (1 cycle)
+    ADD  R3, R3, R3         (1 cycle)
     MOV  R4, R3             (1 cycle)
 ```
 
@@ -125,7 +126,7 @@ This snippet of 32-bit instruction code takes only 5 cycles (Possible because of
     ADD  R1, R2, R2, R2     (1 cycle)
     ADD  R1, R1, R1 LSL #2  (1 cycle)
     ADD  R3, R4, R5 LSR #3  (1 cycle)
-    QADD R3, R3, R3         (1 cycle)
+    ADD  R3, R3, R3         (1 cycle)
     MOV  R4, R3             (1 cycle)
 ```
 
