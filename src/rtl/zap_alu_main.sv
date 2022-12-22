@@ -241,7 +241,8 @@ logic                             cin;
 // 32-bit adder with carry input and carry output.
 logic [32:0]                      sum;
 
-logic [31:0]                      tmp_flags, tmp_sum;
+logic [31:0]                      tmp_flags, tmp_sum, tmp_sum_x;
+logic                             valid_x;
 
 // Opcode.
 logic [$clog2   (ALU_OPS)-1:0]   opcode;
@@ -394,7 +395,7 @@ begin
         begin
                 // Clock out all flops normally.
 
-                o_alu_result_ff                  <= o_alu_result_nxt;
+                o_alu_result_ff                  <= valid_x ? tmp_sum_x : o_alu_result_nxt;
                 o_dav_ff                         <= o_dav_nxt;                
                 o_pc_plus_8_ff                   <= i_pc_plus_8_ff;
                 o_destination_index_ff           <= o_destination_index_nxt;
@@ -657,44 +658,69 @@ begin: alu_result
                              op == {1'd0, OP_QSUB } || 
                              op == {1'd0, OP_QDADD} || 
                              op == {1'd0, OP_QDSUB})
-                                tmp_flags[27] = (v || i_shift_sat_ff || tmp_flags[27]) ? 1'd1 : 1'd0; // Sticky.
-                        else
-                                tmp_flags[31:28] = {n,z,c,v};
-                end
-
-                // Write out the result.
-                tmp_sum = op == {1'd0, CLZ} ? {26'd0, clz_rm} : sum[31:0]; 
-
-                // Saturating operations.
-                if ( op == {1'd0, OP_QADD } || 
-                     op == {1'd0, OP_QSUB } || 
-                     op == {1'd0, OP_QDADD} || 
-                     op == {1'd0, OP_QDSUB} )
-                begin        
-                        if ( v ) // result saturated due to ALU operation.
                         begin
-                                if ( op == {1'd0, OP_QADD} || op == {1'd0, OP_QDADD} )
-                                begin
-                                        // Find the direction of saturation.
-                                        if ( rm[31] )
-                                                tmp_sum = {1'd1, {31{1'd0}}};
-                                        else
-                                                tmp_sum = {1'd0, {31{1'd1}}};
-                                end
-                                else
-                                begin
-                                        // Use rn to determine saturation.
-                                        if ( rn[31] )
-                                                tmp_sum = {1'd1, {31{1'd0}}};
-                                        else
-                                                tmp_sum = {1'd0, {31{1'd1}}};
-                                end
+                                tmp_flags[27] = (v || i_shift_sat_ff || tmp_flags[27]) ? 1'd1 : 1'd0; 
+                        end
+                        else
+                        begin
+                                tmp_flags[31:28] = {n,z,c,v};
                         end
                 end
+
+                tmp_sum = sum[31:0];
         end
 
-        // Drive nxt pin of result register.
         o_alu_result_nxt = tmp_sum;
+end
+
+// Handle CLZ and saturating operations.
+always_comb
+begin
+        if ( opcode == {1'd0, CLZ} )
+        begin
+                tmp_sum_x = {26'd0, clz_rm};       
+                valid_x   = 1'd1;
+        end
+        else if 
+        ( 
+             opcode == {1'd0, OP_QADD } || 
+             opcode == {1'd0, OP_QSUB } || 
+             opcode == {1'd0, OP_QDADD} || 
+             opcode == {1'd0, OP_QDSUB} 
+        )
+        begin
+                if ( tmp_flags[27] ) // result saturated due to ALU operation.
+                begin
+                        valid_x = 1'd1;
+
+                        if ( opcode == {1'd0, OP_QADD} || opcode == {1'd0, OP_QDADD} )
+                        begin
+                                // Find the direction of saturation.
+                                if ( rm[31] )
+                                        tmp_sum_x = {1'd1, {31{1'd0}}};
+                                else
+                                        tmp_sum_x = {1'd0, {31{1'd1}}};
+                        end
+                        else
+                        begin
+                                // Use rn to determine saturation.
+                                if ( rn[31] )
+                                        tmp_sum_x = {1'd1, {31{1'd0}}};
+                                else
+                                        tmp_sum_x = {1'd0, {31{1'd1}}};
+                        end
+                end
+                else
+                begin
+                        valid_x   = 1'd0;
+                        tmp_sum_x = {32{1'dx}};
+                end
+        end
+        else
+        begin
+                valid_x   = 1'd0;
+                tmp_sum_x = {32{1'dx}};
+        end
 end
 
 // ----------------------------------------------------------------------------
