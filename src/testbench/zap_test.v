@@ -33,6 +33,8 @@
 module zap_test (
         input  wire            i_clk, 
         input  wire            i_reset,
+        input  wire            i_int_sel,
+
         output reg             o_sim_ok = 1'd0,
         output reg             o_sim_err = 1'd0,
         
@@ -176,6 +178,7 @@ chip_top #(
         .UART0_TXD(o_uart[0]),
         .UART1_RXD(i_uart[1]),
         .UART1_TXD(o_uart[1]),
+        .int_sel  (i_int_sel),
         .I_IRQ    (28'd0),
         .I_FIQ    (1'd0),
         .O_WB_STB (o_wb_stb),
@@ -277,6 +280,9 @@ parameter ONLY_CORE                     = 0
         // UART 1
         input  wire         UART1_RXD,
         output wire         UART1_TXD,
+
+        // Interrupt sel..
+        input wire          int_sel,
 
         // Remaining IRQs to the interrupt controller.
         input   wire [27:0] I_IRQ,              
@@ -427,10 +433,10 @@ zap_top #(
 ) 
 u_zap_top 
 (
-        .i_clk(i_clk),
-        .i_reset(i_reset),
-        .i_irq(global_irq),
-        .i_fiq    (I_FIQ),
+        .i_clk    (i_clk),
+        .i_reset  (i_reset),
+        .i_irq    (int_sel == 1'd0 ? global_irq : I_FIQ),
+        .i_fiq    (int_sel == 1'd1 ? global_irq : I_FIQ),
         .o_wb_cyc (data_wb_cyc),
         .o_wb_stb (data_wb_stb),
         .o_wb_adr (data_wb_adr),
@@ -875,7 +881,7 @@ begin
 
                                 default: 
                                 begin
-                                        $display($time, " Error : Attemting to write to illegal register in %m");
+                                        $display($time, " Error : Attemting to write to illegal register in %m at address %x", i_wb_adr);
                                         $finish;
                                 end
 
@@ -892,7 +898,7 @@ begin
 
                                 default:                
                                 begin
-                                        $display($time, " Error : Attempting to read from illegal register in %m.");
+                                        $display($time, " Error : Attempting to read from illegal register in %m at adress %x", i_wb_adr);
                                         $finish;
                                 end
                                 endcase
