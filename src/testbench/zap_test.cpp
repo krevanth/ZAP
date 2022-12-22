@@ -116,7 +116,8 @@ int main(int argc, char** argv, char** env) {
 
             if ( contextp->time() < RESET_CYCLES ) 
             {
-                zap_test->i_reset = 1;  
+                zap_test->i_reset = 1; 
+                zap_test->i_int_sel = (rand() & 0x1); // Select IRQ or FIQ port.
             } 
             else 
             {

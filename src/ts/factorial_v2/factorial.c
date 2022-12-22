@@ -21,79 +21,49 @@
 // --                                                                         --
 // -----------------------------------------------------------------------------
 
-.set USER_STACK_POINTER, 0x00002000
-.set IRQ_STACK_POINTER,  0x00003000
-.set FIQ_STACK_POINTER,  0x00004000
-.set VIC_BASE_ADDRESS,   0xFFFFFFA0
+/* Computes factorial and stores 3.14 in 2004 memory location. */
 
-.text
-.global _Reset
-_Reset:
+void main (void)
+{
+        char *x = (char *)2000;
+        float *y = (float*) 2004;
+        x[0] = 5;
+        x[1] = fact(x[0]);   
+        x[2] = 255;
+        x[3] = 255;
+        *y = 3.14;           
+}
 
-_Reset   : b there
-_Undef   : b _Undef
-_Swi     : b _Swi
-_Pabt    : b _Pabt
-_Dabt    : b _Dabt
-reserved : b reserved
-irq      : b sc_call
-fiq      : b sc_call
+int fact (int x)
+{
+        if ( x == 0 )
+                return 1;
+        else
+                return x * fact(x-1);
+}
 
-/*
- * This handler simply revectors IRQs to
- * a dedicated irq_handler function. This
- * is a common routine for IRQ and FIQ.
- */
-sc_call:
-sub r14, r14, #4
-stmfd sp!, {r0-r12, r14}
-bl irq_handler
-ldmfd sp!, {r0-r12, pc}^
+////////////////// VECTORS /////////////////////////
 
-there:
-/* 
- * Switch to IRQ mode.
- * Set up stack pointer.
- */
-mrs r2, cpsr
-bic r2, r2, #31
-orr r2, r2, #18
-msr cpsr_c, r2
-ldr sp, =IRQ_STACK_POINTER
+void __undef(void) {
+        return;
+} 
 
-/* 
- * Switch to FIQ mode.
- * Setup up stack pointer.
- */
-mrs r2, cpsr
-bic r2, r2, #31
-orr r2, r2, #17
-msr cpsr_c, r2
-ldr sp, =FIQ_STACK_POINTER
+void __swi (void) {
+        return;
+}
 
-/*
- * Switch to user mode with interrupts enabled.
- * Set up stack pointer.
- */
-mrs r2, cpsr
-bic r1, r1, #31
-orr r1, r1, #16
-bic r1, r1, #0xC0
-msr cpsr_c, r1
+void __pabt (void) {
+        return;
+}
 
-/*
- * Unmask all interrupts in the VIC.
- */
-ldr r0, =VIC_BASE_ADDRESS // VIC base address.
-add r0, r0, #4            // Move to INT_MASK
-mov r1, #0                // Prepare mask value
-str r1, [r0]              // Unmask all interrupt sources.
+void __dabt (void) {
+        return;
+}
 
-/*
- * Then call the main function. The main function
- * will initiallize UART0 in TX and RX.
- */
-ldr sp, =USER_STACK_POINTER
-bl main
-here: b here
+void __irq (void) {
+        return;
+}
 
+void __fiq (void) {
+        return;
+}

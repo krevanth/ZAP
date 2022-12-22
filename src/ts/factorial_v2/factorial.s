@@ -64,23 +64,21 @@ ldmfa sp!, {r0-r12, pc}^
 
 // IRQ.
 IRQ:
-sub r14, r14, #4
-stmfd sp!, {r0-r12, r14}
+stmfd sp!, {r0-r12}
 
-mov r0, #1
-mov r1, #2
-mov r2, #3
-mov r3, #4
-mov r4, #5
-mov r5, #6
-mov r6, #7
-mov r7, #8
-mov r8, #9
-mov r9, #10
+mov r0,  #1
+mov r1,  #2
+mov r2,  #3
+mov r3,  #4
+mov r4,  #5
+mov r5,  #6
+mov r6,  #7
+mov r7,  #8
+mov r8,  #9
+mov r9,  #10
 mov r10, #12
 mov r11, #13
 mov r12, #14
-mov r14, #15
 
 .set TIMER_BASE_ADDRESS, 0xFFFFFFC0
 
@@ -100,13 +98,12 @@ ldr r1, =CLEAR_ALL_PENDING
 str r1, [r0]                // Clear all interrupt pending status
 
 # Restore
-ldmfd sp!, {r0-r12, pc}^
+ldmfd sp!, {r0-r12}
+subs pc, lr, #4
 
 FIQ:
 
-# Correct return address and push to stack.
-sub r14, r14, #4
-stmfd sp!, {r0-r7, r14}
+stmfd sp!, {r0-r7}
 
 # Corrupt registers. Note that R8-R14 wont corrupt - so no need to push to stack.
 mov r0, #1
@@ -124,9 +121,6 @@ mov r9,  #10
 mov r10, #12
 mov r11, #13
 mov r12, #14
-
-# Corrupt return address. OK to do since we pushed to stack.
-mov r14, #15
 
 .set TIMER_BASE_ADDRESS, 0xFFFFFFC0
 
@@ -146,7 +140,8 @@ ldr r1, =CLEAR_ALL_PENDING
 str r1, [r0]                // Clear all interrupt pending status
 
 # Restore corrupted registers. Restore PC from stack.
-ldmfd sp!, {r0-r7, pc}^
+ldmfd sp!, {r0-r7}
+subs pc,lr,#4
 
 SWI:
 .set SWI_SP_VALUE,  2500
