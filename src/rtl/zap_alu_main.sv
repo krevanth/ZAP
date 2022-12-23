@@ -764,10 +764,11 @@ begin: flags_bp_feedback
         end
         else if ( (opcode == {1'd0, FMOV}) && o_dav_nxt ) // Writes to CPSR...
         begin
-                w_clear_from_alu        = 2'd1; // Need to flush everything because we might end up fetching stuff in KERNEL instead of USER mode.
+                w_clear_from_alu        = 2'd1; // Resync pipeline.
 
                 // USR cannot change mode. Will silently fail.
-                flags_nxt[`ZAP_CPSR_MODE]   = (flags_nxt[`ZAP_CPSR_MODE] == USR) ? USR : flags_nxt[`ZAP_CPSR_MODE]; // Security.
+                flags_nxt[23:0]   = (flags_ff[`ZAP_CPSR_MODE] == USR) ? flags_ff[23:0] : 
+                flags_nxt[23:0]; // Security.
         end
         else if ( i_destination_index_ff == {2'd0, ARCH_PC} && (i_condition_code_ff != NV))
         begin
@@ -776,11 +777,10 @@ begin: flags_bp_feedback
                         o_destination_index_nxt     = PHY_RAZ_REGISTER;
                         w_clear_from_alu            = 2'd2;
 
-                        flags_nxt                   = i_mem_srcdest_value_ff;   
-                        // Restore CPSR from SPSR.
+                        flags_nxt                   = i_mem_srcdest_value_ff;   // Restore CPSR from SPSR.
 
-                        flags_nxt[`ZAP_CPSR_MODE]   = (flags_nxt[`ZAP_CPSR_MODE] == USR) ? 
-                        USR : flags_nxt[`ZAP_CPSR_MODE]; // Security.
+                        flags_nxt[23:0]   = (flags_ff[`ZAP_CPSR_MODE] == USR) ? flags_ff[23:0] : 
+                        flags_nxt[23:0]; // Security.
                 end
                 else if ( o_dav_nxt ) // Branch taken and no flag update.
                 begin
