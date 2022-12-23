@@ -759,7 +759,6 @@ always_comb
 begin: flags_bp_feedback
 
         w_clear_from_alu         = 2'd0;
-        sleep_nxt                = sleep_ff;
         flags_nxt                = tmp_flags;
         o_destination_index_nxt  = i_destination_index_ff;
         w_confirm_from_alu       = 1'd0;
