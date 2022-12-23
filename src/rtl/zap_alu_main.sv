@@ -353,7 +353,7 @@ begin
         rm          = i_shifted_source_value_ff;
         rn          = i_alu_source_value_ff;
         o_flags_ff  = flags_ff;
-        o_flags_nxt = flags_nxt;
+        o_flags_nxt = o_dav_nxt ? flags_nxt : flags_ff;
 end
 
 // -----------------------------------------------------------------------------
@@ -399,7 +399,7 @@ begin
                 o_dav_ff                         <= o_dav_nxt;                
                 o_pc_plus_8_ff                   <= i_pc_plus_8_ff;
                 o_destination_index_ff           <= o_destination_index_nxt;
-                flags_ff                         <= flags_nxt;
+                flags_ff                         <= o_flags_nxt;
                 o_abt_ff                         <= i_abt_ff;
                 o_taken_ff                       <= i_taken_ff;
                 o_irq_ff                         <= i_irq_ff;
@@ -728,18 +728,20 @@ end
 // ----------------------------------------------------------------------------
 
 always_comb
-begin: flags_bp_feedback
+begin
+        o_dav_nxt  = is_cc_satisfied ( i_condition_code_ff, flags_ff[31:28] );
+        o_dav_nxt |= i_irq_ff || i_fiq_ff || i_abt_ff || i_und_ff;
+end
 
-        w_clear_from_alu         = 2'd0;
+always_comb
+begin
+        sleep_nxt  = i_irq_ff || i_fiq_ff || i_abt_ff || i_und_ff || (i_swi_ff && o_dav_nxt);
+        sleep_nxt |= i_mem_srcdest_index_ff == {2'd0, ARCH_PC} && o_dav_nxt && i_mem_load_ff;
+end
 
-        sleep_nxt                = sleep_ff;
-        flags_nxt                = tmp_flags;
-        o_destination_index_nxt  = i_destination_index_ff;
-        w_confirm_from_alu       = 1'd0;
-
-         // Check if condition is satisfied.
-        o_dav_nxt = is_cc_satisfied ( i_condition_code_ff, flags_ff[31:28] );
-
+// Debug
+always_comb
+begin
         // Decompile valid. Valid condition code but unqualified.
         if ( i_condition_code_ff != NV && !o_dav_nxt )
         begin
@@ -751,18 +753,18 @@ begin: flags_bp_feedback
                 o_decompile_valid_nxt = 1'd0;
                 o_uop_last_nxt        = o_dav_nxt ? i_uop_last : 1'd0;
         end
+end
 
-        if ( i_irq_ff || i_fiq_ff || i_abt_ff || (i_swi_ff && o_dav_nxt) || i_und_ff ) 
-        begin
-                //
-                // Any sign of an interrupt is present, put unit to sleep.
-                // The current instruction will not be executed ultimately.
-                // However o_dav_nxt = 1 since interrupt must be carried on.
-                //
-                o_dav_nxt = 1'd1;
-                sleep_nxt = 1'd1;
-        end
-        else if ( (opcode == {1'd0, FMOV}) && o_dav_nxt ) // Writes to CPSR...
+always_comb
+begin: flags_bp_feedback
+
+        w_clear_from_alu         = 2'd0;
+        sleep_nxt                = sleep_ff;
+        flags_nxt                = tmp_flags;
+        o_destination_index_nxt  = i_destination_index_ff;
+        w_confirm_from_alu       = 1'd0;
+
+        if ( (opcode == {1'd0, FMOV}) && o_dav_nxt ) // Writes to CPSR...
         begin
                 w_clear_from_alu        = 2'd1; // Resync pipeline.
 
@@ -862,15 +864,6 @@ begin: flags_bp_feedback
                         end
                 end
         end
-        else if ( i_mem_srcdest_index_ff == {2'd0, ARCH_PC} && o_dav_nxt && i_mem_load_ff)
-        begin
-                // Loads to PC also puts the unit to sleep.
-                sleep_nxt = 1'd1;
-        end
-
-        // If the current instruction is invalid, do not update flags.
-        if ( o_dav_nxt == 1'd0 ) 
-                flags_nxt = flags_ff;
 end
 
 // ----------------------------------------------------------------------------
