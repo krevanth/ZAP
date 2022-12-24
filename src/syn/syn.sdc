@@ -21,16 +21,15 @@
 # // --                                                                       --
 # // ---------------------------------------------------------------------------
 
-create_clock -period 5.000 -name i_clk [get_ports i_clk]
+# Target 160MHz clock speed.
+create_clock -period 6.25 -name i_clk [get_ports i_clk]
 
-# Synchros present, so false path.
-set_false_path -through [get_ports i_fiq]
-set_false_path -through [get_ports i_irq]
-
-# i_wb_ack/data/reset must be driven with very little logic (~100ps) on the path.
-set_input_delay -clock [get_clocks i_clk] -add_delay 0.100 [get_ports {i_wb_dat[*]}]
-set_input_delay -clock [get_clocks i_clk] -add_delay 0.100 [get_ports i_reset]
-set_input_delay -clock [get_clocks i_clk] -add_delay 0.100 [get_ports i_wb_ack]
+# Inputs are directly driven from FF.
+set_input_delay -clock [get_clocks i_clk] -add_delay 1.000 [get_ports i_fiq]
+set_input_delay -clock [get_clocks i_clk] -add_delay 1.000 [get_ports i_irq]
+set_input_delay -clock [get_clocks i_clk] -add_delay 1.000 [get_ports {i_wb_dat[*]}]
+set_input_delay -clock [get_clocks i_clk] -add_delay 1.000 [get_ports i_reset]
+set_input_delay -clock [get_clocks i_clk] -add_delay 1.000 [get_ports i_wb_ack]
 
 # Output pin configuration.
 set_output_delay -clock [get_clocks i_clk] -max -add_delay 2.000 [get_ports {o_wb_adr[*]}]
