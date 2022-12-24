@@ -686,12 +686,9 @@ Timing report will be available in `obj/syn/syn_timing.rpt`
 
 #### 3.4.1. XDC Setup (Vivado FPGA Synthesis)
 
-* The XDC assumes a 200MHz clock for an Artix 7 FPGA part with -3 speed grade.
-* IRQ and FIQ inputs are set to false path due to internal synchronizers.
-* Reset is assumed to be driven directly from a DFF (Tcq ~ 100ps).
-* Wishbone response signals are assumed to be directly driven from a register (Tcq ~ 100ps).
-* Outputs assume they are driving a flop with Tsu = 2ns Th=1ns.
-* Setting FPGA synthesis clock to an unreasonably high FPGA design frequency may result in better timing closure (but will result in a larger FPGA design).
+* The XDC assumes a 160MHz clock for an Artix 7 FPGA part with -3 speed grade.
+* All inputs are given an input delay of 1ns, typical for an FPGA flip-flop.
+* Outputs assume they are driving flip-flops with Tsu = 2ns Th=1ns.
 
 ## 4. References
 
