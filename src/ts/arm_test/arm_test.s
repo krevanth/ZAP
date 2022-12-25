@@ -722,6 +722,16 @@ test_adder:
         bmi fail
         bcc fail
 
+        @test 7 - check SBC and RSC
+        mov r2, #0x4
+        mov r1, #0x5
+        sbc r3, r2, r1
+        adds r3, #1
+        bne fail
+        rsc r3, r1, r2
+        adds r3, #1
+        bne fail
+
         mov r0, #0
         bx lr
 

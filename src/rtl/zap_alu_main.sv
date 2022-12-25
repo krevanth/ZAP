@@ -917,13 +917,13 @@ begin: adder_ip_mux
         begin              
                 op1 = rn     ; 
                 op2 = not_rm ; 
-                cin = !flag  ;              
+                cin = flag  ; 
         end
         {2'd0, RSC}: 
         begin              
                 op1 = rm     ; 
                 op2 = not_rn ; 
-                cin = !flag  ;              
+                cin = flag  ;              
         end
 
         // Target is not written.
