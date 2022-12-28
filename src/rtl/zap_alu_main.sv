@@ -300,7 +300,7 @@ always_comb mem_srcdest_value_nxt =  duplicate (
 // Adder
 // -------------------------------------------------------------------------------
 
-zap_adder u_zap_adder ( .a(op1), .b(op2), .c(cin), .sum(sum));
+assign sum[32:0] = {1'd0, op1} + {1'd0, op2} + {32'd0, cin};
 
 // -------------------------------------------------------------------------------
 // CLZ logic.
@@ -626,8 +626,8 @@ begin: alu_result
                 n = sum[31];
 
                 // Overflow.
-                if ( ( op == {2'd0, ADD}   ||
-                       op == {2'd0, ADC}   ||
+                if ( ( op == {2'd0, ADD}      ||
+                       op == {2'd0, ADC}      ||
                        op == {1'd0, OP_QADD}  ||
                        op == {1'd0, OP_QDADD} ||
                        op == {2'd0, CMN} ) && (rn[31] == rm[31]) && (sum[31] != rn[31]) )
