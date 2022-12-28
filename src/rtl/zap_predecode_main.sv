@@ -114,7 +114,6 @@ module zap_predecode_main #( parameter PHY_REGS = 46, parameter RAS_DEPTH = 8 )
 
 logic                               copro_dav_nxt;
 logic [31:0]                        copro_word_nxt;
-logic                               dbg;
 logic                               w_clear_from_decode;
 logic [31:0]                        w_pc_from_decode;
 logic [39:0]                        o_instruction_nxt;
@@ -410,15 +409,10 @@ always_comb arm_fiq                  = cp_fiq;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-wire unused;
-assign unused = |dbg;
-
 always_comb
 begin:bprblk1
         logic [31:0] addr;
         logic [31:0] addr_final;
-
-        dbg = 1'd0;
 
         o_clear_btb             = 1'd0;
         w_clear_from_decode     = 1'd0;
@@ -510,7 +504,6 @@ begin:bprblk1
                   )
                 )
         begin
-                dbg = 1'd1;
 
                 // Predicted as taken.
                 if ( skid_taken == WT || skid_taken == ST || arm_instruction[31:28] == AL )
@@ -561,10 +554,12 @@ begin:bprblk1
         begin
                 // Jump table. Do what the BTB says. Dont correct it.
         end
-        else if (arm_instruction_valid) // Predict non supported as strongly not taken.
+        else if (arm_instruction_valid)
+        // Predict non supported instructions as strongly not taken.
         begin
                 taken_nxt = SNT;
 
+                // Clear out the BTB.
                 if ( skid_pred[32] )
                 begin
                         w_clear_from_decode = 1'd1;
