@@ -117,7 +117,13 @@ module zap_writeback #(
         output logic     [31:0]               o_pc_check,
         output logic     [31:0]               o_pc_nxt,
 
-        // Predict.
+        // Branch state.
+        output logic     [1:0]                o_taken,
+
+        //
+        // Predict. MSB is valid indication and the rest indicates the
+        // PC predicted. If MSB=0, ignore this.
+        //
         output logic     [32:0]               o_pred,
 
         // CPSR output
@@ -255,6 +261,7 @@ begin: blk1
         end
         else if ( clear_from_btb && pc_del3_ff[32] ) // Lowest priority now.
         begin
+                // Set MSB to 1 to indicate the BTB predicted this.
                 pc_shelve (pc_from_btb);
                 o_pred = {1'd1, pc_from_btb};
         end
@@ -461,7 +468,8 @@ zap_btb #(.BP_ENTRIES(BP_ENTRIES)) u_zap_btb (
         .i_rd_addr(pc_del_ff[31:0]),
         .i_rd_addr_del(pc_del2_ff[31:0]),
         .o_clear_from_btb(clear_from_btb),
-        .o_pc_from_btb(pc_from_btb)
+        .o_pc_from_btb(pc_from_btb),
+        .o_branch_state(o_taken)
 );
 
 // ----------------------------------------------------------------------------

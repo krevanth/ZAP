@@ -81,7 +81,13 @@ module zap_btb #(
 
         // BTB control path change.
         output logic        o_clear_from_btb,
-        output logic [31:0] o_pc_from_btb
+        output logic [31:0] o_pc_from_btb,
+
+        /////////////////////////
+        // Branch state.
+        /////////////////////////
+
+        output logic [1:0]  o_branch_state
 );
 
 `include "zap_localparams.svh"
@@ -177,9 +183,12 @@ begin
         begin
                 o_clear_from_btb <= 1'd0;
                 o_pc_from_btb    <= 32'd0;
+                o_branch_state   <= 2'd0;
         end
         else if ( !i_stall )
         begin
+                o_branch_state <= mem_rd_data.state;
+
                 //
                 // If the tag matches and prediction is taken, resync
                 // the pipeline to the predicted address.

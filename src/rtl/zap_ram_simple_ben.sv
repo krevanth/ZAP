@@ -26,6 +26,11 @@
 //
 // This memory has a read latency of 3 cycles.
 //
+// We cannot generalize this memory to every case because we may need
+// memories whose widths are less than a byte. Although it is possible
+// to merge multiple rows of such memories into a single column, we choose
+// to have a separate memory system with byte enables not present.
+//
 
 module zap_ram_simple_ben #(
         parameter bit [31:0] WIDTH = 32'd32,
@@ -55,14 +60,16 @@ module zap_ram_simple_ben #(
         output logic [WIDTH-1:0]             o_rd_data
 );
 
-// ----------------------------------------------------------------------------
-// Stage 1
-// ----------------------------------------------------------------------------
+initial
+begin
+        assert ( WIDTH % 8 == 0 ) else
+        $fatal(2, "RAM width not a multiple of bytes.");
+end
 
-// Memory array.
+// Note that the sel_* signals are bytewise, simply because writes can only
+// target a byte.
+
 logic [WIDTH-1:0] mem [DEPTH-1:0];
-
-// Hazard detection.
 logic [WIDTH-1:0]         mem_data_st1, mem_data_st2;
 logic [WIDTH-1:0]         buffer_st1, buffer_st2, buffer_st2_x;
 logic [WIDTH/8-1:0][1:0]  sel_st1;

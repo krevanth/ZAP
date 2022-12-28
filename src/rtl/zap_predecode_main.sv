@@ -146,8 +146,6 @@ logic [31:0]                        skid_pc_plus_8_ff;
 logic [RAS_DEPTH-1:0][31:0]         ras_ff, ras_nxt;
 logic [$clog2(RAS_DEPTH)-1:0]       ras_ptr_ff, ras_ptr_nxt;
 
-///////////////////////////////////////////////////////////////////////////////
-
 // Flop the outputs to break the pipeline at this point.
 always_ff @ (posedge i_clk)
 begin
@@ -246,8 +244,6 @@ begin
                 o_clear_from_decode                     <= 0;
 end
 endtask
-
-///////////////////////////////////////////////////////////////////////////////
 
 always_ff @ ( posedge i_clk)
 begin
@@ -348,8 +344,6 @@ begin
         end
 end
 
-///////////////////////////////////////////////////////////////////////////////
-
 // This unit handles coprocessor stuff.
 zap_predecode_coproc
 #(
@@ -395,17 +389,10 @@ u_zap_decode_coproc
         .o_copro_word_nxt(copro_word_nxt)
 );
 
-
-
-///////////////////////////////////////////////////////////////////////////////
-
-// Alias.
-always_comb arm_instruction          = cp_instruction;
-always_comb arm_instruction_valid    = cp_instruction_valid;
-always_comb arm_irq                  = cp_irq;
-always_comb arm_fiq                  = cp_fiq;
-
-///////////////////////////////////////////////////////////////////////////////
+assign arm_instruction          = cp_instruction;
+assign arm_instruction_valid    = cp_instruction_valid;
+assign arm_irq                  = cp_irq;
+assign arm_fiq                  = cp_fiq;
 
 always_comb
 begin:bprblk1
@@ -426,11 +413,13 @@ begin:bprblk1
         else                            // Indicates a left shift of 2 i.e., X = X * 4.
                 addr_final = addr << 2;
 
+        //
         // Is it an instruction that we support ?
         // Proccessor recognizes:
         // 1. BL as a function call.
         // 2. MOV PC, LR as a function return.
         // 3. BX LR as a function return.
+        //
 
         // Bcc[L] <offset>. Function call.
         if ( arm_instruction[27:25] == 3'b101 && arm_instruction_valid )
@@ -572,8 +561,6 @@ begin:bprblk1
         end
 end
 
-///////////////////////////////////////////////////////////////////////////////
-
 // This FSM handles LDM/STM/SWAP/SWAPB/BL/LMULT
 zap_predecode_uop_sequencer u_zap_uop_sequencer (
         .i_clk(i_clk),
@@ -600,8 +587,6 @@ zap_predecode_uop_sequencer u_zap_uop_sequencer (
         .o_uop_last(o_uop_last_nxt),
         .o_stall_from_decode(mem_fetch_stall)
 );
-
-///////////////////////////////////////////////////////////////////////////////
 
 endmodule
 
