@@ -1,7 +1,7 @@
 // -----------------------------------------------------------------------------
 // --                                                                         --
 // --    (C) 2016-2022 Revanth Kamaraj (krevanth)                             --
-// --                                                                         -- 
+// --                                                                         --
 // -- --------------------------------------------------------------------------
 // --                                                                         --
 // -- This program is free software; you can redistribute it and/or           --
@@ -21,7 +21,7 @@
 // --                                                                         --
 // -----------------------------------------------------------------------------
 
-module zap_btb #(parameter BP_ENTRIES=1024) ( 
+module zap_btb #(parameter BP_ENTRIES=1024) (
         input logic         i_clk,
         input logic         i_reset,
         input logic         i_stall,
@@ -29,17 +29,17 @@ module zap_btb #(parameter BP_ENTRIES=1024) (
 
         // Feedback path.
         input logic         i_fb_ok,
-        input logic         i_fb_nok,              
+        input logic         i_fb_nok,
         input logic [31:0]  i_fb_branch_src_address,
         input logic [1:0]   i_fb_current_branch_state,
-        input logic [31:0]  i_fb_branch_dest_address,   
-        
+        input logic [31:0]  i_fb_branch_dest_address,
+
         // Live read path.
         input logic [31:0]  i_rd_addr,
         input logic [31:0]  i_rd_addr_del,
         output logic        o_clear_from_btb,
         output logic [31:0] o_pc_from_btb
-);        
+);
 
 `include "zap_localparams.svh"
 `include "zap_functions.svh"
@@ -51,8 +51,8 @@ logic unused;
 
 always_comb
 begin
-        unused = |{i_rd_addr[0],  
-                   i_rd_addr    [31:$clog2(BP_ENTRIES)+1], 
+        unused = |{i_rd_addr[0],
+                   i_rd_addr    [31:$clog2(BP_ENTRIES)+1],
                    i_rd_addr_del[$clog2(BP_ENTRIES):0],
                    i_fb_branch_src_address[0]};
 end
@@ -71,8 +71,8 @@ zap_ram_simple_nopipe #(.DEPTH(BP_ENTRIES), .WIDTH(MAX_WDT)) u_br_ram
         .i_rd_addr(i_rd_addr[$clog2(BP_ENTRIES):1]),
 
         //{target, tag, state}
-        .i_wr_data({i_fb_branch_dest_address, 
-                    i_fb_branch_src_address[$clog2(BP_ENTRIES)+1+TAG_WDT-1:$clog2(BP_ENTRIES)+1], 
+        .i_wr_data({i_fb_branch_dest_address,
+                    i_fb_branch_src_address[$clog2(BP_ENTRIES)+1+TAG_WDT-1:$clog2(BP_ENTRIES)+1],
                     compute(i_fb_current_branch_state, i_fb_nok)}),
 
         .i_rd_en  (!i_stall),
@@ -110,7 +110,7 @@ end
 // Tag check and clear generation logic. Use RAM data.
 always_ff @ ( posedge i_clk )
 begin
-        if ( i_reset )  
+        if ( i_reset )
         begin
                 o_clear_from_btb <= 1'd0;
                 o_pc_from_btb    <= 32'd0;
@@ -118,12 +118,12 @@ begin
         else if ( !i_stall )
         begin
                 if ( (
-                        i_rd_addr_del[$clog2(BP_ENTRIES)+1+TAG_WDT-1:$clog2(BP_ENTRIES)+1] == 
-                        rd_data[TAG_WDT + 1 : 2]) 
-                        && 
-                        bp_dav                                                                                          
-                        && 
-                        (rd_data[1:0] == WT || rd_data[1:0] == ST) 
+                        i_rd_addr_del[$clog2(BP_ENTRIES)+1+TAG_WDT-1:$clog2(BP_ENTRIES)+1] ==
+                        rd_data[TAG_WDT + 1 : 2])
+                        &&
+                        bp_dav
+                        &&
+                        (rd_data[1:0] == WT || rd_data[1:0] == ST)
                 )
                 begin
                         o_clear_from_btb <= 1'd1;

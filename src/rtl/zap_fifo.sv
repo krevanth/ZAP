@@ -1,7 +1,7 @@
 // -----------------------------------------------------------------------------
 // --                                                                         --
 // --    (C) 2016-2022 Revanth Kamaraj (krevanth)                             --
-// --                                                                         -- 
+// --                                                                         --
 // -- --------------------------------------------------------------------------
 // --                                                                         --
 // -- This program is free software; you can redistribute it and/or           --
@@ -20,8 +20,6 @@
 // -- 02110-1301, USA.                                                        --
 // --                                                                         --
 // -----------------------------------------------------------------------------
-
-
 
 module zap_fifo #(parameter WDT = 32, DEPTH = 8) (
 
@@ -46,7 +44,7 @@ output logic            o_valid, // Output valid.
 output logic            o_full   // FIFO full.
 );
 
-logic clear, rd_en; 
+logic clear, rd_en;
 logic [WDT-1:0] instr;
 logic valid;
 
@@ -94,7 +92,7 @@ zap_sync_fifo #(.WIDTH(WDT), .DEPTH(DEPTH), .FWFT(32'd1)) USF (
 always_ff @ ( posedge i_clk )
 begin
         if ( i_reset )
-        begin   
+        begin
                 o_valid <= 1'd0;
         end
         else if ( clear )

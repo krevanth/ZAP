@@ -1,7 +1,7 @@
 // -----------------------------------------------------------------------------
 // --                                                                         --
 // --    (C) 2016-2022 Revanth Kamaraj (krevanth)                             --
-// --                                                                         -- 
+// --                                                                         --
 // -- --------------------------------------------------------------------------
 // --                                                                         --
 // -- This program is free software; you can redistribute it and/or           --
@@ -20,7 +20,7 @@
 // -- 02110-1301, USA.                                                        --
 // --                                                                         --
 // -----------------------------------------------------------------------------
-// --                                                                         -- 
+// --                                                                         --
 // -- Merges two Wishbone busses onto a single bus. One side can from the     --
 // -- instruction cache while the other from data cache. This module can      --
 // -- be used to connect I and D caches to a common interface.                --
@@ -29,8 +29,8 @@
 
 module zap_wb_merger #(parameter ONLY_CORE = 1'd0) (
 
-// Clock and reset       
-input logic i_clk,   
+// Clock and reset
+input logic i_clk,
 input logic i_reset,
 
 // Wishbone bus 1
@@ -134,7 +134,7 @@ begin: genblk1
                         o_wb_stb <= 0;
                         o_wb_wen <= 0;
                         o_wb_sel <= 0;
-                        o_wb_dat <= 0;                                
+                        o_wb_dat <= 0;
                         o_wb_adr <= 0;
                         o_wb_cti <= CTI_EOB;
                 end
@@ -144,9 +144,9 @@ begin: genblk1
                         o_wb_stb <= i_c_wb_stb;
                         o_wb_wen <= i_c_wb_wen;
                         o_wb_sel <= i_c_wb_sel;
-                        o_wb_dat <= i_c_wb_dat;                                
+                        o_wb_dat <= i_c_wb_dat;
                         o_wb_adr <= i_c_wb_adr;
-                        o_wb_cti <= i_c_wb_cti;               
+                        o_wb_cti <= i_c_wb_cti;
                 end
                 else
                 begin
@@ -154,9 +154,9 @@ begin: genblk1
                         o_wb_stb <= i_d_wb_stb;
                         o_wb_wen <= i_d_wb_wen;
                         o_wb_sel <= i_d_wb_sel;
-                        o_wb_dat <= i_d_wb_dat;                                
+                        o_wb_dat <= i_d_wb_dat;
                         o_wb_adr <= i_d_wb_adr;
-                        o_wb_cti <= i_d_wb_cti; 
+                        o_wb_cti <= i_d_wb_cti;
                 end
         end
 
@@ -174,9 +174,9 @@ begin: genblk2
                         o_wb_stb = i_c_wb_stb;
                         o_wb_wen = i_c_wb_wen;
                         o_wb_sel = i_c_wb_sel;
-                        o_wb_dat = i_c_wb_dat;                                
+                        o_wb_dat = i_c_wb_dat;
                         o_wb_adr = i_c_wb_adr;
-                        o_wb_cti = i_c_wb_cti;               
+                        o_wb_cti = i_c_wb_cti;
                 end
                 else
                 begin
@@ -184,12 +184,12 @@ begin: genblk2
                         o_wb_stb = i_d_wb_stb;
                         o_wb_wen = i_d_wb_wen;
                         o_wb_sel = i_d_wb_sel;
-                        o_wb_dat = i_d_wb_dat;                                
+                        o_wb_dat = i_d_wb_dat;
                         o_wb_adr = i_d_wb_adr;
-                        o_wb_cti = i_d_wb_cti; 
+                        o_wb_cti = i_d_wb_cti;
                 end
-        end       
-end: genblk2 
+        end
+end: genblk2
 endgenerate
 
 endmodule

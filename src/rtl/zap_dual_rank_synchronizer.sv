@@ -1,7 +1,7 @@
 // -----------------------------------------------------------------------------
 // --                                                                         --
 // --    (C) 2016-2022 Revanth Kamaraj (krevanth)                             --
-// --                                                                         -- 
+// --                                                                         --
 // -- --------------------------------------------------------------------------
 // --                                                                         --
 // -- This program is free software; you can redistribute it and/or           --
@@ -21,14 +21,14 @@
 // --                                                                         --
 // -----------------------------------------------------------------------------
 
-module zap_dual_rank_synchronizer 
+module zap_dual_rank_synchronizer
 #(
         parameter WIDTH=1
-) 
+)
 (
-        input logic i_clk, 
+        input logic i_clk,
         input logic i_reset,
-        input logic [WIDTH-1:0] in, 
+        input logic [WIDTH-1:0] in,
         output logic [WIDTH-1:0] out
 );
 

@@ -27,8 +27,8 @@
 
 // FWFT means "First Word Fall Through".
 module zap_sync_fifo #(
-        parameter [31:0] WIDTH            = 32'd32, 
-        parameter [31:0] DEPTH            = 32'd32, 
+        parameter [31:0] WIDTH            = 32'd32,
+        parameter [31:0] DEPTH            = 32'd32,
         parameter [31:0] FWFT             = 32'd1
 )
 (
@@ -61,7 +61,7 @@ logic [PTR_WDT-1:0] wptr_ff;
 logic               empty, nempty;
 logic               full, nfull;
 logic [PTR_WDT-1:0] wptr_nxt;
-logic [WIDTH-1:0]   mem [DEPTH-1:0]; 
+logic [WIDTH-1:0]   mem [DEPTH-1:0];
 logic               unused;
 
 // Assigns

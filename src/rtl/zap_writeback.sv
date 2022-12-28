@@ -1,7 +1,7 @@
 // -----------------------------------------------------------------------------
 // --                                                                         --
 // --    (C) 2016-2022 Revanth Kamaraj (krevanth)                             --
-// --                                                                         -- 
+// --                                                                         --
 // -- --------------------------------------------------------------------------
 // --                                                                         --
 // -- This program is free software; you can redistribute it and/or           --
@@ -39,12 +39,18 @@ module zap_writeback #(
         // Shelve output.
         output logic                          o_shelve,
 
+        // PID
+        input   logic [6:0]                   i_cpu_pid,
+
+        // L4 enable.
+        input   logic                         i_l4_enable,
+
         // Clear BTB
         input   logic                         i_clear_btb,
 
         // Clock and reset.
-        input logic                           i_clk, 
-        input logic                           i_reset,   
+        input logic                           i_clk,
+        input logic                           i_reset,
 
         // Inputs from memory unit valid signal.
         input logic                           i_valid,
@@ -63,9 +69,9 @@ module zap_writeback #(
         input logic [1:0]                     i_taken,            // Added
 
         // 4 read ports for high performance.
-        input logic   [$clog2(PHY_REGS)-1:0] i_rd_index_0, 
-        input logic   [$clog2(PHY_REGS)-1:0] i_rd_index_1, 
-        input logic   [$clog2(PHY_REGS)-1:0] i_rd_index_2, 
+        input logic   [$clog2(PHY_REGS)-1:0] i_rd_index_0,
+        input logic   [$clog2(PHY_REGS)-1:0] i_rd_index_1,
+        input logic   [$clog2(PHY_REGS)-1:0] i_rd_index_2,
         input logic   [$clog2(PHY_REGS)-1:0] i_rd_index_3,
 
         // Memory load indicator.
@@ -86,7 +92,7 @@ module zap_writeback #(
         input   logic                         i_fiq,
         input   logic                         i_instr_abt,
         input   logic [1:0]                   i_data_abt,
-        input   logic                         i_swi,    
+        input   logic                         i_swi,
         input   logic                         i_und,
 
         // Program counter, PC + 8. This value is captured in the fetch
@@ -101,9 +107,9 @@ module zap_writeback #(
         output logic      [31:0]                 o_copro_reg_rd_data_ff,
 
         // Read data from the register file.
-        output logic     [31:0]               o_rd_data_0,         
-        output logic     [31:0]               o_rd_data_1,         
-        output logic     [31:0]               o_rd_data_2,         
+        output logic     [31:0]               o_rd_data_0,
+        output logic     [31:0]               o_rd_data_1,
+        output logic     [31:0]               o_rd_data_2,
         output logic     [31:0]               o_rd_data_3,
 
         // Program counter (dedicated port).
@@ -126,7 +132,7 @@ module zap_writeback #(
 
         // Trace
         output logic [2047:0]                o_trace,
-        output logic                         o_trace_valid, 
+        output logic                         o_trace_valid,
         output logic                         o_trace_uop_last
 );
 
@@ -169,7 +175,7 @@ always_comb  o_wb_cyc     = pc_del3_ff[32];
 zap_register_file u_zap_register_file
 (
 .i_clk(i_clk),
- .i_reset        (       i_reset         ),       
+ .i_reset        (       i_reset         ),
 
  .i_wr_addr_a    (       wa1             ),
  .i_wr_addr_b    (       wa2             ),
@@ -179,7 +185,7 @@ zap_register_file u_zap_register_file
  .i_wr_data_b    (       wdata2          ),
  .i_wr_data_c    (     i_wr_data_2       ),
 
- .i_wen          (       wen             ),        
+ .i_wen          (       wen             ),
 
  .i_rd_addr_a    ( i_copro_reg_en ? i_copro_reg_rd_index : i_rd_index_0 ),
  .i_rd_addr_b    (       i_rd_index_1    ),
@@ -262,20 +268,20 @@ begin: blk1
 
         // -------------- High priority PC control tree -------------------------
         // The stuff below has more priority than the above. This means even in
-        // a global stall, interrupts can overtake execution. Further, writes to 
-        // PC that reach writeback can cancel a global stall. On interrupts or 
+        // a global stall, interrupts can overtake execution. Further, writes to
+        // PC that reach writeback can cancel a global stall. On interrupts or
         // jumps, all units are flushed effectively clearing any global stalls.
         // -----------------------------------------------------------------------
-             
+
         if ( i_data_abt[1] )
         begin
                 pc_shelve ( arm_mode ? i_pc_plus_8_buf_ff - 8 : i_pc_plus_8_buf_ff - 4 );
                 o_clear_from_writeback = 1'd1;
-        end   
+        end
         else if ( i_data_abt[0] )
         begin
                 // Returns do LR - 8 to get back to the same instruction.
-                pc_shelve( DABT_VECTOR ); 
+                pc_shelve( DABT_VECTOR );
 
                 wen                     = 1;
                 wdata1                  = arm_mode ? i_pc_plus_8_buf_ff : i_pc_plus_8_buf_ff + 4;
@@ -289,7 +295,7 @@ begin: blk1
         else if ( i_fiq )
         begin
                 // Returns do LR - 4 to get back to the same instruction.
-                pc_shelve ( FIQ_VECTOR ); 
+                pc_shelve ( FIQ_VECTOR );
 
                 wen                     = 1;
                 wdata1                  = arm_mode ? i_wr_data : i_pc_plus_8_buf_ff ;
@@ -303,7 +309,7 @@ begin: blk1
         end
         else if ( i_irq )
         begin
-                pc_shelve (IRQ_VECTOR); 
+                pc_shelve (IRQ_VECTOR);
 
                 wen                     = 1;
                 wdata1                  = arm_mode ? i_wr_data : i_pc_plus_8_buf_ff ;
@@ -318,7 +324,7 @@ begin: blk1
         else if ( i_instr_abt )
         begin
                 // Returns do LR - 4 to get back to the same instruction.
-                pc_shelve (PABT_VECTOR); 
+                pc_shelve (PABT_VECTOR);
 
                 wen    = 1;
                 wdata1 = arm_mode ? i_wr_data : i_pc_plus_8_buf_ff ;
@@ -332,7 +338,7 @@ begin: blk1
         else if ( i_swi )
         begin
                 // Returns do LR to return to the next instruction.
-                pc_shelve(SWI_VECTOR); 
+                pc_shelve(SWI_VECTOR);
 
                 wen                     = 1;
                 wdata1                  = arm_mode ? i_wr_data : i_pc_plus_8_buf_ff ;
@@ -346,7 +352,7 @@ begin: blk1
         else if ( i_und )
         begin
                 // Returns do LR to return to the next instruction.
-                pc_shelve(UND_VECTOR); 
+                pc_shelve(UND_VECTOR);
 
                 wen                     = 1;
                 wdata1                  = arm_mode ? i_wr_data : i_pc_plus_8_buf_ff ;
@@ -385,12 +391,21 @@ begin: blk1
                 begin
                         pc_shelve (i_wr_data_1);
                         o_clear_from_writeback  = 1'd1;
-                        cpsr_nxt[T]             = i_wr_data_1[0]; // Switch A/T state.
+
+                        // Switch state only if this is 0.
+                        if ( i_l4_enable == 1'd0 )
+                        begin
+                                cpsr_nxt[T] = i_wr_data_1[0];
+                        end
                 end
         end
 
         // lower bit of pc = 0.
         pc_nxt[0] = 1'd0;
+
+        // FCSE
+        if ( pc_nxt[31:25] == 0 )
+                pc_nxt[31:25] = i_cpu_pid;
 end
 
 // ----------------------------------------------------------------------------
@@ -531,30 +546,30 @@ endfunction
                 end
                 else if ( i_copro_reg_en  )
                 begin
-                        $sformat(msg_nxt, 
-                                "CP15_ASYNC_UPDATE:idx=%x data=%x", 
+                        $sformat(msg_nxt,
+                                "CP15_ASYNC_UPDATE:idx=%x data=%x",
                                  i_copro_reg_wr_index, i_copro_reg_wr_data);
                 end
                 else if ( i_valid )
                 begin
-                        $sformat(msg_nxt, 
-                        "%x:<%s> %x@%x %x@%x %x", 
+                        $sformat(msg_nxt,
+                        "%x:<%s> %x@%x %x@%x %x",
                         i_pc_plus_8_buf_ff - 8, i_decompile, wa1, wdata1, wa2, wdata2, i_flags);
 
                         trace_uop_last_nxt = i_uop_last;
-                end              
+                end
                 else if ( i_decompile_valid )
                 begin
-                         $sformat(msg_nxt, 
-                        "%x:<%s>*", 
+                         $sformat(msg_nxt,
+                        "%x:<%s>*",
                         i_pc_plus_8_buf_ff - 8, i_decompile);
 
                         trace_uop_last_nxt = i_uop_last;
-                end 
+                end
         end
 
         // Happens on the same edge as register update.
-        always @ ( posedge i_clk ) 
+        always @ ( posedge i_clk )
         begin
                 o_trace          <= msg_nxt;
                 o_trace_uop_last <= trace_uop_last_nxt;
@@ -611,7 +626,7 @@ endfunction
                 end
         end
 
-        /* Above block is for simulation only */ 
+        /* Above block is for simulation only */
 `else
 
 // Tie off trace to 0.

@@ -28,7 +28,7 @@
 
 module zap_dcache #(
 
-parameter [31:0] CACHE_SIZE             = 1024, 
+parameter [31:0] CACHE_SIZE             = 1024,
 parameter [31:0] SPAGE_TLB_ENTRIES      = 8,
 parameter [31:0] LPAGE_TLB_ENTRIES      = 8,
 parameter [31:0] SECTION_TLB_ENTRIES    = 8,
@@ -87,7 +87,7 @@ input   logic [31:0]           i_dac_reg,
 input  logic                   i_tlb_inv,
 
 // Wishbone. Signals from all 4 modules are ORed.
-output logic              o_wb_stb, o_wb_stb_nxt, 
+output logic              o_wb_stb, o_wb_stb_nxt,
 output logic              o_wb_cyc, o_wb_cyc_nxt,
 output logic              o_wb_wen, o_wb_wen_nxt,
 output logic  [3:0]       o_wb_sel, o_wb_sel_nxt,
@@ -106,8 +106,8 @@ localparam                      S0=0;
 localparam                      S1=1;
 localparam                      S2=2;
 
-logic [2:0]                      wb_stb; 
-logic [2:0]                      wb_cyc; 
+logic [2:0]                      wb_stb;
+logic [2:0]                      wb_cyc;
 logic [2:0]                      wb_wen;
 logic [3:0]                      wb_sel [2:0];
 logic [31:0]                     wb_dat [2:0];
@@ -294,7 +294,7 @@ begin
         begin
                 state_ff <= S0;
                 o_wb_stb <= 1'd0;
-                o_wb_cyc <= 1'd0; 
+                o_wb_cyc <= 1'd0;
                 o_wb_adr <= 32'd0;
                 o_wb_cti <= CTI_EOB;
                 o_wb_sel <= 4'd0;
@@ -304,13 +304,13 @@ begin
         else
         begin
                 state_ff <= state_nxt;
-                o_wb_stb <= o_wb_stb_nxt; 
-                o_wb_cyc <= o_wb_cyc_nxt; 
-                o_wb_adr <= o_wb_adr_nxt; 
-                o_wb_cti <= o_wb_cti_nxt; 
-                o_wb_sel <= o_wb_sel_nxt; 
-                o_wb_dat <= o_wb_dat_nxt; 
-                o_wb_wen <= o_wb_wen_nxt; 
+                o_wb_stb <= o_wb_stb_nxt;
+                o_wb_cyc <= o_wb_cyc_nxt;
+                o_wb_adr <= o_wb_adr_nxt;
+                o_wb_cti <= o_wb_cti_nxt;
+                o_wb_sel <= o_wb_sel_nxt;
+                o_wb_dat <= o_wb_dat_nxt;
+                o_wb_wen <= o_wb_wen_nxt;
         end
 end
 
@@ -320,13 +320,13 @@ begin
         state_nxt = state_ff;
 
         // Change state only if strobe is inactive or strobe has just completed.
-        if ( !o_wb_stb || (o_wb_stb && i_wb_ack) ) 
+        if ( !o_wb_stb || (o_wb_stb && i_wb_ack) )
         begin
                 casez({wb_cyc[2],wb_cyc[1],wb_cyc[0]})
                 3'b1?? : state_nxt = S2; // TLB.
                 3'b01? : state_nxt = S1; // Tag.
                 3'b001 : state_nxt = S0; // Cache.
-                default: state_nxt = state_ff;                                       
+                default: state_nxt = state_ff;
                 endcase
         end
 end

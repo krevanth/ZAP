@@ -1,7 +1,7 @@
 // ---------------------------------------------------------------------------
 // --                                                                       --
 // --    (C) 2016-2022 Revanth Kamaraj (krevanth)                           --
-// --                                                                       -- 
+// --                                                                       --
 // -- ------------------------------------------------------------------------
 // --                                                                       --
 // -- This program is free software; you can redistribute it and/or         --
@@ -22,7 +22,7 @@
 // ---------------------------------------------------------------------------
 
 module zap_adder ( input [31:0] a, input [31:0] b, input c, output logic [32:0] sum );
-        always_comb 
+        always_comb
         begin
                 sum = {1'd0, a} + {1'd0, b} + {32'd0, c};
         end

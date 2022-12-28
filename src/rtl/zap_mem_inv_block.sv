@@ -1,7 +1,7 @@
 // ---------------------------------------------------------------------------
 // --                                                                       --
 // --    (C) 2016-2022 Revanth Kamaraj (krevanth)                           --
-// --                                                                       -- 
+// --                                                                       --
 // -- ------------------------------------------------------------------------
 // --                                                                       --
 // -- This program is free software; you can redistribute it and/or         --
@@ -25,7 +25,7 @@
 module zap_mem_inv_block #(
         parameter DEPTH = 32,
         parameter WIDTH = 32   // Not including valid bit.
-)(  
+)(
 
 
         input logic                           i_clk,
@@ -36,13 +36,13 @@ module zap_mem_inv_block #(
         input logic   [WIDTH-1:0]             i_wdata,
 
         // Write and read enable.
-        input logic                           i_wen, 
+        input logic                           i_wen,
 
         // Invalidate entries in 1 cycle.
         input logic                           i_inv,
 
         // Read and write address.
-        input logic   [$clog2(DEPTH)-1:0]     i_raddr, 
+        input logic   [$clog2(DEPTH)-1:0]     i_raddr,
         input logic   [$clog2(DEPTH)-1:0]     i_waddr,
 
         // Read data and valid.
@@ -137,7 +137,7 @@ end
 // ----------------------------------------------------------------------------
 
 always_ff @  (posedge i_clk )
-begin   
+begin
         if ( i_reset )
                 o_rdav <= '0;
         else if ( i_inv )

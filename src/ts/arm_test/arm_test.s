@@ -34,7 +34,7 @@
         .global test_clz, test_sat
 
 _Reset:
-        b enable_cache
+       b enable_cache
 
 // ------------------------------
 // CONSTANT POOL
@@ -50,15 +50,6 @@ _Reset:
 enable_cache:
    // Enable cache (Uses a single bit to enable both caches).
    .set ENABLE_CP_WORD, 4100
-
-   // Check if unaligned loads work.
-   mov r0, #4
-   ldr r1, [r0, #2]
-   ldr r2, [r0]
-   mov r2, r2, ror #16
-   cmp r1, r2
-   bne enable_cache 
-
    mov r0, #4
    ldr r1, [r0]
    mcr p15, 0, r1, c1, c1, 0
@@ -110,6 +101,14 @@ enable_cache:
 disable_cache:
 
         msr cpsr, #0x1f         @ Enter SYS mode.
+
+        // Check if unaligned loads work.
+       mov r0, #4
+       ldr r1, [r0, #2]
+       ldr r2, [r0]
+       mov r2, r2, ror #16
+       cmp r1, r2
+       bne _Reset
 
 // Must check TEQ first.
 fail_teq:
@@ -212,7 +211,13 @@ fail13:
         bne fail13
 
         bl test_rti
+
 passed:
+        // Both these should not change mode or T state.
+        msr cpsr, #0x0
+        msr cpsr, #0x20
+        msr cpsr, #0x30
+
         mvn  r0, #0
         mov  r1, r0
         mov  r2, r0
@@ -1282,9 +1287,9 @@ test_mul:
         bne fail
         bmi fail
 
-@       mul r3, r3, r4          @ no joke, verified to fail on a real ARM !
-@       cmp r4, #36
-@       bne fail
+        mul r3, r3, r4          @ no joke, verified to fail on a real ARM !
+        cmp r3, #36
+        bne fail
 
         mov r3, #-3                     @ multiply positive * negative
         muls r5, r2, r3
@@ -1305,7 +1310,7 @@ test_mul:
         mov r3, #5
         mlas r4, r1, r2, r3             @ 2*10 + 5 = 25
         bmi fail
-@       bcs fail                        @ on a real ARM, C flag after MLA is unpredictable
+        bcc fail                        @ Carry should be unchanged.
         bvs fail
         cmp r4, #25
         bne fail
@@ -1320,7 +1325,7 @@ test_mul:
         mov r3, #0x80000001             @ causes addition overflow
         mlas r4, r1, r2, r3
         bmi fail
-@       bvc fail                        @ on a real ARM, V flag is not updated ?
+        bvs fail                        @ Overflow should be unaffected.
         add r0, #1
 
         @ Test 3 - SMALTB test.

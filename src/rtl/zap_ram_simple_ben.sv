@@ -1,7 +1,7 @@
 // -----------------------------------------------------------------------------
 // --                                                                         --
 // --    (C) 2016-2022 Revanth Kamaraj (krevanth)                             --
-// --                                                                         -- 
+// --                                                                         --
 // -- --------------------------------------------------------------------------
 // --                                                                         --
 // -- This program is free software; you can redistribute it and/or           --
@@ -20,7 +20,7 @@
 // -- 02110-1301, USA.                                                        --
 // --                                                                         --
 // -----------------------------------------------------------------------------
-// --                                                                         -- 
+// --                                                                         --
 // -- This is a pipelined memory macro for high performance.                  --
 // --                                                                         --
 // -----------------------------------------------------------------------------
@@ -73,7 +73,7 @@ always_ff @ (posedge i_clk) if ( i_clken )
 begin
         for(int i=0;i<WIDTH/8;i++)
         begin
-                if ( i_wr_en[i] )  
+                if ( i_wr_en[i] )
                         mem [ i_wr_addr ][ i*8 +: 8 ] <= i_wr_data [i*8 +: 8];
         end
 end
@@ -97,7 +97,7 @@ begin
                 if ( i_wr_addr == i_rd_addr && i_wr_en[i] )
                         sel_st1[i] <= 2'd2;
                 else
-                        sel_st1[i] <= 2'd1;  
+                        sel_st1[i] <= 2'd1;
         end
 end
 
@@ -133,7 +133,7 @@ end
 always_comb
 begin
         for(int i=0;i<WIDTH/8;i++)
-        begin   
+        begin
                 casez ( sel_st2[i] )
                 3'b100 : o_rd_data_pre[i*8 +: 8] = buffer_st2   [i*8 +: 8];
                 3'b010 : o_rd_data_pre[i*8 +: 8] = buffer_st2_x [i*8 +: 8];

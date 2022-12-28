@@ -1,7 +1,7 @@
 // ---------------------------------------------------------------------------
 // --                                                                       --
 // --    (C) 2016-2022 Revanth Kamaraj (krevanth)                           --
-// --                                                                       -- 
+// --                                                                       --
 // -- ------------------------------------------------------------------------
 // --                                                                       --
 // -- This program is free software; you can redistribute it and/or         --
@@ -55,14 +55,14 @@ module zap_predecode_coproc #(
         input logic              i_clear_from_alu,       // |
         input logic              i_stall_from_shifter,   // |
         input logic              i_stall_from_issue,     // V Low Priority
-        input logic              i_clear_from_decode, 
+        input logic              i_clear_from_decode,
 
         // Pipeline Valid. Must become 0 when every stage of the pipeline
         // is invalid.
         input logic              i_pipeline_dav,
 
         // Coprocessor done signal.
-        input logic              i_copro_done,          
+        input logic              i_copro_done,
 
         // Interrupts output.
         output logic              o_irq,
@@ -74,13 +74,13 @@ module zap_predecode_coproc #(
 
         // We can generate stall if coprocessor is slow. We also have
         // some minimal latency.
-        output logic              o_stall_from_decode,      
+        output logic              o_stall_from_decode,
 
         // Are we really asking for the coprocessor ?
-        output logic              o_copro_dav_nxt,  
+        output logic              o_copro_dav_nxt,
 
         // The entire instruction is passed to the coprocessor.
-        output logic  [31:0]      o_copro_word_nxt  
+        output logic  [31:0]      o_copro_word_nxt
 );
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -140,7 +140,7 @@ begin
                 begin
                         if ( i_instruction[11:8] == 4'b1111 && i_cpsr_ff_mode != USR )  // CP15 and root access -- perfectly fine.
                         begin
-                                o_instruction = i_instruction; 
+                                o_instruction = i_instruction;
                                 o_valid       = i_valid;
                                 o_irq         = 1'd0;
                                 o_fiq         = 1'd0;
@@ -149,7 +149,7 @@ begin
                                 if ( i_pipeline_dav )
                                 begin
                                         // Do not impose any output. However, continue
-                                        // to stall all before this unit in the 
+                                        // to stall all before this unit in the
                                         // pipeline.
                                         o_valid                 = i_valid;
                                         o_stall_from_decode     = 1'd1;
@@ -268,7 +268,7 @@ end
 task automatic clear;
 begin
                 state_ff            <= IDLE;
-                cp_dav_ff           <= 1'd0; 
+                cp_dav_ff           <= 1'd0;
 end
 endtask
 

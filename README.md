@@ -330,7 +330,7 @@ Please refer to ref \[1] for CP15 CSR architectural requirements. The ZAP implem
 | 12  | 0x1: ICache Enable.<br/>0x0: ICache Disable<br/>When **ONLY_CORE=0x1**, this bit always reads 0. |
 | 13  | RAZ. Normal exception vectors.                                                                   |
 | 14  | RAO. Predictive direct mapped strategy.                                                          |
-| 15  | RAO. No v4T compatibility. Compressed instruction support is v5T.                                |
+| 15  | 0x0: Compressed instruction support is v5T.<br/>0x1: Compressed instruction support is v4T.      |
 
 #### 1.3.4. Register 2: **Translation Base.**
 
@@ -406,7 +406,7 @@ ZAP does not support the legacy 26-bit mode.
 
 #### 1.4.3. 16-bit Compressed Support
 
-ZAP has support for the 16-bit V5T compressed instruction set.
+ZAP has support for the 16-bit V5T compressed instruction set. A backward compatibility bit is available in CP15 register 1 to set the compressed instruction set version to v4T. This is in accordance with the architecture specification.
 
 #### 1.4.4. DSP Enhanced Instruction Set
 

@@ -1,7 +1,7 @@
 // -----------------------------------------------------------------------------
 // --                                                                         --
 // --    (C) 2016-2022 Revanth Kamaraj (krevanth)                             --
-// --                                                                         -- 
+// --                                                                         --
 // -- --------------------------------------------------------------------------
 // --                                                                         --
 // -- This program is free software; you can redistribute it and/or           --
@@ -20,7 +20,7 @@
 // -- 02110-1301, USA.                                                        --
 // --                                                                         --
 // -----------------------------------------------------------------------------
-// --                                                                         -- 
+// --                                                                         --
 // --  Synthesizes to standard 1R + 1W block RAM. The read and write addresses--
 // --  may be specified separately. Only for FPGA.                            --
 // --                                                                         --
@@ -60,7 +60,7 @@ begin
         if ( i_wr_addr == i_rd_addr && i_wr_en && i_rd_en )
                 sel <= 1'd1;
         else
-                sel <= 1'd0;                
+                sel <= 1'd0;
 end
 
 // Buffer update logic.
@@ -89,7 +89,7 @@ end
 // Write logic.
 always_ff @ (posedge i_clk)
 begin
-        if ( i_wr_en )  
+        if ( i_wr_en )
                 mem [ i_wr_addr ] <= i_wr_data;
 end
 

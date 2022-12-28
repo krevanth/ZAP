@@ -120,7 +120,7 @@ if ( $HT == 1 )
 }
 
 my $cmd = 
-"verilator $HT -Wno-lint --cc --exe  --build ../../../src/testbench/zap_test.cpp --Mdir obj/ts/$TEST --top zap_test $IVL_OPTIONS --trace --x-assign unique --x-initial unique --error-limit 1 ";
+"verilator $HT -Wno-lint --cc --exe --assert  --build ../../../src/testbench/zap_test.cpp --Mdir obj/ts/$TEST --top zap_test $IVL_OPTIONS --trace --x-assign unique --x-initial unique --error-limit 1 ";
 
 print "$cmd\n";
 die "Error: Failed to build executable." if system("$cmd");

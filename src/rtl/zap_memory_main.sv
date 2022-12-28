@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------------
 // --                                                                          --
 // --    (C) 2016-2022 Revanth Kamaraj (krevanth)                              --
-// --                                                                          -- 
+// --                                                                          --
 // -- ---------------------------------------------------------------------------
 // --                                                                          --
 // -- This program is free software; you can redistribute it and/or            --
@@ -20,12 +20,12 @@
 // -- 02110-1301, USA.                                                         --
 // --                                                                          --
 // ------------------------------------------------------------------------------
-// --                                                                          --          
-// --  This stage merely acts as a buffer in between the ALU stage and the reg.-- 
-// --  file (i.e., writeback stage). 32-bit data received from the cache is    -- 
+// --                                                                          --
+// --  This stage merely acts as a buffer in between the ALU stage and the reg.--
+// --  file (i.e., writeback stage). 32-bit data received from the cache is    --
 // --  is rotated appropriately here in case of byte reads or halfword reads.  --
-// --  Otherwise, this stage is simply a buffer.                               -- 
-// --                                                                          -- 
+// --  Otherwise, this stage is simply a buffer.                               --
+// --                                                                          --
 // ------------------------------------------------------------------------------
 
 
@@ -88,9 +88,9 @@ module zap_memory_main
         input logic [31:0]                   i_mem_srcdest_value_ff,
 
         // Memory size and type.
-        input logic                          i_sbyte_ff, 
-                                            i_ubyte_ff, 
-                                            i_shalf_ff, 
+        input logic                          i_sbyte_ff,
+                                            i_ubyte_ff,
+                                            i_shalf_ff,
                                             i_uhalf_ff,
 
         // Undefined instr.
@@ -105,7 +105,7 @@ module zap_memory_main
         output logic [$clog2(PHY_REGS)-1:0]    o_destination_index_ff,
 
         // Set to point to the RAZ register if invalid.
-        output logic [$clog2(PHY_REGS)-1:0]    o_mem_srcdest_index_ff, 
+        output logic [$clog2(PHY_REGS)-1:0]    o_mem_srcdest_index_ff,
 
         // Outputs valid and PC buffer.
         output logic                           o_dav_ff,
@@ -184,11 +184,11 @@ begin
                 o_fiq_ff              <= i_fiq_ff;
                 o_swi_ff              <= i_swi_ff;
                 o_instr_abort_ff      <= i_instr_abort_ff;
-                o_mem_load_ff         <= i_mem_load_ff; 
+                o_mem_load_ff         <= i_mem_load_ff;
                 o_und_ff              <= i_und_ff;
                 o_mem_fault           <= i_mem_fault;
                 mem_rd_data           <= i_mem_rd_data;
-        
+
                 // Debug.
                 o_decompile           <= i_decompile;
                 o_decompile_valid     <= i_decompile_valid;
@@ -212,28 +212,28 @@ begin
 end
 
 always_comb
-        o_mem_rd_data         = transform((i_mem_load_ff2 ? mem_rd_data : 
-                                i_mem_srcdest_value_ff2), i_mem_address_ff2[1:0], 
-                                i_sbyte_ff2, i_ubyte_ff2, i_shalf_ff2, i_uhalf_ff2, 
+        o_mem_rd_data         = transform((i_mem_load_ff2 ? mem_rd_data :
+                                i_mem_srcdest_value_ff2), i_mem_address_ff2[1:0],
+                                i_sbyte_ff2, i_ubyte_ff2, i_shalf_ff2, i_uhalf_ff2,
                                 i_mem_load_ff2);
 
-// Memory always loads 32-bit to processor. 
+// Memory always loads 32-bit to processor.
 // We will rotate that here as we wish.
 
-function [31:0] transform ( 
+function [31:0] transform (
 
         // Data and address.
-        input [31:0]    data, 
-        input [1:0]     address, 
+        input [31:0]    data,
+        input [1:0]     address,
 
         // Memory access data type.
-        input           sbyte, 
-        input           ubyte, 
-        input           shalf, 
+        input           sbyte,
+        input           ubyte,
+        input           shalf,
         input           uhalf,
 
-        // Memory load. 
-        input           mem_load_ff 
+        // Memory load.
+        input           mem_load_ff
 );
 begin: transform_function
         logic [31:0] d; // Data shorthand.
@@ -256,7 +256,7 @@ begin: transform_function
         begin
                 // Take lower byte.
                 case ( address[1:0] )
-                0: transform = (d >> 0)  & 32'h000000ff; 
+                0: transform = (d >> 0)  & 32'h000000ff;
                 1: transform = (d >> 8)  & 32'h000000ff;
                 2: transform = (d >> 16) & 32'h000000ff;
                 3: transform = (d >> 24) & 32'h000000ff;
@@ -295,7 +295,7 @@ begin: transform_function
         end
 
         // Override above computation if not a memory load.
-        if ( !mem_load_ff ) 
+        if ( !mem_load_ff )
         begin
                 transform = data; // No memory load means pass data on.
         end

@@ -1,7 +1,7 @@
 // ---------------------------------------------------------------------------
 // --                                                                       --
 // --    (C) 2016-2022 Revanth Kamaraj (krevanth)                           --
-// --                                                                       -- 
+// --                                                                       --
 // -- ------------------------------------------------------------------------
 // --                                                                       --
 // -- This program is free software; you can redistribute it and/or         --
@@ -66,6 +66,7 @@ module zap_alu_main #(
         // Misc. signals
         // -------------------------------------------------------------------
 
+        input logic  [6:0]                       i_cpu_pid,                   // CPU process ID.
         input logic  [31:0]                      i_cpsr_nxt,                  // From passive CPSR.
         input logic                              i_switch_ff,                 // Switch state.
         input logic   [1:0]                      i_taken_ff,                  // Branch prediction.
@@ -79,7 +80,7 @@ module zap_alu_main #(
 
         input logic  [31:0]                      i_alu_source_value_ff,       // ALU source value.
         input logic  [31:0]                      i_shifted_source_value_ff,   // Shifted source value.
-        input logic                              i_shift_carry_ff,            // Carry from shifter.        
+        input logic                              i_shift_carry_ff,            // Carry from shifter.
         input logic                              i_shift_sat_ff,              // Saturation indication from shifter.
         input logic  [31:0]                      i_pc_plus_8_ff,              // PC + 8 value.
 
@@ -98,10 +99,10 @@ module zap_alu_main #(
         // Memory Access Related
         // ------------------------------------------------------------------
 
-        input logic  [31:0]                      i_mem_srcdest_value_ff,           // Value to store. 
-        input logic  [$clog2   (PHY_REGS)-1:0]   i_mem_srcdest_index_ff,           // LD/ST Memory data register index.    
+        input logic  [31:0]                      i_mem_srcdest_value_ff,           // Value to store.
+        input logic  [$clog2   (PHY_REGS)-1:0]   i_mem_srcdest_index_ff,           // LD/ST Memory data register index.
         input logic                              i_mem_load_ff,                    // LD/ST Memory load.
-        input logic                              i_mem_store_ff,                   // LD/ST Memory store.                    
+        input logic                              i_mem_store_ff,                   // LD/ST Memory store.
         input logic                              i_mem_pre_index_ff,               // LD/ST Pre/Post index.
         input logic                              i_mem_unsigned_byte_enable_ff,    // LD/ST uint8_t  data type.
         input logic                              i_mem_signed_byte_enable_ff,      // LD/ST int8_t   data type.
@@ -172,7 +173,7 @@ module zap_alu_main #(
         output logic                              o_data_wb_cyc_ff,
         output logic                              o_data_wb_stb_ff,
         output logic [31:0]                       o_data_wb_dat_ff,
-        output logic [3:0]                        o_data_wb_sel_ff 
+        output logic [3:0]                        o_data_wb_sel_ff
 );
 
 // ----------------------------------------------------------------------------
@@ -205,7 +206,7 @@ logic [3:0]                      ben_nxt;
 // Address about to be output. Used to drive tag RAMs etc.
 logic [31:0]                      mem_address_nxt;
 
-/* 
+/*
    Sleep flop. When 1 unit sleeps i.e., does not produce any output except on
    the first clock cycle where LR is calculated using the ALU.
 */
@@ -282,18 +283,18 @@ always_comb quick_sum = rm + rn;
    If there is neither a load or a store, the old value is preserved.
 */
 always_comb ben_nxt =                generate_ben (
-                                                 i_mem_unsigned_byte_enable_ff, 
-                                                 i_mem_signed_byte_enable_ff, 
-                                                 i_mem_unsigned_halfword_enable_ff, 
-                                                 i_mem_unsigned_halfword_enable_ff, 
+                                                 i_mem_unsigned_byte_enable_ff,
+                                                 i_mem_signed_byte_enable_ff,
+                                                 i_mem_unsigned_halfword_enable_ff,
+                                                 i_mem_unsigned_halfword_enable_ff,
                                                  mem_address_nxt[1:0]);
 
 always_comb mem_srcdest_value_nxt =  duplicate (
-                                                 i_mem_unsigned_byte_enable_ff, 
-                                                 i_mem_signed_byte_enable_ff, 
-                                                 i_mem_unsigned_halfword_enable_ff, 
-                                                 i_mem_unsigned_halfword_enable_ff, 
-                                                 i_mem_srcdest_value_ff );  
+                                                 i_mem_unsigned_byte_enable_ff,
+                                                 i_mem_signed_byte_enable_ff,
+                                                 i_mem_unsigned_halfword_enable_ff,
+                                                 i_mem_unsigned_halfword_enable_ff,
+                                                 i_mem_srcdest_value_ff );
 
 // -------------------------------------------------------------------------------
 // Adder
@@ -369,7 +370,7 @@ begin
                 reset;
                 clear ( CPSR_INIT );
         end
-        else if ( i_clear_from_writeback ) 
+        else if ( i_clear_from_writeback )
         begin
                 // Clear but take CPSR from writeback.
                 clear ( i_cpsr_nxt );
@@ -382,7 +383,7 @@ begin
         begin
                 // Clear and preserve flags. Keep sleeping.
                 clear ( flags_ff );
-                sleep_ff                         <= 1'd1; 
+                sleep_ff                         <= 1'd1;
                 o_dav_ff                         <= 1'd0; // Don't give any output.
                 o_decompile_valid                <= 1'd0;
                 o_uop_last                       <= 1'd0;
@@ -396,7 +397,7 @@ begin
                 // Clock out all flops normally.
 
                 o_alu_result_ff                  <= valid_x ? tmp_sum_x : o_alu_result_nxt;
-                o_dav_ff                         <= o_dav_nxt;                
+                o_dav_ff                         <= o_dav_nxt;
                 o_pc_plus_8_ff                   <= i_pc_plus_8_ff;
                 o_destination_index_ff           <= o_destination_index_nxt;
                 flags_ff                         <= o_flags_nxt;
@@ -406,17 +407,17 @@ begin
                 o_fiq_ff                         <= i_fiq_ff;
                 o_swi_ff                         <= i_swi_ff && o_dav_nxt;
                 o_mem_srcdest_index_ff           <= i_mem_srcdest_index_ff;
-                o_mem_srcdest_index_ff           <= i_mem_srcdest_index_ff;           
+                o_mem_srcdest_index_ff           <= i_mem_srcdest_index_ff;
 
                 // Load or store must come up only if an actual LDR/STR is
                 // detected.
-                o_mem_load_ff                    <= o_dav_nxt ? i_mem_load_ff : 1'd0;                    
+                o_mem_load_ff                    <= o_dav_nxt ? i_mem_load_ff : 1'd0;
 
-                o_mem_unsigned_byte_enable_ff    <= i_mem_unsigned_byte_enable_ff;    
-                o_mem_signed_byte_enable_ff      <= i_mem_signed_byte_enable_ff;      
-                o_mem_signed_halfword_enable_ff  <= i_mem_signed_halfword_enable_ff;  
+                o_mem_unsigned_byte_enable_ff    <= i_mem_unsigned_byte_enable_ff;
+                o_mem_signed_byte_enable_ff      <= i_mem_signed_byte_enable_ff;
+                o_mem_signed_halfword_enable_ff  <= i_mem_signed_halfword_enable_ff;
                 o_mem_unsigned_halfword_enable_ff<= i_mem_unsigned_halfword_enable_ff;
-                o_mem_translate_ff               <= i_mem_translate_ff;  
+                o_mem_translate_ff               <= i_mem_translate_ff;
                 sleep_ff                         <= sleep_nxt;
                 o_und_ff                         <= i_und_ff;
 
@@ -440,7 +441,7 @@ end
 always_comb
 begin
         case(r_clear_from_alu)
-        2'd0   : o_pc_from_alu = w_pc_from_alu_0; 
+        2'd0   : o_pc_from_alu = w_pc_from_alu_0;
         2'd1   : o_pc_from_alu = w_pc_from_alu_1;
         2'd2   : o_pc_from_alu = w_pc_from_alu_2;
         2'd3   : o_pc_from_alu = w_pc_from_alu_3;
@@ -453,17 +454,17 @@ always_ff @ ( posedge i_clk ) // Wishbone flops.
 begin
         if ( i_reset )
         begin
-                // Wishbone updates.    
+                // Wishbone updates.
                 o_data_wb_cyc_ff                <= 1'd0;
                 o_data_wb_stb_ff                <= 1'd0;
                 o_data_wb_we_ff                 <= '0;
                 o_data_wb_dat_ff                <= '0;
                 o_data_wb_sel_ff                <= '0;
-                o_mem_address_ff                <= '0; 
+                o_mem_address_ff                <= '0;
         end
         else
         begin
-                // Wishbone updates.    
+                // Wishbone updates.
                 o_data_wb_cyc_ff                <= o_data_wb_cyc_nxt;
                 o_data_wb_stb_ff                <= o_data_wb_stb_nxt;
                 o_data_wb_we_ff                 <= o_data_wb_we_nxt;
@@ -473,7 +474,7 @@ begin
                 // Hold WB address on stall. This is the flop.
                 if ( !i_data_stall )
                 begin
-                        o_mem_address_ff  <= mem_address_nxt; 
+                        o_mem_address_ff  <= mem_address_nxt;
                 end
         end
 end
@@ -481,8 +482,8 @@ end
 // -----------------------------------------------------------------------------
 // WB next state logic.
 // -----------------------------------------------------------------------------
- 
-always_comb 
+
+always_comb
 begin
         // Preserve values.
         o_data_wb_cyc_nxt = o_data_wb_cyc_ff;
@@ -491,16 +492,16 @@ begin
         o_data_wb_dat_nxt = o_data_wb_dat_ff;
         o_data_wb_sel_nxt = o_data_wb_sel_ff;
 
-        if ( i_clear_from_writeback ) 
-        begin 
+        if ( i_clear_from_writeback )
+        begin
                 o_data_wb_cyc_nxt = 0;
                 o_data_wb_stb_nxt = 0;
         end
-        else if ( i_data_stall ) 
-        begin 
+        else if ( i_data_stall )
+        begin
                 // Save state.
         end
-        else if ( i_data_mem_fault || sleep_ff || o_clear_from_alu ) 
+        else if ( i_data_mem_fault || sleep_ff || o_clear_from_alu )
         begin
                 o_data_wb_cyc_nxt = 0;
                 o_data_wb_stb_nxt = 0;
@@ -511,7 +512,7 @@ begin
                 o_data_wb_cyc_nxt = o_dav_nxt ? i_mem_load_ff | i_mem_store_ff : 1'd0;
                 o_data_wb_stb_nxt = o_dav_nxt ? i_mem_load_ff | i_mem_store_ff : 1'd0;
                 o_data_wb_we_nxt  = o_dav_nxt ? i_mem_store_ff                 : 1'd0;
-                o_data_wb_dat_nxt = mem_srcdest_value_nxt; 
+                o_data_wb_dat_nxt = mem_srcdest_value_nxt;
                 o_data_wb_sel_nxt = ben_nxt;
         end
 end
@@ -522,19 +523,22 @@ end
 
 always_comb
 begin:pre_post_index_address_generator
-        /* 
+        /*
          * Memory address output based on pre or post index.
          * For post-index, update is done after memory access.
          * For pre-index, update is done before memory access.
          */
-        if ( i_mem_pre_index_ff == 0 )  
-                mem_address_nxt = rn;               // Postindex; 
-        else                            
+        if ( i_mem_pre_index_ff == 0 )
+                mem_address_nxt = rn;               // Postindex;
+        else
                 mem_address_nxt = sum[31:0];        // Preindex.
-        
+
         // If a force 32 align is set, make the lower 2 bits as zero.
         if ( i_force32align_ff )
                 mem_address_nxt[1:0] = 2'b00;
+
+        if ( mem_address_nxt[31:25] == 0 )
+                mem_address_nxt[31:25] = i_cpu_pid;
 end
 
 // ---------------------------------------------------------------------------------
@@ -553,25 +557,25 @@ begin: alu_result
         exp_mask  = 0;
 
         // Default value.
-        tmp_flags = flags_ff;        
+        tmp_flags = flags_ff;
 
         // If it is a logical instruction.
-        if (            opcode == {2'd0, AND}     || 
-                        opcode == {2'd0, EOR}     || 
+        if (            opcode == {2'd0, AND}     ||
+                        opcode == {2'd0, EOR}     ||
                         opcode == {2'd0, MOV}     ||
-                        opcode == {  SAT_MOV}     || 
-                        opcode == {2'd0, MVN}     || 
-                        opcode == {2'd0, BIC}     || 
+                        opcode == {  SAT_MOV}     ||
+                        opcode == {2'd0, MVN}     ||
+                        opcode == {2'd0, BIC}     ||
                         opcode == {2'd0, ORR}     ||
                         opcode == {2'd0, TST}     ||
-                        opcode == {2'd0, TEQ}     
+                        opcode == {2'd0, TEQ}
                 )
         begin
                 // Call the logical processing function.
-                {tmp_flags[31:28], tmp_sum} = process_logical_instructions ( 
-                        rn, rm, flags_ff[31:28], 
-                        opcode, opcode == SAT_MOV ? 1'd0 : i_flag_update_ff, i_nozero_ff, 
-                        i_shift_carry_ff 
+                {tmp_flags[31:28], tmp_sum} = process_logical_instructions (
+                        rn, rm, flags_ff[31:28],
+                        opcode, opcode == SAT_MOV ? 1'd0 : i_flag_update_ff, i_nozero_ff,
+                        i_shift_carry_ff
                 );
 
                 // Set only Q flag from shift stage. Don't touch other Flags.
@@ -603,7 +607,7 @@ begin: alu_result
                 end
 
                 /*
-                 * FMOV moves to the CPSR in ALU and writeback. 
+                 * FMOV moves to the CPSR in ALU and writeback.
                  * No register is changed. The MSR out of this will have
                  * a target to CPSR.
                  */
@@ -622,21 +626,21 @@ begin: alu_result
                 n = sum[31];
 
                 // Overflow.
-                if ( ( op == {2'd0, ADD}   || 
-                       op == {2'd0, ADC}   || 
+                if ( ( op == {2'd0, ADD}   ||
+                       op == {2'd0, ADC}   ||
                        op == {1'd0, OP_QADD}  ||
                        op == {1'd0, OP_QDADD} ||
                        op == {2'd0, CMN} ) && (rn[31] == rm[31]) && (sum[31] != rn[31]) )
                 begin
                         v = 1;
                 end
-                else if ( (op[$clog2(ALU_OPS)-1:0] == {2'd0, RSB} || 
+                else if ( (op[$clog2(ALU_OPS)-1:0] == {2'd0, RSB} ||
                            op[$clog2(ALU_OPS)-1:0] == {2'd0, RSC}) && (rm[31] == !rn[31]) && (sum[31] != rm[31] ) )
                 begin
                         v = 1;
                 end
-                else if ( (op == {2'd0, SUB}      || 
-                           op == {2'd0, SBC}      || 
+                else if ( (op == {2'd0, SUB}      ||
+                           op == {2'd0, SBC}      ||
                            op == {1'd0, OP_QSUB}  ||
                            op == {1'd0, OP_QDSUB} ||
                            op == {2'd0, CMP}) && (rn[31] != rm[31]) && (sum[31] != rn[31]) ) // rn - rm
@@ -648,18 +652,18 @@ begin: alu_result
                         v = 0;
                 end
 
-                //       
+                //
                 // If you choose not to update flags, do not change the flags.
                 // Otherwise, they will contain their newly computed values.
                 //
                 if ( i_flag_update_ff )
                 begin
-                        if ( op == {1'd0, OP_QADD } || 
-                             op == {1'd0, OP_QSUB } || 
-                             op == {1'd0, OP_QDADD} || 
+                        if ( op == {1'd0, OP_QADD } ||
+                             op == {1'd0, OP_QSUB } ||
+                             op == {1'd0, OP_QDADD} ||
                              op == {1'd0, OP_QDSUB})
                         begin
-                                tmp_flags[27] = (v || i_shift_sat_ff || tmp_flags[27]) ? 1'd1 : 1'd0; 
+                                tmp_flags[27] = (v || i_shift_sat_ff || tmp_flags[27]) ? 1'd1 : 1'd0;
                         end
                         else
                         begin
@@ -678,15 +682,15 @@ always_comb
 begin
         if ( opcode == {1'd0, CLZ} )
         begin
-                tmp_sum_x = {26'd0, clz_rm};       
+                tmp_sum_x = {26'd0, clz_rm};
                 valid_x   = 1'd1;
         end
-        else if 
-        ( 
-             opcode == {1'd0, OP_QADD } || 
-             opcode == {1'd0, OP_QSUB } || 
-             opcode == {1'd0, OP_QDADD} || 
-             opcode == {1'd0, OP_QDSUB} 
+        else if
+        (
+             opcode == {1'd0, OP_QADD } ||
+             opcode == {1'd0, OP_QSUB } ||
+             opcode == {1'd0, OP_QDADD} ||
+             opcode == {1'd0, OP_QDSUB}
         )
         begin
                 if ( tmp_flags[27] ) // result saturated due to ALU operation.
@@ -755,6 +759,24 @@ begin
         end
 end
 
+// Assertion.
+always @ ( posedge i_clk )
+begin
+        if ( opcode == {1'd0, FMOV} && o_dav_nxt && !i_reset )
+        begin
+                if ( flags_ff[`ZAP_CPSR_MODE] == USR )
+                        assert ( tmp_flags[23:0] == flags_ff[23:0] ) else
+                                $info("Info: USR attempting to change 23:0 of CPSR. Blocked.");
+        end
+        else if ( i_destination_index_ff == {2'd0, ARCH_PC} && i_condition_code_ff != NV && !i_reset )
+        begin
+                if ( flags_ff[`ZAP_CPSR_MODE] == USR )
+                        if ( i_flag_update_ff && o_dav_nxt )
+                                 assert ( i_mem_srcdest_value_ff[23:0] == flags_ff[23:0] ) else
+                                        $info("Info: USR attempting to change 23:0 of CPSR. Blocked.");
+        end
+end
+
 always_comb
 begin: flags_bp_feedback
 
@@ -768,34 +790,34 @@ begin: flags_bp_feedback
                 w_clear_from_alu        = 2'd1; // Resync pipeline.
 
                 // USR cannot change mode. Will silently fail.
-                flags_nxt[23:0]   = (flags_ff[`ZAP_CPSR_MODE] == USR) ? flags_ff[23:0] : 
+                flags_nxt[23:0]   = (flags_ff[`ZAP_CPSR_MODE] == USR) ? flags_ff[23:0] :
                 flags_nxt[23:0]; // Security.
         end
         else if ( i_destination_index_ff == {2'd0, ARCH_PC} && (i_condition_code_ff != NV))
         begin
-                if ( i_flag_update_ff && o_dav_nxt ) // PC update with S bit. Context restore. 
+                if ( i_flag_update_ff && o_dav_nxt ) // PC update with S bit. Context restore.
                 begin
                         o_destination_index_nxt     = PHY_RAZ_REGISTER;
                         w_clear_from_alu            = 2'd2;
 
                         flags_nxt                   = i_mem_srcdest_value_ff;   // Restore CPSR from SPSR.
 
-                        flags_nxt[23:0]   = (flags_ff[`ZAP_CPSR_MODE] == USR) ? flags_ff[23:0] : 
+                        flags_nxt[23:0]   = (flags_ff[`ZAP_CPSR_MODE] == USR) ? flags_ff[23:0] :
                         flags_nxt[23:0]; // Security.
                 end
                 else if ( o_dav_nxt ) // Branch taken and no flag update.
                 begin
-                        if ( i_taken_ff == SNT || i_taken_ff == WNT ) 
+                        if ( i_taken_ff == SNT || i_taken_ff == WNT )
                         // Incorrectly predicted. Need to branch.
                         begin
                                 // Quick branches - Flush everything before.
-                                // Dumping ground since PC change is done. 
+                                // Dumping ground since PC change is done.
                                 // Jump to branch target for fast switching.
 
                                 o_destination_index_nxt = PHY_RAZ_REGISTER;
                                 w_clear_from_alu        = 2'd2;
 
-                                if ( i_switch_ff ) 
+                                if ( i_switch_ff )
                                 begin
                                         flags_nxt[T]            = tmp_sum[0];
                                 end
@@ -808,9 +830,9 @@ begin: flags_bp_feedback
                                         // Quick branches! PC goes to RAZ register since
                                         // change is done. Flush pipe before.
 
-                                        o_destination_index_nxt = PHY_RAZ_REGISTER;                     
+                                        o_destination_index_nxt = PHY_RAZ_REGISTER;
                                         w_clear_from_alu        = 2'd2;
-                                        flags_nxt[T]            = tmp_sum[0];   
+                                        flags_nxt[T]            = tmp_sum[0];
                                 end
                                 else
                                 begin
@@ -823,8 +845,8 @@ begin: flags_bp_feedback
                                         // i.e., MOV and ADD instructions which
                                         // destine to PC.
                                         //
-                                        if ( opcode == {2'd0, ADD} ? (i_ppc_ff == quick_sum) : 
-                                             opcode == {2'd0, MOV} ? (i_ppc_ff == rm) : 1'd0 )  
+                                        if ( opcode == {2'd0, ADD} ? (i_ppc_ff == quick_sum) :
+                                             opcode == {2'd0, MOV} ? (i_ppc_ff == rm) : 1'd0 )
                                         begin
                                                 // No mode change, do not change anything.
 
@@ -834,7 +856,7 @@ begin: flags_bp_feedback
                                                 // Send confirmation message to branch predictor.
 
                                                 // This DOES matter.
-                                                w_confirm_from_alu = 1'd1; 
+                                                w_confirm_from_alu = 1'd1;
                                         end
                                         else // PC not predicted correctly. Go to correct vector.
                                         begin
@@ -851,7 +873,7 @@ begin: flags_bp_feedback
                         // branch. Non branches are always predicted as not-taken.
                         // Inform predictor of its mistake.
                         //
-                        if ( i_taken_ff == WT || i_taken_ff == ST ) 
+                        if ( i_taken_ff == WT || i_taken_ff == ST )
                         begin
                                 // Go to the next instruction as this branch
                                 // is NOT taken.
@@ -880,72 +902,72 @@ begin: adder_ip_mux
 
         case ( op )
         {1'd0, FMOV}:
-        begin              
-                op1 = i_pc_plus_8_ff    ; 
-                op2 = ~32'd4            ; 
-                cin = 1'd1              ;              
+        begin
+                op1 = i_pc_plus_8_ff    ;
+                op2 = ~32'd4            ;
+                cin = 1'd1              ;
         end
-        {2'd0, ADD}, 
-        {1'd0, OP_QADD}, 
-        {1'd0, OP_QDADD}: 
-        begin         
-                op1 = rn        ; 
-                op2 = rm        ;   
-                cin = 1'd0      ;              
+        {2'd0, ADD},
+        {1'd0, OP_QADD},
+        {1'd0, OP_QDADD}:
+        begin
+                op1 = rn        ;
+                op2 = rm        ;
+                cin = 1'd0      ;
         end
-        {2'd0, ADC}: 
-        begin              
-                op1 = rn        ; 
-                op2 = rm        ; 
-                cin = flag      ;              
+        {2'd0, ADC}:
+        begin
+                op1 = rn        ;
+                op2 = rm        ;
+                cin = flag      ;
         end
-        {2'd0, SUB}, 
-        {1'd0, OP_QSUB}, 
-        {1'd0, OP_QDSUB}: 
-        begin         
-                op1 = rn     ; 
-                op2 = not_rm ; 
-                cin =   1'd1 ;               
+        {2'd0, SUB},
+        {1'd0, OP_QSUB},
+        {1'd0, OP_QDSUB}:
+        begin
+                op1 = rn     ;
+                op2 = not_rm ;
+                cin =   1'd1 ;
         end
-        {2'd0, RSB}: 
-        begin              
-                op1 = rm     ; 
-                op2 = not_rn ; 
-                cin =   1'd1 ;                     
+        {2'd0, RSB}:
+        begin
+                op1 = rm     ;
+                op2 = not_rn ;
+                cin =   1'd1 ;
         end
-        {2'd0, SBC}: 
-        begin              
-                op1 = rn     ; 
-                op2 = not_rm ; 
-                cin = flag  ; 
+        {2'd0, SBC}:
+        begin
+                op1 = rn     ;
+                op2 = not_rm ;
+                cin = flag  ;
         end
-        {2'd0, RSC}: 
-        begin              
-                op1 = rm     ; 
-                op2 = not_rn ; 
-                cin = flag  ;              
+        {2'd0, RSC}:
+        begin
+                op1 = rm     ;
+                op2 = not_rn ;
+                cin = flag  ;
         end
 
         // Target is not written.
-        {2'd0, CMP}: 
+        {2'd0, CMP}:
         begin
-                op1 = rn  ;     
-                op2 = not_rm ; 
-                cin = 1'd1;               
-        end 
-        {2'd0, CMN}:    
-        begin 
-                op1 = rn  ; 
-                op2 = rm  ; 
-                cin = 1'd0;               
-        end 
+                op1 = rn  ;
+                op2 = not_rm ;
+                cin = 1'd1;
+        end
+        {2'd0, CMN}:
+        begin
+                op1 = rn  ;
+                op2 = rm  ;
+                cin = 1'd0;
+        end
 
         // Default.
-        default: 
-        begin 
-                op1 = 0; 
-                op2 = 0; 
-                cin = 0; 
+        default:
+        begin
+                op1 = 0;
+                op2 = 0;
+                cin = 0;
         end
         endcase
 end
@@ -955,15 +977,15 @@ end
 // ----------------------------------------------------------------------------
 
 // Process logical instructions.
-function [35:0] process_logical_instructions 
-(       
-                input [31:0]                    RN, 
-                input [31:0]                    RM, 
-                input [3:0]                     flags, 
-                input [$clog2   (ALU_OPS)-1:0]  op, 
-                input                           flag_upd, 
+function [35:0] process_logical_instructions
+(
+                input [31:0]                    RN,
+                input [31:0]                    RM,
+                input [3:0]                     flags,
+                input [$clog2   (ALU_OPS)-1:0]  op,
+                input                           flag_upd,
                 input                           nozero,
-                input                           shift_carry 
+                input                           shift_carry
 );
 begin: blk2
         logic [31:0] rd;
@@ -983,11 +1005,11 @@ begin: blk2
         {2'd0, ORR}: rd = RN |   RM;
         {2'd0, TST}: rd = RN &   RM; // Target is not written.
         {2'd0, TEQ}: rd = RN ^   RM; // Target is not written.
-        default: 
+        default:
         begin
                 rd = 0;
         end
-        endcase           
+        endcase
 
         // Suppose flags are not going to change at ALL.
         flags_out = flags;
@@ -1000,8 +1022,8 @@ begin: blk2
                 flags_out[_C] = shift_carry;
 
                 if ( nozero )
-                        // This specifically states that we must NOT set the 
-                        // ZERO flag under any circumstance. 
+                        // This specifically states that we must NOT set the
+                        // ZERO flag under any circumstance.
                         flags_out[_Z] = 1'd0;
                 else
                         flags_out[_Z] = (rd == 0);
@@ -1009,13 +1031,13 @@ begin: blk2
                 flags_out[_N] = rd[31];
         end
 
-        process_logical_instructions = {flags_out, rd};     
+        process_logical_instructions = {flags_out, rd};
 end
 endfunction
 
 /*
  * This task automatic clears out the flip-flops in this module.
- * The flag input is used to preserve/force flags to 
+ * The flag input is used to preserve/force flags to
  * a specific state.
  */
 task automatic clear ( input [31:0] flags );
@@ -1047,7 +1069,7 @@ endtask
  * For halfword access - duplicate the lower 16-bit of the register twice.
  */
 
-function [31:0] duplicate (     input ub, // Unsigned byte. 
+function [31:0] duplicate (     input ub, // Unsigned byte.
                                 input sb, // Signed byte.
                                 input uh, // Unsigned halfword.
                                 input sh, // Signed halfword.
@@ -1057,7 +1079,7 @@ begin
         if ( ub || sb)
         begin
                 // Byte.
-                x = {val[7:0], val[7:0], val[7:0], val[7:0]};    
+                x = {val[7:0], val[7:0], val[7:0], val[7:0]};
         end
         else if (uh || sh)
         begin
@@ -1084,9 +1106,9 @@ endfunction
  *  For a halfword access, based on lower 2-bits, if it is 00,
  *  make no change to byte enable (0011) else if it is 10, then
  *  make byte enable as (1100) which is basically the 32-bit
- *  address + 2 (and 3) which will be written. 
- */  
-function [3:0] generate_ben (   input ub, // Unsigned byte. 
+ *  address + 2 (and 3) which will be written.
+ */
+function [3:0] generate_ben (   input ub, // Unsigned byte.
                                 input sb, // Signed byte.
                                 input uh, // Unsigned halfword.
                                 input sh, // Signed halfword.
@@ -1101,7 +1123,7 @@ begin
                 2: x = 1 << 2;
                 3: x = 1 << 3;
                 endcase
-        end 
+        end
         else if ( uh || sh ) // Halfword. A word = 2 half words.
         begin
                 case ( addr[1] )
@@ -1120,28 +1142,28 @@ endfunction // generate_ben
 
 task automatic reset;
 begin
-                o_alu_result_ff                  <= 0; 
-                o_dav_ff                         <= 0; 
-                o_pc_plus_8_ff                   <= 0; 
-                o_destination_index_ff           <= 0; 
-                flags_ff                         <= 0; 
-                o_abt_ff                         <= 0; 
-                o_irq_ff                         <= 0; 
-                o_fiq_ff                         <= 0; 
-                o_swi_ff                         <= 0; 
-                o_mem_srcdest_index_ff           <= 0; 
-                o_mem_srcdest_index_ff           <= 0; 
-                o_mem_load_ff                    <= 0; 
-                o_mem_unsigned_byte_enable_ff    <= 0; 
-                o_mem_signed_byte_enable_ff      <= 0; 
-                o_mem_signed_halfword_enable_ff  <= 0; 
-                o_mem_unsigned_halfword_enable_ff<= 0; 
-                o_mem_translate_ff               <= 0; 
+                o_alu_result_ff                  <= 0;
+                o_dav_ff                         <= 0;
+                o_pc_plus_8_ff                   <= 0;
+                o_destination_index_ff           <= 0;
+                flags_ff                         <= 0;
+                o_abt_ff                         <= 0;
+                o_irq_ff                         <= 0;
+                o_fiq_ff                         <= 0;
+                o_swi_ff                         <= 0;
+                o_mem_srcdest_index_ff           <= 0;
+                o_mem_srcdest_index_ff           <= 0;
+                o_mem_load_ff                    <= 0;
+                o_mem_unsigned_byte_enable_ff    <= 0;
+                o_mem_signed_byte_enable_ff      <= 0;
+                o_mem_signed_halfword_enable_ff  <= 0;
+                o_mem_unsigned_halfword_enable_ff<= 0;
+                o_mem_translate_ff               <= 0;
                 w_pc_from_alu_0                  <= 0;
                 w_pc_from_alu_1                  <= 0;
                 w_pc_from_alu_2                  <= 0;
                 w_pc_from_alu_3                  <= 0;
-                o_decompile                      <= 0; 
+                o_decompile                      <= 0;
                 o_taken_ff                       <= 0;
                 o_confirm_from_alu               <= 0;
                 o_decompile_valid                <= 0;

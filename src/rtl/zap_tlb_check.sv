@@ -1,7 +1,7 @@
 // -----------------------------------------------------------------------------
 // --                                                                         --
 // --    (C) 2016-2022 Revanth Kamaraj (krevanth)                             --
-// --                                                                         -- 
+// --                                                                         --
 // -- --------------------------------------------------------------------------
 // --                                                                         --
 // -- This program is free software; you can redistribute it and/or           --
@@ -20,9 +20,9 @@
 // -- 02110-1301, USA.                                                        --
 // --                                                                         --
 // -----------------------------------------------------------------------------
-// --                                                                         -- 
-// --  Examines TLB entries to authorize access.                              --                     
-// --                                                                         --  
+// --                                                                         --
+// --  Examines TLB entries to authorize access.                              --
+// --                                                                         --
 // -----------------------------------------------------------------------------
 
 
@@ -84,7 +84,7 @@ input logic [`ZAP_CPSR_MODE]             i_cpsr;         // CPSR.
 input logic [1:0]                        i_sr;           // Status Register.
 input logic [31:0]                       i_dac_reg;      // Domain Access Control Register.
 
-input logic [`ZAP_SPAGE_TLB_WDT  -1:0]   i_sptlb_rdata;  // Small page TLB.              
+input logic [`ZAP_SPAGE_TLB_WDT  -1:0]   i_sptlb_rdata;  // Small page TLB.
 input logic                              i_sptlb_rdav;   // TLB entry valid.
 
 input logic [`ZAP_LPAGE_TLB_WDT  -1:0]   i_lptlb_rdata;  // Large page TLB read data.
@@ -109,23 +109,23 @@ localparam [64 - `ZAP_LPAGE_TLB_WDT   - 1 : 0] CONST_0_LP = {(64 - `ZAP_LPAGE_TL
 localparam [64 - `ZAP_FPAGE_TLB_WDT   - 1 : 0] CONST_0_FP = {(64 - `ZAP_FPAGE_TLB_WDT  ){1'd0}};
 localparam [64 - `ZAP_SECTION_TLB_WDT - 1 : 0] CONST_0_SE = {(64 - `ZAP_SECTION_TLB_WDT){1'd0}};
 
-logic [3:0] match; 
+logic [3:0] match;
 
 // 0: Small Page
-assign  match[0] = (i_sptlb_rdata[`ZAP_SPAGE_TLB__TAG] == i_va[`ZAP_VA__SPAGE_TAG]) && i_sptlb_rdav; 
+assign  match[0] = (i_sptlb_rdata[`ZAP_SPAGE_TLB__TAG] == i_va[`ZAP_VA__SPAGE_TAG]) && i_sptlb_rdav;
 
 // 1: Large Page
-assign  match[1] = (i_lptlb_rdata[`ZAP_LPAGE_TLB__TAG] == i_va[`ZAP_VA__LPAGE_TAG]) && i_lptlb_rdav; 
+assign  match[1] = (i_lptlb_rdata[`ZAP_LPAGE_TLB__TAG] == i_va[`ZAP_VA__LPAGE_TAG]) && i_lptlb_rdav;
 
 // 2: Section
 assign  match[2] = (i_setlb_rdata[`ZAP_SECTION_TLB__TAG] == i_va[`ZAP_VA__SECTION_TAG]) && i_setlb_rdav;
 
 // 3: Fine Page
-assign  match[3] = (i_fptlb_rdata[`ZAP_FPAGE_TLB__TAG] == i_va[`ZAP_VA__FPAGE_TAG]) && i_fptlb_rdav; 
+assign  match[3] = (i_fptlb_rdata[`ZAP_FPAGE_TLB__TAG] == i_va[`ZAP_VA__FPAGE_TAG]) && i_fptlb_rdav;
 
 always @ ( posedge i_clk ) if ( i_clkena )
 begin:blk1
-        logic dummy;       
+        logic dummy;
         logic unused;
 
         dummy  <= 1'd0;
@@ -207,7 +207,7 @@ begin:blk1
                         o_fsr <= get_fsr
                         (
                                 1'd0, 1'd0, 1'd0, 1'd1,
-                                2'd0,                    
+                                2'd0,
                                 i_cpsr[`ZAP_CPSR_MODE] == USR,
                                 i_rd,
                                 i_wr,
@@ -275,7 +275,7 @@ begin
         end
         else if ( spage ) // small page.
         begin
-                {dummy[5:0], apsr[3:2]} = (tlb  [ `ZAP_SPAGE_TLB__AP ]) >> ({30'd0, ap_sel} << 32'd1); 
+                {dummy[5:0], apsr[3:2]} = (tlb  [ `ZAP_SPAGE_TLB__AP ]) >> ({30'd0, ap_sel} << 32'd1);
                 {dummy,  dac[1:0]}      = (dac_reg >> (tlb  [ `ZAP_SPAGE_TLB__DAC_SEL ] << 1));
         end
         else if ( fpage ) // fine page
@@ -285,7 +285,7 @@ begin
         end
         else if ( lpage ) // large page.
         begin
-                {dummy[5:0], apsr[3:2]} = (tlb  [ `ZAP_LPAGE_TLB__AP ]) >> ({30'd0, ap_sel} << 32'd1); 
+                {dummy[5:0], apsr[3:2]} = (tlb  [ `ZAP_LPAGE_TLB__AP ]) >> ({30'd0, ap_sel} << 32'd1);
                 {dummy,  dac[1:0]}      = (dac_reg >> (tlb  [ `ZAP_LPAGE_TLB__DAC_SEL ] << 1));
         end
 
@@ -294,12 +294,12 @@ begin
 
         case(dac)
 
-        DAC_MANAGER: 
+        DAC_MANAGER:
         begin
                 get_fsr = '0; // No fault.
-        end                
+        end
 
-        DAC_CLIENT: 
+        DAC_CLIENT:
                 if ( is_apsr_ok ( user, rd, wr, apsr ) == APSR_OK )
                 begin
                         get_fsr = '0; // No fault.
@@ -312,8 +312,8 @@ begin
                      else if ( lpage   )  get_fsr = {tlb[`ZAP_LPAGE_TLB__DAC_SEL]  , FSR_PAGE_PERMISSION_FAULT};
                 end
 
-        default: 
-        begin 
+        default:
+        begin
                        if  ( section )  get_fsr = {tlb[`ZAP_SECTION_TLB__DAC_SEL], FSR_SECTION_DOMAIN_FAULT};
                   else if  ( spage   )  get_fsr = {tlb[`ZAP_SPAGE_TLB__DAC_SEL],   FSR_PAGE_DOMAIN_FAULT   };
                   else if  ( fpage   )  get_fsr = {tlb[`ZAP_FPAGE_TLB__DAC_SEL],   FSR_PAGE_DOMAIN_FAULT   };
@@ -337,9 +337,9 @@ endfunction
 
 // ----------------------------------------------------------------------------
 
-// 
+//
 // Function to check APSR bits.
-// 
+//
 // Returns 0 for failure, 1 for okay.
 // Checks AP and SR bits.
 //
