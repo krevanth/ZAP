@@ -72,7 +72,7 @@ begin
         else                               rd_en = 1'd1;
 end
 
-zap_sync_fifo #(.WIDTH(WDT), .DEPTH(DEPTH), .FWFT(32'd1)) USF (
+zap_sync_fifo #(.WIDTH(WDT), .DEPTH(DEPTH)) u_zap_sync_fifo (
         .i_clk          (i_clk),
         .i_reset        (i_reset || clear),
         .i_ack          ( rd_en  ),
@@ -83,7 +83,6 @@ zap_sync_fifo #(.WIDTH(WDT), .DEPTH(DEPTH), .FWFT(32'd1)) USF (
         .o_full         (o_full),
         /* verilator lint_off PINCONNECTEMPTY */
         .o_full_n       (),
-        .o_full_n_nxt   (),
         .o_empty        ()
         /* verilator lint_on PINCONNECTEMPTY */
 );
