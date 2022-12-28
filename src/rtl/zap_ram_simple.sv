@@ -30,7 +30,10 @@ module zap_ram_simple #(
         parameter DEPTH = 32
 )
 (
+        // Clock.
         input logic                          i_clk,
+
+        // SRAM clock enable.
         input logic                          i_clken,
 
         // Write and read enable.
