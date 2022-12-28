@@ -193,30 +193,4 @@ begin
 end
 endfunction
 
-//
-// Function for branch prediction.
-//
-function [1:0] compute ( input [1:0] pred, input nok );
-begin
-                // Branch was predicted incorrectly. Go to opposite state.
-                if ( nok )
-                begin
-                        case ( pred )
-                        SNT: compute = WNT; // May be not so strongly not taken.
-                        WNT: compute = WT;  // Perhaps it is taken.
-                        WT:  compute = WNT; // Perhaps it is not taken.
-                        ST:  compute = WT;  // May be not so strongy taken.
-                        endcase
-                end
-                else // Confirm that branch was correctly predicted.
-                begin
-                        case ( pred )
-                        SNT: compute = SNT; // Reinforce.
-                        WNT: compute = SNT; // Reinforce.
-                        WT:  compute = ST;  // Reinforce.
-                        ST:  compute = ST;  // Reinforce.
-                        endcase
-                end
-end
-endfunction
 

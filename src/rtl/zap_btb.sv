@@ -125,7 +125,7 @@ assign mem_rd_en = ~i_stall;
 assign mem_wr_addr = i_fb_branch_src_address.index;
 assign mem_rd_addr = i_rd_addr.index;
 
-// Memory write data.
+// Memory write data. Compute the new state based on feedback.
 assign mem_wr_data.state   = compute(i_fb_current_branch_state,i_fb_nok);
 assign mem_wr_data.tag     = i_fb_branch_src_address.tag;
 assign mem_wr_data.target  = i_fb_branch_dest_address;
@@ -204,6 +204,33 @@ begin
                 end
         end
 end
+
+//
+// Function for branch prediction.
+//
+function [1:0] compute ( input [1:0] pred, input nok );
+begin
+                // Branch was predicted incorrectly. Go to opposite state.
+                if ( nok )
+                begin
+                        case ( pred )
+                        SNT: return WNT; // May be not so strongly not taken.
+                        WNT: return WT;  // Perhaps it is taken.
+                        WT:  return WNT; // Perhaps it is not taken.
+                        ST:  return WT;  // May be not so strongy taken.
+                        endcase
+                end
+                else // Confirm that branch was correctly predicted.
+                begin
+                        case ( pred )
+                        SNT: return SNT; // Reinforce.
+                        WNT: return SNT; // Reinforce.
+                        WT:  return ST;  // Reinforce.
+                        ST:  return ST;  // Reinforce.
+                        endcase
+                end
+end
+endfunction
 
 endmodule
 

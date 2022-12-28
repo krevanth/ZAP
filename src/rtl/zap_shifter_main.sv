@@ -30,8 +30,6 @@
 // --                                                                         --
 // -----------------------------------------------------------------------------
 
-
-
 module zap_shifter_main
 #(
         parameter PHY_REGS  = 46,
@@ -42,6 +40,7 @@ module zap_shifter_main
         // For debug
         input   logic    [64*8-1:0]              i_decompile,
         output  logic    [64*8-1:0]              o_decompile,
+
         input   logic                            i_uop_last,
         output  logic                            o_uop_last,
 
@@ -354,11 +353,8 @@ U_SHIFT
 // Resolve conflict for ALU source value (rn)
 always_comb
 begin
-
-                rn = resolve_conflict ( i_alu_source_ff, i_alu_source_value_ff,
-                                        o_destination_index_ff, i_alu_value_nxt, i_alu_dav_nxt );
-
-
+ rn = resolve_conflict ( i_alu_source_ff, i_alu_source_value_ff,
+                         o_destination_index_ff, i_alu_value_nxt, i_alu_dav_nxt );
 end
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -415,8 +411,13 @@ begin
         else
         begin
                 // Resolve conflict.
-                rm = resolve_conflict ( i_shift_source_ff, i_shift_source_value_ff,
-                                        o_destination_index_ff, i_alu_value_nxt, i_alu_dav_nxt );
+                rm = resolve_conflict (
+                  i_shift_source_ff,
+                  i_shift_source_value_ff,
+                  o_destination_index_ff,
+                  i_alu_value_nxt,
+                  i_alu_dav_nxt
+                );
 
                 // Do not touch the carry. Get from _nxt for back2back execution.
                 shift_carry_nxt = i_cpsr_nxt_29;
@@ -425,8 +426,9 @@ end
 
 ///////////////////////////////////////////////////////////////////////////////
 
-// Mem srcdest index. Used for
-// stores. Resolve conflict.
+//
+// Mem srcdest index. Used for stores. Resolve conflict.
+//
 always_comb
 begin
         mem_srcdest_value = resolve_conflict ( {27'd0, i_mem_srcdest_index_ff}, i_mem_srcdest_value_ff,
@@ -435,8 +437,10 @@ end
 
 ///////////////////////////////////////////////////////////////////////////////
 
+//
 // This will resolve conflicts for back to back instruction execution.
 // The function entirely depends only on the inputs to the function.
+//
 function [31:0] resolve_conflict (
         input    [32:0]                  index_from_issue,       // Index from issue stage. Could have immed too.
         input    [31:0]                  value_from_issue,       // Issue speculatively read value.
@@ -445,7 +449,6 @@ function [31:0] resolve_conflict (
         input                            result_from_alu_valid   // Result from ALU is VALID.
 );
 begin
-
         if ( index_from_issue[32] == IMMED_EN )
         begin
                 resolve_conflict = index_from_issue[31:0];
@@ -465,8 +468,7 @@ begin
 end
 endfunction
 
-///////////////////////////////////////////////////////////////////////////////
-
+// Reset all flops.
 task automatic reset;
 begin
            o_condition_code_ff               <= 0;
@@ -504,9 +506,7 @@ begin
 end
 endtask
 
-endmodule // zap_shifter_main.v
-
-
+endmodule
 
 // ----------------------------------------------------------------------------
 // EOF
