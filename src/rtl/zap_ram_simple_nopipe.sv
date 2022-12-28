@@ -17,7 +17,10 @@
 // 02110-1301, USA.
 //
 //  Synthesizes to standard 1R + 1W block RAM. The read and write addresses
-//  may be specified separately. Only for FPGA.
+//  may be specified separately. This synthesizes as a single cycle
+//  memory, which behaves as a write first memory, even though the macro
+//  is a standard read first memory. This memory provides a read latency
+//  of 1 cycle.
 //
 
 module zap_ram_simple_nopipe #(

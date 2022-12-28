@@ -16,7 +16,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 // 02110-1301, USA.
 //
-// This is a simple synchronous FIFO.
+// This is a classic synchronous FIFO.
 //
 
 module zap_sync_fifo #(

@@ -17,6 +17,8 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 // 02110-1301, USA.
 //
+// This RTL describe a classic direct mapped branch target buffer.
+//
 
 module zap_btb #(
         //

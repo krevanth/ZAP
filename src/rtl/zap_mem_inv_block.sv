@@ -16,7 +16,10 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 // 02110-1301, USA.
 //
-// Description: RAMs with single cycle invalidate via flip-flops.
+// This RTL describes RAM with single cycle invalidate via flip-flops. The
+// valid bits per memory row are maintained using flip-flops. This avoids
+// having to do an actual memory write to invalidate the memory. This allows
+// bulk invalidation to happen in a single cycle.
 //
 
 module zap_mem_inv_block #(

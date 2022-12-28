@@ -1,39 +1,44 @@
-// -----------------------------------------------------------------------------
-// --                                                                         --
-// --    (C) 2016-2022 Revanth Kamaraj (krevanth)                             --
-// --                                                                         --
-// -- --------------------------------------------------------------------------
-// --                                                                         --
-// -- This program is free software; you can redistribute it and/or           --
-// -- modify it under the terms of the GNU General Public License             --
-// -- as published by the Free Software Foundation; either version 2          --
-// -- of the License, or (at your option) any later version.                  --
-// --                                                                         --
-// -- This program is distributed in the hope that it will be useful,         --
-// -- but WITHOUT ANY WARRANTY; without even the implied warranty of          --
-// -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           --
-// -- GNU General Public License for more details.                            --
-// --                                                                         --
-// -- You should have received a copy of the GNU General Public License       --
-// -- along with this program; if not, write to the Free Software             --
-// -- Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA           --
-// -- 02110-1301, USA.                                                        --
-// --                                                                         --
-// -----------------------------------------------------------------------------
-// --                                                                         --
-// -- This is a pipelined memory macro for high performance.                  --
-// --                                                                         --
-// -----------------------------------------------------------------------------
+//
+// (C) 2016-2022 Revanth Kamaraj (krevanth)
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+// 02110-1301, USA.
+//
+// This is a pipelined memory macro for high performance. Very similar
+// to zap_ram_simple but has byte enables. Please use that file to
+// follow code comments.
+//
+// The key difference in the hazard detection logic is that it is byte
+// wise. For example, a 32-bit read could have each of its 4 bytes
+// modified over 3 cycles, the final data should reflect that.
+//
+// This memory has a read latency of 3 cycles.
+//
 
 module zap_ram_simple_ben #(
-        parameter WIDTH = 32,
-        parameter DEPTH = 32
+        parameter bit [31:0] WIDTH = 32'd32,
+        parameter bit [31:0] DEPTH = 32'd32
 )
 (
+        // Clock and reset.
         input logic                          i_clk,
+
+        // Clock enable/read enable.
         input logic                          i_clken,
 
-        // Write and read enable.
+        // Write enable. Needs i_clken=1 to actually write.
         input logic [WIDTH/8-1:0]            i_wr_en,
 
         // Write data and address.
@@ -69,25 +74,31 @@ logic [$clog2(DEPTH)-1:0] rd_addr_st1, rd_addr_st2;
 // ----------------------------------------------------------------------------
 
 // Write logic.
-always_ff @ (posedge i_clk) if ( i_clken )
+always_ff @ (posedge i_clk)
 begin
-        for(int i=0;i<WIDTH/8;i++)
+        if ( i_clken )
         begin
-                if ( i_wr_en[i] )
-                        mem [ i_wr_addr ][ i*8 +: 8 ] <= i_wr_data [i*8 +: 8];
+                for(int i=0;i<WIDTH/8;i++)
+                begin
+                        if ( i_wr_en[i] )
+                                mem [ i_wr_addr ][ i*8 +: 8 ] <=
+                                i_wr_data [i*8 +: 8];
+                end
         end
-end
-
-// RAM Read logic.
-always_ff @ (posedge i_clk) if ( i_clken )
-begin
-        mem_data_st1 <= mem [ i_rd_addr ];
-        mem_data_st2 <= mem_data_st1;
 end
 
 // ----------------------------------------------------------------------------
 // Stage 1
 // ----------------------------------------------------------------------------
+
+// RAM Read logic.
+always_ff @ (posedge i_clk)
+begin
+        if ( i_clken )
+        begin
+                mem_data_st1 <= mem [ i_rd_addr ];
+        end
+end
 
 // Hazard Detection Logic
 always_ff @ ( posedge i_clk ) if ( i_clken )
@@ -112,22 +123,37 @@ end
 // Stage 2
 // ----------------------------------------------------------------------------
 
-always_ff @ ( posedge i_clk ) if ( i_clken )
+// RAM Read logic.
+always_ff @ (posedge i_clk)
 begin
-        for(int i=0;i<WIDTH/8;i++)
+        if ( i_clken )
         begin
-                if ( i_wr_addr == rd_addr_st1 && i_wr_en[i] )
-                        sel_st2[i] <= {1'd1, 2'd0};
-                else
-                        sel_st2[i] <= {1'd0, sel_st1[i]};
+                mem_data_st2 <= mem_data_st1;
         end
 end
 
-always_ff @ ( posedge i_clk ) if ( i_clken )
+always_ff @ ( posedge i_clk )
 begin
-        buffer_st2   <= i_wr_data;
-        buffer_st2_x <= buffer_st1;
-        rd_addr_st2  <= rd_addr_st1;
+        if ( i_clken )
+        begin
+                for(int i=0;i<WIDTH/8;i++)
+                begin
+                        if ( i_wr_addr == rd_addr_st1 && i_wr_en[i] )
+                                sel_st2[i] <= {1'd1, 2'd0};
+                        else
+                                sel_st2[i] <= {1'd0, sel_st1[i]};
+                end
+        end
+end
+
+always_ff @ ( posedge i_clk )
+begin
+        if ( i_clken )
+        begin
+                buffer_st2   <= i_wr_data;
+                buffer_st2_x <= buffer_st1;
+                rd_addr_st2  <= rd_addr_st1;
+        end
 end
 
 always_comb
@@ -147,19 +173,21 @@ end
 // Stage 3
 // ----------------------------------------------------------------------------
 
-always_ff @ ( posedge i_clk ) if ( i_clken )
+always_ff @ ( posedge i_clk )
 begin
-        for(int i=0;i<WIDTH/8;i++)
+        if ( i_clken )
         begin
-                if ( i_wr_addr == rd_addr_st2 && i_wr_en[i] )
-                        o_rd_data[i*8 +: 8] <= i_wr_data[i*8 +: 8];
-                else
-                        o_rd_data[i*8 +: 8] <= o_rd_data_pre[i*8 +: 8];
+                for(int i=0;i<WIDTH/8;i++)
+                begin
+                        if ( i_wr_addr == rd_addr_st2 && i_wr_en[i] )
+                                o_rd_data[i*8 +: 8] <= i_wr_data[i*8 +: 8];
+                        else
+                                o_rd_data[i*8 +: 8] <= o_rd_data_pre[i*8 +: 8];
+                end
         end
 end
 
-endmodule // zap_ram_simple.v
-
+endmodule
 
 // ----------------------------------------------------------------------------
 // EOF

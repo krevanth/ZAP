@@ -16,6 +16,9 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 // 02110-1301, USA.
 //
+// This RTL describes the FIFO stage of the pipeline. It essentially
+// consists of an async FIFO wrapped around with some control logic.
+//
 
 module zap_fifo #(parameter WDT = 32, DEPTH = 8) (
 
@@ -41,6 +44,7 @@ output logic            o_full,
 // Payload out.
 output logic  [WDT-1:0] o_instr,
 output logic            o_valid
+
 );
 
 logic           clear;
@@ -74,6 +78,7 @@ begin
         else                               rd_en = 1'd1;
 end
 
+// The core queue of the pipeline stage.
 zap_sync_fifo #(.WIDTH(WDT), .DEPTH(DEPTH)) u_zap_sync_fifo (
         .i_clk          (i_clk),
         .i_reset        (i_reset),
