@@ -1,7 +1,7 @@
 // -----------------------------------------------------------------------------
 // --                                                                         --
 // --    (C) 2016-2022 Revanth Kamaraj (krevanth)                             --
-// --                                                                         -- 
+// --                                                                         --
 // -- --------------------------------------------------------------------------
 // --                                                                         --
 // -- This program is free software; you can redistribute it and/or           --
@@ -87,7 +87,7 @@ output  logic    [3:0]           o_wb_sel_nxt,
 output logic                     o_wb_cyc,
 output logic                     o_wb_stb,
 output logic                     o_wb_wen,
-output logic [3:0]               o_wb_sel, 
+output logic [3:0]               o_wb_sel,
 output logic [31:0]              o_wb_adr,
 input  logic [31:0]              i_wb_dat,
 input  logic                     i_wb_ack
@@ -106,7 +106,7 @@ localparam FETCH_L1_DESC        = 2; /* Fetch L1 descriptor */
 localparam FETCH_L2_DESC        = 3; /* Fetch L2 descriptor */
 localparam FETCH_L1_DESC_0      = 4;
 localparam FETCH_L2_DESC_0      = 5;
-localparam NUMBER_OF_STATES     = 6; 
+localparam NUMBER_OF_STATES     = 6;
 
 // ----------------------------------------------------------------------------
 
@@ -211,7 +211,7 @@ begin: blk1
                  * We need to page walk to get the page table.
                  * Call for access to L1 level page table.
                  */
-                tsk_prpr_wb_rd({i_baddr[`ZAP_VA__TRANSLATION_BASE], 
+                tsk_prpr_wb_rd({i_baddr[`ZAP_VA__TRANSLATION_BASE],
                                 address[`ZAP_VA__TABLE_INDEX], 2'd0});
         end
 
@@ -224,7 +224,7 @@ begin: blk1
                         dnxt = i_wb_dat;
                         state_nxt = FETCH_L1_DESC;
                 end
-                else 
+                else
                 begin
                         tsk_hold_wb_access ();
                 end
@@ -247,11 +247,11 @@ begin: blk1
                          * It is a section itself so there is no need
                          * for another fetch. Simply reload the TLB
                          * and we are good.
-                         */  
+                         */
                         o_setlb_wen       = 1'd1;
-                        o_setlb_wdata     = {address[`ZAP_VA__SECTION_TAG], 
+                        o_setlb_wdata     = {address[`ZAP_VA__SECTION_TAG],
                                              dff};
-                        state_nxt         = IDLE;           
+                        state_nxt         = IDLE;
 
                 end
 
@@ -262,19 +262,19 @@ begin: blk1
                          * descriptor is remembered because when we
                          * reload the TLB, it would be useful. Anyway,
                          * we need to initiate another access.
-                         */      
+                         */
                         dac_nxt         = dff[`ZAP_L1_PAGE__DAC_SEL];  // dac register holds the dac sel for future use.
                         state_nxt       = FETCH_L2_DESC_0;
 
-                        tsk_prpr_wb_rd({dff[`ZAP_L1_PAGE__PTBR], 
+                        tsk_prpr_wb_rd({dff[`ZAP_L1_PAGE__PTBR],
                                           address[`ZAP_VA__L2_TABLE_INDEX], 2'd0});
-                end               
+                end
 
-                FINE_ID:  
+                FINE_ID:
                 begin
                         /*
                          *  Page ID requires DAC from current descriptor.
-                         */ 
+                         */
                         dac_nxt         = dff[`ZAP_L1_PAGE__DAC_SEL];
                         state_nxt       = FETCH_L2_DESC_0;
 
@@ -293,8 +293,8 @@ begin: blk1
                         begin
                                 dnxt            = i_wb_dat;
                                 state_nxt       = FETCH_L2_DESC;
-                        end 
-                        else 
+                        end
+                        else
                         begin
                                 tsk_hold_wb_access ();
                         end

@@ -1,7 +1,7 @@
 // -----------------------------------------------------------------------------
 // --                                                                         --
 // --    (C) 2016-2022 Revanth Kamaraj (krevanth)                             --
-// --                                                                         -- 
+// --                                                                         --
 // -- --------------------------------------------------------------------------
 // --                                                                         --
 // -- This program is free software; you can redistribute it and/or           --
@@ -53,9 +53,9 @@ endfunction
 // execution. Returns 1 if satisfied, 0 if not.
 //
 
-function  is_cc_satisfied 
-( 
-        input [3:0] cc,         // 31:28 of the instruction. 
+function  is_cc_satisfied
+(
+        input [3:0] cc,         // 31:28 of the instruction.
         input [3:0] fl          // CPSR flags.
 );
 logic ok,n,z,c,v;
@@ -78,23 +78,23 @@ begin: blk1
         GT:     ok = (n == v) && !z;
         LE:     ok = (n != v) || z;
         AL:     ok = 1'd1;
-        NV:     ok = 1'd0;                    
-        endcase   
+        NV:     ok = 1'd0;
+        endcase
 
         is_cc_satisfied = ok;
 end
 endfunction
 
-// 
+//
 // Translate function.
-// 
+//
 //
 // Used to implement ARM modes. The register file is basically a flat array
 // of registers. Based on mode, we select some of those to implement banking.
 //
 
 function  [5:0] translate (
- 
+
         input [5:0] index,      // Requested instruction index.
         input [4:0] cpu_mode    // Current CPU mode.
 
@@ -104,9 +104,9 @@ begin
 
         // User/System mode map.
         case ( index )
-                      0:      translate = PHY_USR_R0; 
-                      1:      translate = PHY_USR_R1;                            
-                      2:      translate = PHY_USR_R2; 
+                      0:      translate = PHY_USR_R0;
+                      1:      translate = PHY_USR_R1;
+                      2:      translate = PHY_USR_R2;
                       3:      translate = PHY_USR_R3;
                       4:      translate = PHY_USR_R4;
                       5:      translate = PHY_USR_R5;

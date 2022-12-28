@@ -1,7 +1,7 @@
 // -----------------------------------------------------------------------------
 // --                                                                         --
 // --    (C) 2016-2022 Revanth Kamaraj (krevanth)                             --
-// --                                                                         -- 
+// --                                                                         --
 // -- --------------------------------------------------------------------------
 // --                                                                         --
 // -- This program is free software; you can redistribute it and/or           --
@@ -20,11 +20,11 @@
 // -- 02110-1301, USA.                                                        --
 // --                                                                         --
 // -----------------------------------------------------------------------------
-// --                                                                         --                   
+// --                                                                         --
 // -- This is the tag RAM and data RAM unit. The tag RAM holds both the       --
-// -- virtual tag and the physical address. The physical address is used to   --  
+// -- virtual tag and the physical address. The physical address is used to   --
 // -- avoid translation during clean operations. The cache data RAM is also   --
-// -- present in this unit. This unit has a dedicated memory interface        -- 
+// -- present in this unit. This unit has a dedicated memory interface        --
 // -- because it can perform global clean and flush by itself without         --
 // -- depending on the cache controller.                                      --
 // --                                                                         --
@@ -34,7 +34,7 @@
 
 `include "zap_defines.svh"
 
-module zap_cache_tag_ram #( 
+module zap_cache_tag_ram #(
 
 parameter CACHE_SIZE = 1024, // Bytes.
 parameter CACHE_LINE = 8
@@ -62,9 +62,9 @@ output  logic                             o_cache_clean_done,
 input   logic                             i_cache_inv_req,
 output  logic                             o_cache_inv_done,
 
-/* 
+/*
  * Cache clean operations occur through these ports.
- * Memory access ports, both NXT and FF. Usually you'll be connecting NXT ports 
+ * Memory access ports, both NXT and FF. Usually you'll be connecting NXT ports
  */
 output  logic                             o_wb_cyc_ff, o_wb_cyc_nxt,
 output  logic                             o_wb_stb_ff, o_wb_stb_nxt,
@@ -100,11 +100,11 @@ localparam ZERO_WDT    = $clog2(CACHE_LINE/4) + 1;
 // ----------------------------------------------------------------------------
 
 logic [(CACHE_SIZE/CACHE_LINE)-1:0]        dirty;
-logic [(CACHE_SIZE/CACHE_LINE)-1:0]        valid; 
+logic [(CACHE_SIZE/CACHE_LINE)-1:0]        valid;
 logic [`ZAP_CACHE_TAG_WDT-1:0]             tag_ram_wr_data;
 logic                                      tag_ram_wr_en;
 logic [$clog2(CACHE_SIZE/CACHE_LINE)-1:0]  tag_ram_wr_addr;
-logic [$clog2(CACHE_SIZE/CACHE_LINE)-1:0]  tag_ram_rd_addr, tag_ram_rd_addr_del, 
+logic [$clog2(CACHE_SIZE/CACHE_LINE)-1:0]  tag_ram_rd_addr, tag_ram_rd_addr_del,
                                            tag_ram_rd_addr_del2, tag_ram_rd_addr_ff,
                                            tag_ram_rd_addr_nxt;
 logic                                      tag_ram_clear;
@@ -132,7 +132,7 @@ always_comb        unused = |{dummy, line_dummy, i_wb_dat, unused_0, cache_unuse
 
 zap_ram_simple_ben #(.WIDTH(CACHE_LINE*8), .DEPTH(CACHE_SIZE/CACHE_LINE)) u_zap_ram_simple_data_ram (
         .i_clk(i_clk),
-        .i_clken(!i_hold),                 
+        .i_clken(!i_hold),
 
         .i_wr_en(i_cache_line_ben),
         .i_wr_data(i_cache_line),
@@ -183,7 +183,7 @@ begin
                 o_cache_tag_dirty  <= tag_ram_rd_addr_del2 == tag_ram_wr_addr && tag_ram_wr_en ? i_cache_tag_dirty : cache_tag_dirty_del;
                 cache_tag_dirty_del<= tag_ram_rd_addr_del  == tag_ram_wr_addr && tag_ram_wr_en ? i_cache_tag_dirty : cache_tag_dirty;
                 cache_tag_dirty    <= tag_ram_rd_addr      == tag_ram_wr_addr && tag_ram_wr_en ? i_cache_tag_dirty : dirty [ tag_ram_rd_addr ];
-        
+
                 if ( tag_ram_wr_en )
                 begin
                         dirty [ tag_ram_wr_addr ]   <= i_cache_tag_dirty;
@@ -270,14 +270,14 @@ begin:blk1
 
         dummy      = '0;
         unused_0   = '0;
-        unusedx    = '0; 
- 
+        unusedx    = '0;
+
         // Defaults.
         state_nxt = state_ff;
         tag_ram_rd_addr_nxt     = get_tag_ram_rd_addr (blk_ctr_ff, dirty);
         tag_ram_rd_addr         = 0;
         tag_ram_wr_addr         = i_address     [`ZAP_VA__CACHE_INDEX];
-        tag_ram_wr_en           = 0; 
+        tag_ram_wr_en           = 0;
         tag_ram_clear           = 0;
         tag_ram_clean           = 0;
         adr_ctr_nxt             = adr_ctr_ff;
@@ -299,7 +299,7 @@ begin:blk1
         if ( state_ff == IDLE )
                 tag_ram_rd_addr = i_address_nxt [`ZAP_VA__CACHE_INDEX];
         else
-                tag_ram_rd_addr = tag_ram_rd_addr_ff; 
+                tag_ram_rd_addr = tag_ram_rd_addr_ff;
 
         case ( state_ff )
 
@@ -310,7 +310,7 @@ begin:blk1
                 tag_ram_wr_addr = i_address     [`ZAP_VA__CACHE_INDEX];
                 tag_ram_wr_en   = i_cache_tag_wr_en;
                 tag_ram_wr_data = i_cache_tag;
-                
+
                 cache_clean_done_nxt = 1'd0;
 
                 if ( i_cache_clean_req && !cache_clean_done_ff )
@@ -325,7 +325,7 @@ begin:blk1
                         tag_ram_wr_en = 0;
                         state_nxt     = CACHE_INV;
                 end
-        end        
+        end
 
         CACHE_CLEAN_GET_ADDRESS:
         begin
@@ -367,8 +367,8 @@ begin:blk1
         CACHE_CLEAN_WRITE:
         begin
 
-                adr_ctr_nxt = adr_ctr_ff + ((i_wb_ack && o_wb_stb_ff) ? 
-                              {{(ZERO_WDT-1){1'd0}}, 1'd1} : 
+                adr_ctr_nxt = adr_ctr_ff + ((i_wb_ack && o_wb_stb_ff) ?
+                              {{(ZERO_WDT-1){1'd0}}, 1'd1} :
                               {ZERO_WDT{1'd0}});
 
                 if ( {{ADR_CTR_PAD{1'd0}}, adr_ctr_nxt} > ((CACHE_LINE/4) - 1) )
@@ -387,17 +387,17 @@ begin:blk1
                         shamt = {{(ADR_CTR_PAD-5){1'd0}}, adr_ctr_nxt, 5'd0};
                         {line_dummy, data}  = o_cache_line >> shamt;
 
-                        pa    = {o_cache_tag[`ZAP_CACHE_TAG__PA], 
+                        pa    = {o_cache_tag[`ZAP_CACHE_TAG__PA],
                                 {$clog2(CACHE_LINE){1'd0}}};
 
                         // Perform a Wishbone write using Physical Address.
-                        // Uses WB burst protocol for higher efficency. 
-                        wb_prpr_write(  
-                        data, 
-                        pa + ({{(ADR_CTR_PAD-2){1'd0}}, adr_ctr_nxt, 2'd0}), 
-                        ({{ADR_CTR_PAD{1'd0}},adr_ctr_nxt} != (CACHE_LINE/4)-1) ? 
-                        CTI_BURST : CTI_EOB, 
-                        4'b1111 
+                        // Uses WB burst protocol for higher efficency.
+                        wb_prpr_write(
+                        data,
+                        pa + ({{(ADR_CTR_PAD-2){1'd0}}, adr_ctr_nxt, 2'd0}),
+                        ({{ADR_CTR_PAD{1'd0}},adr_ctr_nxt} != (CACHE_LINE/4)-1) ?
+                        CTI_BURST : CTI_EOB,
+                        4'b1111
                         );
                 end
         end
@@ -408,8 +408,8 @@ begin:blk1
                 state_nxt        = IDLE;
                 o_cache_inv_done = 1'd1;
         end
-        
-        endcase                
+
+        endcase
 end
 
 // -----------------------------------------------------------------------------
@@ -505,9 +505,9 @@ endfunction
 
 // ----------------------------------------------------------------------------
 
-function [4:0] baggage ( 
-        input [CACHE_SIZE/CACHE_LINE-1:0]               Dirty, 
-        input [$clog2(NUMBER_OF_DIRTY_BLOCKS):0]        blk_ctr 
+function [4:0] baggage (
+        input [CACHE_SIZE/CACHE_LINE-1:0]               Dirty,
+        input [$clog2(NUMBER_OF_DIRTY_BLOCKS):0]        blk_ctr
 );
 logic [CACHE_SIZE/CACHE_LINE-1:0] w_dirty;
 logic [15:0] val;

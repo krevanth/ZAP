@@ -1,7 +1,7 @@
 // ---------------------------------------------------------------------------
 // --                                                                       --
 // --    (C) 2016-2022 Revanth Kamaraj (krevanth)                           --
-// --                                                                       -- 
+// --                                                                       --
 // -- ------------------------------------------------------------------------
 // --                                                                       --
 // -- This program is free software; you can redistribute it and/or         --
@@ -101,7 +101,7 @@ module zap_postalu_main #(
         output logic                              o_data_wb_cyc_ff,
         output logic                              o_data_wb_stb_ff,
         output logic [31:0]                       o_data_wb_dat_ff,
-        output logic [3:0]                        o_data_wb_sel_ff 
+        output logic [3:0]                        o_data_wb_sel_ff
 );
 
 logic sleep_ff;
@@ -110,26 +110,26 @@ always_ff @ (posedge i_clk)
 begin
         if ( i_reset )
         begin
-                o_alu_result_ff                  <= 0; 
-                o_dav_ff                         <= 0; 
+                o_alu_result_ff                  <= 0;
+                o_dav_ff                         <= 0;
                 o_decompile_valid                <= 0;
                 o_uop_last                       <= 0;
-                o_pc_plus_8_ff                   <= 0; 
-                o_destination_index_ff           <= 0; 
-                o_abt_ff                         <= 0; 
-                o_irq_ff                         <= 0; 
-                o_fiq_ff                         <= 0; 
-                o_swi_ff                         <= 0; 
+                o_pc_plus_8_ff                   <= 0;
+                o_destination_index_ff           <= 0;
+                o_abt_ff                         <= 0;
+                o_irq_ff                         <= 0;
+                o_fiq_ff                         <= 0;
+                o_swi_ff                         <= 0;
                 o_und_ff                         <= 0;
-                o_mem_srcdest_index_ff           <= 0; 
-                o_mem_srcdest_index_ff           <= 0; 
-                o_mem_load_ff                    <= 0; 
-                o_mem_unsigned_byte_enable_ff    <= 0; 
-                o_mem_signed_byte_enable_ff      <= 0; 
-                o_mem_signed_halfword_enable_ff  <= 0; 
-                o_mem_unsigned_halfword_enable_ff<= 0; 
-                o_mem_translate_ff               <= 0; 
-                o_decompile                      <= 0; 
+                o_mem_srcdest_index_ff           <= 0;
+                o_mem_srcdest_index_ff           <= 0;
+                o_mem_load_ff                    <= 0;
+                o_mem_unsigned_byte_enable_ff    <= 0;
+                o_mem_signed_byte_enable_ff      <= 0;
+                o_mem_signed_halfword_enable_ff  <= 0;
+                o_mem_unsigned_halfword_enable_ff<= 0;
+                o_mem_translate_ff               <= 0;
+                o_decompile                      <= 0;
                 o_data_wb_cyc_ff                 <= 0;
                 o_data_wb_stb_ff                 <= 0;
                 o_data_wb_sel_ff                 <= 0;
@@ -137,10 +137,10 @@ begin
                 o_data_wb_we_ff                  <= 0;
                 o_flags_ff                       <= 0;
         end
-        else if ( i_clear_from_writeback ) 
+        else if ( i_clear_from_writeback )
         begin
-                sleep_ff                         <= 'd1; 
-                o_dav_ff                         <= 'd0; 
+                sleep_ff                         <= 'd1;
+                o_dav_ff                         <= 'd0;
                 o_decompile_valid                <= 'd0;
                 o_uop_last                       <= 'd0;
                 o_mem_load_ff                    <= 'd0;
@@ -159,8 +159,8 @@ begin
         begin
                 if ( i_data_mem_fault || sleep_ff )
                 begin
-                        sleep_ff                         <= 'd1; 
-                        o_dav_ff                         <= 'd0; 
+                        sleep_ff                         <= 'd1;
+                        o_dav_ff                         <= 'd0;
                         o_mem_load_ff                    <= 'd0;
                         o_dav_ff                         <= 'd0;
                         o_decompile_valid                <= 'd0;
@@ -182,9 +182,9 @@ begin
                         o_decompile_valid                <= i_decompile_valid;
                         o_uop_last                       <= i_uop_last;
                         o_alu_result_ff                  <= i_alu_result_ff;
-                        o_dav_ff                         <= i_dav_ff;          
+                        o_dav_ff                         <= i_dav_ff;
                         o_flags_ff                       <= i_flags_ff;
-                        o_destination_index_ff           <= i_destination_index_ff; 
+                        o_destination_index_ff           <= i_destination_index_ff;
                         o_abt_ff                         <= i_abt_ff;
                         o_irq_ff                         <= i_irq_ff;
                         o_fiq_ff                         <= i_fiq_ff;
@@ -192,13 +192,13 @@ begin
                         o_und_ff                         <= i_und_ff;
                         o_pc_plus_8_ff                   <= i_pc_plus_8_ff;
                         o_mem_srcdest_index_ff           <= i_mem_srcdest_index_ff;
-                        o_mem_load_ff                    <= i_mem_load_ff; 
+                        o_mem_load_ff                    <= i_mem_load_ff;
                         o_mem_address_ff                 <= i_mem_address_ff;
-                        o_mem_unsigned_byte_enable_ff    <= i_mem_unsigned_byte_enable_ff;    
-                        o_mem_signed_byte_enable_ff      <= i_mem_signed_byte_enable_ff;      
-                        o_mem_signed_halfword_enable_ff  <= i_mem_signed_halfword_enable_ff;  
+                        o_mem_unsigned_byte_enable_ff    <= i_mem_unsigned_byte_enable_ff;
+                        o_mem_signed_byte_enable_ff      <= i_mem_signed_byte_enable_ff;
+                        o_mem_signed_halfword_enable_ff  <= i_mem_signed_halfword_enable_ff;
                         o_mem_unsigned_halfword_enable_ff<= i_mem_unsigned_halfword_enable_ff;
-                        o_mem_translate_ff               <= i_mem_translate_ff;  
+                        o_mem_translate_ff               <= i_mem_translate_ff;
                         o_data_wb_cyc_ff                 <= i_data_wb_cyc_ff;
                         o_data_wb_stb_ff                 <= i_data_wb_stb_ff;
                         o_data_wb_we_ff                  <= i_data_wb_we_ff;

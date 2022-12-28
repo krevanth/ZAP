@@ -1,7 +1,7 @@
 // -----------------------------------------------------------------------------
 // --                                                                         --
 // --    (C) 2016-2022 Revanth Kamaraj (krevanth)                             --
-// --                                                                         -- 
+// --                                                                         --
 // -- --------------------------------------------------------------------------
 // --                                                                         --
 // -- This program is free software; you can redistribute it and/or           --
@@ -42,14 +42,8 @@ i_instruction,
 i_instruction_valid,
 
 //
-// CPU mode from active CPSR. Required to prevent CPSR change on MSR 
-// instruction in USR mode.
-//
-i_cpsr_ff_mode,
-
-//
 // Bits related to decoded instruction...
-// 
+//
 
 o_condition_code,       // 4-bit CC.
 o_destination_index,    // Destination register.
@@ -71,7 +65,7 @@ o_mem_signed_halfword_enable,   // Access treated as int16_t.
 o_mem_unsigned_halfword_enable, // Access treated as uint16_t.
 o_mem_translate,                // Force user view of memory.
 
-o_und,   // Declare as undecodable. 
+o_und,   // Declare as undecodable.
 o_switch // Switch between ARM and Thumb may be needed if this is 1.
 
 );
@@ -90,9 +84,8 @@ o_switch // Switch between ARM and Thumb may be needed if this is 1.
 
                 // I/O Ports.
                 input   logic                             i_irq, i_fiq, i_abt;
-                input    logic   [35:0]                   i_instruction;          
+                input    logic   [35:0]                   i_instruction;
                 input    logic                            i_instruction_valid;
-                input   logic    [4:0]                    i_cpsr_ff_mode; 
                 output   logic    [3:0]                   o_condition_code;
                 output   logic    [$clog2(ARCH_REGS)-1:0] o_destination_index;
                 output   logic    [32:0]                  o_alu_source;
@@ -102,14 +95,14 @@ o_switch // Switch between ARM and Thumb may be needed if this is 1.
                 output   logic    [32:0]                  o_shift_length;
                 output  logic                             o_flag_update;
                 output  logic   [$clog2(ARCH_REGS)-1:0]   o_mem_srcdest_index;
-                output  logic                             o_mem_load;      
+                output  logic                             o_mem_load;
                 output  logic                             o_mem_store;
-                output  logic                             o_mem_pre_index;   
+                output  logic                             o_mem_pre_index;
                 output  logic                             o_mem_unsigned_byte_enable;
-                output  logic                             o_mem_signed_byte_enable;       
+                output  logic                             o_mem_signed_byte_enable;
                 output  logic                             o_mem_signed_halfword_enable;
                 output  logic                             o_mem_unsigned_halfword_enable;
-                output  logic                             o_mem_translate;   
+                output  logic                             o_mem_translate;
                 output  logic                             o_und;
                 output  logic                             o_switch;
 
@@ -163,7 +156,7 @@ begin: mainBlk1
                 o_condition_code    = AL;
                 o_alu_operation     = {2'd0, SUB};
                 o_alu_source        = {29'd0, ARCH_PC};
-                o_alu_source[32]    = INDEX_EN; 
+                o_alu_source[32]    = INDEX_EN;
                 o_destination_index = {1'd0, ARCH_LR};
                 o_shift_source      = 4;
                 o_shift_source[32]  = IMMED_EN;
@@ -175,7 +168,7 @@ begin: mainBlk1
         begin
                 casez ( i_instruction[31:0] )
 
-                PLD:                         
+                PLD:
                 begin
                         // Generate a NOP i.e., R0 = R0 & R0.
                         o_condition_code    = AL;
@@ -192,7 +185,7 @@ begin: mainBlk1
 
                 SMLAxy, SMLAWy,
                 SMLALxy:                      decode_lmul_dsp   ();
-                SMULWy, SMULxy:               decode_smul_dsp   ();                
+                SMULWy, SMULxy:               decode_smul_dsp   ();
                 QADD:                         decode_sat_addsub ();
                 QSUB:                         decode_sat_addsub ();
                 QDADD:                        decode_sat_addsub ();
@@ -200,13 +193,13 @@ begin: mainBlk1
 
                 CLZ_INSTRUCTION:              decode_clz  ();
                 BX_INST:                      decode_bx   ();
-                MRS:                          decode_mrs  ();   
+                MRS:                          decode_mrs  ();
                 MSR,MSR_IMMEDIATE:            decode_msr  ();
 
-                DATA_PROCESSING_IMMEDIATE, 
-                DATA_PROCESSING_REGISTER_SPECIFIED_SHIFT, 
+                DATA_PROCESSING_IMMEDIATE,
+                DATA_PROCESSING_REGISTER_SPECIFIED_SHIFT,
                 DATA_PROCESSING_INSTRUCTION_SPECIFIED_SHIFT:   decode_data_processing ();
-                BRANCH_INSTRUCTION:     decode_branch      ();   
+                BRANCH_INSTRUCTION:     decode_branch      ();
                 LS_INSTRUCTION_SPECIFIED_SHIFT,
                 LS_IMMEDIATE:           decode_ls          ();
                 MULT_INST:              decode_mult        ();
@@ -220,7 +213,7 @@ begin: mainBlk1
                 end
                 endcase
         end
-end    
+end
 
 // ----------------------------------------------------------------------------
 
@@ -240,7 +233,7 @@ begin
         endcase
 
         // Processor does Rn - Rm.
- 
+
         // Rn
         o_alu_source            = {29'd0, instruction[3:0]};
         o_alu_source[32]        = INDEX_EN;
@@ -270,7 +263,7 @@ begin: tskDecodeClz
 
         // Rn = 0.
         o_alu_source            =       33'd0;
-        o_alu_source[32]        =       IMMED_EN; 
+        o_alu_source[32]        =       IMMED_EN;
 
         // Rm = register whose CLZ must be found.
         o_shift_source          =       {28'd0, instruction[`ZAP_DP_RB_EXTEND], instruction[`ZAP_DP_RB]}; // Rm
@@ -294,21 +287,21 @@ begin: tskLDecodeMult
         o_flag_update           =       instruction[20];
 
         // ARM rd.
-        o_destination_index     =       {instruction[`ZAP_DP_RD_EXTEND], 
+        o_destination_index     =       {instruction[`ZAP_DP_RD_EXTEND],
                                          instruction[19:16]};
 
-        // For MUL, Rd and Rn are interchanged. 
+        // For MUL, Rd and Rn are interchanged.
         // For 64bit, this is normally high register.
 
         o_alu_source            =       {29'd0, instruction[11:8]}; // ARM rs
         o_alu_source[32]        =       INDEX_EN;
 
-        o_shift_source          =       {28'd0, instruction[`ZAP_DP_RB_EXTEND], 
+        o_shift_source          =       {28'd0, instruction[`ZAP_DP_RB_EXTEND],
                                          instruction[`ZAP_DP_RB]};
-        o_shift_source[32]      =       INDEX_EN;            // ARM rm 
+        o_shift_source[32]      =       INDEX_EN;            // ARM rm
 
         // ARM rn
-        o_shift_length          =       {28'd0, instruction[`ZAP_DP_RA_EXTEND], 
+        o_shift_length          =       {28'd0, instruction[`ZAP_DP_RA_EXTEND],
                                          instruction[`ZAP_DP_RD]};
 
         o_shift_length[32]      =       INDEX_EN;
@@ -364,7 +357,7 @@ begin
         o_condition_code    = AL;
         o_alu_operation     = {2'd0, SUB};
         o_alu_source        = {29'd0, ARCH_PC};
-        o_alu_source[32]    = INDEX_EN; 
+        o_alu_source[32]    = INDEX_EN;
         o_destination_index = {1'd0, ARCH_LR};
         o_shift_source      = 33'd4;
         o_shift_source[32]  = IMMED_EN;
@@ -386,7 +379,7 @@ begin: tskDecodeSWI
         o_condition_code    = instruction[31:28];
         o_alu_operation     = {2'd0, SUB};
         o_alu_source        = {29'd0, ARCH_PC};
-        o_alu_source[32]    = INDEX_EN; 
+        o_alu_source[32]    = INDEX_EN;
         o_destination_index = {1'd0, ARCH_LR};
         o_shift_source      = 33'd4;
         o_shift_source[32]  = IMMED_EN;
@@ -420,11 +413,11 @@ begin: tskDecodeHalfWordLs
         end
         else
         begin
-                process_instruction_specified_shift ( {21'd0, temp1} );  
+                process_instruction_specified_shift ( {21'd0, temp1} );
         end
 
         o_alu_operation     = instruction[23] ? {2'd0, ADD} : {2'd0, SUB};
-        o_alu_source        = { 28'd0, instruction[`ZAP_BASE_EXTEND], 
+        o_alu_source        = { 28'd0, instruction[`ZAP_BASE_EXTEND],
                                 instruction[`ZAP_BASE]}; // Pointer register.
         o_alu_source[32]    = INDEX_EN;
         o_mem_load          = instruction[20];
@@ -433,11 +426,11 @@ begin: tskDecodeHalfWordLs
 
         // If post-index is used or pre-index is used with writeback,
         // take is as a request to update the base register.
-        o_destination_index = (instruction[21] || !o_mem_pre_index) ? 
-                                o_alu_source[4:0] : 
+        o_destination_index = (instruction[21] || !o_mem_pre_index) ?
+                                o_alu_source[4:0] :
                                 RAZ_REGISTER; // Pointer register already added.
 
-        o_mem_srcdest_index = {instruction[`ZAP_SRCDEST_EXTEND], 
+        o_mem_srcdest_index = {instruction[`ZAP_SRCDEST_EXTEND],
                                instruction[`ZAP_SRCDEST]};
 
         // Transfer size.
@@ -472,20 +465,20 @@ begin: tskDecodeMult
         o_condition_code        =       instruction[31:28];
         o_flag_update           =       instruction[20];
         o_alu_operation         =       {1'd0, UMLALL};
-        o_destination_index     =       {instruction[`ZAP_DP_RD_EXTEND], 
+        o_destination_index     =       {instruction[`ZAP_DP_RD_EXTEND],
                                          instruction[19:16]};
 
         // For MUL, Rd and Rn are interchanged.
         o_alu_source            =       {29'd0, instruction[11:8]}; // ARM rs
         o_alu_source[32]        =       INDEX_EN;
 
-        o_shift_source          =       {28'd0, instruction[`ZAP_DP_RB_EXTEND], 
+        o_shift_source          =       {28'd0, instruction[`ZAP_DP_RB_EXTEND],
                                          instruction[`ZAP_DP_RB]};
-        o_shift_source[32]      =       INDEX_EN;            // ARM rm 
+        o_shift_source[32]      =       INDEX_EN;            // ARM rm
 
         // ARM rn - Set for accumulate.
-        o_shift_length          =       instruction[21] ? 
-                                        {28'd0, instruction[`ZAP_DP_RA_EXTEND], 
+        o_shift_length          =       instruction[21] ?
+                                        {28'd0, instruction[`ZAP_DP_RA_EXTEND],
                                          instruction[`ZAP_DP_RD]} : 33'd0;
 
         o_shift_length[32]      =       instruction[21] ? INDEX_EN : IMMED_EN;
@@ -505,9 +498,9 @@ function void decode_smul_dsp ();
 begin
         o_condition_code    = instruction[31:28];
         o_flag_update       = 1'd1;
-        
+
         o_alu_operation = ((instruction[22:21] == 2'b01) && instruction[5] && instruction[15:12] == 0) ?
-                          (instruction[6] ? OP_SMULW0 : OP_SMULW1) : 
+                          (instruction[6] ? OP_SMULW0 : OP_SMULW1) :
                           (instruction[6:5] == 2'b00 ? OP_SMUL00 :
                            instruction[6:5] == 2'b01 ? OP_SMUL01 :
                            instruction[6:5] == 2'b10 ? OP_SMUL10 :
@@ -515,7 +508,7 @@ begin
 
         // ARM rd
         o_destination_index = {instruction[`ZAP_DP_RD_EXTEND], instruction[19:16]};
-        
+
         // ARM Rs.
         o_alu_source = {29'd0, instruction[11:8]};
         o_alu_source[32] = INDEX_EN;
@@ -543,27 +536,27 @@ function void decode_lmul_dsp (); // (rm.rs) + {rh, rn} = {rh, rn}
 begin: tskLDecodeMultDsp
 
         o_condition_code        =       instruction[31:28];
-        o_flag_update           =       1'd1;                   
+        o_flag_update           =       1'd1;
 
         // ARM rd.
-        o_destination_index     =       {instruction[`ZAP_DP_RD_EXTEND], 
+        o_destination_index     =       {instruction[`ZAP_DP_RD_EXTEND],
                                          instruction[19:16]};
 
-        // For MUL, Rd and Rn are interchanged. 
+        // For MUL, Rd and Rn are interchanged.
         // For 64bit, this is normally high register.
 
         o_alu_source            =       {29'd0, instruction[11:8]}; // ARM rs
         o_alu_source[32]        =       INDEX_EN;
 
-        o_shift_source          =       {28'd0, instruction[`ZAP_DP_RB_EXTEND], 
+        o_shift_source          =       {28'd0, instruction[`ZAP_DP_RB_EXTEND],
                                          instruction[`ZAP_DP_RB]};
-        o_shift_source[32]      =       INDEX_EN;            // ARM rm 
+        o_shift_source[32]      =       INDEX_EN;            // ARM rm
 
         o_shift_length          =       // ARM rn.
-                                        {28'd0, instruction[`ZAP_DP_RA_EXTEND], 
+                                        {28'd0, instruction[`ZAP_DP_RA_EXTEND],
                                          instruction[`ZAP_DP_RD]};
 
-        o_shift_length[32]      =       INDEX_EN;                             
+        o_shift_length[32]      =       INDEX_EN;
 
 
         // We need to generate output code.
@@ -573,9 +566,9 @@ begin: tskLDecodeMultDsp
         begin
                 o_alu_operation     = instruction[6:5] == 2'b00 ? SMLA00 :
                                       instruction[6:5] == 2'b01 ? SMLA01 :
-                                      instruction[6:5] == 2'b10 ? SMLA10 : 
+                                      instruction[6:5] == 2'b10 ? SMLA10 :
                                                                   SMLA11 ;
-                                       
+
 
                 o_mem_srcdest_index = RAZ_REGISTER; // rh.
         end
@@ -604,7 +597,7 @@ begin: tskLDecodeMultDsp
                         o_destination_index = {1'd0, instruction[15:12]}; // Low register.
                         o_alu_operation[0]  = 1'd0;                       // Request low operation.
 
-                        o_alu_operation     = 
+                        o_alu_operation     =
                                       instruction[6:5] == 2'b00 ? SMLAL00L :
                                       instruction[6:5] == 2'b01 ? SMLAL01L :
                                       instruction[6:5] == 2'b10 ? SMLAL10L :
@@ -639,7 +632,7 @@ begin: tskDecodeBx
         o_alu_source            = 0;
         o_alu_source[32]        = IMMED_EN;
 
-        // Indicate switch. This is a primary differentiator. 
+        // Indicate switch. This is a primary differentiator.
         o_switch = 1;
 end
 endfunction
@@ -661,11 +654,11 @@ begin: tskDecodeLs
                 o_shift_source[32]      = IMMED_EN;
                 o_shift_length          = 0;
                 o_shift_length[32]      = IMMED_EN;
-                o_shift_operation       = {1'd0, LSL};                
+                o_shift_operation       = {1'd0, LSL};
         end
         else
         begin
-              process_instruction_specified_shift ( {21'd0, instruction[11:0]} );  
+              process_instruction_specified_shift ( {21'd0, instruction[11:0]} );
         end
 
         o_alu_operation = instruction[23] ? {2'd0, ADD} : {2'd0, SUB};
@@ -679,8 +672,8 @@ begin: tskDecodeLs
 
         // If post-index is used or pre-index is used with writeback,
         // take is as a request to update the base register.
-        o_destination_index = (instruction[21] || !o_mem_pre_index) ? 
-                                o_alu_source[4:0] : 
+        o_destination_index = (instruction[21] || !o_mem_pre_index) ?
+                                o_alu_source[4:0] :
                                 RAZ_REGISTER; // Pointer register already added.
         o_mem_unsigned_byte_enable = instruction[22];
 
@@ -703,7 +696,7 @@ function void decode_mrs ();
 begin
 
         process_immediate ( {instruction[11:0]} );
-        
+
         o_condition_code    = instruction[31:28];
         o_destination_index = {instruction[`ZAP_DP_RD_EXTEND], instruction[`ZAP_DP_RD]};
         o_alu_source        = instruction[22] ? ARCH_CURR_SPSR : ARCH_CPSR;
@@ -737,15 +730,8 @@ begin
         // Select SPSR or CPSR.
         o_alu_operation  = instruction[22] ? {1'd0, MMOV} : {1'd0, FMOV};
 
-        o_alu_source     = {29'd0, instruction[19:16]}; 
+        o_alu_source     = {29'd0, instruction[19:16]};
         o_alu_source[32] = IMMED_EN;
-
-        // Part of the instruction will silently fail when changing mode bits
-        // in user mode. This is as per the ARM spec.
-        if  ( i_cpsr_ff_mode == USR )
-        begin
-                o_alu_source[2:0] = 3'b0;
-        end
 end
 endfunction
 
@@ -766,7 +752,7 @@ begin
         o_shift_source[32]      = IMMED_EN;
         o_shift_operation       = {1'd0, LSL};
         o_shift_length          = instruction[34] ? 1 : 2; // Thumb branches sometimes need only a shift of 1.
-        o_shift_length[32]      = IMMED_EN; 
+        o_shift_length[32]      = IMMED_EN;
 end
 endfunction
 
@@ -786,9 +772,9 @@ begin
         o_alu_source[32]        = INDEX_EN;
         o_mem_srcdest_index     = ARCH_CURR_SPSR;
 
-        if (    o_alu_operation == {2'd0, CMP} || 
-                o_alu_operation == {2'd0, CMN} || 
-                o_alu_operation == {2'd0, TST} || 
+        if (    o_alu_operation == {2'd0, CMP} ||
+                o_alu_operation == {2'd0, CMN} ||
+                o_alu_operation == {2'd0, TST} ||
                 o_alu_operation == {2'd0, TEQ} )
         begin
                 o_destination_index = RAZ_REGISTER;
@@ -809,7 +795,7 @@ endfunction
 // ----------------------------------------------------------------------------
 
 //
-// If an immediate value is to be rotated right by an 
+// If an immediate value is to be rotated right by an
 // immediate value, this mode is used.
 //
 function void process_immediate( input [11:0] xinstruction );
@@ -817,7 +803,7 @@ begin
         o_shift_length          = {28'd0, xinstruction[11:8], 1'd0};
         o_shift_length[32]      = IMMED_EN;
         o_shift_source          = {25'd0, xinstruction[7:0]};
-        o_shift_source[32]      = IMMED_EN;                        
+        o_shift_source[32]      = IMMED_EN;
         o_shift_operation       = RORI;
 end
 endfunction
@@ -825,7 +811,7 @@ endfunction
 // ----------------------------------------------------------------------------
 
 //
-// The shifter source is a register but the 
+// The shifter source is a register but the
 // amount to shift is in the instruction itself.
 //
 function void process_instruction_specified_shift( input [32:0] xinstruction );
@@ -833,7 +819,7 @@ logic unused;
 begin
          unused                  = |{xinstruction[31:12],xinstruction[4]};
 
-        // ROR #0 = RRC, ASR #0 = ASR #32, LSL #0 = LSL #0, LSR #0 = LSR #32 
+        // ROR #0 = RRC, ASR #0 = ASR #32, LSL #0 = LSL #0, LSR #0 = LSR #32
         // ROR #n = ROR_1 #n ( n > 0 )
         o_shift_length          = {28'd0, xinstruction[11:7]};
         o_shift_length[32]      = IMMED_EN;
@@ -844,12 +830,12 @@ begin
         case ( o_shift_operation[1:0] )
                 LSR: if ( o_shift_length[31:0] == 32'd0 ) o_shift_length[31:0] = 32;
                 ASR: if ( o_shift_length[31:0] == 32'd0 ) o_shift_length[31:0] = 32;
-                ROR: 
+                ROR:
                 begin
-                        if ( o_shift_length[31:0] == 32'd0 ) 
+                        if ( o_shift_length[31:0] == 32'd0 )
                                 o_shift_operation    = RRC;
                         else
-                                o_shift_operation    = ROR_1; 
+                                o_shift_operation    = ROR_1;
                                 // Differs in carry generation behavior.
                 end
                 default: // For lint. Default values set in function anyway.

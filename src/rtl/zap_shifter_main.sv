@@ -1,7 +1,7 @@
 // -----------------------------------------------------------------------------
 // --                                                                         --
 // --    (C) 2016-2022 Revanth Kamaraj (krevanth)                             --
-// --                                                                         -- 
+// --                                                                         --
 // -- --------------------------------------------------------------------------
 // --                                                                         --
 // -- This program is free software; you can redistribute it and/or           --
@@ -20,7 +20,7 @@
 // -- 02110-1301, USA.                                                        --
 // --                                                                         --
 // -----------------------------------------------------------------------------
-// --                                                                         -- 
+// --                                                                         --
 // --  The ZAP shift unit. Apart from shift, it does value restoration and    --
 // --  multiplication. Value restoration is needed since the ALU (Shift+Op)   --
 // --  is pipelined and we want back to back instructions to execute correctly--
@@ -67,8 +67,8 @@ module zap_shifter_main
         input logic                               i_clear_from_alu,       // V Low Priority.
 
         // Next CPSR and FF CPSR.
-        input logic                              i_cpsr_nxt_29, 
-        input logic                              i_cpsr_ff_29, 
+        input logic                              i_cpsr_nxt_29,
+        input logic                              i_cpsr_ff_29,
 
         //
         // Things from Issue. Please see issue stage for signal details.
@@ -79,17 +79,17 @@ module zap_shifter_main
         input logic       [$clog2(ALU_OPS)-1:0]   i_alu_operation_ff,
         input logic       [$clog2(SHIFT_OPS)-1:0] i_shift_operation_ff,
         input logic                               i_flag_update_ff,
-        
-        input logic     [$clog2(PHY_REGS )-1:0]   i_mem_srcdest_index_ff,            
-        input logic                               i_mem_load_ff,                     
+
+        input logic     [$clog2(PHY_REGS )-1:0]   i_mem_srcdest_index_ff,
+        input logic                               i_mem_load_ff,
         input logic                               i_mem_store_ff,
-        input logic                               i_mem_pre_index_ff,                
-        input logic                               i_mem_unsigned_byte_enable_ff,     
-        input logic                               i_mem_signed_byte_enable_ff,       
+        input logic                               i_mem_pre_index_ff,
+        input logic                               i_mem_unsigned_byte_enable_ff,
+        input logic                               i_mem_signed_byte_enable_ff,
         input logic                               i_mem_signed_halfword_enable_ff,
         input logic                               i_mem_unsigned_halfword_enable_ff,
-        input logic                               i_mem_translate_ff,                
-        
+        input logic                               i_mem_translate_ff,
+
         input logic                               i_irq_ff,
         input logic                               i_fiq_ff,
         input logic                               i_abt_ff,
@@ -104,7 +104,7 @@ module zap_shifter_main
         input logic      [31:0]                  i_alu_source_value_ff,
         input logic      [31:0]                  i_shift_source_value_ff,
         input logic      [31:0]                  i_shift_length_value_ff,
-        input logic      [31:0]                  i_mem_srcdest_value_ff, // This too has to be resolved. 
+        input logic      [31:0]                  i_mem_srcdest_value_ff, // This too has to be resolved.
                                                 // For stores.
 
         // The PC value.
@@ -148,21 +148,21 @@ module zap_shifter_main
         output logic      [31:0]                  o_pc_plus_8_ff,
 
         // Interrupts.
-        output logic                              o_irq_ff, 
-        output logic                              o_fiq_ff, 
-        output logic                              o_abt_ff, 
+        output logic                              o_irq_ff,
+        output logic                              o_fiq_ff,
+        output logic                              o_abt_ff,
         output logic                              o_swi_ff,
 
         // Memory related outputs.
-        output logic [$clog2(PHY_REGS )-1:0]      o_mem_srcdest_index_ff,            
-        output logic                              o_mem_load_ff,                     
+        output logic [$clog2(PHY_REGS )-1:0]      o_mem_srcdest_index_ff,
+        output logic                              o_mem_load_ff,
         output logic                              o_mem_store_ff,
-        output logic                              o_mem_pre_index_ff,                
-        output logic                              o_mem_unsigned_byte_enable_ff,     
-        output logic                              o_mem_signed_byte_enable_ff,       
+        output logic                              o_mem_pre_index_ff,
+        output logic                              o_mem_unsigned_byte_enable_ff,
+        output logic                              o_mem_signed_byte_enable_ff,
         output logic                              o_mem_signed_halfword_enable_ff,
         output logic                              o_mem_unsigned_halfword_enable_ff,
-        output logic                              o_mem_translate_ff,                
+        output logic                              o_mem_translate_ff,
 
         // Other stuff.
         output logic       [3:0]                   o_condition_code_ff,
@@ -215,7 +215,7 @@ u_zap_multiply
 
         .i_alu_operation_ff(i_alu_operation_ff),
 
-        .i_cc_satisfied (i_condition_code_ff == 4'd15 ? 1'd0 : 1'd1), 
+        .i_cc_satisfied (i_condition_code_ff == 4'd15 ? 1'd0 : 1'd1),
 
         .i_rm(i_alu_source_value_ff),
         .i_rn(i_shift_length_value_ff),
@@ -233,10 +233,10 @@ u_zap_multiply
 task automatic clear; // Clear the unit out.
 begin
            o_condition_code_ff               <= NV;
-           o_irq_ff                          <= 0; 
-           o_fiq_ff                          <= 0; 
-           o_abt_ff                          <= 0;                
-           o_swi_ff                          <= 0; 
+           o_irq_ff                          <= 0;
+           o_fiq_ff                          <= 0;
+           o_abt_ff                          <= 0;
+           o_swi_ff                          <= 0;
            o_und_ff                          <= 0;
            o_uop_last                        <= 0;
 end
@@ -265,22 +265,22 @@ begin
         end
         else
         begin
-           o_condition_code_ff               <= o_stall_from_shifter ? NV : i_condition_code_ff;                                     
+           o_condition_code_ff               <= o_stall_from_shifter ? NV : i_condition_code_ff;
            o_destination_index_ff            <= i_destination_index_ff;
            o_alu_operation_ff                <= (
-                                                 i_alu_operation_ff == {1'd0, UMLALL} || 
-                                                 i_alu_operation_ff == {1'd0, UMLALH} || 
-                                                 i_alu_operation_ff == {1'd0, SMLALL} || 
-                                                 i_alu_operation_ff == {1'd0, SMLALH} 
-                                                ) ? {2'd0, MOV} : 
+                                                 i_alu_operation_ff == {1'd0, UMLALL} ||
+                                                 i_alu_operation_ff == {1'd0, UMLALH} ||
+                                                 i_alu_operation_ff == {1'd0, SMLALL} ||
+                                                 i_alu_operation_ff == {1'd0, SMLALH}
+                                                ) ? {2'd0, MOV} :
                                                 (
-                                                i_alu_operation_ff == SMULW0     || 
-                                                i_alu_operation_ff == SMULW1     || 
-                                                i_alu_operation_ff == SMUL00     || 
-                                                i_alu_operation_ff == SMUL01     || 
-                                                i_alu_operation_ff == SMUL10     || 
-                                                i_alu_operation_ff == SMUL11     || 
-                                                i_alu_operation_ff == SMLA00     ||        
+                                                i_alu_operation_ff == SMULW0     ||
+                                                i_alu_operation_ff == SMULW1     ||
+                                                i_alu_operation_ff == SMUL00     ||
+                                                i_alu_operation_ff == SMUL01     ||
+                                                i_alu_operation_ff == SMUL10     ||
+                                                i_alu_operation_ff == SMUL11     ||
+                                                i_alu_operation_ff == SMLA00     ||
                                                 i_alu_operation_ff == SMLA01     ||
                                                 i_alu_operation_ff == SMLA10     ||
                                                 i_alu_operation_ff == SMLA11     ||
@@ -293,25 +293,25 @@ begin
                                                 i_alu_operation_ff == SMLAL00H   ||
                                                 i_alu_operation_ff == SMLAL01H   ||
                                                 i_alu_operation_ff == SMLAL10H   ||
-                                                i_alu_operation_ff == SMLAL11H  
-                                                ) ? 
-                                                 SAT_MOV : 
-                                                 i_alu_operation_ff; 
+                                                i_alu_operation_ff == SMLAL11H
+                                                ) ?
+                                                 SAT_MOV :
+                                                 i_alu_operation_ff;
 
            o_flag_update_ff                  <= i_flag_update_ff;
-           o_mem_srcdest_index_ff            <= i_mem_srcdest_index_ff;           
-           o_mem_load_ff                     <= i_mem_load_ff;                    
-           o_mem_store_ff                    <= i_mem_store_ff;                   
-           o_mem_pre_index_ff                <= i_mem_pre_index_ff;               
-           o_mem_unsigned_byte_enable_ff     <= i_mem_unsigned_byte_enable_ff;    
-           o_mem_signed_byte_enable_ff       <= i_mem_signed_byte_enable_ff;      
-           o_mem_signed_halfword_enable_ff   <= i_mem_signed_halfword_enable_ff;  
+           o_mem_srcdest_index_ff            <= i_mem_srcdest_index_ff;
+           o_mem_load_ff                     <= i_mem_load_ff;
+           o_mem_store_ff                    <= i_mem_store_ff;
+           o_mem_pre_index_ff                <= i_mem_pre_index_ff;
+           o_mem_unsigned_byte_enable_ff     <= i_mem_unsigned_byte_enable_ff;
+           o_mem_signed_byte_enable_ff       <= i_mem_signed_byte_enable_ff;
+           o_mem_signed_halfword_enable_ff   <= i_mem_signed_halfword_enable_ff;
            o_mem_unsigned_halfword_enable_ff <= i_mem_unsigned_halfword_enable_ff;
-           o_mem_translate_ff                <= i_mem_translate_ff;               
-           o_irq_ff                          <= o_stall_from_shifter ? '0 : i_irq_ff;                         
-           o_fiq_ff                          <= o_stall_from_shifter ? '0 : i_fiq_ff;                         
-           o_abt_ff                          <= o_stall_from_shifter ? '0 : i_abt_ff;                         
-           o_swi_ff                          <= o_stall_from_shifter ? '0 : i_swi_ff;   
+           o_mem_translate_ff                <= i_mem_translate_ff;
+           o_irq_ff                          <= o_stall_from_shifter ? '0 : i_irq_ff;
+           o_fiq_ff                          <= o_stall_from_shifter ? '0 : i_fiq_ff;
+           o_abt_ff                          <= o_stall_from_shifter ? '0 : i_abt_ff;
+           o_swi_ff                          <= o_stall_from_shifter ? '0 : i_swi_ff;
            o_pc_plus_8_ff                    <= i_pc_plus_8_ff;
            o_mem_srcdest_value_ff            <= mem_srcdest_value;
            o_alu_source_value_ff             <= rn;
@@ -355,8 +355,8 @@ U_SHIFT
 always_comb
 begin
 
-                rn = resolve_conflict ( i_alu_source_ff, i_alu_source_value_ff, 
-                                        o_destination_index_ff, i_alu_value_nxt, i_alu_dav_nxt ); 
+                rn = resolve_conflict ( i_alu_source_ff, i_alu_source_value_ff,
+                                        o_destination_index_ff, i_alu_value_nxt, i_alu_dav_nxt );
 
 
 end
@@ -369,17 +369,17 @@ begin
         shift_sat_nxt = 1'd0;
 
         // If we issue a multiply.
-        if ( i_alu_operation_ff == {1'd0, UMLALL} || 
-             i_alu_operation_ff == {1'd0, UMLALH} || 
-             i_alu_operation_ff == {1'd0, SMLALL} || 
+        if ( i_alu_operation_ff == {1'd0, UMLALL} ||
+             i_alu_operation_ff == {1'd0, UMLALH} ||
+             i_alu_operation_ff == {1'd0, SMLALL} ||
              i_alu_operation_ff == {1'd0, SMLALH} ||
-             i_alu_operation_ff == SMULW0         || 
-             i_alu_operation_ff == SMULW1         || 
-             i_alu_operation_ff == SMUL00         || 
-             i_alu_operation_ff == SMUL01         || 
-             i_alu_operation_ff == SMUL10         || 
-             i_alu_operation_ff == SMUL11         || 
-             i_alu_operation_ff == SMLA00         ||        
+             i_alu_operation_ff == SMULW0         ||
+             i_alu_operation_ff == SMULW1         ||
+             i_alu_operation_ff == SMUL00         ||
+             i_alu_operation_ff == SMUL01         ||
+             i_alu_operation_ff == SMUL10         ||
+             i_alu_operation_ff == SMUL11         ||
+             i_alu_operation_ff == SMLA00         ||
              i_alu_operation_ff == SMLA01         ||
              i_alu_operation_ff == SMLA10         ||
              i_alu_operation_ff == SMLA11         ||
@@ -392,7 +392,7 @@ begin
              i_alu_operation_ff == SMLAL00H       ||
              i_alu_operation_ff == SMLAL01H       ||
              i_alu_operation_ff == SMLAL10H       ||
-             i_alu_operation_ff == SMLAL11H  
+             i_alu_operation_ff == SMLAL11H
         )
         begin
                 // Get result from multiplier.
@@ -400,14 +400,14 @@ begin
 
                 // Preserve carry.
                 shift_carry_nxt = i_cpsr_nxt_29;
-        end        
+        end
         else if( shifter_enabled ) // Shifter enabled if valid shift is asked for.
         begin
                 // Get result from shifter.
                 rm              = shout;
 
                 // Get carry from shifter
-                shift_carry_nxt = shcarry; 
+                shift_carry_nxt = shcarry;
 
                 // Get saturation from shifter.
                 shift_sat_nxt = shsat;
@@ -430,14 +430,14 @@ end
 always_comb
 begin
         mem_srcdest_value = resolve_conflict ( {27'd0, i_mem_srcdest_index_ff}, i_mem_srcdest_value_ff,
-                                               o_destination_index_ff, i_alu_value_nxt, i_alu_dav_nxt );  
+                                               o_destination_index_ff, i_alu_value_nxt, i_alu_dav_nxt );
 end
 
 ///////////////////////////////////////////////////////////////////////////////
 
 // This will resolve conflicts for back to back instruction execution.
 // The function entirely depends only on the inputs to the function.
-function [31:0] resolve_conflict ( 
+function [31:0] resolve_conflict (
         input    [32:0]                  index_from_issue,       // Index from issue stage. Could have immed too.
         input    [31:0]                  value_from_issue,       // Issue speculatively read value.
         input    [$clog2(PHY_REGS)-1:0]  index_from_this_stage,  // From shift (This) stage output flops.
@@ -450,10 +450,10 @@ begin
         begin
                 resolve_conflict = index_from_issue[31:0];
         end
-        else if ( index_from_issue == PHY_PC ) 
+        else if ( index_from_issue == PHY_PC )
         begin
-                resolve_conflict = i_pc_plus_8_ff; 
-        end 
+                resolve_conflict = i_pc_plus_8_ff;
+        end
         else if ( index_from_this_stage == index_from_issue[$clog2(PHY_REGS)-1:0] && result_from_alu_valid )
         begin
                 resolve_conflict = result_from_alu;
@@ -472,34 +472,34 @@ begin
            o_condition_code_ff               <= 0;
            o_destination_index_ff            <= 0;
            o_alu_operation_ff                <= 0;
-           o_flag_update_ff                  <= 0; 
-           o_mem_srcdest_index_ff            <= 0; 
-           o_mem_load_ff                     <= 0; 
-           o_mem_store_ff                    <= 0; 
-           o_mem_pre_index_ff                <= 0; 
-           o_mem_unsigned_byte_enable_ff     <= 0; 
-           o_mem_signed_byte_enable_ff       <= 0; 
-           o_mem_signed_halfword_enable_ff   <= 0; 
-           o_mem_unsigned_halfword_enable_ff <= 0; 
-           o_mem_translate_ff                <= 0;      
-           o_irq_ff                          <= 0;      
-           o_fiq_ff                          <= 0;      
-           o_abt_ff                          <= 0;      
-           o_swi_ff                          <= 0; 
-           o_pc_plus_8_ff                    <= 0; 
-           o_mem_srcdest_value_ff            <= 0; 
-           o_alu_source_value_ff             <= 0; 
-           o_shifted_source_value_ff         <= 0; 
-           o_shift_carry_ff                  <= 0; 
-           o_shift_sat_ff                    <= 0; 
-           o_switch_ff                       <= 0; 
-           o_und_ff                          <= 0; 
-           o_force32align_ff                 <= 0;      
-           o_taken_ff                        <= 0; 
+           o_flag_update_ff                  <= 0;
+           o_mem_srcdest_index_ff            <= 0;
+           o_mem_load_ff                     <= 0;
+           o_mem_store_ff                    <= 0;
+           o_mem_pre_index_ff                <= 0;
+           o_mem_unsigned_byte_enable_ff     <= 0;
+           o_mem_signed_byte_enable_ff       <= 0;
+           o_mem_signed_halfword_enable_ff   <= 0;
+           o_mem_unsigned_halfword_enable_ff <= 0;
+           o_mem_translate_ff                <= 0;
+           o_irq_ff                          <= 0;
+           o_fiq_ff                          <= 0;
+           o_abt_ff                          <= 0;
+           o_swi_ff                          <= 0;
+           o_pc_plus_8_ff                    <= 0;
+           o_mem_srcdest_value_ff            <= 0;
+           o_alu_source_value_ff             <= 0;
+           o_shifted_source_value_ff         <= 0;
+           o_shift_carry_ff                  <= 0;
+           o_shift_sat_ff                    <= 0;
+           o_switch_ff                       <= 0;
+           o_und_ff                          <= 0;
+           o_force32align_ff                 <= 0;
+           o_taken_ff                        <= 0;
            o_ppc_ff                          <= 0;
-           o_pc_ff                           <= 0; 
-           o_nozero_ff                       <= 0; 
-           o_decompile                       <= 0; 
+           o_pc_ff                           <= 0;
+           o_nozero_ff                       <= 0;
+           o_decompile                       <= 0;
            o_uop_last                        <= 1'd0;
 end
 endtask

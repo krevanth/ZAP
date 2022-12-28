@@ -1,7 +1,7 @@
 // -----------------------------------------------------------------------------
 // --                                                                         --
 // --    (C) 2016-2022 Revanth Kamaraj (krevanth)                             --
-// --                                                                         -- 
+// --                                                                         --
 // -- --------------------------------------------------------------------------
 // --                                                                         --
 // -- This program is free software; you can redistribute it and/or           --
@@ -41,11 +41,11 @@
 `define ZAP_DP_RA                   19:16   // ALU source. ARM rn.
 `define ZAP_DP_RA_EXTEND            34      // ALU source extend. ARM rn.
 
-`define ZAP_OPCODE_EXTEND           35      // To differentiate lower and higher for multiplication -> 
+`define ZAP_OPCODE_EXTEND           35      // To differentiate lower and higher for multiplication ->
                                         // 1 means higher, 0 lower.
 
 // Instruction fields in CP15 instruction.
-`define ZAP_OPCODE_2                7:5        
+`define ZAP_OPCODE_2                7:5
 `define ZAP_CRM                     3:0
 `define ZAP_CRN                     19:16
 `define ZAP_CP_ID                   11:8
@@ -75,7 +75,7 @@
 `define ZAP_VA__SECTION_TAG     31:20+$clog2(SECTION_TLB_ENTRIES)
 `define ZAP_VA__FPAGE_TAG       31:10+$clog2(FPAGE_TLB_ENTRIES)
 
-`define ZAP_VA__SPAGE_AP_SEL    11:10    
+`define ZAP_VA__SPAGE_AP_SEL    11:10
 `define ZAP_VA__LPAGE_AP_SEL    15:14
 
 // L1 Section Descriptior Breakup
@@ -103,7 +103,7 @@
 `define ZAP_L2_LPAGE__CB     3:2
 
 // L2 Fine Page Descriptor Breakup
-`define ZAP_L2_FPAGE__BASE   31:10 
+`define ZAP_L2_FPAGE__BASE   31:10
 `define ZAP_L2_FPAGE__AP     5:4
 `define ZAP_L2_FPAGE__CB     3:2
 
@@ -131,15 +131,15 @@
 // Fpage TLB Structure - 5:0 is undefined
 `define ZAP_FPAGE_TLB__BASE       31:10
 `define ZAP_FPAGE_TLB__DAC_SEL    8:5
-`define ZAP_FPAGE_TLB__AP         9:8  
-`define ZAP_FPAGE_TLB__CB         7:6 
-`define ZAP_FPAGE_TLB__TAG        32+(32-$clog2(FPAGE_TLB_ENTRIES)-10)-1:32     
+`define ZAP_FPAGE_TLB__AP         9:8
+`define ZAP_FPAGE_TLB__CB         7:6
+`define ZAP_FPAGE_TLB__TAG        32+(32-$clog2(FPAGE_TLB_ENTRIES)-10)-1:32
 
 // Cache tag width. Tag consists of the tag and the physical address. valid and dirty are stored as flops.
 `define ZAP_VA__CACHE_INDEX        $clog2(CACHE_LINE)+$clog2(CACHE_SIZE/CACHE_LINE)-1:$clog2(CACHE_LINE)
 `define ZAP_VA__CACHE_TAG          31 : $clog2(CACHE_LINE)+$clog2(CACHE_SIZE/CACHE_LINE)
-`define ZAP_CACHE_TAG__TAG         (31 - $clog2(CACHE_LINE) - $clog2(CACHE_SIZE/CACHE_LINE) + 1) -1   : 0  
-`define ZAP_CACHE_TAG__PA          31 - $clog2(CACHE_LINE) + (31 - $clog2(CACHE_LINE) - $clog2(CACHE_SIZE/CACHE_LINE) + 1) : 31 - $clog2(CACHE_LINE) - $clog2(CACHE_SIZE/CACHE_LINE) + 1 
+`define ZAP_CACHE_TAG__TAG         (31 - $clog2(CACHE_LINE) - $clog2(CACHE_SIZE/CACHE_LINE) + 1) -1   : 0
+`define ZAP_CACHE_TAG__PA          31 - $clog2(CACHE_LINE) + (31 - $clog2(CACHE_LINE) - $clog2(CACHE_SIZE/CACHE_LINE) + 1) : 31 - $clog2(CACHE_LINE) - $clog2(CACHE_SIZE/CACHE_LINE) + 1
 `define ZAP_CACHE_TAG_WDT          31 - $clog2(CACHE_LINE) + (31 - $clog2(CACHE_LINE) - $clog2(CACHE_SIZE/CACHE_LINE) + 1) + 1
 
 // TLB widths.

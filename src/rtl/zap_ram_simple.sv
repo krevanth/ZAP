@@ -1,7 +1,7 @@
 // -----------------------------------------------------------------------------
 // --                                                                         --
 // --    (C) 2016-2022 Revanth Kamaraj (krevanth)                             --
-// --                                                                         -- 
+// --                                                                         --
 // -- --------------------------------------------------------------------------
 // --                                                                         --
 // -- This program is free software; you can redistribute it and/or           --
@@ -20,7 +20,7 @@
 // -- 02110-1301, USA.                                                        --
 // --                                                                         --
 // -----------------------------------------------------------------------------
-// --                                                                         -- 
+// --                                                                         --
 // -- This is a pipelined memory macro for high performance.                  --
 // --                                                                         --
 // -----------------------------------------------------------------------------
@@ -67,7 +67,7 @@ logic [$clog2(DEPTH)-1:0] rd_addr_st1, rd_addr_st2;
 
 always_ff @ (posedge i_clk) if ( i_clken )
 begin
-        if ( i_wr_en )  
+        if ( i_wr_en )
                 mem [ i_wr_addr ] <= i_wr_data;
 end
 
@@ -87,7 +87,7 @@ begin
         if ( i_wr_addr == i_rd_addr && i_wr_en )
                 sel_st1 <= 2'd2;
         else
-                sel_st1 <= 2'd1;                
+                sel_st1 <= 2'd1;
 end
 
 // Buffer update logic.
@@ -104,7 +104,7 @@ end
 always_ff @ ( posedge i_clk ) if ( i_clken )
 begin
         if ( i_wr_addr == rd_addr_st1 && i_wr_en )
-                sel_st2       <= 3'd4; 
+                sel_st2       <= 3'd4;
         else
                 sel_st2       <= {1'd0, sel_st1};
 end

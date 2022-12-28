@@ -1,7 +1,7 @@
 // -----------------------------------------------------------------------------
 // --                                                                         --
 // --    (C) 2016-2022 Revanth Kamaraj (krevanth)                             --
-// --                                                                         -- 
+// --                                                                         --
 // -- --------------------------------------------------------------------------
 // --                                                                         --
 // -- This program is free software; you can redistribute it and/or           --
@@ -20,7 +20,7 @@
 // -- 02110-1301, USA.                                                        --
 // --                                                                         --
 // -----------------------------------------------------------------------------
-// --                                                                         -- 
+// --                                                                         --
 // --  The pre-decode block. Does partial instruction decoding and sequencing --
 // --  before passing the instruction onto the next stage.                    --
 // --                                                                         --
@@ -47,7 +47,7 @@ module zap_predecode_main #( parameter PHY_REGS = 46, parameter RAS_DEPTH = 8 )
         input   logic                            i_und,
 
         // Clear and stall signals. From high to low priority.
-        input logic                              i_clear_from_writeback, // |Pri 
+        input logic                              i_clear_from_writeback, // |Pri
         input logic                              i_data_stall,           // |
         input logic                              i_clear_from_alu,       // |
         input logic                              i_stall_from_shifter,   // |
@@ -59,7 +59,7 @@ module zap_predecode_main #( parameter PHY_REGS = 46, parameter RAS_DEPTH = 8 )
         input   logic                            i_abt,
 
         // Is 0 if all pipeline is invalid. Used for coprocessor.
-        input   logic                            i_pipeline_dav, 
+        input   logic                            i_pipeline_dav,
 
         // Coprocessor done.
         input   logic                            i_copro_done,
@@ -73,18 +73,18 @@ module zap_predecode_main #( parameter PHY_REGS = 46, parameter RAS_DEPTH = 8 )
         input   logic [4:0]                      i_cpu_mode_mode, // CPU mode.
 
         // Instruction input.
-        input     logic  [34:0]                  i_instruction,    
+        input     logic  [34:0]                  i_instruction,
         input     logic                          i_instruction_valid,
 
-        // Instruction output      
+        // Instruction output
         output logic [39:0]                       o_instruction_ff,
         output logic                              o_instruction_valid_ff,
-     
+
         // Stall of PC and fetch.
         output  logic                             o_stall_from_decode,
 
         // PC output.
-        output  logic  [31:0]                     o_pc_plus_8_ff,       
+        output  logic  [31:0]                     o_pc_plus_8_ff,
         output  logic  [31:0]                     o_pc_ff,
         output  logic  [31:0]                     o_ppc_ff,
 
@@ -158,7 +158,7 @@ begin
         begin
                 reset;
                 clear;
-                
+
                 // Return address stack is RESET.
                 ras_ff     <= '0;
                 ras_ptr_ff <= '0;
@@ -191,9 +191,9 @@ begin
         else
         begin
                 // Do not pass IRQ and FIQ if mask is 1.
-                o_irq_ff               <= skid_irq & irq_mask; 
-                o_fiq_ff               <= skid_fiq & fiq_mask; 
-                o_abt_ff               <= skid_abt;                    
+                o_irq_ff               <= skid_irq & irq_mask;
+                o_fiq_ff               <= skid_fiq & fiq_mask;
+                o_abt_ff               <= skid_abt;
                 o_und_ff               <= skid_und && skid_instruction_valid;
                 o_pc_plus_8_ff         <= skid_pc_plus_8_ff;
                 o_pc_ff                <= skid_pc_ff;
@@ -218,16 +218,16 @@ end
 
 task automatic reset;
 begin
-                o_irq_ff               <= 0; 
-                o_fiq_ff               <= 0; 
-                o_abt_ff               <= 0; 
-                o_und_ff               <= 0; 
-                o_pc_plus_8_ff         <= 0; 
-                o_pc_ff                <= 0; 
-                o_force32align_ff      <= 0; 
-                o_taken_ff             <= 0; 
-                o_instruction_ff       <= 0; 
-                o_instruction_valid_ff <= 0; 
+                o_irq_ff               <= 0;
+                o_fiq_ff               <= 0;
+                o_abt_ff               <= 0;
+                o_und_ff               <= 0;
+                o_pc_plus_8_ff         <= 0;
+                o_pc_ff                <= 0;
+                o_force32align_ff      <= 0;
+                o_taken_ff             <= 0;
+                o_instruction_ff       <= 0;
+                o_instruction_valid_ff <= 0;
                 o_uop_last             <= 0;
                 o_ppc_ff               <= 0;
                 o_clear_from_decode    <= 0;
@@ -241,7 +241,7 @@ task automatic clear;
 begin
                 o_irq_ff                                <= 0;
                 o_fiq_ff                                <= 0;
-                o_abt_ff                                <= 0; 
+                o_abt_ff                                <= 0;
                 o_und_ff                                <= 0;
                 o_taken_ff                              <= 0;
                 o_instruction_valid_ff                  <= 0;
@@ -278,7 +278,7 @@ begin
         begin
                 // Preserve state.
         end
-        else 
+        else
         begin
                 case(o_stall_from_decode)
 
@@ -296,7 +296,7 @@ begin
                                                         i_abt,
                                                         i_pc_ff,
                                                         i_pc_plus_8_ff,
-                                                        i_instruction, 
+                                                        i_instruction,
                                                         i_instruction_valid};
                         end
                 end
@@ -306,7 +306,7 @@ begin
                         if ( !(mem_fetch_stall || cp_stall) )
                         begin
                                 o_stall_from_decode <= 1'd0;
-                                
+
                         end
                 end
 
@@ -324,7 +324,7 @@ begin
         if ( o_stall_from_decode )
         begin
                 skid_pred              = skid[139:107];
-                skid_taken             = skid[106:105];  
+                skid_taken             = skid[106:105];
                 skid_force32           = skid[104];
                 skid_und               = skid[103];
                 skid_irq               = skid[102];
@@ -354,7 +354,7 @@ end
 ///////////////////////////////////////////////////////////////////////////////
 
 // This unit handles coprocessor stuff.
-zap_predecode_coproc 
+zap_predecode_coproc
 #(
         .PHY_REGS(PHY_REGS)
 )
@@ -372,9 +372,9 @@ u_zap_decode_coproc
 
         // Clear and stall signals.
         .i_clear_from_writeback(i_clear_from_writeback),
-        .i_data_stall(i_data_stall),          
-        .i_clear_from_alu(i_clear_from_alu),      
-        .i_stall_from_issue(i_stall_from_issue), 
+        .i_data_stall(i_data_stall),
+        .i_clear_from_alu(i_clear_from_alu),
+        .i_stall_from_issue(i_stall_from_issue),
         .i_stall_from_shifter(i_stall_from_shifter),
         .i_clear_from_decode(o_clear_from_decode),
 
@@ -428,7 +428,7 @@ begin:bprblk1
         ras_nxt                 = ras_ff;
         ras_ptr_nxt             = ras_ptr_ff;
         addr                    = {{8{arm_instruction[23]}},arm_instruction[23:0]}; // Offset.
-        
+
         if ( arm_instruction[34] )      // Indicates a left shift of 1 i.e., X = X * 2.
                 addr_final = addr << 1;
         else                            // Indicates a left shift of 2 i.e., X = X * 4.
@@ -443,13 +443,13 @@ begin:bprblk1
         // Bcc[L] <offset>. Function call.
         if ( arm_instruction[27:25] == 3'b101 && arm_instruction_valid )
         begin
-                if ( skid_taken == ST || skid_taken == WT || arm_instruction[31:28] == AL ) 
+                if ( skid_taken == ST || skid_taken == WT || arm_instruction[31:28] == AL )
                 // Predicted as Taken or Predicted as Strongly Taken or Always taken.
                 begin
                         // Predict new PC.
                         w_pc_from_decode    = skid_pc_plus_8_ff + addr_final;
                         ppc_nxt             = w_pc_from_decode;
-        
+
                         if ( skid_pred[32] && skid_pred[31:0] != w_pc_from_decode )
                                 w_clear_from_decode = 1'd1;
                         else if ( !skid_pred[32] )
@@ -459,15 +459,15 @@ begin:bprblk1
 
                         // Force taken status to ST.
                         if ( arm_instruction[31:28] == AL )
-                        begin 
-                                taken_nxt = ST;  
+                        begin
+                                taken_nxt = ST;
                         end
 
                         // If Link=1, push next address onto RAS.
                         if ( arm_instruction[24] )
                         begin
-                               ras_nxt[ras_ptr_ff] = skid_pc_ff + 
-                                                     (i_cpu_mode_t ? 32'd2 : 32'd4); 
+                               ras_nxt[ras_ptr_ff] = skid_pc_ff +
+                                                     (i_cpu_mode_t ? 32'd2 : 32'd4);
                                ras_ptr_nxt++;
                         end
                 end
@@ -478,18 +478,18 @@ begin:bprblk1
                         ppc_nxt             = skid_pc_ff + (i_cpu_mode_t ? 32'd2 : 32'd4);
                 end
         end
-        else if ( 
+        else if (
                   // BX LR is recognized as a fnction return.
                   (
-                   arm_instruction[31:0] ==? BX_INST && 
-                   arm_instruction[3:0]   ==   4'd14 && 
-                   arm_instruction_valid) 
-                  || 
+                   arm_instruction[31:0] ==? BX_INST &&
+                   arm_instruction[3:0]   ==   4'd14 &&
+                   arm_instruction_valid)
+                  ||
                    // As is MOV PC, LR
                   (
-                   ( arm_instruction[34:0] ==?  { 3'd0, 4'b????, 2'b00, 1'd0, MOV, 1'd0, 
-                                                4'd0, ARCH_PC, 8'd0, 4'd15 } ) 
-                   && 
+                   ( arm_instruction[34:0] ==?  { 3'd0, 4'b????, 2'b00, 1'd0, MOV, 1'd0,
+                                                4'd0, ARCH_PC, 8'd0, 4'd15 } )
+                   &&
                    arm_instruction_valid
                   ) ||
                   // As is load multiple with PC in register list.
@@ -503,7 +503,7 @@ begin:bprblk1
                   (
                         (arm_instruction[31:0] ==? LS_INSTRUCTION_SPECIFIED_SHIFT ||
                          arm_instruction[31:0] ==? LS_IMMEDIATE)                  &&
-                         arm_instruction[15:12] == ARCH_PC                        && 
+                         arm_instruction[15:12] == ARCH_PC                        &&
                          arm_instruction[20]                                      &&
                          arm_instruction_valid                                    &&
                          arm_instruction[19:16] == ARCH_SP
@@ -538,12 +538,12 @@ begin:bprblk1
                         ppc_nxt             = skid_pc_ff + (i_cpu_mode_t ? 32'd2 : 32'd4);
                 end
         end
-        else if ( 
-                         arm_instruction_valid                                    && 
+        else if (
+                         arm_instruction_valid                                    &&
                         (arm_instruction[31:0] ==? LS_INSTRUCTION_SPECIFIED_SHIFT ||
                          arm_instruction[31:0] ==? LS_IMMEDIATE)                  &&
-                         arm_instruction[15:12] == ARCH_PC                        && 
-                         arm_instruction[20]                                
+                         arm_instruction[15:12] == ARCH_PC                        &&
+                         arm_instruction[20]
                 )
         begin
                 // Jump table. Do what the BTB says. Dont correct it.
@@ -555,7 +555,7 @@ begin:bprblk1
                         arm_instruction[27:26] == 2'b00                                     &&
                         arm_instruction[15:12] == ARCH_PC                                   &&
                         (arm_instruction[25] || !arm_instruction[4] || !arm_instruction[7]) &&
-                        ( (arm_instruction[24:21] == ADD) || (arm_instruction[24:21] == MOV) ) 
+                        ( (arm_instruction[24:21] == ADD) || (arm_instruction[24:21] == MOV) )
                         // arm_instruction inside {ADD, MOV}
                 )
         begin
@@ -593,9 +593,9 @@ zap_predecode_uop_sequencer u_zap_uop_sequencer (
         .i_irq(arm_irq),                                // Skid version
 
         .i_clear_from_writeback(i_clear_from_writeback),
-        .i_data_stall(i_data_stall),          
-        .i_clear_from_alu(i_clear_from_alu),      
-        .i_issue_stall(i_stall_from_issue), 
+        .i_data_stall(i_data_stall),
+        .i_clear_from_alu(i_clear_from_alu),
+        .i_issue_stall(i_stall_from_issue),
         .i_stall_from_shifter(i_stall_from_shifter),
         .i_clear_from_decode(o_clear_from_decode),
 

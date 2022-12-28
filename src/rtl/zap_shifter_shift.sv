@@ -1,7 +1,7 @@
 // -----------------------------------------------------------------------------
 // --                                                                         --
 // --    (C) 2016-2022 Revanth Kamaraj (krevanth)                             --
-// --                                                                         -- 
+// --                                                                         --
 // -- --------------------------------------------------------------------------
 // --                                                                         --
 // -- This program is free software; you can redistribute it and/or           --
@@ -32,7 +32,7 @@ module zap_shifter_shift
         input  logic [31:0]                      i_source,
 
         // Shift amount.
-        input  logic [7:0]                       i_amount, 
+        input  logic [7:0]                       i_amount,
 
         // Carry in.
         input  logic                             i_carry,
@@ -65,11 +65,11 @@ begin:blk1
 
         case ( i_shift_type )
 
-                // Logical shift left, logical shift right and 
+                // Logical shift left, logical shift right and
                 // arithmetic shift right.
                 {1'd0, LSL}:    {o_carry, o_result} = {i_carry, i_source} << i_amount;
                 {1'd0, LSR}:    {o_result, o_carry} = {i_source, i_carry} >> i_amount;
-                {1'd0, ASR}:    
+                {1'd0, ASR}:
                 begin
                         res = {i_source, i_carry};
                         res1 = $signed(res) >>> i_amount;
@@ -78,26 +78,26 @@ begin:blk1
 
                 {1'd0, ROR}: // Rotate right.
                 begin
-                        o_result = ( i_source >> i_amount[4:0] )  | 
-                                   ( i_source << (32 - i_amount[4:0] ) );                               
-                        o_carry  = ( i_amount[7:0] == 0) ? 
-                                     i_carry  : ( (i_amount[4:0] == 0) ? 
-                                     i_source[31] : o_result[31] ); 
+                        o_result = ( i_source >> i_amount[4:0] )  |
+                                   ( i_source << (32 - i_amount[4:0] ) );
+                        o_carry  = ( i_amount[7:0] == 0) ?
+                                     i_carry  : ( (i_amount[4:0] == 0) ?
+                                     i_source[31] : o_result[31] );
                 end
 
                 RORI, ROR_1:
                 begin
                         // ROR #n (ROR_1)
-                        o_result = ( i_source >> i_amount[4:0] )  | 
+                        o_result = ( i_source >> i_amount[4:0] )  |
                                    (i_source << (32 - i_amount[4:0] ) );
-                        o_carry  = (|i_amount) ? o_result[31] : i_carry; 
+                        o_carry  = (|i_amount) ? o_result[31] : i_carry;
                 end
 
                 // ROR #0 becomes this.
-                RRC:    {o_result, o_carry}        = {i_carry, i_source}; 
+                RRC:    {o_result, o_carry}        = {i_carry, i_source};
 
                 // LSL_SAT. Always #1 in length.
-                LSL_SAT: 
+                LSL_SAT:
                 begin
 
                         o_result = i_source << 1;

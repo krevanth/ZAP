@@ -1,7 +1,7 @@
 // -----------------------------------------------------------------------------
 // --                                                                         --
 // --    (C) 2016-2022 Revanth Kamaraj (krevanth)                             --
-// --                                                                         -- 
+// --                                                                         --
 // -- --------------------------------------------------------------------------
 // --                                                                         --
 // -- This program is free software; you can redistribute it and/or           --
@@ -20,20 +20,20 @@
 // -- 02110-1301, USA.                                                        --
 // --                                                                         --
 // -----------------------------------------------------------------------------
-// --                                                                         --   
-// --   This module sequences ARM LDM/STM CISC instructions into simpler RISC --  
-// --   instructions. Basically LDM -> LDRs and STM -> STRs. Supports a base  --  
-// --   restored abort model. Start instruction carries interrupt information --  
-// --   so this cannot  block interrupts if there is a sequence of these.     --  
-// --                                                                         --          
-// --  Also handles SWAP instruction but without atomicity preserving.        --  
+// --                                                                         --
+// --   This module sequences ARM LDM/STM CISC instructions into simpler RISC --
+// --   instructions. Basically LDM -> LDRs and STM -> STRs. Supports a base  --
+// --   restored abort model. Start instruction carries interrupt information --
+// --   so this cannot  block interrupts if there is a sequence of these.     --
+// --                                                                         --
+// --  Also handles SWAP instruction but without atomicity preserving.        --
 // --  The SWAP implementation is meant for SW compatibility and not for MP   --
-// --                                                                         --  
-// --  SWAP steps:                                                            --  
-// --  - Read data from [Rn] into DUMMY. - LDR DUMMY0, [Rn]                   --  
-// --  - Write data in Rm to [Rn]        - STR Rm, [Rn]                       --  
-// --  - Copy data from DUMMY to Rd.     - MOV Rd, DUMMY0                     --          
-// --                                                                         --          
+// --                                                                         --
+// --  SWAP steps:                                                            --
+// --  - Read data from [Rn] into DUMMY. - LDR DUMMY0, [Rn]                   --
+// --  - Write data in Rm to [Rn]        - STR Rm, [Rn]                       --
+// --  - Copy data from DUMMY to Rd.     - MOV Rd, DUMMY0                     --
+// --                                                                         --
 // -----------------------------------------------------------------------------
 
 
@@ -86,15 +86,15 @@ module zap_predecode_uop_sequencer
 ///////////////////////////////////////////////////////////////////////////////
 
 // Instruction breakup
-logic [3:0]  cc                  ; 
-logic [2:0]  id                  ; 
-logic        pre_index           ; 
-logic        up                  ; 
-logic        s_bit               ; 
-logic        writeback           ; 
-logic        load                ; 
-logic [3:0]  base                ; 
-logic [15:0] reglist             ; 
+logic [3:0]  cc                  ;
+logic [2:0]  id                  ;
+logic        pre_index           ;
+logic        up                  ;
+logic        s_bit               ;
+logic        writeback           ;
+logic        load                ;
+logic [3:0]  base                ;
+logic [15:0] reglist             ;
 logic        store               ;
 
 logic          unused;
@@ -170,7 +170,7 @@ begin:blk_a
                         // MOV PC, ARCH_DUMMY_REG0
                         o_instruction[31:0] = { cc, 2'b00, 1'd0, MOV, 1'd0, 4'd0, ARCH_PC, 12'd0 };
                         {o_instruction[`ZAP_DP_RB_EXTEND], o_instruction[`ZAP_DP_RB]}
-                                      = ARCH_DUMMY_REG0; 
+                                      = ARCH_DUMMY_REG0;
 
                         o_irq = 1'd0;
                         o_fiq = 1'd0;
@@ -199,7 +199,7 @@ begin:blk_a
                 begin
                         o_stall_from_decode = 1'd1;
 
-                        // ORR DUMMY0, DUMMY0, SCONST[15:8]  ror 12*2 
+                        // ORR DUMMY0, DUMMY0, SCONST[15:8]  ror 12*2
                         o_instruction[31:0] = {AL, 2'b00, 1'b1, ORR, 1'd0, 4'd0, 4'd0, 4'd12, const_nxt[15:8]};
                         {o_instruction[`ZAP_DP_RD_EXTEND], o_instruction[`ZAP_DP_RD]} = ARCH_DUMMY_REG0;
                         {o_instruction[`ZAP_DP_RA_EXTEND], o_instruction[`ZAP_DP_RA]} = ARCH_DUMMY_REG0;
@@ -226,7 +226,7 @@ begin:blk_a
                         // ORR DUMMY0, DUMMY0, SCONST[31:24] ror 4*2
                          o_instruction[31:0] = {AL, 2'b00, 1'b1, ORR, 1'd0, 4'd0, 4'd0, 4'd4, const_nxt[31:24]};
                         {o_instruction[`ZAP_DP_RD_EXTEND], o_instruction[`ZAP_DP_RD]} = ARCH_DUMMY_REG0;
-                        {o_instruction[`ZAP_DP_RA_EXTEND], o_instruction[`ZAP_DP_RA]} = ARCH_DUMMY_REG0;                       
+                        {o_instruction[`ZAP_DP_RA_EXTEND], o_instruction[`ZAP_DP_RA]} = ARCH_DUMMY_REG0;
 
                         state_nxt = BLX1_ARM_S4;
                 end
@@ -236,10 +236,10 @@ begin:blk_a
                         o_stall_from_decode = 1'd1;
 
                         // ORR DUMMY0, DUMMY0, 1 - Needed to indicate a switch
-                        // to Thumb if needed.                       
+                        // to Thumb if needed.
                          o_instruction[31:0] = {AL, 2'b00, 1'b1, ORR, 1'd0, 4'd0, 4'd0, 4'd0, !i_cpsr_t ? 8'd1 : 8'd0};
                         {o_instruction[`ZAP_DP_RD_EXTEND], o_instruction[`ZAP_DP_RD]} = ARCH_DUMMY_REG0;
-                        {o_instruction[`ZAP_DP_RA_EXTEND], o_instruction[`ZAP_DP_RA]} = ARCH_DUMMY_REG0;   
+                        {o_instruction[`ZAP_DP_RA_EXTEND], o_instruction[`ZAP_DP_RA]} = ARCH_DUMMY_REG0;
 
                         state_nxt = BLX1_ARM_S5;
                 end
@@ -272,7 +272,7 @@ begin:blk_a
                 LDRD_STRD_S0:
                 begin
                         o_stall_from_decode = 1'd0;
-                        
+
                         o_instruction[31:28] = i_instruction[31:28];
                         o_instruction[27:26] = 2'b01;
                         o_instruction[15:12] = i_instruction[15:12] + 1;
@@ -299,14 +299,14 @@ begin:blk_a
                                         state_nxt            = IDLE;
                                 end
                                 else
-                                begin 
+                                begin
 
-                                        // If no writeback was specified and in register mode, issue + 4 to the register. 
+                                        // If no writeback was specified and in register mode, issue + 4 to the register.
                                         // This requires the register to be temporarily added by 4.
-                                        // 1. 
+                                        // 1.
                                         // Generate ADDAL ARCH_DUMMY_REG0, Register, #4
 
-                                        o_instruction[31:0] = 
+                                        o_instruction[31:0] =
                                         {AL, 2'b00, 1'b1, ADD, 1'd0, 4'd0, i_instruction[19:16], 12'd4};
 
                                         {o_instruction[`ZAP_DP_RD_EXTEND], o_instruction[`ZAP_DP_RD]}= ARCH_DUMMY_REG0;
@@ -315,7 +315,7 @@ begin:blk_a
 
                                         o_stall_from_decode = 1'd1;
 
-                                end                                 
+                                end
                         end
 
                         if ( i_instruction[6:5] == 2'b11 )
@@ -331,10 +331,10 @@ begin:blk_a
 
                         // Use arch dummy reg0 as the base address since it was incremented by 4.
                         o_instruction[15:12] = i_instruction[15:12] + 1;
-                        o_instruction[27:26] = 2'b01;        
+                        o_instruction[27:26] = 2'b01;
                         o_instruction[25]    = 1'd0;
                         o_instruction[11:0]  = i_instruction[11:0];
-                        o_instruction[24:23] = i_instruction[24:23]; 
+                        o_instruction[24:23] = i_instruction[24:23];
                         o_instruction[22]    = 1'd0;
                         o_instruction[21]    = i_instruction[21];
                         o_instruction[15:12] = i_instruction[15:12];
@@ -367,13 +367,13 @@ begin:blk_a
                 IDLE:
                 begin
                         // CLZ and saturating instruction - gap the issue.
-                        if ( 
+                        if (
                                (i_instruction[31:0] ==? CLZ_INSTRUCTION ||
                                 i_instruction[31:0] ==? QADD            ||
                                 i_instruction[31:0] ==? QSUB            ||
                                 i_instruction[31:0] ==? QDADD           ||
                                 i_instruction[31:0] ==? QDSUB)          &&
-                                i_instruction_valid 
+                                i_instruction_valid
                         )
                         begin
                                 state_nxt           = DEP_WAIT;
@@ -383,24 +383,24 @@ begin:blk_a
                                 o_fiq               = i_fiq;
                         end
                         // Instruction in coprocessor space.
-                        else if ( 
+                        else if (
                              (i_instruction[31:0] ==? MRC   ||
                               i_instruction[31:0] ==? MCR   ||
                               i_instruction[31:0] ==? LDC   ||
                               i_instruction[31:0] ==? STC   ||
                               i_instruction[31:0] ==? CDP   ||
-                              i_instruction[31:0] ==? MCR2  || 
+                              i_instruction[31:0] ==? MCR2  ||
                               i_instruction[31:0] ==? LDC2  ||
                               i_instruction[31:0] ==? STC2) &&
-                              i_instruction_valid 
+                              i_instruction_valid
                         )
                         begin
                                 o_instruction_valid = 1'd0;
                         end
                         // LDRD and STRD. First reg should be EVEN.
-                        else if 
-                            ( i_instruction[27:25] == 3'b000                                 && 
-                             i_instruction[20]    == 1'd0                                   && 
+                        else if
+                            ( i_instruction[27:25] == 3'b000                                 &&
+                             i_instruction[20]    == 1'd0                                   &&
                              ( i_instruction[6:5] == 2'b10 || i_instruction[6:5] == 2'b11 ) &&
                              i_instruction[12]    == 1'd0                                   &&
                              i_instruction[7]     == 1'd1                                   &&
@@ -422,11 +422,11 @@ begin:blk_a
                                 if ( i_instruction[22] ) // Immediate.
                                 begin
                                         o_instruction[25]    = 1'd1;
-                                        o_instruction[11:0]  = $signed({i_instruction[11], 
-                                                                        i_instruction[11], 
-                                                                        i_instruction[11], 
-                                                                        i_instruction[11], 
-                                                                        i_instruction[11:8], 
+                                        o_instruction[11:0]  = $signed({i_instruction[11],
+                                                                        i_instruction[11],
+                                                                        i_instruction[11],
+                                                                        i_instruction[11],
+                                                                        i_instruction[11:8],
                                                                         i_instruction[3:0]});
                                 end
                                 else
@@ -434,8 +434,8 @@ begin:blk_a
                                         o_instruction[25]    = 1'd0;
                                         o_instruction[11:0]  = i_instruction[11:0];
                                 end
-                
-                                o_instruction[24:23] = i_instruction[24:23]; 
+
+                                o_instruction[24:23] = i_instruction[24:23];
                                 o_instruction[22]    = 1'd0;
                                 o_instruction[21]    = i_instruction[21];
 
@@ -455,7 +455,7 @@ begin:blk_a
                         end
                         // BLX1 detected. Unconditional!!!
                         // Immediate Offset.
-                        else if ( i_instruction[31:25] == BLX1[31:25] && i_instruction_valid ) 
+                        else if ( i_instruction[31:25] == BLX1[31:25] && i_instruction_valid )
                         begin
                                 // We must generate a SUBAL LR,PC,4 ROR 0
                                 // This makes LR have the value
@@ -464,19 +464,19 @@ begin:blk_a
                                 o_instruction[31:0]           = {AL, 2'b00, 1'b1, SUB, 1'd0, 4'd15, 4'd14, 12'd4};
 
                                 // In Thumb mode, we must generate PC+4-2. Modify it.
-                                if ( i_cpsr_t ) 
+                                if ( i_cpsr_t )
                                 begin
                                         o_instruction[11:0] = 12'd2; // Modify the instruction.
                                 end
 
                                 o_stall_from_decode     = 1'd1; // Stall the core.
-                                state_nxt               = BLX1_ARM_S0; 
+                                state_nxt               = BLX1_ARM_S0;
 
                                 o_irq = i_irq;
                                 o_fiq = i_fiq;
                         end
                         // BLX2 detected. Register offset. CONDITIONAL.
-                        else if ( i_instruction[27:4] == BLX2[27:4] && i_instruction_valid ) 
+                        else if ( i_instruction[27:4] == BLX2[27:4] && i_instruction_valid )
                         begin
                                 // Write address of next instruction to LR. Now this
                                 // depends on the mode we're in. Mode in the sense
@@ -485,18 +485,18 @@ begin:blk_a
                                 // We need to generate a SUBcc LR,PC,4 ROR 0
                                 // to store the next instruction address in
                                 // LR. This is in ARM mode.
-                                o_instruction[31:0]     = 
+                                o_instruction[31:0]     =
                                 {i_instruction[31:28], 2'b00, 1'b1, SUB, 1'd0, 4'd15, 4'd14, 12'd4};
 
                                 // In Thumb mode, we need to remove 2 from PC
                                 // instead of 4. Modify it.
-                                if ( i_cpsr_t ) 
+                                if ( i_cpsr_t )
                                 begin
                                         o_instruction[11:0] = 12'd2; // modify instr.
                                 end
 
                                 o_stall_from_decode     = 1'd1; // Stall the core.
-                                state_nxt               = BLX2_ARM_S0; 
+                                state_nxt               = BLX2_ARM_S0;
 
                                 o_irq = i_irq;
                                 o_fiq = i_fiq;
@@ -508,29 +508,29 @@ begin:blk_a
                                 // MOV DUMMY0, Base
                                 if ( up )
                                 begin
-                                        o_instruction[31:0] = {cc, 2'b00, 1'b0, MOV, 
+                                        o_instruction[31:0] = {cc, 2'b00, 1'b0, MOV,
                                                  1'b0, 4'd0, 4'd0, 8'd0, base};
 
-                                        {o_instruction[`ZAP_DP_RD_EXTEND], 
-                                         o_instruction[`ZAP_DP_RD]} 
+                                        {o_instruction[`ZAP_DP_RD_EXTEND],
+                                         o_instruction[`ZAP_DP_RD]}
                                                 = ARCH_DUMMY_REG0;
                                 end
                                 else
                                 begin
                                         // SUB DUMMY0, BASE, OFFSET
-                                        o_instruction[31:0] = {cc, 2'b00, 1'b1, SUB, 
+                                        o_instruction[31:0] = {cc, 2'b00, 1'b1, SUB,
                                                   1'd0, base, 4'd0, oc_offset};
 
-                                        {o_instruction[`ZAP_DP_RD_EXTEND], 
-                                         o_instruction[`ZAP_DP_RD]} = 
+                                        {o_instruction[`ZAP_DP_RD_EXTEND],
+                                         o_instruction[`ZAP_DP_RD]} =
                                                 ARCH_DUMMY_REG0;
                                 end
 
                                 o_instruction_valid = 1'd1;
                                 reglist_nxt = reglist;
-                              
-                                state_nxt = MEMOP;  
-                                o_stall_from_decode = 1'd1; 
+
+                                state_nxt = MEMOP;
+                                o_stall_from_decode = 1'd1;
 
                                 // Take interrupt on this.
                                 o_irq = i_irq;
@@ -544,32 +544,32 @@ begin:blk_a
                                 // dummy = *(rn) - LDR ARCH_DUMMY_REG0, [rn, #0]
                                 state_nxt = SWAP1;
 
-                                o_instruction[31:0]  = {cc, 3'b010, 1'd1, 1'd0, 
-                                i_instruction[22], 1'd0, 1'd1, 
-                                i_instruction[19:16], 4'b0000, 12'd0}; 
+                                o_instruction[31:0]  = {cc, 3'b010, 1'd1, 1'd0,
+                                i_instruction[22], 1'd0, 1'd1,
+                                i_instruction[19:16], 4'b0000, 12'd0};
                                 // The 0000 is replaced with dummy0 below.
 
-                                {o_instruction[`ZAP_SRCDEST_EXTEND], 
-                                 o_instruction[`ZAP_SRCDEST]} = ARCH_DUMMY_REG0;  
+                                {o_instruction[`ZAP_SRCDEST_EXTEND],
+                                 o_instruction[`ZAP_SRCDEST]} = ARCH_DUMMY_REG0;
 
-                                o_instruction_valid = 1'd1;      
-                                o_stall_from_decode = 1'd1;  
+                                o_instruction_valid = 1'd1;
+                                o_stall_from_decode = 1'd1;
                         end
-                        else if ( i_instruction[27:23] == 5'd1    && 
-                                  i_instruction[7:4]   == 4'b1001 && 
+                        else if ( i_instruction[27:23] == 5'd1    &&
+                                  i_instruction[7:4]   == 4'b1001 &&
                                   i_instruction_valid )
                         begin
                                  // LMULT
                                  state_nxt           = LMULT_BUSY;
-                                 o_stall_from_decode = 1'd1; 
+                                 o_stall_from_decode = 1'd1;
                                  o_irq               = i_irq;
                                  o_fiq               = i_fiq;
                                  o_instruction       = {5'd0, i_instruction};
                                  o_instruction_valid = i_instruction_valid;
                         end
-                        else if (  i_instruction[27:23] == 5'b00010 && 
-                                   i_instruction[22:21] == 2'b10    && 
-                                  !i_instruction[20]                && 
+                        else if (  i_instruction[27:23] == 5'b00010 &&
+                                   i_instruction[22:21] == 2'b10    &&
+                                  !i_instruction[20]                &&
                                    i_instruction[7] && i_instruction[4] )
                         begin
                                 // LMULT
@@ -580,14 +580,14 @@ begin:blk_a
                                 o_instruction = {5'd0, i_instruction};
                                 o_instruction_valid = i_instruction_valid;
                         end
-                        else if ( i_instruction[27:25] == 3'b101 && 
+                        else if ( i_instruction[27:25] == 3'b101 &&
                                   i_instruction[24] && i_instruction_valid ) // BL.
                         begin
-                                // Move to new state. In that state, we will 
+                                // Move to new state. In that state, we will
                                 // generate a plain branch.
                                 state_nxt = BL_S1;
-                                
-                                // PC will stall preventing the fetch from 
+
+                                // PC will stall preventing the fetch from
                                 // presenting new data.
                                 o_stall_from_decode = 1'd1;
 
@@ -595,16 +595,16 @@ begin:blk_a
                                 begin
                                         // PC is 8 bytes ahead.
                                         // Craft a SUB LR, PC, 4.
-                                        o_instruction[31:0] = {i_instruction[31:28], 
+                                        o_instruction[31:0] = {i_instruction[31:28],
                                                          28'h24FE004};
                                 end
                                 else
                                 begin
                                         // PC is 4 bytes ahead...
-                                        // Craft a SUB LR, PC, 1 so that return 
-                                        // goes to the next 16bit instruction 
+                                        // Craft a SUB LR, PC, 1 so that return
+                                        // goes to the next 16bit instruction
                                         // and making LSB of LR = 1.
-                                         o_instruction[31:0] = {i_instruction[31:28], 
+                                         o_instruction[31:0] = {i_instruction[31:28],
                                                                 28'h24FE001};
                                 end
 
@@ -617,8 +617,8 @@ begin:blk_a
                         end
                         else if ( (i_instruction[31:0] ==? LS_INSTRUCTION_SPECIFIED_SHIFT ||
                                    i_instruction[31:0] ==? LS_IMMEDIATE)                  &&
-                                   i_instruction[15:12] == ARCH_PC                        && 
-                                   i_instruction[20] ) 
+                                   i_instruction[15:12] == ARCH_PC                        &&
+                                   i_instruction[20] )
                         // Load to PC. First load to local, then to PC.
                         begin
                                 o_irq = i_irq;
@@ -686,9 +686,9 @@ begin:blk_a
                         o_stall_from_decode = state_ff == SWAP3 ? 1'd0 : 1'd1;
 
                         o_instruction_valid = 1;
-                        o_instruction[31:0] = {cc, 3'b010, 1'd1, 1'd0, 
-                                        i_instruction[22], 1'd0, 1'd0, 
-                                        i_instruction[19:16], 
+                        o_instruction[31:0] = {cc, 3'b010, 1'd1, 1'd0,
+                                        i_instruction[22], 1'd0, 1'd0,
+                                        i_instruction[19:16],
                                         i_instruction[3:0], 12'd0}; // BUG FIX
 
                         state_nxt = state_ff == SWAP3 ? IDLE : SWAP2;
@@ -701,16 +701,16 @@ begin:blk_a
 
                         // Keep waiting. Next we initiate a read to ensure
                         // write buffer gets flushed.
-                        o_stall_from_decode = 1'd1; 
+                        o_stall_from_decode = 1'd1;
                         o_instruction_valid = 1'd1;
 
                         o_irq = 0;
                         o_fiq = 0;
 
-                        o_instruction[31:0] = {cc, 2'b00, 1'd0, MOV, 1'd0, 4'b0000, 
+                        o_instruction[31:0] = {cc, 2'b00, 1'd0, MOV, 1'd0, 4'b0000,
                                          rd, 12'd0}; // ALU src doesn't matter.
 
-                        {o_instruction[`ZAP_DP_RB_EXTEND], o_instruction[`ZAP_DP_RB]} 
+                        {o_instruction[`ZAP_DP_RB_EXTEND], o_instruction[`ZAP_DP_RB]}
                                         = ARCH_DUMMY_REG0;
 
                         state_nxt = SWAP3;
@@ -722,12 +722,12 @@ begin:blk_a
                         // Memory operations happen here.
 
                         pri_enc_out = pri_enc(reglist_ff);
-                        reglist_nxt = reglist_ff & ~(16'd1 << pri_enc_out); 
+                        reglist_nxt = reglist_ff & ~(16'd1 << pri_enc_out);
 
                         o_irq = 0;
                         o_fiq = 0;
 
-                        // The map function generates a base restore 
+                        // The map function generates a base restore
                         // instruction if reglist = 0.
                         o_instruction[33:0] = map ( i_instruction[31:0], pri_enc_out, reglist_ff );
                         o_instruction_valid = 1'd1;
@@ -740,10 +740,10 @@ begin:blk_a
                                         state_nxt               = WRITE_PC;
                                 end
                                 else
-                                begin   
-                                        o_stall_from_decode     = 1'd0;       
+                                begin
+                                        o_stall_from_decode     = 1'd0;
                                         state_nxt               = IDLE;
-                                end 
+                                end
                         end
                         else
                         begin
@@ -752,22 +752,22 @@ begin:blk_a
                         end
                 end
 
-                // If needed, we finally write to the program counter as 
+                // If needed, we finally write to the program counter as
                 // either a MOV PC, LR or MOVS PC, LR.
                 WRITE_PC:
                 begin
                         // MOV(S) PC, ARCH_DUMMY_REG1
                         state_nxt = IDLE;
-                        o_stall_from_decode = 1'd0;      
+                        o_stall_from_decode = 1'd0;
 
-                        o_instruction[31:0] = 
-                        { cc, 2'b00, 1'd0, MOV, s_bit, 4'd0, ARCH_PC, 
+                        o_instruction[31:0] =
+                        { cc, 2'b00, 1'd0, MOV, s_bit, 4'd0, ARCH_PC,
                                                                 8'd0, 4'd0 };
 
-                        {o_instruction[`ZAP_DP_RB_EXTEND], o_instruction[`ZAP_DP_RB]} 
-                                        = ARCH_DUMMY_REG1; 
+                        {o_instruction[`ZAP_DP_RB_EXTEND], o_instruction[`ZAP_DP_RB]}
+                                        = ARCH_DUMMY_REG1;
 
-                        o_instruction_valid = 1'd1;                 
+                        o_instruction_valid = 1'd1;
                         o_irq = 0;
                         o_fiq = 0;
                 end
@@ -775,8 +775,8 @@ begin:blk_a
 end
 
 // Debug only.
-assign o_uop_last = (((state_ff == IDLE) && (state_nxt == IDLE)) || 
-                     ((state_ff != IDLE) && (state_nxt == IDLE))) && 
+assign o_uop_last = (((state_ff == IDLE) && (state_nxt == IDLE)) ||
+                     ((state_ff != IDLE) && (state_nxt == IDLE))) &&
                      o_instruction_valid;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -791,7 +791,7 @@ begin
         map[11:0] = 12'd4;          // Offset
         map[27:26] = 2'b01;         // Memory instruction.
 
-        map[`ZAP_SRCDEST] = enc;         
+        map[`ZAP_SRCDEST] = enc;
         {map[`ZAP_BASE_EXTEND],map[`ZAP_BASE]} = ARCH_DUMMY_REG0;//Use as base register.
 
         // If not up, then DA -> IB and DB -> IA.
@@ -817,17 +817,17 @@ begin
                 begin
                         if ( up ) // Original instruction asked increment.
                         begin
-                                map = 
-                                { 2'd0, cc, 2'b0, 1'b0, MOV, 1'b0, 4'd0, 
+                                map =
+                                { 2'd0, cc, 2'b0, 1'b0, MOV, 1'b0, 4'd0,
                                                 base, 8'd0, 4'd0 };
 
-                                {map[`ZAP_DP_RB_EXTEND],map[`ZAP_DP_RB]} = 
-                                                ARCH_DUMMY_REG0;  
+                                {map[`ZAP_DP_RB_EXTEND],map[`ZAP_DP_RB]} =
+                                                ARCH_DUMMY_REG0;
                         end
                         else
                         begin // Restore.
                                 // SUB BASE, BASE, #OFFSET
-                                map = { 2'd0, cc, 2'b00, 1'b1, SUB, 
+                                map = { 2'd0, cc, 2'b00, 1'b1, SUB,
                                                 1'd0, base, base, oc_offset};
                         end
                 end
@@ -836,7 +836,7 @@ begin
                         map = 34'd0; // Wasted cycle.
                 end
         end
-        else if ( (store && s_bit) || (load && s_bit && !list[15]) ) 
+        else if ( (store && s_bit) || (load && s_bit && !list[15]) )
         // STR with S bit or LDR with S bit and no PC - force user bank access.
         begin
                         case ( map[`ZAP_SRCDEST] ) // Force user bank.
@@ -849,9 +849,9 @@ begin
                         14:{map[`ZAP_SRCDEST_EXTEND],map[`ZAP_SRCDEST]} = ARCH_USR2_R14;
                         endcase
         end
-        else if ( load && enc == 4'd15  ) 
+        else if ( load && enc == 4'd15  )
         //
-        // Load with PC in register list. Load to dummy register. 
+        // Load with PC in register list. Load to dummy register.
         // Will never use user bank.
         //
         begin
@@ -867,31 +867,31 @@ end
 endfunction
 
 ///////////////////////////////////////////////////////////////////////////////
-       
+
 always_ff @ (posedge i_clk)
 begin
-        if      ( i_reset )                             
+        if      ( i_reset )
         begin
                 clear;
         end
-        else if ( i_clear_from_writeback)               
+        else if ( i_clear_from_writeback)
         begin
                 clear;
         end
-        else if ( i_data_stall )                        
-        begin 
+        else if ( i_data_stall )
+        begin
                 // Save state
-        end 
+        end
         else if ( i_clear_from_alu )
         begin
                 clear;
         end
-        else if ( i_stall_from_shifter )                
-        begin 
+        else if ( i_stall_from_shifter )
+        begin
                 // Save state
         end
-        else if ( i_issue_stall )                       
-        begin 
+        else if ( i_issue_stall )
+        begin
                 // Save state
         end
         else if ( i_clear_from_decode )
@@ -901,7 +901,7 @@ begin
         else
         begin
                 state_ff   <= state_nxt;
-                reglist_ff <= reglist_nxt; 
+                reglist_ff <= reglist_nxt;
                 const_ff   <= const_nxt;
         end
 end
@@ -929,7 +929,7 @@ begin
         // Counter number of ones. We can have up to 16 ones, 5-bits should be enough to hold 0 to 16.
         for(int i=0;i<16;i++)
                 offset[4:0] = offset[4:0] + {4'd0, i_word[i]};
-                
+
         // Since LDM and STM occur only on 4 byte regions, compute the
         // next offset.
         offset[6:0] = {offset[4:0], 2'd0}; // Multiply by 4.

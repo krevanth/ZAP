@@ -49,6 +49,7 @@ int uart0_ctr = 0;
 int uart1_ctr = 0;
 
 unsigned int seed;
+int delay = -1;
 
 int main(int argc, char** argv, char** env) {
     
@@ -133,14 +134,28 @@ int main(int argc, char** argv, char** env) {
             // Simulate a Wishbone RAM.
             if ( zap_test->o_wb_cyc && zap_test->o_wb_stb && !zap_test -> i_reset ) 
             {
-                    // If seed is odd, give immediate response WB RAM.
-                    if ( (rand() & 0x1) && (seed % 2 == 0) )
+                    // Randomly give delay between 0 and 50 cycles per
+                    // transfer, when seed is even. When seed is odd,
+                    // give response immediately.
+
+                    if ( (seed % 2 == 0) && delay == -1 && (rand() % 2) ) 
                     {
-                            zap_test->i_wb_ack = 0;
-                            zap_test->i_wb_dat = rand();
+                        delay = (rand() % 50) + 1;
+                        zap_test->i_wb_ack = 0;
+                        zap_test->i_wb_dat = rand();
                     }
-                    else
+                    else if ( delay > 0 )
                     {
+                        // Keep holding the bus.
+                        delay--;
+                        zap_test->i_wb_ack = 0;
+                        zap_test->i_wb_dat = rand();
+                    }
+                    else if (delay <= 0)
+                    {
+                            delay = -1;
+
+                            // Give bus response.
                             if( !zap_test->o_wb_we )
                             {
                                     zap_test->i_wb_ack = 1;      

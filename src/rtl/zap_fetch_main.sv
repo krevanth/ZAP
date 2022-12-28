@@ -1,7 +1,7 @@
 // -----------------------------------------------------------------------------
 // --                                                                         --
 // --    (C) 2016-2022 Revanth Kamaraj (krevanth)                             --
-// --                                                                         -- 
+// --                                                                         --
 // -- --------------------------------------------------------------------------
 // --                                                                         --
 // -- This program is free software; you can redistribute it and/or           --
@@ -20,7 +20,7 @@
 // -- 02110-1301, USA.                                                        --
 // --                                                                         --
 // -----------------------------------------------------------------------------
-// --                                                                         --   
+// --                                                                         --
 // --  This is the simple I-cache frontend to the processor. This stage       --
 // --  serves as a buffer for instructions. Data aborts are handled by adding --
 // --  an extra signal down the pipeline. Data aborts piggyback off           --
@@ -36,15 +36,15 @@ module zap_fetch_main #(
 )
 (
 // Clock and reset.
-input logic i_clk,          // ZAP clock.        
+input logic i_clk,          // ZAP clock.
 input logic i_reset,        // Active high synchronous reset.
 
-// 
+//
 // From other parts of the pipeline. These
 // signals either tell the unit to invalidate
 // its outputs or freeze in place.
 //
-input logic i_code_stall,           // |      
+input logic i_code_stall,           // |
 input logic i_clear_from_writeback, // | High Priority.
 input logic i_data_stall,           // |
 input logic i_clear_from_alu,       // |
@@ -69,13 +69,13 @@ input logic        i_instr_abort,   // Instruction abort fault.
 // To decode.
 output logic [31:0]  o_instruction,  // The 32-bit instruction.
 output logic         o_valid,        // Instruction valid.
-output logic         o_instr_abort,  // Indication of an abort.       
+output logic         o_instr_abort,  // Indication of an abort.
 output logic [31:0]  o_pc_plus_8_ff, // PC +8 ouput.
 output logic [31:0]  o_pc_ff,        // PC output.
 
 // For BP.
 input logic         i_confirm_from_alu,  // Confirm branch prediction from ALU.
-input logic [31:0]  i_pc_from_alu,       // Address of branch. 
+input logic [31:0]  i_pc_from_alu,       // Address of branch.
 input logic [1:0]   i_taken,             // Predicted status.
 output logic [1:0]  o_taken,             // Prediction. Not a flip-flop...
 
@@ -121,7 +121,7 @@ always_comb unused = |{i_pc_from_alu[0], i_pc_from_alu[31:$clog2(BP_ENTRIES)+1]}
 //
 always_ff @ ( posedge i_clk )
 begin
-        if (  i_reset )                          
+        if (  i_reset )
         begin
                 o_pc_plus_8_ff  <= 0;
                 o_pc_ff         <= 0;
@@ -138,40 +138,40 @@ begin
 
                 o_pred          <= 33'd0;
         end
-        else if ( i_clear_from_writeback )       
+        else if ( i_clear_from_writeback )
         begin
                 clear_unit;
         end
-        else if ( i_data_stall)                  
-        begin 
+        else if ( i_data_stall)
+        begin
                 // Save state
-        end 
-        else if ( i_clear_from_alu )             
+        end
+        else if ( i_clear_from_alu )
         begin
                 clear_unit;
         end
-        else if ( i_stall_from_shifter )         
-        begin 
+        else if ( i_stall_from_shifter )
+        begin
                 // Save state
-        end 
-        else if ( i_stall_from_issue )           
-        begin 
+        end
+        else if ( i_stall_from_issue )
+        begin
                 // Save state
-        end 
-        else if ( i_stall_from_decode)           
-        begin 
+        end
+        else if ( i_stall_from_decode)
+        begin
                 // Save state
-        end 
-        else if ( i_clear_from_decode )          
+        end
+        else if ( i_clear_from_decode )
         begin
                 clear_unit;
         end
-        else if ( i_code_stall )                 
-        begin 
+        else if ( i_code_stall )
+        begin
                 // Save state
-        end 
+        end
         // If unit is sleeping.
-        else if ( sleep_ff ) 
+        else if ( sleep_ff )
         begin
                 // Nothing valid to be sent.
                 o_valid         <= 1'd0;
@@ -180,7 +180,7 @@ begin
                 o_instr_abort   <= 1'd0;
 
                 // Keep sleeping.
-                sleep_ff        <= 1'd1;        
+                sleep_ff        <= 1'd1;
         end
 
         // Data from memory is valid. This could also be used to signal
@@ -194,7 +194,7 @@ begin
                 // BKPT instruction in ARM mode cause prefetch abort.
                 if ( (i_cpsr_ff_t == 1'd0) && (i_instruction ==? BKPT) )
                 begin
-                        o_instr_abort <= 1'd1; 
+                        o_instr_abort <= 1'd1;
                 end
 
                 // Put unit to sleep on an abort.
@@ -204,7 +204,7 @@ begin
                 // Pump PC + 8 or 4 down the pipeline. The number depends on
                 // ARM/Compressed mode.
                 //
-                o_pc_plus_8_ff <= i_cpsr_ff_t ? ( i_pc_ff + 32'd4 ) : 
+                o_pc_plus_8_ff <= i_cpsr_ff_t ? ( i_pc_ff + 32'd4 ) :
                                                 ( i_pc_ff + 32'd8 );
 
                 // PC is pumped down the pipeline.
@@ -246,10 +246,10 @@ zap_ram_simple_nopipe #(.DEPTH(BP_ENTRIES), .WIDTH(2)) u_br_ram
         // The reason that a no-stall condition is included is that
         // if the pipeline stalls, this memory should be trigerred multiply
         // times.
-        .i_wr_en(       !i_data_stall             && 
-                        !i_stall_from_issue       && 
-                        !i_stall_from_decode      && 
-                        !i_stall_from_shifter     && 
+        .i_wr_en(       !i_data_stall             &&
+                        !i_stall_from_issue       &&
+                        !i_stall_from_decode      &&
+                        !i_stall_from_shifter     &&
                         (i_clear_from_alu || i_confirm_from_alu)),
 
         // Lower bits of the PC index into the branch RAM for read and
@@ -261,16 +261,16 @@ zap_ram_simple_nopipe #(.DEPTH(BP_ENTRIES), .WIDTH(2)) u_br_ram
         .i_wr_data(compute(i_taken, i_clear_from_alu)),
 
         // Read when there is no stall.
-        .i_rd_en( 
+        .i_rd_en(
                         !i_code_stall             &&
-                        !i_data_stall             && 
-                        !i_stall_from_issue       && 
-                        !i_stall_from_decode      && 
-                        !i_stall_from_shifter      
+                        !i_data_stall             &&
+                        !i_stall_from_issue       &&
+                        !i_stall_from_decode      &&
+                        !i_stall_from_shifter
         ),
 
         // Send the read data over to o_taken_ff which is a 2-bit value.
-        .o_rd_data(taken_v) 
+        .o_rd_data(taken_v)
 );
 
 // ----------------------------------------------------------------------------

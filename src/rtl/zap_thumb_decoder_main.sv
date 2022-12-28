@@ -1,7 +1,7 @@
 // -----------------------------------------------------------------------------
 // --                                                                         --
 // --    (C) 2016-2022 Revanth Kamaraj (krevanth)                             --
-// --                                                                         -- 
+// --                                                                         --
 // -- --------------------------------------------------------------------------
 // --                                                                         --
 // -- This program is free software; you can redistribute it and/or           --
@@ -22,7 +22,7 @@
 // -----------------------------------------------------------------------------
 // --                                                                         --
 // --  Implements a 16-bit instruction decoder. The 16-bit instruction set is --
-// --  not logically organized so as to save on encoding and thus the code    -- 
+// --  not logically organized so as to save on encoding and thus the code    --
 // --  seem a bit complex.                                                    --
 // --                                                                         --
 // -----------------------------------------------------------------------------
@@ -62,7 +62,7 @@ module zap_thumb_decoder_main (
         output logic             o_iabort,
 
         // Ensure compressed mode is active (T bit).
-        input logic              i_cpsr_ff_t, 
+        input logic              i_cpsr_ff_t,
 
         // Program counter.
         input logic      [31:0]  i_pc_ff,
@@ -70,14 +70,14 @@ module zap_thumb_decoder_main (
 
         //
         // Outputs to the ARM decoder.
-        // 
-        
+        //
+
         // Instruction, valid, undefined by this decoder and force 32-bit
         // align signals (requires memory to keep lower 2 bits as 00).
         output logic [34:0]       o_instruction,
         output logic              o_instruction_valid,
         output logic              o_und,
-        output logic              o_force32_align, 
+        output logic              o_force32_align,
 
         // PCs.
         output  logic [31:0]      o_pc_ff,
@@ -124,16 +124,16 @@ begin
                 o_instruction_valid <= 1'd0;
                 o_irq <= 0;
                 o_fiq <= 0;
-                o_und <= 0;       
-                o_iabort <= 0;         
+                o_und <= 0;
+                o_iabort <= 0;
         end
         else if ( i_clear_from_writeback )
         begin
                 o_instruction_valid <= 1'd0;
                 o_irq <= 0;
                 o_fiq <= 0;
-                o_und <= 0;       
-                o_iabort <= 0; 
+                o_und <= 0;
+                o_iabort <= 0;
         end
         else if ( i_data_stall )
         begin
@@ -144,12 +144,12 @@ begin
                 o_instruction_valid <= 1'd0;
                 o_irq <= 0;
                 o_fiq <= 0;
-                o_und <= 0;       
-                o_iabort <= 0; 
+                o_und <= 0;
+                o_iabort <= 0;
         end
-        else if ( i_stall_from_shifter || 
-                  i_stall_from_issue   ||   
-                  i_stall_from_decode  )  
+        else if ( i_stall_from_shifter ||
+                  i_stall_from_issue   ||
+                  i_stall_from_decode  )
         begin
                 // Save state
         end
@@ -158,8 +158,8 @@ begin
                 o_instruction_valid <= 1'd0;
                 o_irq <= 0;
                 o_fiq <= 0;
-                o_und <= 0;       
-                o_iabort <= 0; 
+                o_und <= 0;
+                o_iabort <= 0;
         end
         else // BUG FIX.
         begin
@@ -179,16 +179,16 @@ end
 
 task automatic reset;
 begin
-                o_iabort                <= 0; 
-                o_instruction_valid     <= 0; 
-                o_instruction           <= 0; 
-                o_und                   <= 0; 
-                o_force32_align         <= 0; 
-                o_pc_ff                 <= 0; 
-                o_pc_plus_8_ff          <= 0; 
-                o_irq                   <= 0; 
-                o_fiq                   <= 0; 
-                o_taken_ff              <= 0; 
+                o_iabort                <= 0;
+                o_instruction_valid     <= 0;
+                o_instruction           <= 0;
+                o_und                   <= 0;
+                o_force32_align         <= 0;
+                o_pc_ff                 <= 0;
+                o_pc_plus_8_ff          <= 0;
+                o_irq                   <= 0;
+                o_fiq                   <= 0;
+                o_taken_ff              <= 0;
                 o_pred                  <= 33'd0;
 end
 endtask

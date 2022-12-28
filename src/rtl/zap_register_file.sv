@@ -1,7 +1,7 @@
 // -----------------------------------------------------------------------------
 // --                                                                         --
 // --    (C) 2016-2022 Revanth Kamaraj (krevanth)                             --
-// --                                                                         -- 
+// --                                                                         --
 // -- --------------------------------------------------------------------------
 // --                                                                         --
 // -- This program is free software; you can redistribute it and/or           --
@@ -30,22 +30,22 @@ module zap_register_file
         input logic              i_reset,
 
         input logic              i_wen,
-        input logic  [5:0]       i_wr_addr_a, 
+        input logic  [5:0]       i_wr_addr_a,
         input logic  [5:0]       i_wr_addr_b,       // 3 write addresses.
         input logic  [39:0]      i_wr_addr_c,
 
-        input logic  [31:0]      i_wr_data_a, 
+        input logic  [31:0]      i_wr_data_a,
         input logic  [31:0]      i_wr_data_b,       // 3 write data.
         input logic  [31:0]      i_wr_data_c,
 
-        input logic  [5:0]       i_rd_addr_a, 
-        input logic  [5:0]       i_rd_addr_b, 
-        input logic  [5:0]       i_rd_addr_c, 
+        input logic  [5:0]       i_rd_addr_a,
+        input logic  [5:0]       i_rd_addr_b,
+        input logic  [5:0]       i_rd_addr_c,
         input logic  [5:0]       i_rd_addr_d,
 
         output logic  [31:0]      o_rd_data_a,
-        output logic  [31:0]      o_rd_data_b, 
-        output logic  [31:0]      o_rd_data_c, 
+        output logic  [31:0]      o_rd_data_b,
+        output logic  [31:0]      o_rd_data_c,
         output logic  [31:0]      o_rd_data_d
 );
 
@@ -92,7 +92,7 @@ end
 
 initial $display("DEBUG_EN defined in register file. Use only for Sim.");
 
-wire [31:0] r0   =  mem[0]; 
+wire [31:0] r0   =  mem[0];
 wire [31:0] r1   =  mem[1];
 wire [31:0] r2   =  mem[2];
 wire [31:0] r3   =  mem[3];

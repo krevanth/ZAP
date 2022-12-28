@@ -1,7 +1,7 @@
 // -----------------------------------------------------------------------------
 // --                                                                         --
 // --    (C) 2016-2022 Revanth Kamaraj (krevanth)                             --
-// --                                                                         -- 
+// --                                                                         --
 // -- --------------------------------------------------------------------------
 // --                                                                         --
 // -- This program is free software; you can redistribute it and/or           --
@@ -24,7 +24,7 @@
 // -- This is the core state machine for the memory subsystem. Talks to both  --
 // -- processor and the TLB controller. Cache uploads and downloads are done  --
 // -- using an incrementing burst on the Wishbone bus for maximum efficiency  --
-// --                                                                         --   
+// --                                                                         --
 // -----------------------------------------------------------------------------
 
 `include "zap_defines.svh"
@@ -33,11 +33,11 @@ module zap_dcache_fsm   #(
         parameter CACHE_SIZE    = 1024,  // Bytes.
         parameter CACHE_LINE    = 8,
         parameter BE_32_ENABLE  = 0
-) 
+)
 
-// ---------------------------------------------- 
-//  Port List 
-// ----------------------------------------------        
+// ----------------------------------------------
+//  Port List
+// ----------------------------------------------
 
 (
 
@@ -46,7 +46,7 @@ input   logic                      i_clk,
 input   logic                      i_reset,
 
 /* From/to processor */
-input   logic    [31:0]            i_address,      
+input   logic    [31:0]            i_address,
 input   logic                      i_rd,
 input   logic                      i_wr,
 input   logic    [31:0]            i_din,
@@ -74,7 +74,7 @@ output  logic                       o_cache_clean_done,
 input   logic    [CACHE_LINE*8-1:0]     i_cache_line,
 
 input   logic                           i_cache_tag_dirty,
-input   logic  [`ZAP_CACHE_TAG_WDT-1:0] i_cache_tag, // Tag 
+input   logic  [`ZAP_CACHE_TAG_WDT-1:0] i_cache_tag, // Tag
 input   logic                           i_cache_tag_valid,
 
 output  logic   [`ZAP_CACHE_TAG_WDT-1:0] o_cache_tag,
@@ -102,7 +102,7 @@ input   logic                      i_busy,
 output  logic                      o_hold,
 
 /* Cache state */
-output  logic                      o_idle,                     
+output  logic                      o_idle,
 
 /* Memory access ports, both NXT and FF. Usually you'll be connecting NXT ports */
 output  logic             o_wb_cyc_ff, o_wb_cyc_nxt,
@@ -134,7 +134,7 @@ localparam FETCH_SINGLE         = 4; /* Ultimately validates cache line. Parent 
 localparam INVALIDATE           = 5; /* Cache invalidate parent state */
 localparam CLEAN                = 6; /* Cache clean parent state */
 localparam UNLOCK_REG           = 7; /* Unlock register */
-localparam NUMBER_OF_STATES     = 8; 
+localparam NUMBER_OF_STATES     = 8;
 
 localparam ADR_PAD              = 32 - $clog2(CACHE_LINE/4) - 1;
 localparam ADR_PAD_MINUS_2      = ADR_PAD - 2;
@@ -150,20 +150,20 @@ logic                                     cache_dirty;
 logic [$clog2(NUMBER_OF_STATES)-1:0]      state_ff, state_nxt;
 logic [31:0]                              buf_ff [(CACHE_LINE/4)-1:0];
 logic [31:0]                              buf_nxt[(CACHE_LINE/4)-1:0];
-logic                                     cache_clean_req_nxt, 
+logic                                     cache_clean_req_nxt,
                                           cache_clean_req_ff;
-logic                                     cache_inv_req_nxt, 
+logic                                     cache_inv_req_nxt,
                                           cache_inv_req_ff;
 logic [$clog2(CACHE_LINE/4):0]            adr_ctr_ff, adr_ctr_nxt; // Needs to take on 0,1,2,3, ... CACHE_LINE/4
 logic                                     rhit, whit;              // For debug only.
 
 /* From/to processor */
-logic    [31:0]                           address;      
+logic    [31:0]                           address;
 logic                                     wr;
 logic    [31:0]                           din;
 logic    [3:0]                            ben; /* Valid only for writes. */
 logic    [CACHE_LINE*8-1:0]               cache_line;
-logic  [`ZAP_CACHE_TAG_WDT-1:0]           cache_tag; // Tag 
+logic  [`ZAP_CACHE_TAG_WDT-1:0]           cache_tag; // Tag
 logic    [31:0]                           phy_addr;
 logic    [63:0]                           reg_idx;
 logic    [63:0]                           lock_nxt, lock_ff;
@@ -186,9 +186,9 @@ always_comb cache_cmp   = (i_cache_tag[`ZAP_CACHE_TAG__TAG] == i_address[`ZAP_VA
 always_comb cache_dirty = i_cache_tag_dirty;
 
 /* Buffers */
-always_ff @ ( posedge i_clk ) 
+always_ff @ ( posedge i_clk )
 begin
-        if ( state_ff == IDLE ) 
+        if ( state_ff == IDLE )
         begin
                 address         <= i_address ;
                 wr              <= i_wr;
@@ -198,16 +198,16 @@ begin
 end
 
 always_ff @ ( posedge i_clk )
-begin 
-        if ( state_ff == IDLE ) 
+begin
+        if ( state_ff == IDLE )
                 cache_line      <= i_cache_line;
         else if ( state_nxt == UNLOCK_REG )
                 cache_line      <= o_cache_line;
 end
 
-always_ff @ ( posedge i_clk ) 
+always_ff @ ( posedge i_clk )
 begin
-        if ( state_ff == IDLE ) 
+        if ( state_ff == IDLE )
         begin
                 cache_tag       <= i_cache_tag;
                 phy_addr        <= i_phy_addr;
@@ -266,10 +266,10 @@ end
 always_comb
 begin:blk1
        logic [$clog2(CACHE_LINE/4)-1:0] a;
-  
+
        UNUSED_1B = '0;
        UNUSED_2B = '0;
-        
+
         /* Default values */
         a                       = {($clog2(CACHE_LINE/4)){1'd0}};
         state_nxt               = state_ff;
@@ -297,7 +297,7 @@ begin:blk1
         o_hold                  = 1'd0;
         o_reg_dat               = 32'd0;
         o_reg_idx               = 64'd0;
-        o_dat                   = adapt_cache_data(i_address[$clog2(CACHE_LINE)-1:2], 
+        o_dat                   = adapt_cache_data(i_address[$clog2(CACHE_LINE)-1:2],
                                                    i_cache_line);
         o_ack                   = 0;
         o_err                   = 0;
@@ -309,7 +309,7 @@ begin:blk1
 
         rhit                     = 1'd0;
         whit                     = 1'd0;
- 
+
         case(state_ff)
 
         IDLE:
@@ -353,7 +353,7 @@ begin:blk1
                                 o_ack           = 1'd0; /* Wait...*/
                                 o_wb_stb_nxt    = 1'd1;
                                 o_wb_cyc_nxt    = 1'd1;
-                                o_wb_adr_nxt    = i_address;  
+                                o_wb_adr_nxt    = i_address;
                                 o_wb_wen_nxt    = i_wr;
                                 o_wb_cti_nxt    = CTI_EOB;
                                 o_wb_dat_nxt    = i_din;
@@ -374,7 +374,7 @@ begin:blk1
                                 2'b11: /* Cache Hit */
                                 begin
                                         if ( i_rd ) /* Read request. */
-                                        begin  
+                                        begin
                                                 rhit    = 1'd1;
                                                 o_ack   = 1'd1;
                                         end
@@ -383,19 +383,19 @@ begin:blk1
                                                 o_ack        = 1'd1;
                                                 whit         = 1'd1;
 
-                                                o_cache_line = 
+                                                o_cache_line =
                                                 {(CACHE_LINE/4){i_din}};
-  
-                                                o_cache_line_ben  = ben_comp ( 
-                                                        i_address[$clog2(CACHE_LINE)-1:2], 
-                                                        i_ben ); 
+
+                                                o_cache_line_ben  = ben_comp (
+                                                        i_address[$clog2(CACHE_LINE)-1:2],
+                                                        i_ben );
 
                                                 /* Write to tag and also write out physical address. */
                                                 o_cache_tag_wr_en                = 1'd1;
-                                                o_cache_tag[`ZAP_CACHE_TAG__TAG] = i_address[`ZAP_VA__CACHE_TAG]; 
+                                                o_cache_tag[`ZAP_CACHE_TAG__TAG] = i_address[`ZAP_VA__CACHE_TAG];
                                                 o_cache_tag_dirty                = 1'd1;
-                                                o_cache_tag[`ZAP_CACHE_TAG__PA]  = i_phy_addr[31 : 
-                                                                                   $clog2(CACHE_LINE)]; 
+                                                o_cache_tag[`ZAP_CACHE_TAG__PA]  = i_phy_addr[31 :
+                                                                                   $clog2(CACHE_LINE)];
                                                 o_address                        = i_address;
                                         end
                                 end
@@ -432,7 +432,7 @@ begin:blk1
                                                 /* Fetch a single cache line */
                                                 state_nxt = FETCH_SINGLE;
                                         end
-                                end 
+                                end
 
                                 default: /* Need to generate a new tag. */
                                 begin
@@ -463,7 +463,7 @@ begin:blk1
                                 state_nxt       = UNCACHEABLE_PREPARE;
                                 o_ack           = 1'd0; /* Wait...*/
                                 o_hold          = 1'd1;
-                        end                        
+                        end
                 end
         end
 
@@ -524,19 +524,19 @@ begin:blk1
                 end
 
                 /* Generate address */
-                adr_ctr_nxt = adr_ctr_ff + ((o_wb_stb_ff && i_wb_ack) ? {{($clog2(CACHE_LINE/4) ){1'd0}}, 1'd1} : 
+                adr_ctr_nxt = adr_ctr_ff + ((o_wb_stb_ff && i_wb_ack) ? {{($clog2(CACHE_LINE/4) ){1'd0}}, 1'd1} :
                                                                          {($clog2(CACHE_LINE/4)+1){1'd0}});
 
                 if ( {{ADR_PAD{1'd0}}, adr_ctr_nxt} <= ((CACHE_LINE/4) - 1) )
                 begin
                         /* Sync up with memory. Use PA in cache tag itself. */
-                        wb_prpr_write( clean_single_d (cache_line, adr_ctr_nxt), 
+                        wb_prpr_write( clean_single_d (cache_line, adr_ctr_nxt),
 
-                                      {cache_tag[`ZAP_CACHE_TAG__PA], {$clog2(CACHE_LINE){1'd0}}} + 
-                                        ({{ADR_PAD_MINUS_2{1'd0}}, adr_ctr_nxt, 2'd0}), 
+                                      {cache_tag[`ZAP_CACHE_TAG__PA], {$clog2(CACHE_LINE){1'd0}}} +
+                                        ({{ADR_PAD_MINUS_2{1'd0}}, adr_ctr_nxt, 2'd0}),
 
-                                      {{ADR_PAD{1'd0}},adr_ctr_nxt} != ((CACHE_LINE/4) - 1) ? 
-                                        CTI_BURST : CTI_EOB, 
+                                      {{ADR_PAD{1'd0}},adr_ctr_nxt} != ((CACHE_LINE/4) - 1) ?
+                                        CTI_BURST : CTI_EOB,
                                         4'b1111);
                 end
                 else
@@ -545,14 +545,14 @@ begin:blk1
                         kill_access ();
 
                         adr_ctr_nxt = 0;
-                        state_nxt   = FETCH_SINGLE;                             
-                        
+                        state_nxt   = FETCH_SINGLE;
+
                         /* Update tag. Remove dirty bit. */
                         o_cache_tag_wr_en                      = 1'd1; // Implicitly sets valid (redundant).
                         o_cache_tag[`ZAP_CACHE_TAG__TAG]       = cache_tag[`ZAP_CACHE_TAG__TAG]; // Preserve.
                         o_cache_tag_dirty                      = 1'd0;
                         o_cache_tag[`ZAP_CACHE_TAG__PA]        = cache_tag[`ZAP_CACHE_TAG__PA]; // Preserve.
-                end 
+                end
         end
 
         FETCH_SINGLE: /* Fetch a single cache line */
@@ -566,12 +566,12 @@ begin:blk1
                 end
 
                 /* Generate address */
-                adr_ctr_nxt = adr_ctr_ff + ((o_wb_stb_ff && i_wb_ack) ? {{($clog2(CACHE_LINE/4) ){1'd0}}, 1'd1} : 
+                adr_ctr_nxt = adr_ctr_ff + ((o_wb_stb_ff && i_wb_ack) ? {{($clog2(CACHE_LINE/4) ){1'd0}}, 1'd1} :
                                                                          {($clog2(CACHE_LINE/4)+1){1'd0}}) ;
 
                 /* Write to buffer */
-                buf_nxt[adr_ctr_ff[$clog2(CACHE_LINE/4)-1:0]] = i_wb_ack ? 
-                                                                i_wb_dat : 
+                buf_nxt[adr_ctr_ff[$clog2(CACHE_LINE/4)-1:0]] = i_wb_ack ?
+                                                                i_wb_dat :
                                                                 buf_ff[adr_ctr_ff[$clog2(CACHE_LINE/4)-1:0]];
 
                 /* Manipulate buffer as needed */
@@ -590,7 +590,7 @@ begin:blk1
 
                         /* Fetch line from memory */
                         wb_prpr_read(
-                                     {phy_addr[31:$clog2(CACHE_LINE)], {$clog2(CACHE_LINE){1'd0}}} + (adr_ctr_nxt * (32/8)), 
+                                     {phy_addr[31:$clog2(CACHE_LINE)], {$clog2(CACHE_LINE){1'd0}}} + (adr_ctr_nxt * (32/8)),
                                      ({{ADR_PAD{1'd0}}, adr_ctr_nxt} != CACHE_LINE/4 - 1) ? CTI_BURST : CTI_EOB);
                 end
                 else
@@ -599,8 +599,8 @@ begin:blk1
 
                         o_cache_line = 0;
 
-                        for(int i=0;i<CACHE_LINE/4;i++)                        
-                                o_cache_line = o_cache_line | ({{LINE_PAD{1'd0}},buf_nxt[i][31:0]} << (32 * i)); 
+                        for(int i=0;i<CACHE_LINE/4;i++)
+                                o_cache_line = o_cache_line | ({{LINE_PAD{1'd0}},buf_nxt[i][31:0]} << (32 * i));
 
                         o_cache_line_ben  = {CACHE_LINE{1'd1}};
 
@@ -637,18 +637,18 @@ begin:blk1
                 begin
                         o_ack        = 1'd1;
 
-                        o_cache_line = 
+                        o_cache_line =
                         {(CACHE_LINE/4){din}};
-  
-                        o_cache_line_ben  = ben_comp ( 
-                                address[$clog2(CACHE_LINE)-1:2], 
-                                ben ); 
+
+                        o_cache_line_ben  = ben_comp (
+                                address[$clog2(CACHE_LINE)-1:2],
+                                ben );
 
                         /* Write to tag and also write out physical address. */
                         o_cache_tag_wr_en                = 1'd1;
-                        o_cache_tag[`ZAP_CACHE_TAG__TAG] = address[`ZAP_VA__CACHE_TAG]; 
+                        o_cache_tag[`ZAP_CACHE_TAG__TAG] = address[`ZAP_VA__CACHE_TAG];
                         o_cache_tag_dirty                = 1'd1;
-                        o_cache_tag[`ZAP_CACHE_TAG__PA]  = phy_addr[31 : $clog2(CACHE_LINE)]; 
+                        o_cache_tag[`ZAP_CACHE_TAG__PA]  = phy_addr[31 : $clog2(CACHE_LINE)];
                         o_address                        = address;
                 end
 
@@ -698,7 +698,7 @@ end
 // ----------------------------------------------------------------------------
 
 function [31:0] adapt_cache_data (
-        input [$clog2(CACHE_LINE) - 3:0] shift,   
+        input [$clog2(CACHE_LINE) - 3:0] shift,
         input [CACHE_LINE*8-1:0]         data
 );
 localparam W = $clog2(CACHE_LINE) + 3;
@@ -711,9 +711,9 @@ begin
 end
 endfunction
 
-function [CACHE_LINE-1:0] ben_comp ( 
-        input [$clog2(CACHE_LINE) - 3:0] shift, 
-        input [3:0]                      bv 
+function [CACHE_LINE-1:0] ben_comp (
+        input [$clog2(CACHE_LINE) - 3:0] shift,
+        input [3:0]                      bv
 );
 localparam W = $clog2(CACHE_LINE);
 logic [W-1:0] shamt;
@@ -723,9 +723,9 @@ begin
 end
 endfunction
 
-function [31:0] clean_single_d ( 
-        input [CACHE_LINE*8-1:0]        cl, 
-        input [$clog2(CACHE_LINE/4):0]  sh 
+function [31:0] clean_single_d (
+        input [CACHE_LINE*8-1:0]        cl,
+        input [$clog2(CACHE_LINE/4):0]  sh
 );
 logic [$clog2(CACHE_LINE/4) + 5:0] shamt;
 logic [CACHE_LINE*8-32-1:0] dummy;
@@ -793,7 +793,7 @@ begin
            && cache_cmp && i_cache_tag_valid)
         begin
                 if ( i_rd ) /* Read request. */
-                begin  
+                begin
                         rhit    = 1'd1;
                         o_ack   = 1'd1;
 
@@ -811,19 +811,19 @@ begin
                         o_ack        = 1'd1;
                         whit         = 1'd1;
 
-                        o_cache_line = 
+                        o_cache_line =
                         {(CACHE_LINE/4){i_din}};
-  
-                        o_cache_line_ben  = ben_comp ( 
-                                i_address[$clog2(CACHE_LINE)-1:2], 
-                                i_ben ); 
+
+                        o_cache_line_ben  = ben_comp (
+                                i_address[$clog2(CACHE_LINE)-1:2],
+                                i_ben );
 
                         /* Write to tag and also write out physical address. */
                         o_cache_tag_wr_en                = 1'd1;
-                        o_cache_tag[`ZAP_CACHE_TAG__TAG] = i_address[`ZAP_VA__CACHE_TAG]; 
+                        o_cache_tag[`ZAP_CACHE_TAG__TAG] = i_address[`ZAP_VA__CACHE_TAG];
                         o_cache_tag_dirty                = 1'd1;
-                        o_cache_tag[`ZAP_CACHE_TAG__PA]  = i_phy_addr[31 : 
-                                                           $clog2(CACHE_LINE)]; 
+                        o_cache_tag[`ZAP_CACHE_TAG__PA]  = i_phy_addr[31 :
+                                                           $clog2(CACHE_LINE)];
                         o_address                        = i_address;
                 end
         end

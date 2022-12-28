@@ -1,7 +1,7 @@
 // -----------------------------------------------------------------------------
 // --                                                                         --
 // --    (C) 2016-2022 Revanth Kamaraj (krevanth)                             --
-// --                                                                         -- 
+// --                                                                         --
 // -- --------------------------------------------------------------------------
 // --                                                                         --
 // -- This program is free software; you can redistribute it and/or           --
@@ -20,9 +20,9 @@
 // -- 02110-1301, USA.                                                        --
 // --                                                                         --
 // -----------------------------------------------------------------------------
-// --                                                                         -- 
+// --                                                                         --
 // --  This unit handles 32x32=32/64 multiplication using an FSM using        --
-// --  a 17x17 signed array multiplier.                                       -- 
+// --  a 17x17 signed array multiplier.                                       --
 // --                                                                         --
 // -----------------------------------------------------------------------------
 
@@ -53,7 +53,7 @@ module zap_shifter_multiply
         input logic [31:0]                       i_rm,
         input logic [31:0]                       i_rn,
         input logic [31:0]                       i_rh,
-        input logic [31:0]                       i_rs,        
+        input logic [31:0]                       i_rs,
 
         //
         // Outputs.
@@ -85,10 +85,10 @@ logic         unused;
 
 always_comb unused = |{PHY_REGS};
 
-always_comb higher = i_alu_operation_ff[0]          || 
-                i_alu_operation_ff == SMLAL00H || 
+always_comb higher = i_alu_operation_ff[0]          ||
+                i_alu_operation_ff == SMLAL00H ||
                 i_alu_operation_ff == SMLAL01H ||
-                i_alu_operation_ff == SMLAL10H || 
+                i_alu_operation_ff == SMLAL10H ||
                 i_alu_operation_ff == SMLAL11H;
 
 // 17-bit partial products.
@@ -144,7 +144,7 @@ begin
                 b = $signed({i_rs[31], i_rs[31:16]});
                 d = $signed({1'd0, i_rs[15:0]});
         end
-        else if ( i_alu_operation_ff == OP_SMULW0 )                
+        else if ( i_alu_operation_ff == OP_SMULW0 )
         begin
                 // Signed RM x Lower RS
 
@@ -156,7 +156,7 @@ begin
 
                 take_upper = 1'd1;
         end
-        else if ( i_alu_operation_ff == OP_SMULW1 )                
+        else if ( i_alu_operation_ff == OP_SMULW1 )
         begin
                 // Signed RM x Upper RS
 
@@ -168,8 +168,8 @@ begin
 
                 take_upper = 1'd1;
         end
-        else if ( i_alu_operation_ff == OP_SMUL00   || i_alu_operation_ff == OP_SMLA00  || 
-                  i_alu_operation_ff == OP_SMLAL00L || i_alu_operation_ff == OP_SMLAL00H )                 
+        else if ( i_alu_operation_ff == OP_SMUL00   || i_alu_operation_ff == OP_SMLA00  ||
+                  i_alu_operation_ff == OP_SMLAL00L || i_alu_operation_ff == OP_SMLAL00H )
         begin
                 // lower RM x lower RS
 
@@ -205,7 +205,7 @@ begin
 
                 if ( i_alu_operation_ff == OP_SMLAL10L || i_alu_operation_ff == OP_SMLAL10H )   take_upper = 1'd1;
         end
-        else if ( i_alu_operation_ff == OP_SMUL11   || i_alu_operation_ff == OP_SMLA11 || 
+        else if ( i_alu_operation_ff == OP_SMUL11   || i_alu_operation_ff == OP_SMLA11 ||
                   i_alu_operation_ff == OP_SMLAL11L || i_alu_operation_ff == OP_SMLAL11H)
         begin
                 // upper RM x upper RS
@@ -221,7 +221,7 @@ begin
                // unsigned RM x RS
 
                a = $signed({1'd0, i_rm[31:16]});
-               c = $signed({1'd0, i_rm[15:0]}); 
+               c = $signed({1'd0, i_rm[15:0]});
 
                b = $signed({1'd0, i_rs[31:16]});
                d = $signed({1'd0, i_rs[15:0]});
@@ -238,7 +238,7 @@ begin
         o_busy         = 1'd1;
         o_rd           = 32'd0;
         state_nxt      = state_ff;
-        x_nxt          = x_ff;        
+        x_nxt          = x_ff;
         o_sat          = 1'd0;
 
         case ( state_ff )
@@ -247,19 +247,19 @@ begin
                         o_busy = 1'd0;
 
                         // If we have the go signal.
-                        if ( i_cc_satisfied && (i_alu_operation_ff == {1'd0, UMLALL} || 
-                                                i_alu_operation_ff == {1'd0, UMLALH} || 
-                                                i_alu_operation_ff == {1'd0, SMLALL} || 
+                        if ( i_cc_satisfied && (i_alu_operation_ff == {1'd0, UMLALL} ||
+                                                i_alu_operation_ff == {1'd0, UMLALH} ||
+                                                i_alu_operation_ff == {1'd0, SMLALL} ||
                                                 i_alu_operation_ff == {1'd0, SMLALH} ||
 
-                                                i_alu_operation_ff == OP_SMULW0 || 
-                                                i_alu_operation_ff == OP_SMULW1 || 
-                                                i_alu_operation_ff == OP_SMUL00 || 
-                                                i_alu_operation_ff == OP_SMUL01 || 
-                                                i_alu_operation_ff == OP_SMUL10 || 
-                                                i_alu_operation_ff == OP_SMUL11 || 
-                                                
-                                                i_alu_operation_ff == OP_SMLA00     ||        
+                                                i_alu_operation_ff == OP_SMULW0 ||
+                                                i_alu_operation_ff == OP_SMULW1 ||
+                                                i_alu_operation_ff == OP_SMUL00 ||
+                                                i_alu_operation_ff == OP_SMUL01 ||
+                                                i_alu_operation_ff == OP_SMUL10 ||
+                                                i_alu_operation_ff == OP_SMUL11 ||
+
+                                                i_alu_operation_ff == OP_SMLA00     ||
                                                 i_alu_operation_ff == OP_SMLA01     ||
                                                 i_alu_operation_ff == OP_SMLA10     ||
                                                 i_alu_operation_ff == OP_SMLA11     ||
@@ -294,7 +294,7 @@ begin
                         x_nxt     = (x_ff[63:0]) + (prod_ab << 32'd32) + {i_rh, i_rn};
                 end
 
-                S3: 
+                S3:
                 begin
                         state_nxt  = IDLE;
 
@@ -348,7 +348,7 @@ begin
         end
         else if ( i_clear_from_writeback )
         begin
-                state_ff      <= IDLE; 
+                state_ff      <= IDLE;
                 old_nozero_ff <= 1'd0;
         end
         else if ( i_data_stall )

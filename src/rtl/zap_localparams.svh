@@ -1,7 +1,7 @@
 // -----------------------------------------------------------------------------
 // --                                                                         --
 // --    (C) 2016-2022 Revanth Kamaraj (krevanth)                             --
-// --                                                                         -- 
+// --                                                                         --
 // -- --------------------------------------------------------------------------
 // --                                                                         --
 // -- This program is free software; you can redistribute it and/or           --
@@ -54,7 +54,7 @@ localparam DAC_CLIENT  = 2'b01;
 // only some FSR values make sense in this implementation.
 
 //Section.
-localparam [3:0] FSR_SECTION_DOMAIN_FAULT      = 4'b1001; 
+localparam [3:0] FSR_SECTION_DOMAIN_FAULT      = 4'b1001;
 localparam [3:0] FSR_SECTION_TRANSLATION_FAULT = 4'b0101;
 localparam [3:0] FSR_SECTION_PERMISSION_FAULT  = 4'b1101;
 
@@ -86,20 +86,20 @@ localparam [3:0] MOV   = 13;
 localparam [3:0] BIC   = 14;
 localparam [3:0] MVN   = 15;
 
-// Internal opcodes used to 
+// Internal opcodes used to
 // implement some instructions.
 localparam [4:0] MUL   = 16; // Multiply ( 32 x 32 = 32 ) -> Translated to MAC.
-localparam [4:0] MLA   = 17; // Multiply-Accumulate ( 32 x 32 + 32 = 32 ). 
+localparam [4:0] MLA   = 17; // Multiply-Accumulate ( 32 x 32 + 32 = 32 ).
 
-// Flag MOV. Will write upper 4-bits to flags if mask bit [3] is set to 1. 
-// Also writes to target register similarly. 
+// Flag MOV. Will write upper 4-bits to flags if mask bit [3] is set to 1.
+// Also writes to target register similarly.
 // Mask bit comes from non-shift operand.
-localparam [4:0] FMOV  = 18; 
+localparam [4:0] FMOV  = 18;
 
-// Same as FMOV but does not touch the flags in the ALU. This is MASK MOV. 
-// Set to 1 will update, 0 will not 
+// Same as FMOV but does not touch the flags in the ALU. This is MASK MOV.
+// Set to 1 will update, 0 will not
 // (0000 -> No updates, 0001 -> [7:0] update) and so on.
-localparam [4:0] MMOV  = 19; 
+localparam [4:0] MMOV  = 19;
 
 localparam [4:0] UMLALL = 20; // Unsigned multiply accumulate (Write lower reg).
 localparam [4:0] UMLALH = 21;
@@ -236,7 +236,7 @@ localparam      [31:0]  PLD                                             =       
 // Data processing.
 localparam      [31:0]  DATA_PROCESSING_IMMEDIATE                       =                                       32'b????_00_1_????_?_????_????_????????????;
 localparam      [31:0]  DATA_PROCESSING_REGISTER_SPECIFIED_SHIFT        =                                       32'b????_00_0_????_?_????_????_????0??1????;
-localparam      [31:0]  DATA_PROCESSING_INSTRUCTION_SPECIFIED_SHIFT     =                                       32'b????_00_0_????_?_????_????_???????0????;       
+localparam      [31:0]  DATA_PROCESSING_INSTRUCTION_SPECIFIED_SHIFT     =                                       32'b????_00_0_????_?_????_????_???????0????;
 
 // BL never reaches the unit.
 localparam      [31:0]  BRANCH_INSTRUCTION                              =                                       32'b????_101?_????_????_????_????_????_????;
@@ -246,7 +246,7 @@ localparam      [31:0]  MSR_IMMEDIATE                                   =       
 
 localparam      [31:0]  MSR                                             =                                       32'b????_00_0_10?10_????_1111_????_????_????;
 
-localparam      [31:0]  LS_INSTRUCTION_SPECIFIED_SHIFT                  =                                       32'b????_01_1_?????_????_????_????_????_????; 
+localparam      [31:0]  LS_INSTRUCTION_SPECIFIED_SHIFT                  =                                       32'b????_01_1_?????_????_????_????_????_????;
 localparam      [31:0]  LS_IMMEDIATE                                    =                                       32'b????_01_0_?????_????_????_????_????_????;
 
 localparam      [31:0]  BX_INST                                         =                                       32'b????_0001_0010_1111_1111_1111_0001_????;
@@ -266,7 +266,7 @@ localparam      [31:0]  SOFTWARE_INTERRUPT                              =       
 localparam      [31:0]  SWAP                                            =                                       32'b????_00010_?_00_????_????_00001001_????;
 
 // Write to coprocessor.
-localparam      [31:0]  MCR                                             =                                       32'b????_1110_???_0_????_????_1111_???_1_????;        
+localparam      [31:0]  MCR                                             =                                       32'b????_1110_???_0_????_????_1111_???_1_????;
 localparam      [31:0]  MCR2                                            =                                       32'b1111_1110???0_????????????_???1_????;
 
 // Read from coprocessor.
@@ -285,7 +285,7 @@ localparam      [31:0]  STC2                                            =       
 localparam      [31:0]  CDP                                             =                                       32'b????_1110_????????_????????_????????;
 
 // BLX(1)
-localparam      [31:0] BLX1                                             =                                       32'b1111_101_?_????????_????????_????????; 
+localparam      [31:0] BLX1                                             =                                       32'b1111_101_?_????????_????????_????????;
 
 // BLX(2)
 localparam      [31:0] BLX2                                             =                                       32'b????_00010010_1111_1111_1111_0011_????;
@@ -364,7 +364,7 @@ localparam [3:0] ARCH_PC   = 15;
 localparam RAZ_REGISTER    = 16; // Serves as $0 does on MIPS.
 
 // These always point to user registers irrespective of mode.
-localparam ARCH_USR2_R8    = 18; 
+localparam ARCH_USR2_R8    = 18;
 localparam ARCH_USR2_R9    = 19;
 localparam ARCH_USR2_R10   = 20;
 localparam ARCH_USR2_R11   = 21;
@@ -426,7 +426,7 @@ localparam  PHY_UND_R13          =       29;
 localparam  PHY_UND_R14          =       30;
 
 localparam  PHY_ABT_R13          =       31;
-localparam  PHY_ABT_R14          =       32;     
+localparam  PHY_ABT_R14          =       32;
 
 // Dummy registers for various purposes.
 localparam  PHY_DUMMY_REG0       =       33;
@@ -440,7 +440,7 @@ localparam  PHY_UND_SPSR         =       38;
 localparam  PHY_ABT_SPSR         =       39;
 
 //
-// Count of total registers 
+// Count of total registers
 // (Can go up to 64 with no problems). Used to set register index widths of
 // the control signals.
 //

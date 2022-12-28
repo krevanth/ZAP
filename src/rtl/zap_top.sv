@@ -1,7 +1,7 @@
 // -----------------------------------------------------------------------------
 // --                                                                         --
 // --    (C) 2016-2022 Revanth Kamaraj (krevanth)                             --
-// --                                                                         -- 
+// --                                                                         --
 // -- --------------------------------------------------------------------------
 // --                                                                         --
 // -- This program is free software; you can redistribute it and/or           --
@@ -20,7 +20,7 @@
 // -- 02110-1301, USA.                                                        --
 // --                                                                         --
 // -----------------------------------------------------------------------------
-// --                                                                        -- 
+// --                                                                        --
 // --  This is the top module of the ZAP processor. It contains instances of --
 // --  processor core and the memory management units. I and D WB busses     --
 // --  are provided.                                                         --
@@ -90,7 +90,7 @@ parameter [31:0] CODE_CACHE_LINE          =  32'd64    // Ccahe line size in byt
         // --------------------------------------
 
         output  logic  [2047:0]    o_trace,
-        output  logic              o_trace_valid,  
+        output  logic              o_trace_valid,
         output  logic              o_trace_uop_last,
 
         `endif
@@ -103,8 +103,8 @@ parameter [31:0] CODE_CACHE_LINE          =  32'd64    // Ccahe line size in byt
         input   logic            i_reset,
 
         // ---------------------------------------
-        // Interrupts. 
-        // Both of them are active high and level 
+        // Interrupts.
+        // Both of them are active high and level
         // trigerred.
         // ---------------------------------------
 
@@ -151,7 +151,6 @@ logic [7:0]      dc_fsr;
 logic [31:0]     dc_far;
 logic            cpu_dc_en, cpu_ic_en;
 logic [1:0]      cpu_sr;
-logic [7:0]      cpu_pid;
 logic [31:0]     cpu_baddr, cpu_dac_reg;
 logic            cpu_dc_inv, cpu_ic_inv;
 logic            cpu_dc_clean, cpu_ic_clean;
@@ -249,10 +248,11 @@ zap_core #(
 .o_data_wb_dat          (cpu_dc_dat),
 /* verilator lint_off PINCONNECTEMPTY */
 .o_data_wb_cyc          (),
+.o_pid                  (),
 /* verilator lint_on PINCONNECTEMPTY */
 .o_data_wb_stb          (cpu_dc_stb),
-.i_data_wb_dat          (!ONLY_CORE ? dc_data : 
-                         BE_32_ENABLE ? be_32(i_wb_dat, o_wb_sel) : i_wb_dat), 
+.i_data_wb_dat          (!ONLY_CORE ? dc_data :
+                         BE_32_ENABLE ? be_32(i_wb_dat, o_wb_sel) : i_wb_dat),
                         // Swap data into CPU based on current o_wb_sel.
 .i_data_wb_ack          (data_ack),
 .i_data_wb_err          (data_err),
@@ -270,7 +270,6 @@ zap_core #(
 .o_baddr                (cpu_baddr),
 .o_mmu_en               (cpu_mmu_en),
 .o_sr                   (cpu_sr),
-.o_pid                  (cpu_pid),
 .o_dcache_inv           (cpu_dc_inv),
 .o_icache_inv           (cpu_ic_inv),
 .o_dcache_clean         (cpu_dc_clean),
@@ -290,7 +289,7 @@ zap_core #(
 
 .i_dc_reg_idx           (!ONLY_CORE ? dc_wreg_idx : '0),
 .i_dc_lock              (!ONLY_CORE ? dc_lock : '0),
-.i_dc_reg_dat           (!ONLY_CORE ? dc_reg_data : '0), 
+.i_dc_reg_dat           (!ONLY_CORE ? dc_reg_data : '0),
 .i_dcache_inv_done      (!ONLY_CORE ? dc_inv_done : '0),
 .i_icache_inv_done      (!ONLY_CORE ? ic_inv_done : '0),
 .i_dcache_clean_done    (!ONLY_CORE ? dc_clean_done : '0),
@@ -337,68 +336,67 @@ generate
                 assign c_wb_sel        = '0;
                 assign c_wb_dat        = '0;
                 assign c_wb_adr        = '0;
-                assign c_wb_cti        = CTI_EOB; 
+                assign c_wb_cti        = CTI_EOB;
                 assign d_wb_stb        = '0;
                 assign d_wb_cyc        = '0;
                 assign d_wb_wen        = '0;
                 assign d_wb_sel        = '0;
                 assign d_wb_dat        = '0;
                 assign d_wb_adr        = '0;
-                assign d_wb_cti        = CTI_EOB; 
+                assign d_wb_cti        = CTI_EOB;
                 assign wb_dat          = '0;
 
                 wire unused =
                    (    |dc_wreg_idx       )
-                 | (    |dc_lock           ) 
-                 | (    |dc_reg_data       ) 
-                 | (    |dc_inv_done       ) 
-                 | (    |ic_inv_done       ) 
-                 | (    |dc_clean_done     ) 
-                 | (    |ic_clean_done     ) 
-                 | (    |icache_err2       ) 
-                 | (    |dcache_err2       ) 
-                 | (    |dc_fsr            ) 
-                 | (    |dc_far            ) 
-                 | (    |instr_err         ) 
-                 | (    |dc_data           ) 
-                 | (    |ic_data           ) 
-                 | (    |data_err          ) 
-                 | (    |c_wb_ack          ) 
-                 | (    |d_wb_ack          ) 
-                 | (    |wb_cyc            ) 
-                 | (    |wb_stb            ) 
-                 | (    |wb_we             ) 
-                 | (    |wb_sel            ) 
-                 | (    |wb_idat           ) 
-                 | (    |wb_adr            ) 
-                 | (    |wb_cti            ) 
-                 | (    |wb_ack            ) 
-                 | (    |c_wb_stb          ) 
-                 | (    |c_wb_cyc          ) 
-                 | (    |c_wb_wen          ) 
-                 | (    |c_wb_sel          ) 
-                 | (    |c_wb_dat          ) 
-                 | (    |c_wb_adr          ) 
-                 | (    |c_wb_cti          )  
-                 | (    |d_wb_stb          ) 
-                 | (    |d_wb_cyc          ) 
-                 | (    |d_wb_wen          ) 
-                 | (    |d_wb_sel          ) 
-                 | (    |d_wb_dat          ) 
-                 | (    |d_wb_adr          ) 
+                 | (    |dc_lock           )
+                 | (    |dc_reg_data       )
+                 | (    |dc_inv_done       )
+                 | (    |ic_inv_done       )
+                 | (    |dc_clean_done     )
+                 | (    |ic_clean_done     )
+                 | (    |icache_err2       )
+                 | (    |dcache_err2       )
+                 | (    |dc_fsr            )
+                 | (    |dc_far            )
+                 | (    |instr_err         )
+                 | (    |dc_data           )
+                 | (    |ic_data           )
+                 | (    |data_err          )
+                 | (    |c_wb_ack          )
+                 | (    |d_wb_ack          )
+                 | (    |wb_cyc            )
+                 | (    |wb_stb            )
+                 | (    |wb_we             )
+                 | (    |wb_sel            )
+                 | (    |wb_idat           )
+                 | (    |wb_adr            )
+                 | (    |wb_cti            )
+                 | (    |wb_ack            )
+                 | (    |c_wb_stb          )
+                 | (    |c_wb_cyc          )
+                 | (    |c_wb_wen          )
+                 | (    |c_wb_sel          )
+                 | (    |c_wb_dat          )
+                 | (    |c_wb_adr          )
+                 | (    |c_wb_cti          )
+                 | (    |d_wb_stb          )
+                 | (    |d_wb_cyc          )
+                 | (    |d_wb_wen          )
+                 | (    |d_wb_sel          )
+                 | (    |d_wb_dat          )
+                 | (    |d_wb_adr          )
                  | (    |d_wb_cti          )
                  | (    |wb_dat            )
-                 | (    |cpu_mmu_en        )            
+                 | (    |cpu_mmu_en        )
                  | (    |cpu_cpsr          )
                  | (    |cpu_mem_translate )
                  | (    |cpu_daddr_nxt     )
-                 | (    |cpu_daddr_check   )     
+                 | (    |cpu_daddr_check   )
                  | (    |cpu_iaddr_nxt     )
                  | (    |cpu_iaddr_check   )
                  | (    |cpu_dc_en         )
                  | (    |cpu_ic_en         )
                  | (    |cpu_sr            )
-                 | (    |cpu_pid           )
                  | (    |cpu_baddr         )
                  | (    |cpu_dac_reg       )
                  | (    |cpu_dc_inv        )
@@ -415,22 +413,22 @@ generate
         end
 endgenerate
 
-generate 
+generate
 if ( !ONLY_CORE )
         zap_wb_merger #(.ONLY_CORE(1'd0)) u_zap_wb_merger (
-        
+
         .i_clk(i_clk),
         .i_reset(s_reset),
-        
+
         .i_c_wb_stb(c_wb_stb ),
         .i_c_wb_cyc(c_wb_cyc ),
-        .i_c_wb_wen(c_wb_wen ), 
+        .i_c_wb_wen(c_wb_wen ),
         .i_c_wb_sel(c_wb_sel ),
         .i_c_wb_dat(c_wb_dat ),
         .i_c_wb_adr(c_wb_adr ),
         .i_c_wb_cti(c_wb_cti ),
         .o_c_wb_ack(c_wb_ack ),
-        
+
         .i_d_wb_stb(d_wb_stb ),
         .i_d_wb_cyc(d_wb_cyc ),
         .i_d_wb_wen(d_wb_wen ),
@@ -439,7 +437,7 @@ if ( !ONLY_CORE )
         .i_d_wb_adr(d_wb_adr ),
         .i_d_wb_cti(d_wb_cti ),
         .o_d_wb_ack(d_wb_ack ),
-        
+
         .o_wb_cyc  (wb_cyc   ),
         .o_wb_stb  (wb_stb   ),
         .o_wb_wen  (wb_we    ),
@@ -448,14 +446,14 @@ if ( !ONLY_CORE )
         .o_wb_adr  (wb_adr   ),
         .o_wb_cti  (wb_cti   ),
         .i_wb_ack  (wb_ack   )
-        
+
         );
 else // if ( ONLY_CORE )
         zap_wb_merger #(.ONLY_CORE(1'd1)) u_zap_wb_merger (
-        
+
         .i_clk(i_clk),
         .i_reset(s_reset),
-        
+
         .i_c_wb_stb(cpu_instr_stb),
         .i_c_wb_cyc(cpu_instr_stb),
         .i_c_wb_wen(1'h0),
@@ -464,7 +462,7 @@ else // if ( ONLY_CORE )
         .i_c_wb_adr(cpu_iaddr),
         .i_c_wb_cti(3'b111),
         .o_c_wb_ack(instr_ack),
-        
+
         .i_d_wb_stb(cpu_dc_stb),
         .i_d_wb_cyc(cpu_dc_stb),
         .i_d_wb_wen(cpu_dc_we),
@@ -473,7 +471,7 @@ else // if ( ONLY_CORE )
         .i_d_wb_adr(cpu_daddr),
         .i_d_wb_cti(3'b111),
         .o_d_wb_ack(data_ack),
-        
+
         .o_wb_cyc  (o_wb_cyc ),
         .o_wb_stb  (o_wb_stb ),
         .o_wb_wen  (o_wb_we  ),
@@ -482,7 +480,7 @@ else // if ( ONLY_CORE )
         .o_wb_adr  (o_wb_adr ),
         .o_wb_cti  (o_wb_cti ),
         .i_wb_ack  (i_wb_ack )
-        
+
         );
 
 endgenerate
@@ -491,14 +489,14 @@ endgenerate
 // Put cache and MMU only if ONLY_CORE == 0
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-generate 
-if ( !ONLY_CORE ) 
+generate
+if ( !ONLY_CORE )
 begin: genblk1
 
 zap_dcache #(
-        .CACHE_SIZE(DATA_CACHE_SIZE), 
-        .SPAGE_TLB_ENTRIES(DATA_SPAGE_TLB_ENTRIES), 
-        .LPAGE_TLB_ENTRIES(DATA_LPAGE_TLB_ENTRIES), 
+        .CACHE_SIZE(DATA_CACHE_SIZE),
+        .SPAGE_TLB_ENTRIES(DATA_SPAGE_TLB_ENTRIES),
+        .LPAGE_TLB_ENTRIES(DATA_LPAGE_TLB_ENTRIES),
         .SECTION_TLB_ENTRIES(DATA_SECTION_TLB_ENTRIES),
         .FPAGE_TLB_ENTRIES(DATA_FPAGE_TLB_ENTRIES),
         .CACHE_LINE(CODE_CACHE_LINE),
@@ -508,9 +506,9 @@ u_data_cache (
 .i_clk                  (i_clk),
 .i_stall                (1'd0), // For timing.
 .i_reset                (s_reset),
-.i_address              (cpu_daddr     + ({24'd0, cpu_pid[7:0]} << 32'd25)),
-.i_address_nxt          (cpu_daddr_nxt + ({24'd0, cpu_pid[7:0]} << 32'd25)),
-.i_address_check        (cpu_daddr_check + ({24'd0, cpu_pid[7:0]} << 32'd25)),
+.i_address              (cpu_daddr      ),
+.i_address_nxt          (cpu_daddr_nxt  ),
+.i_address_check        (cpu_daddr_check),
 .i_wr_check             (cpu_dwe_check),
 .i_rd_check             (cpu_dre_check),
 .i_rd                   (!cpu_dc_we && cpu_dc_stb),
@@ -565,21 +563,22 @@ u_data_cache (
 );
 
 zap_cache #(
-.CACHE_SIZE(CODE_CACHE_SIZE), 
-.SPAGE_TLB_ENTRIES(CODE_SPAGE_TLB_ENTRIES), 
-.LPAGE_TLB_ENTRIES(CODE_LPAGE_TLB_ENTRIES), 
+.CACHE_SIZE(CODE_CACHE_SIZE),
+.SPAGE_TLB_ENTRIES(CODE_SPAGE_TLB_ENTRIES),
+.LPAGE_TLB_ENTRIES(CODE_LPAGE_TLB_ENTRIES),
 .SECTION_TLB_ENTRIES(CODE_SECTION_TLB_ENTRIES),
 .FPAGE_TLB_ENTRIES(CODE_FPAGE_TLB_ENTRIES),
 .CACHE_LINE(DATA_CACHE_LINE)
-) 
+)
 u_code_cache (
 .i_clk              (i_clk),
 .i_stall            (code_stall),
 .i_reset            (s_reset),
-.i_address          ((cpu_iaddr     & 32'hFFFF_FFFC) + ({24'd0, cpu_pid[7:0]} << 32'd25)), // Cut off lower 2 bits.
-.i_address_nxt      ((cpu_iaddr_nxt & 32'hFFFF_FFFC) + ({24'd0, cpu_pid[7:0]} << 32'd25)), // Cut off lower 2 bits.
 
-.i_address_check    ((cpu_iaddr_check & 32'hFFFF_FFFC) + ({24'd0, cpu_pid[7:0]} << 32'd25)),
+.i_address          ((cpu_iaddr     & 32'hFFFF_FFFC)  ), // Cut off lower 2 bits.
+.i_address_nxt      ((cpu_iaddr_nxt & 32'hFFFF_FFFC)  ), // Cut off lower 2 bits.
+.i_address_check    ((cpu_iaddr_check & 32'hFFFF_FFFC)),
+
 .i_wr_check         (1'd0),
 .i_rd_check         (1'd1),
 
@@ -592,8 +591,8 @@ u_code_cache (
 .o_err             (instr_err),
 
 /* verilator lint_off PINCONNECTEMPTY */
-.o_fsr             (), 
-.o_far             (), 
+.o_fsr             (),
+.o_far             (),
 /* verilator lint_on PINCONNECTEMPTY */
 
 .i_mmu_en          (cpu_mmu_en),
