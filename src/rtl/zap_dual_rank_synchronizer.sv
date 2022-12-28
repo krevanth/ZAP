@@ -23,19 +23,35 @@
 
 module zap_dual_rank_synchronizer
 #(
-        parameter WIDTH=1
+        parameter bit [31:0] WIDTH = 32'd1
 )
 (
-        input logic i_clk,
-        input logic i_reset,
-        input logic [WIDTH-1:0] in,
-        output logic [WIDTH-1:0] out
+        input  logic             i_clk,
+        input  logic             i_reset,
+        input  logic [WIDTH-1:0] i_async,
+        output logic [WIDTH-1:0] o_sync
 );
 
 logic [WIDTH-1:0] meta;
 
-always_ff @ ( posedge i_clk )  meta <= i_reset ? '0 : in;
-always_ff @ ( posedge i_clk )  out  <= i_reset ? '0 : meta;
+always_ff @ ( posedge i_clk )
+begin
+        if ( i_reset )
+                meta <= '0;
+        else
+                meta <= i_async;
+end
 
-endmodule
+always_ff @ ( posedge i_clk )
+begin
+        if ( i_reset )
+                o_sync <= '0;
+        else
+                o_sync <= meta;
+end
 
+endmodule: zap_dual_rank_synchronizer
+
+// ----------------------------------------------------------------------------
+// EOF
+// ----------------------------------------------------------------------------

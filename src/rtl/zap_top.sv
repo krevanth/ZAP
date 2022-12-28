@@ -188,10 +188,10 @@ logic            code_stall;
 assign          s_reset = i_reset;
 
 zap_dual_rank_synchronizer #(.WIDTH(2)) u_sync (
-        .i_clk(i_clk),
-        .i_reset(i_reset),
-        .in( {i_fiq, i_irq}),
-        .out({s_fiq, s_irq})
+        .i_clk   (i_clk),
+        .i_reset (i_reset),
+        .i_async ({i_fiq, i_irq}),
+        .o_sync  ({s_fiq, s_irq})
 );
 
 `ifndef DEBUG_EN
