@@ -33,12 +33,14 @@ input logic             i_stall_from_issue,
 input logic             i_stall_from_decode,
 input logic             i_clear_from_decode,
 
-input logic [WDT-1:0]   i_instr, // Instruction + other bits.
-input logic             i_valid, // Above is valid. Write enable basically.
+// Payload and valid. o_full blocks writes.
+input logic [WDT-1:0]   i_instr,
+input logic             i_valid,
+output logic            o_full,
 
-output logic  [WDT-1:0] o_instr, // Instruction output.
-output logic            o_valid, // Output valid.
-output logic            o_full   // FIFO full.
+// Payload out.
+output logic  [WDT-1:0] o_instr,
+output logic            o_valid
 );
 
 logic           clear;
@@ -111,3 +113,6 @@ end
 
 endmodule
 
+// ----------------------------------------------------------------------------
+// EOF
+// ----------------------------------------------------------------------------
