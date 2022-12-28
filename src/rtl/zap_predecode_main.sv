@@ -26,9 +26,7 @@
 // --                                                                         --
 // -----------------------------------------------------------------------------
 
-
 module zap_predecode_main #( parameter PHY_REGS = 46, parameter RAS_DEPTH = 8 )
-
 (
         // Clock and reset.
         input   logic                            i_clk,
