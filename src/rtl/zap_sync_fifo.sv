@@ -36,10 +36,12 @@ module zap_sync_fifo #(
         input   logic [WIDTH-1:0] i_data,
         output  logic [WIDTH-1:0] o_data,
 
+        // Controls.
+        input   logic             i_clear,
+
         // Flags
         output logic              o_empty,
         output logic              o_empty_n,
-
         output logic              o_full,
         output logic              o_full_n
 );
@@ -63,9 +65,10 @@ assign o_full    = full_ff;
 assign  o_data   = mem[rptr_ff[PTR_WDT-2:0]];
 
 // Flags
-assign empty_nxt =   wptr_nxt              == rptr_nxt;
-assign full_nxt  = ( wptr_nxt[PTR_WDT-2:0] == rptr_nxt[PTR_WDT-2:0] ) &
-                   ( wptr_nxt[PTR_WDT-1]   != rptr_nxt[PTR_WDT-1]   );
+assign empty_nxt =   i_clear ? 1'd1 : (wptr_nxt == rptr_nxt);
+assign full_nxt  =   i_clear ? 1'd0 :
+                     (( wptr_nxt[PTR_WDT-2:0] == rptr_nxt[PTR_WDT-2:0] ) &
+                      ( wptr_nxt[PTR_WDT-1]   != rptr_nxt[PTR_WDT-1]   ));
 
 always_ff @ ( posedge i_clk )
 begin
@@ -91,8 +94,8 @@ always_ff @ (posedge i_clk)
                 mem[wptr_ff[PTR_WDT-2:0]] <= i_data;
 
 // Pointer updates.
-assign  wptr_nxt = wptr_ff + (write_ok ? 'd1 : 'd0);
-assign  rptr_nxt = rptr_ff + (read_ok  ? 'd1 : 'd0);
+assign  wptr_nxt = i_clear ? 'd0 : (wptr_ff + (write_ok ? 'd1 : 'd0));
+assign  rptr_nxt = i_clear ? 'd0 : (rptr_ff + (read_ok  ? 'd1 : 'd0));
 
 always_ff @ (posedge i_clk)
 begin
