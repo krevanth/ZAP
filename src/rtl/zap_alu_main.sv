@@ -173,7 +173,14 @@ module zap_alu_main #(
         output logic                              o_data_wb_cyc_ff,
         output logic                              o_data_wb_stb_ff,
         output logic [31:0]                       o_data_wb_dat_ff,
-        output logic [3:0]                        o_data_wb_sel_ff
+        output logic [3:0]                        o_data_wb_sel_ff,
+
+        // -------------------------------------------------------------
+        // Alternate result
+        // -------------------------------------------------------------
+
+        output logic    [31:0]                    o_alt_result_ff,
+        output logic    [1:0]                     o_alt_dav_ff
 );
 
 // ----------------------------------------------------------------------------
@@ -243,7 +250,7 @@ logic                             cin;
 logic [32:0]                      sum;
 
 logic [31:0]                      tmp_flags, tmp_sum, tmp_sum_x;
-logic                             valid_x;
+logic [1:0]                       valid_x;
 
 // Opcode.
 logic [$clog2   (ALU_OPS)-1:0]   opcode;
@@ -389,6 +396,7 @@ begin
                 clear ( flags_ff );
                 sleep_ff                         <= 1'd1;
                 o_dav_ff                         <= 1'd0; // Don't give any output.
+                o_alt_dav_ff                     <= 2'd0;
                 o_decompile_valid                <= 1'd0;
                 o_uop_last                       <= 1'd0;
         end
@@ -400,7 +408,12 @@ begin
         begin
                 // Clock out all flops normally.
 
-                o_alu_result_ff                  <= valid_x ? tmp_sum_x : o_alu_result_nxt;
+                o_alu_result_ff                  <= o_alu_result_nxt;
+
+                // Alternate result.
+                o_alt_result_ff                  <= tmp_sum_x;
+                o_alt_dav_ff                     <= valid_x;
+
                 o_dav_ff                         <= o_dav_nxt;
                 o_pc_plus_8_ff                   <= i_pc_plus_8_ff;
                 o_destination_index_ff           <= o_destination_index_nxt;
@@ -681,10 +694,13 @@ end
 // Handle CLZ and saturating operations.
 always_comb
 begin
+        valid_x   = 2'd0;
+        tmp_sum_x = '0;
+
         if ( opcode == {1'd0, CLZ} )
         begin
                 tmp_sum_x = {26'd0, clz_rm};
-                valid_x   = 1'd1;
+                valid_x   = 2'd1;
         end
         else if
         (
@@ -694,37 +710,10 @@ begin
              opcode == {1'd0, OP_QDSUB}
         )
         begin
-                if ( tmp_flags[27] ) // result saturated due to ALU operation.
-                begin
-                        valid_x = 1'd1;
-
-                        if ( opcode == {1'd0, OP_QADD} || opcode == {1'd0, OP_QDADD} )
-                        begin
-                                // Find the direction of saturation.
-                                if ( rm[31] )
-                                        tmp_sum_x = {1'd1, {31{1'd0}}};
-                                else
-                                        tmp_sum_x = {1'd0, {31{1'd1}}};
-                        end
-                        else
-                        begin
-                                // Use rn to determine saturation.
-                                if ( rn[31] )
-                                        tmp_sum_x = {1'd1, {31{1'd0}}};
-                                else
-                                        tmp_sum_x = {1'd0, {31{1'd1}}};
-                        end
-                end
-                else
-                begin
-                        valid_x   = 1'd0;
-                        tmp_sum_x = {32{1'dx}};
-                end
-        end
-        else
-        begin
-                valid_x   = 1'd0;
-                tmp_sum_x = {32{1'dx}};
+                valid_x   = 2'd2;
+                tmp_sum_x =  opcode == {1'd0, OP_QADD } ||
+                             opcode == {1'd0, OP_QDADD} ?
+                             {31'd0, rm[31]} : {31'd0, rn[31]};
         end
 end
 
@@ -1043,6 +1032,7 @@ begin
                 o_uop_last                       <= 1'd0;
                 o_clear_from_alu                 <= 0;
                 o_dav_ff                         <= 0;
+                o_alt_dav_ff                     <= 0;
                 flags_ff                         <= flags;
                 o_abt_ff                         <= 0;
                 o_irq_ff                         <= 0;
@@ -1139,6 +1129,8 @@ endfunction // generate_ben
 
 task automatic reset;
 begin
+                o_alt_result_ff                  <= 0;
+                o_alt_dav_ff                     <= 0;
                 o_alu_result_ff                  <= 0;
                 o_dav_ff                         <= 0;
                 o_pc_plus_8_ff                   <= 0;

@@ -4,13 +4,13 @@
 
 ## 1. Introduction
 
-The ZAP is intended to be used in FPGA projects that need a high performance application class soft processor core. Most aspects of the processor can be configured through HDL parameters.  The processor can be synthesized  with 0 slack at 160MHz on Artix-7/Spartan-7 series devices in the slow-slow (SS) corner. 
+The ZAP is intended to be used in FPGA projects that need a high performance application class soft processor core. Most aspects of the processor can be configured through HDL parameters.  The processor can be synthesized  with 0 slack at 170MHz on Artix-7 series devices in the slow-slow (SS) corner. 
 
 The default processor specification is as follows (The table below is based on default parameters):
 
 | **Property**               | **Value**                                                                                                                                                                                                                  |
 | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Performance                | Synthesized at 160MHz @ xc7a75tcsg324-3 with 0 slack. <br/>120 DMIPS @ 160MHz with cache enabled. **Cache must be enabled, and utilized effectively, for peak performance.**                                               |
+| Performance                | Synthesized at 170MHz @ xc7a75tcsg324-3 Artix-7 FPGA with 0 slack. <br/>130 DMIPS @ 170MHz with cache enabled. **Cache must be enabled, and utilized effectively, for peak performance.**                                  |
 | Clock and Reset            | Purely synchronous reset scheme. Purely rising edge clock driven design.                                                                                                                                                   |
 | IRQ                        | Supported. Level sensitive interrupt signal. CPU uses a dual rank synchronizer to sample this and make it synchronous to the rising edge of clock.                                                                         |
 | FIQ                        | Supported. Level sensitive interrupt signal. CPU uses a dual rank synchronizer to sample this and make it synchronous to the rising edge of clock.                                                                         |
@@ -82,8 +82,7 @@ During normal operation:
   * This stage also causes branches predicted as taken to be actually executed. The latency for a successfully predicted taken branch is 3 cycles.
 * The instruction before that is being being decompressed. This is only required in the T state, else the stage simply passes the instructions on.
 * The instruction before that is popped off the instruction buffer.
-* The instruction before that is pushed onto the instruction buffer. Branches\
-  are predicted using a bimodal predictor (if applicable).
+* The instruction before that is pushed onto the instruction buffer. Branches are predicted using a bimodal predictor (if applicable).
 * The instruction before that is accessing the cache/TLB RAM.
 * The instruction before that is accessing the cache/TLB RAM.
 * The instruction before that is accessing the cache/TLB RAM.
@@ -108,7 +107,7 @@ Most of the time, the pipeline is able to process 1 instruction per clock cycle.
 * `MSR` when writing to CPSR. This will insert a 12 cycle bubble into the pipeline.
 * `LDx` with `pc/r15` in the register list/data register is executed. This will insert a 9 cycle bubble in the pipeline.
 * `MCR`/`MRC` / `SWI` are executed. These will insert an 18 cycle bubble into the pipeline.
-* `CLZ` and saturating arithmetic(`QADD`/`QSUB`/`QDADD`/`QDSUB`) operations take 3 clock cycles per instruction.
+* `CLZ` and saturating arithmetic(`QADD`/`QSUB`/`QDADD`/`QDSUB`) operations take 4 clock cycles per instruction.
 
 This snippet of 32-bit instruction code takes 6 cycles to execute:
 

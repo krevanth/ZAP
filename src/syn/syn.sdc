@@ -21,8 +21,8 @@
 # // --                                                                       --
 # // ---------------------------------------------------------------------------
 
-# Target 160MHz clock speed.
-create_clock -period 6.25 -name i_clk [get_ports i_clk]
+# Target 170MHz clock speed.
+create_clock -period 6 -name i_clk [get_ports i_clk]
 
 # Inputs are directly driven from FF.
 set_input_delay -clock [get_clocks i_clk] -add_delay 1.000 [get_ports i_fiq]
