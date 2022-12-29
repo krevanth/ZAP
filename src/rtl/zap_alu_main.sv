@@ -23,11 +23,10 @@
 //
 
 module zap_alu_main #(
-
-        parameter [31:0] PHY_REGS  = 32'd46, // Number of physical registers.
-        parameter [31:0] ALU_OPS   = 32'd32, // Number of arithmetic operations.
-        parameter [31:0] FLAG_WDT  = 32'd32, // Width of active CPSR.
-        parameter [31:0] CPSR_INIT = 32'd0   // Initial value of CPSR.
+        parameter bit [31:0] PHY_REGS  = 32'd46, // Number of physical registers.
+        parameter bit [31:0] ALU_OPS   = 32'd32, // Number of arithmetic operations.
+        parameter bit [31:0] FLAG_WDT  = 32'd32, // Width of active CPSR.
+        parameter bit [31:0] CPSR_INIT = 32'd0   // Initial value of CPSR.
 )
 (
         // ------------------------------------------------------------------
@@ -229,10 +228,6 @@ logic [5:0]                       clz_rm; // Count leading zeros in Rm.
 // Destination index about to be output.
 logic [$clog2   (PHY_REGS)-1:0]      o_destination_index_nxt;
 
-// 1s complement of Rm and Rn.
-logic [31:0] not_rm;
-logic [31:0] not_rn;
-
 // Wires which connect to an adder.
 logic [31:0]                      op1;
 logic [31:0]                      op2;
@@ -257,10 +252,12 @@ logic [3:0]                      o_data_wb_sel_nxt;
 // Clear
 logic [1:0]                      w_clear_from_alu;
 
+// PCs
 logic [31:0]                     w_pc_from_alu_0;
 logic [31:0]                     w_pc_from_alu_2;
 logic [31:0]                     w_pc_from_alu_3;
 
+// BP controls.
 logic [1:0]                      r_clear_from_alu;
 logic                            w_confirm_from_alu;
 
@@ -271,14 +268,23 @@ logic [31:0]                     quick_sum;
 logic                            o_decompile_valid_nxt;
 logic                            o_uop_last_nxt;
 
-// -------------------------------------------------------------------------------
-// Assigns
-// -------------------------------------------------------------------------------
+// Misc.
+logic                            arith_overflow;
 
-always_comb opcode = i_alu_operation_ff;
-always_comb not_rm = ~rm;
-always_comb not_rn = ~rn;
-always_comb quick_sum = rm + rn;
+// ----------------------------------------------------------------------------
+// Aliases
+// ----------------------------------------------------------------------------
+
+assign opcode       = i_alu_operation_ff;
+assign quick_sum    = rm + rn;
+assign  rm          = i_shifted_source_value_ff;
+assign  rn          = i_alu_source_value_ff;
+assign  o_flags_ff  = flags_ff;
+assign  o_flags_nxt = o_dav_nxt ? flags_nxt : flags_ff;
+
+// -----------------------------------------------------------------------------
+// Memory byte enable/duplicate calculation.
+// -----------------------------------------------------------------------------
 
 /*
    For memory stores, we must generate correct byte enables. This is done
@@ -299,15 +305,38 @@ always_comb mem_srcdest_value_nxt =  duplicate (
                                                  i_mem_unsigned_halfword_enable_ff,
                                                  i_mem_srcdest_value_ff );
 
-// -------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// MUX structure on the inputs of the adder.
+// ----------------------------------------------------------------------------
+
+assign {op1, op2, cin}
+        = i_alu_operation_ff == {2'd0, ADD}     ? {rn,  rm, 1'd0}
+        : i_alu_operation_ff == {1'd0, OP_QADD} ? {rn,  rm, 1'd0}
+        : i_alu_operation_ff == {1'd0, OP_QDADD}? {rn,  rm, 1'd0}
+        : i_alu_operation_ff == {2'd0, CMN}     ? {rn,  rm, 1'd0}
+        : i_alu_operation_ff == {2'd0, ADC}     ? {rn,  rm, flags_ff[C]}
+
+        : i_alu_operation_ff == {2'd0, SUB}     ? {rn, ~rm, 1'd1}
+        : i_alu_operation_ff == {1'd0, OP_QSUB} ? {rn, ~rm, 1'd1}
+        : i_alu_operation_ff == {1'd0, OP_QDSUB}? {rn, ~rm, 1'd1}
+        : i_alu_operation_ff == {2'd0, CMP}     ? {rn, ~rm, 1'd1}
+        : i_alu_operation_ff == {2'd0, SBC}     ? {rn, ~rm, flags_ff[C]}
+
+        : i_alu_operation_ff == {2'd0, RSB}     ? {rm, ~rn, 1'd1}
+        : i_alu_operation_ff == {2'd0, RSC}     ? {rm, ~rn, flags_ff[C]}
+
+        : '0;
+
+// ----------------------------------------------------------------------------
 // Adder
-// -------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 
 assign sum[32:0] = {1'd0, op1} + {1'd0, op2} + {32'd0, cin};
+assign arith_overflow = (op1[31] == op2[31]) & (op1[31] != sum[31]);
 
-// -------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // CLZ logic.
-// -------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 always_comb // CLZ implementation.
 begin
@@ -346,18 +375,6 @@ begin
         32'b00000000000000000000000000000001:   clz_rm = 6'd31;
         default:                                clz_rm = 6'd32; // All zeros.
         endcase
-end
-
-// ----------------------------------------------------------------------------
-// Aliases
-// ----------------------------------------------------------------------------
-
-always_comb
-begin
-        rm          = i_shifted_source_value_ff;
-        rn          = i_alu_source_value_ff;
-        o_flags_ff  = flags_ff;
-        o_flags_nxt = o_dav_nxt ? flags_nxt : flags_ff;
 end
 
 // -----------------------------------------------------------------------------
@@ -547,9 +564,9 @@ begin:pre_post_index_address_generator
                 mem_address_nxt[31:25] = i_cpu_pid;
 end
 
-// ---------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Used to generate ALU result + Flags
-// ---------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 
 always_comb
 begin: alu_result
@@ -630,33 +647,7 @@ begin: alu_result
                 c = sum[32];
                 z = (sum[31:0] == 0);
                 n = sum[31];
-
-                // Overflow.
-                if ( ( op == {2'd0, ADD}      ||
-                       op == {2'd0, ADC}      ||
-                       op == {1'd0, OP_QADD}  ||
-                       op == {1'd0, OP_QDADD} ||
-                       op == {2'd0, CMN} ) && (rn[31] == rm[31]) && (sum[31] != rn[31]) )
-                begin
-                        v = 1;
-                end
-                else if ( (op[$clog2(ALU_OPS)-1:0] == {2'd0, RSB} ||
-                           op[$clog2(ALU_OPS)-1:0] == {2'd0, RSC}) && (rm[31] == !rn[31]) && (sum[31] != rm[31] ) )
-                begin
-                        v = 1;
-                end
-                else if ( (op == {2'd0, SUB}      ||
-                           op == {2'd0, SBC}      ||
-                           op == {1'd0, OP_QSUB}  ||
-                           op == {1'd0, OP_QDSUB} ||
-                           op == {2'd0, CMP}) && (rn[31] != rm[31]) && (sum[31] != rn[31]) ) // rn - rm
-                begin
-                        v = 1;
-                end
-                else
-                begin
-                        v = 0;
-                end
+                v = arith_overflow;
 
                 //
                 // If you choose not to update flags, do not change the flags.
@@ -669,7 +660,8 @@ begin: alu_result
                              op == {1'd0, OP_QDADD} ||
                              op == {1'd0, OP_QDSUB})
                         begin
-                                tmp_flags[27] = (v || i_shift_sat_ff || tmp_flags[27]) ? 1'd1 : 1'd0;
+                                tmp_flags[27] = (v || i_shift_sat_ff ||
+                                                 tmp_flags[27]) ? 1'd1 : 1'd0;
                         end
                         else
                         begin
@@ -860,86 +852,6 @@ begin: flags_bp_feedback
                         end
                 end
         end
-end
-
-// ----------------------------------------------------------------------------
-// MUX structure on the inputs of the adder.
-// ----------------------------------------------------------------------------
-
-// These are adder connections. Data processing and FMOV use these.
-always_comb
-begin: adder_ip_mux
-        logic [$clog2(ALU_OPS)-1:0] op;
-        logic                       flag;
-
-        flag       = flags_ff[C];
-        op         = i_alu_operation_ff;
-
-        case ( op )
-
-        {2'd0, ADD},
-        {1'd0, OP_QADD},
-        {1'd0, OP_QDADD}:
-        begin
-                op1 = rn        ;
-                op2 = rm        ;
-                cin = 1'd0      ;
-        end
-        {2'd0, ADC}:
-        begin
-                op1 = rn        ;
-                op2 = rm        ;
-                cin = flag      ;
-        end
-        {2'd0, SUB},
-        {1'd0, OP_QSUB},
-        {1'd0, OP_QDSUB}:
-        begin
-                op1 = rn     ;
-                op2 = not_rm ;
-                cin =   1'd1 ;
-        end
-        {2'd0, RSB}:
-        begin
-                op1 = rm     ;
-                op2 = not_rn ;
-                cin =   1'd1 ;
-        end
-        {2'd0, SBC}:
-        begin
-                op1 = rn     ;
-                op2 = not_rm ;
-                cin = flag  ;
-        end
-        {2'd0, RSC}:
-        begin
-                op1 = rm     ;
-                op2 = not_rn ;
-                cin = flag   ;
-        end
-
-        // Target is not written.
-        {2'd0, CMP}:
-        begin
-                op1 = rn     ;
-                op2 = not_rm ;
-                cin = 1'd1   ;
-        end
-        {2'd0, CMN}:
-        begin
-                op1 = rn  ;
-                op2 = rm  ;
-                cin = 1'd0;
-        end
-
-        // Default.
-        default:
-        begin
-                op1 = 0;
-                op2 = 0;
-                cin = 0;
-        end
-        endcase
 end
 
 // ----------------------------------------------------------------------------
@@ -1145,8 +1057,6 @@ end
 endtask
 
 endmodule // zap_alu_main.v
-
-
 
 // ----------------------------------------------------------------------------
 // END OF FILE
