@@ -1,35 +1,27 @@
-// -----------------------------------------------------------------------------
-// --                                                                         --
-// --    (C) 2016-2022 Revanth Kamaraj (krevanth)                             --
-// --                                                                         --
-// -- --------------------------------------------------------------------------
-// --                                                                         --
-// -- This program is free software; you can redistribute it and/or           --
-// -- modify it under the terms of the GNU General Public License             --
-// -- as published by the Free Software Foundation; either version 2          --
-// -- of the License, or (at your option) any later version.                  --
-// --                                                                         --
-// -- This program is distributed in the hope that it will be useful,         --
-// -- but WITHOUT ANY WARRANTY; without even the implied warranty of          --
-// -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           --
-// -- GNU General Public License for more details.                            --
-// --                                                                         --
-// -- You should have received a copy of the GNU General Public License       --
-// -- along with this program; if not, write to the Free Software             --
-// -- Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA           --
-// -- 02110-1301, USA.                                                        --
-// --                                                                         --
-// -----------------------------------------------------------------------------
-// --                                                                         --
-// -- This RTL describes the CP15 register block. The ports go to the MMU and --
-// -- cache unit. This block connects to the CPU core. Coprocessor operations --
-// -- supported are read from coprocessor and write to CPU registers or vice  --
-// -- versa. This is integrated within the processor. The MMU unit can easily --
-// -- interface with this block.                                              --
-// --                                                                         --
-// -----------------------------------------------------------------------------
-
-
+//
+// (C) 2016-2022 Revanth Kamaraj (krevanth)
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+// 02110-1301, USA.
+//
+// This RTL describes the CP15 register block. The ports go to the MMU and
+// cache unit. This block connects to the CPU core. Coprocessor operations
+// supported are read from coprocessor and write to CPU registers or vice
+// versa. This is integrated within the processor. The MMU unit can easily
+// interface with this block.
+//
 
 module zap_cp15_cb #(
         parameter BE_32_ENABLE         = 0,
@@ -251,8 +243,8 @@ assign xCACHE_TYPE_WORD[1][11:9] = '0;
 
 // Build the CACHE_TYPE word.
 assign CACHE_TYPE_WORD[23:0]     = xCACHE_TYPE_WORD;
-assign CACHE_TYPE_WORD[24]       = 1'd1;                // S = 1, split cache.
-assign CACHE_TYPE_WORD[31:25]    = 7'h1;                // Block replacement policy = 0x1.
+assign CACHE_TYPE_WORD[24]       = 1'd1;     // S = 1, split cache.
+assign CACHE_TYPE_WORD[31:25]    = 7'h1;     // Block replacement policy = 0x1.
 
 // ---------------------------------------------
 // Sequential Logic
@@ -275,7 +267,7 @@ begin
                 o_icache_en <= r[1][12];             // Instruction cache enable.
                 o_mmu_en    <= r[1][0];              // MMU enable.
                 o_pid       <= {1'd0, r[13][31:25]}; // PID register.
-                o_l4_enable <= r[0][14];             // 1 for v4T compatibility.
+                o_l4_enable <= r[1][14];             // 1 for v4T compatibility.
         end
 end
 
@@ -598,13 +590,16 @@ end
 endtask
 
 task automatic generate_r1;
-        r[1][1]         <= 1'd1;
+        r[1][1]         <= 1'd0;    // Alignment fault check disabled.
         r[1][3]         <= 1'd0;    // Write buffer always disabled.
+
+        // Endianness.
         r[1][7]         <= BE_32_ENABLE ? 1'd1 : 1'd0;
+
         r[1][6:4]       <= 3'b111;  // 1 = Base updated abort model.
                                     // 1 = 32-bit address range,
                                     // 1 = 32-bit handlers enabled.
-        r[1][11]        <= 1'd1;
+        r[1][11]        <= 1'd1;    // Branch predictor always enabled.
 
         // If only core is present, there is no cache -
         // so in that case, always set to 0.

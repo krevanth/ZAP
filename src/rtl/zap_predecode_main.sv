@@ -26,9 +26,7 @@
 // --                                                                         --
 // -----------------------------------------------------------------------------
 
-
 module zap_predecode_main #( parameter PHY_REGS = 46, parameter RAS_DEPTH = 8 )
-
 (
         // Clock and reset.
         input   logic                            i_clk,
@@ -114,7 +112,6 @@ module zap_predecode_main #( parameter PHY_REGS = 46, parameter RAS_DEPTH = 8 )
 
 logic                               copro_dav_nxt;
 logic [31:0]                        copro_word_nxt;
-logic                               dbg;
 logic                               w_clear_from_decode;
 logic [31:0]                        w_pc_from_decode;
 logic [39:0]                        o_instruction_nxt;
@@ -148,8 +145,6 @@ logic [31:0]                        skid_pc_ff;
 logic [31:0]                        skid_pc_plus_8_ff;
 logic [RAS_DEPTH-1:0][31:0]         ras_ff, ras_nxt;
 logic [$clog2(RAS_DEPTH)-1:0]       ras_ptr_ff, ras_ptr_nxt;
-
-///////////////////////////////////////////////////////////////////////////////
 
 // Flop the outputs to break the pipeline at this point.
 always_ff @ (posedge i_clk)
@@ -250,8 +245,6 @@ begin
 end
 endtask
 
-///////////////////////////////////////////////////////////////////////////////
-
 always_ff @ ( posedge i_clk)
 begin
         if ( i_reset )
@@ -351,8 +344,6 @@ begin
         end
 end
 
-///////////////////////////////////////////////////////////////////////////////
-
 // This unit handles coprocessor stuff.
 zap_predecode_coproc
 #(
@@ -398,27 +389,15 @@ u_zap_decode_coproc
         .o_copro_word_nxt(copro_word_nxt)
 );
 
-
-
-///////////////////////////////////////////////////////////////////////////////
-
-// Alias.
-always_comb arm_instruction          = cp_instruction;
-always_comb arm_instruction_valid    = cp_instruction_valid;
-always_comb arm_irq                  = cp_irq;
-always_comb arm_fiq                  = cp_fiq;
-
-///////////////////////////////////////////////////////////////////////////////
-
-wire unused;
-assign unused = |dbg;
+assign arm_instruction          = cp_instruction;
+assign arm_instruction_valid    = cp_instruction_valid;
+assign arm_irq                  = cp_irq;
+assign arm_fiq                  = cp_fiq;
 
 always_comb
 begin:bprblk1
         logic [31:0] addr;
         logic [31:0] addr_final;
-
-        dbg = 1'd0;
 
         o_clear_btb             = 1'd0;
         w_clear_from_decode     = 1'd0;
@@ -434,11 +413,13 @@ begin:bprblk1
         else                            // Indicates a left shift of 2 i.e., X = X * 4.
                 addr_final = addr << 2;
 
+        //
         // Is it an instruction that we support ?
         // Proccessor recognizes:
         // 1. BL as a function call.
         // 2. MOV PC, LR as a function return.
         // 3. BX LR as a function return.
+        //
 
         // Bcc[L] <offset>. Function call.
         if ( arm_instruction[27:25] == 3'b101 && arm_instruction_valid )
@@ -510,7 +491,6 @@ begin:bprblk1
                   )
                 )
         begin
-                dbg = 1'd1;
 
                 // Predicted as taken.
                 if ( skid_taken == WT || skid_taken == ST || arm_instruction[31:28] == AL )
@@ -561,10 +541,12 @@ begin:bprblk1
         begin
                 // Jump table. Do what the BTB says. Dont correct it.
         end
-        else if (arm_instruction_valid) // Predict non supported as strongly not taken.
+        else if (arm_instruction_valid)
+        // Predict non supported instructions as strongly not taken.
         begin
                 taken_nxt = SNT;
 
+                // Clear out the BTB.
                 if ( skid_pred[32] )
                 begin
                         w_clear_from_decode = 1'd1;
@@ -578,8 +560,6 @@ begin:bprblk1
                 taken_nxt = SNT;
         end
 end
-
-///////////////////////////////////////////////////////////////////////////////
 
 // This FSM handles LDM/STM/SWAP/SWAPB/BL/LMULT
 zap_predecode_uop_sequencer u_zap_uop_sequencer (
@@ -607,8 +587,6 @@ zap_predecode_uop_sequencer u_zap_uop_sequencer (
         .o_uop_last(o_uop_last_nxt),
         .o_stall_from_decode(mem_fetch_stall)
 );
-
-///////////////////////////////////////////////////////////////////////////////
 
 endmodule
 

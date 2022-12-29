@@ -1,56 +1,50 @@
-// -----------------------------------------------------------------------------
-// --                                                                         --
-// --    (C) 2016-2022 Revanth Kamaraj (krevanth)                             --
-// --                                                                         --
-// -- --------------------------------------------------------------------------
-// --                                                                         --
-// -- This program is free software; you can redistribute it and/or           --
-// -- modify it under the terms of the GNU General Public License             --
-// -- as published by the Free Software Foundation; either version 2          --
-// -- of the License, or (at your option) any later version.                  --
-// --                                                                         --
-// -- This program is distributed in the hope that it will be useful,         --
-// -- but WITHOUT ANY WARRANTY; without even the implied warranty of          --
-// -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           --
-// -- GNU General Public License for more details.                            --
-// --                                                                         --
-// -- You should have received a copy of the GNU General Public License       --
-// -- along with this program; if not, write to the Free Software             --
-// -- Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA           --
-// -- 02110-1301, USA.                                                        --
-// --                                                                         --
-// -----------------------------------------------------------------------------
-// --                                                                         --
-// -- This is the ZAP core which contains the bare processor core without any --
-// -- cache or MMU. In other words, this is the bare pipeline.                --
-// --                                                                         --
-// -----------------------------------------------------------------------------
-
+//
+// (C) 2016-2022 Revanth Kamaraj (krevanth)
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+// 02110-1301, USA.
+//
+// This is the ZAP core which contains the bare processor core without any
+// cache or MMU. In other words, this is the bare pipeline.
+//
 
 module zap_core #(
+
         // For CP15 purposes.
-        parameter [31:0] DATA_CACHE_SIZE = 1024,
-        parameter [31:0] CODE_CACHE_SIZE = 1024,
-        parameter [31:0] DATA_CACHE_LINE = 64,
-        parameter [31:0] CODE_CACHE_LINE = 64,
+        parameter bit [31:0] DATA_CACHE_SIZE = 1024,
+        parameter bit [31:0] CODE_CACHE_SIZE = 1024,
+        parameter bit [31:0] DATA_CACHE_LINE = 64,
+        parameter bit [31:0] CODE_CACHE_LINE = 64,
 
         // Reset vector. Safe to not override.
-        parameter [31:0] RESET_VECTOR     = 32'd0,
+        parameter bit [31:0] RESET_VECTOR     = 32'd0,
 
         // Initial CPSR. Safe to not override.
-        parameter [31:0] CPSR_INIT        = {24'd0, 1'd1,1'd1,1'd0,5'b10011},
+        parameter bit [31:0] CPSR_INIT        = {24'd0, 1'd1,1'd1,1'd0,5'b10011},
 
         // For CP15 purposes. Actual conversion is handled at a higher module.
-        parameter BE_32_ENABLE     = 0,
+        parameter bit BE_32_ENABLE            = 1'd0,
 
         // Number of branch predictor entries.
-        parameter [31:0] BP_ENTRIES = 1024,
+        parameter bit [31:0] BP_ENTRIES       = 32'd1024,
 
         // Depth of FIFO.
-        parameter [31:0] FIFO_DEPTH = 4,
+        parameter bit [31:0] FIFO_DEPTH       = 32'd4,
 
         // RAS depth.
-        parameter [31:0] RAS_DEPTH = 4
+        parameter bit [31:0] RAS_DEPTH        = 32'd4
 )
 (
 
@@ -111,7 +105,7 @@ output logic                             o_instr_wb_stb, // Always 1.
 output logic                             o_instr_wb_we,  // Always 0.
 input logic [31:0]                       i_instr_wb_dat, // A 32-bit ZAP instruction.
 input logic                              i_instr_wb_ack, // Instruction available.
-input logic                              i_instr_wb_err, // Instruction abort fault. Given with ack set to 1.
+input logic                              i_instr_wb_err, // Instruction abort fault.
 output logic [3:0]                       o_instr_wb_sel, // wishbone byte select.
 
 // Instruction wishbone nxt ports.
@@ -154,10 +148,10 @@ input   logic                            i_dcache_err2,
 // Background load.
 // -----------------------------------------------------
 
-input   logic [63:0]                     i_dc_reg_idx, /* Register to load to. added */
-input   logic [31:0]                     i_dc_reg_dat, /* Register data. added */
-input   logic [63:0]                     i_dc_lock,    /* Register that is locked. added. Goes to issue. */
-output  logic [63:0]                     o_dc_reg_idx  /* Register index. added. From postalu. */
+input   logic [63:0]                     i_dc_reg_idx, // Register to load to.
+input   logic [31:0]                     i_dc_reg_dat, // Register data.
+input   logic [63:0]                     i_dc_lock,    // Register that is locked.
+output  logic [63:0]                     o_dc_reg_idx  // Register index.
 
 );
 
@@ -486,6 +480,7 @@ logic [31:0]                     rd_data_2;
 logic [31:0]                     rd_data_3;
 logic [31:0]                     cpsr_nxt;
 logic [32:0]                     wb_pred;
+logic [1:0]                      wb_taken;
 
 // Decompile chain for debugging.
 logic [64*8-1:0]                 decode_decompile;
@@ -498,91 +493,68 @@ logic [64*8-1:0]                 postalu1_decompile;
 logic [64*8-1:0]                 memory_decompile;
 logic [64*8-1:0]                 rb_decompile;
 
-logic unused;
 logic [(8*8)-1:0] CPU_MODE; // Max 8 characters i.e. 64-bit string.
 
-always_comb unused = |{rb_decompile, CPU_MODE, alu_cpsr_nxt[31:30], alu_cpsr_nxt[28:0],
-                       predecode_inst[39:36], postalu_mem_translate_ff,
-                       i_dc_reg_idx[63:PHY_REGS]};
+wire unused = |{rb_decompile, CPU_MODE, alu_cpsr_nxt[31:30], alu_cpsr_nxt[28:0],
+                predecode_inst[39:36], postalu_mem_translate_ff,
+               i_dc_reg_idx[63:PHY_REGS]};
 
-// ----------------------------------------------------------------------------
+assign o_cpsr                   = alu_flags_ff[`ZAP_CPSR_MODE];
+assign o_data_wb_adr            = {postalu_address_ff[31:2], 2'd0};
+assign o_data_wb_adr_nxt        = {alu_address_ff[31:2], 2'd0};
+assign o_instr_wb_we            = 1'd0;
+assign o_instr_wb_sel           = 4'b1111;
+assign reset                    = i_reset;
+assign irq                      = i_irq;
+assign fiq                      = i_fiq;
 
-always_comb o_cpsr                   = alu_flags_ff[`ZAP_CPSR_MODE];
-always_comb o_data_wb_adr            = {postalu_address_ff[31:2], 2'd0};
-always_comb o_data_wb_adr_nxt        = {alu_address_ff[31:2], 2'd0};
-always_comb o_instr_wb_we            = 1'd0;
-always_comb o_instr_wb_sel           = 4'b1111;
-always_comb reset                    = i_reset;
-always_comb irq                      = i_irq;
-always_comb fiq                      = i_fiq;
-always_comb data_stall               = o_data_wb_stb && o_data_wb_cyc && !i_data_wb_ack;
-always_comb instr_valid              = (o_instr_wb_stb && o_instr_wb_cyc && i_instr_wb_ack & !shelve);
+assign data_stall   = o_data_wb_stb & o_data_wb_cyc & ~i_data_wb_ack;
+assign instr_valid  = o_instr_wb_stb & o_instr_wb_cyc & i_instr_wb_ack  & ~shelve;
 
 // CP registers are changed only when pipe is EMPTY.
-always_comb pipeline_is_not_empty    = predecode_val                      ||
-                                       (decode_condition_code    != NV)   ||
-                                       (issue_condition_code_ff  != NV)   ||
-                                       (shifter_condition_code_ff!= NV)   ||
-                                       alu_dav_ff                         ||
-                                       postalu0_dav_ff                    ||
-                                       postalu1_dav_ff                    ||
-                                       postalu_dav_ff                     ||
-                                       memory_dav_ff                      ||
-                                       (|i_dc_lock);
+assign pipeline_is_not_empty    = predecode_val                      ||
+                                  (decode_condition_code    != NV)   ||
+                                  (issue_condition_code_ff  != NV)   ||
+                                  (shifter_condition_code_ff!= NV)   ||
+                                  alu_dav_ff                         ||
+                                  postalu0_dav_ff                    ||
+                                  postalu1_dav_ff                    ||
+                                  postalu_dav_ff                     ||
+                                  memory_dav_ff                      ||
+                                  (|i_dc_lock);
 
-always_comb o_mem_translate = postalu1_mem_translate_ff;
+assign o_mem_translate = postalu1_mem_translate_ff;
 
-always_comb
-begin
-        if ( fifo_full )
-                code_stall = 1'd1;
-        else if ( o_instr_wb_stb && o_instr_wb_cyc && !i_instr_wb_ack )
-                code_stall = 1'd1;
-        else
-                code_stall = 1'd0;
-end
+assign code_stall = fifo_full |
+                   (o_instr_wb_stb & o_instr_wb_cyc & ~i_instr_wb_ack);
 
-always_comb
-begin
-        o_data_wb_adr_check  =  {postalu1_address_ff[31:2], 2'd0};
-        o_data_wb_we_check   =    postalu1_data_wb_we && postalu1_data_wb_cyc;
-        o_data_wb_re_check   =   !postalu1_data_wb_we && postalu1_data_wb_cyc;
-        o_code_stall         =   code_stall;
-        o_dc_reg_idx         =   64'd1 << {58'd0, postalu_mem_srcdest_index_ff};
-end
+assign o_data_wb_adr_check =  {postalu1_address_ff[31:2], 2'd0};
+assign o_data_wb_we_check  =   postalu1_data_wb_we && postalu1_data_wb_cyc;
+assign o_data_wb_re_check  =  !postalu1_data_wb_we && postalu1_data_wb_cyc;
+assign o_code_stall        =   code_stall;
+assign o_dc_reg_idx        =   64'd1 << {58'd0, postalu_mem_srcdest_index_ff};
 
-// ----------------------------------------------------------------------------
+/////////////////////////////////
+// Instantiations
+/////////////////////////////////
 
-// =========================
-// FETCH STAGE
-// =========================
-zap_fetch_main
-#(
-        .BP_ENTRIES(BP_ENTRIES)
-)
-u_zap_fetch_main (
+//
+// Instruction fetch stage.
+//
+zap_fetch_main u_zap_fetch_main (
         // Input.
         .i_clk                          (i_clk),
         .i_reset                        (reset),
-
         .i_code_stall                   (code_stall),
-
         .i_clear_from_writeback         (clear_from_writeback),
         .i_clear_from_decode            (clear_from_decode),
-
-        .i_data_stall                   (1'd0),
-
         .i_clear_from_alu               (clear_from_alu),
-
-        .i_stall_from_shifter           (1'd0),
-        .i_stall_from_issue             (1'd0),
-        .i_stall_from_decode            (1'd0),
-
+        .i_taken                        (wb_taken),
+        .i_pred                         (wb_pred),
         .i_pc_ff                        (o_instr_wb_adr),
         .i_instruction                  (i_instr_wb_dat),
         .i_valid                        (i_icache_err2  ? 1'd0  : instr_valid),
         .i_instr_abort                  (i_icache_err2  ? 1'd0  : i_instr_wb_err),
-
         .i_cpsr_ff_t                    (alu_flags_ff[T]),
 
         // Output.
@@ -590,48 +562,40 @@ u_zap_fetch_main (
         .o_valid                        (fetch_valid),
         .o_instr_abort                  (fetch_instr_abort),
         .o_pc_plus_8_ff                 (fetch_pc_plus_8_ff),
-
         /* verilator lint_off PINCONNECTEMPTY */
         .o_pc_ff                        (),
         /* verilator lint_on PINCONNECTEMPTY */
-
-        .i_confirm_from_alu             (confirm_from_alu),
-        .i_pc_from_alu                  (alu_flags_ff[T] ? alu_pc_plus_8_ff - 32'd4 : alu_pc_plus_8_ff - 32'd8),
-        .i_taken                        (alu_taken_ff),
         .o_taken                        (fetch_bp_state),
-        .i_pred                         (wb_pred),
         .o_pred                         (fetch_pred)
 );
 
-// =========================
-// FIFO to store commands.
-// =========================
-
+//
+// Pre-fetch buffer.
+//
 zap_fifo #( .WDT(67 + 33), .DEPTH(FIFO_DEPTH) ) U_ZAP_FIFO (
+        // Inputs
         .i_clk                          (i_clk),
         .i_reset                        (i_reset),
         .i_clear_from_writeback         (clear_from_writeback),
-
         .i_write_inhibit                (code_stall),
         .i_clear_from_alu               (clear_from_alu),
-
         .i_data_stall                   (data_stall         && thumb_valid && fifo_valid ),
         .i_stall_from_shifter           (stall_from_shifter && thumb_valid && fifo_valid ),
         .i_stall_from_issue             (stall_from_issue   && thumb_valid && fifo_valid ),
         .i_stall_from_decode            (stall_from_decode  && thumb_valid && fifo_valid ),
         .i_clear_from_decode            (clear_from_decode),
-
         .i_instr                        ({fetch_pc_plus_8_ff, fetch_instr_abort, fetch_instruction, fetch_bp_state, fetch_pred}),
         .i_valid                        (fetch_valid),
+
+        // Outputs
         .o_instr                        ({fifo_pc_plus_8, fifo_instr_abort, fifo_instruction, fifo_bp_state, fifo_pred}),
         .o_valid                        (fifo_valid),
-
-        .o_full                           (fifo_full)
+        .o_full                         (fifo_full)
 );
 
-// =========================
-// COMPRESSED DECODER STAGE
-// =========================
+//
+// Compresssed instruction inflater.
+//
 zap_thumb_decoder_main u_zap_thumb_decoder (
 .i_clk                                  (i_clk),
 .i_reset                                (i_reset),
@@ -675,9 +639,9 @@ zap_thumb_decoder_main u_zap_thumb_decoder (
 .o_pred                                 (thumb_pred)
 );
 
-// =========================
-// PREDECODE STAGE
-// =========================
+//
+// Pre-decode stage. Handles COP instructions and UOP sequencing.
+//
 zap_predecode_main #(
         .PHY_REGS(PHY_REGS),
         .RAS_DEPTH(RAS_DEPTH)
@@ -746,10 +710,9 @@ u_zap_predecode (
                                         // Asserted to indicate last instruction of sequence.
 );
 
-// =====================
-// DECODE STAGE
-// =====================
-
+//
+// 32-bit instruction decoder.
+//
 zap_decode_main #(
         .ARCH_REGS(ARCH_REGS),
         .PHY_REGS(PHY_REGS),
@@ -818,10 +781,9 @@ u_zap_decode_main (
         .o_ppc_ff                       (decode_ppc_ff)
 );
 
-// ==================
-// ISSUE
-// ==================
-
+//
+// Issue stage. Performs register read and dependency checks.
+//
 zap_issue_main #(
         .PHY_REGS(PHY_REGS),
         .SHIFT_OPS(SHIFT_OPS),
@@ -909,24 +871,23 @@ u_zap_issue_main
         .i_alu_mem_load_ff              (alu_mem_load_ff),
         .i_memory_mem_load_ff           (memory_mem_load_ff),
 
-        .i_postalu0_destination_index_ff (postalu0_destination_index_ff), // ADDED
-        .i_postalu0_dav_ff               (postalu0_dav_ff), // ADDED
-        .i_postalu0_destination_value_ff (postalu0_alu_result_ff), // ADDED
-        .i_postalu0_mem_srcdest_index_ff (postalu0_mem_srcdest_index_ff), // ADDED
-        .i_postalu0_mem_load_ff          (postalu0_mem_load_ff), // ADDED
+        .i_postalu0_destination_index_ff (postalu0_destination_index_ff),
+        .i_postalu0_dav_ff               (postalu0_dav_ff),
+        .i_postalu0_destination_value_ff (postalu0_alu_result_ff),
+        .i_postalu0_mem_srcdest_index_ff (postalu0_mem_srcdest_index_ff),
+        .i_postalu0_mem_load_ff          (postalu0_mem_load_ff),
 
-        // -- ADDED -- //
-        .i_postalu1_destination_index_ff (postalu1_destination_index_ff), // ADDED
-        .i_postalu1_dav_ff               (postalu1_dav_ff), // ADDED
-        .i_postalu1_destination_value_ff (postalu1_alu_result_ff), // ADDED
-        .i_postalu1_mem_srcdest_index_ff (postalu1_mem_srcdest_index_ff), // ADDED
-        .i_postalu1_mem_load_ff          (postalu1_mem_load_ff), // ADDED
+        .i_postalu1_destination_index_ff (postalu1_destination_index_ff),
+        .i_postalu1_dav_ff               (postalu1_dav_ff),
+        .i_postalu1_destination_value_ff (postalu1_alu_result_ff),
+        .i_postalu1_mem_srcdest_index_ff (postalu1_mem_srcdest_index_ff),
+        .i_postalu1_mem_load_ff          (postalu1_mem_load_ff),
 
-        .i_postalu_destination_index_ff (postalu_destination_index_ff), // ADDED
-        .i_postalu_dav_ff               (postalu_dav_ff), // ADDED
-        .i_postalu_destination_value_ff (postalu_alu_result_ff), // ADDED
-        .i_postalu_mem_srcdest_index_ff (postalu_mem_srcdest_index_ff), // ADDED
-        .i_postalu_mem_load_ff          (postalu_mem_load_ff), // ADDED
+        .i_postalu_destination_index_ff (postalu_destination_index_ff),
+        .i_postalu_dav_ff               (postalu_dav_ff),
+        .i_postalu_destination_value_ff (postalu_alu_result_ff),
+        .i_postalu_mem_srcdest_index_ff (postalu_mem_srcdest_index_ff),
+        .i_postalu_mem_load_ff          (postalu_mem_load_ff),
 
         // Switch indicator.
         .i_switch_ff                    (decode_switch_ff),
@@ -968,10 +929,9 @@ u_zap_issue_main
         .o_shifter_disable_ff           (issue_shifter_disable_ff)
 );
 
-// =======================
-// SHIFTER STAGE
-// =======================
-
+//
+// The barrel shifter, and multiply/MAC unit.
+//
 zap_shifter_main #(
         .PHY_REGS(PHY_REGS),
         .ALU_OPS(ALU_OPS),
@@ -1083,10 +1043,9 @@ u_zap_shifter_main
         .o_stall_from_shifter           (stall_from_shifter)
 );
 
-// ===============
-// ALU STAGE
-// ===============
-
+//
+// ALU Stage.
+//
 zap_alu_main #(
         .PHY_REGS(PHY_REGS),
         .ALU_OPS(ALU_OPS),
@@ -1170,10 +1129,10 @@ u_zap_alu_main
 
 );
 
-// ====================
-// POST ALU 0
-// ====================
-
+//
+// Post ALU 0 stage. For tag RAM reads etc. The actual tag RAMs are outside
+// the core.
+//
 zap_postalu_main #(
         .PHY_REGS(PHY_REGS),
         .FLAG_WDT(FLAG_WDT)
@@ -1241,10 +1200,10 @@ zap_postalu_main #(
          .o_data_wb_sel_ff                 (postalu0_data_wb_sel)
 );
 
-// ====================
-// POST ALU 1
-// ====================
-
+//
+// Post ALU 1 stage. Similar in purpose to the above. Helps deal with long
+// latency RAMs.
+//
 zap_postalu_main #(
         .PHY_REGS(PHY_REGS),
         .FLAG_WDT(FLAG_WDT)
@@ -1312,11 +1271,10 @@ zap_postalu_main #(
          .o_data_wb_sel_ff                 (postalu1_data_wb_sel)
 );
 
-
-// ====================
-// POST ALU
-// ====================
-
+//
+// Post ALU stage. Memory access signals are generated at the end of this
+// stage.
+//
 zap_postalu_main #(
         .PHY_REGS(PHY_REGS),
         .FLAG_WDT(FLAG_WDT)
@@ -1384,10 +1342,10 @@ zap_postalu_main #(
          .o_data_wb_sel_ff                 (o_data_wb_sel)
 );
 
-// ====================
-// MEMORY
-// ====================
-
+//
+// Memory access stage. This actual loads in the memory value, and
+// rotates it as required.
+//
 zap_memory_main #(
        .PHY_REGS(PHY_REGS)
 )
@@ -1447,10 +1405,9 @@ u_zap_memory_main
         .o_mem_rd_data                  (memory_mem_rd_data)
 );
 
-// ==================
-// WRITEBACK
-// ==================
-
+//
+// Writeback stage. Writes to the register file.
+//
 zap_writeback #(
         .BP_ENTRIES(BP_ENTRIES),
         .PHY_REGS(PHY_REGS),
@@ -1536,6 +1493,7 @@ u_zap_writeback
         .o_rd_data_2            (rd_data_2),
         .o_rd_data_3            (rd_data_3),
 
+        .o_taken                (wb_taken),
         .o_pc                   (o_instr_wb_adr),
         .o_pred                 (wb_pred),
         .o_pc_nxt               (o_instr_wb_adr_nxt),
@@ -1547,10 +1505,9 @@ u_zap_writeback
         .o_wb_cyc               (o_instr_wb_cyc)
 );
 
-// ==================================
-// CP15 CB
-// ==================================
-
+//
+// Coprocessor 15 registers.
+//
 zap_cp15_cb #(
 .BE_32_ENABLE(BE_32_ENABLE),
 .PHY_REGS(PHY_REGS),
@@ -1622,7 +1579,7 @@ begin
         end
 end
 
-endmodule // zap_core.v
+endmodule
 
 // ----------------------------------------------------------------------------
 // EOF

@@ -1,25 +1,21 @@
-// -----------------------------------------------------------------------------
-// --                                                                         --
-// --    (C) 2016-2022 Revanth Kamaraj (krevanth)                             --
-// --                                                                         --
-// -- --------------------------------------------------------------------------
-// --                                                                         --
-// -- This program is free software; you can redistribute it and/or           --
-// -- modify it under the terms of the GNU General Public License             --
-// -- as published by the Free Software Foundation; either version 2          --
-// -- of the License, or (at your option) any later version.                  --
-// --                                                                         --
-// -- This program is distributed in the hope that it will be useful,         --
-// -- but WITHOUT ANY WARRANTY; without even the implied warranty of          --
-// -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           --
-// -- GNU General Public License for more details.                            --
-// --                                                                         --
-// -- You should have received a copy of the GNU General Public License       --
-// -- along with this program; if not, write to the Free Software             --
-// -- Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA           --
-// -- 02110-1301, USA.                                                        --
-// --                                                                         --
-// -----------------------------------------------------------------------------
+//
+// (C) 2016-2022 Revanth Kamaraj (krevanth)
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+// 02110-1301, USA.
+//
 
 // Swap data based on SEL. Use on wishbone input.
 function [31:0] be_32 (input [31:0] dat, input [3:0] sel);
@@ -197,30 +193,4 @@ begin
 end
 endfunction
 
-//
-// Function for branch prediction.
-//
-function [1:0] compute ( input [1:0] pred, input nok );
-begin
-                // Branch was predicted incorrectly. Go to opposite state.
-                if ( nok )
-                begin
-                        case ( pred )
-                        SNT: compute = WNT; // May be not so strongly not taken.
-                        WNT: compute = WT;  // Perhaps it is taken.
-                        WT:  compute = WNT; // Perhaps it is not taken.
-                        ST:  compute = WT;  // May be not so strongy taken.
-                        endcase
-                end
-                else // Confirm that branch was correctly predicted.
-                begin
-                        case ( pred )
-                        SNT: compute = SNT; // Reinforce.
-                        WNT: compute = SNT; // Reinforce.
-                        WT:  compute = ST;  // Reinforce.
-                        ST:  compute = ST;  // Reinforce.
-                        endcase
-                end
-end
-endfunction
 
