@@ -257,7 +257,11 @@ logic [3:0]                      o_data_wb_sel_nxt;
 
 // Clear
 logic [1:0]                      w_clear_from_alu;
-logic [31:0]                     w_pc_from_alu_0, w_pc_from_alu_1, w_pc_from_alu_2, w_pc_from_alu_3;
+
+logic [31:0]                     w_pc_from_alu_0;
+logic [31:0]                     w_pc_from_alu_2;
+logic [31:0]                     w_pc_from_alu_3;
+
 logic [1:0]                      r_clear_from_alu;
 logic                            w_confirm_from_alu;
 
@@ -425,7 +429,6 @@ begin
                 r_clear_from_alu                <= w_clear_from_alu;
 
                 w_pc_from_alu_0                 <= i_ppc_ff;
-                w_pc_from_alu_1                 <= sum[31:0];
                 w_pc_from_alu_2                 <= tmp_sum;
                 w_pc_from_alu_3                 <= i_pc_ff + (flags_ff[T] ? 32'd2 : 32'd4);
 
@@ -442,13 +445,11 @@ always_comb
 begin
         case(r_clear_from_alu)
         2'd0   : o_pc_from_alu = w_pc_from_alu_0;
-        2'd1   : o_pc_from_alu = w_pc_from_alu_1;
         2'd2   : o_pc_from_alu = w_pc_from_alu_2;
         2'd3   : o_pc_from_alu = w_pc_from_alu_3;
+        default: o_pc_from_alu = 'dx;
         endcase
 end
-
-// ----------------------------------------------------------------------------
 
 always_ff @ ( posedge i_clk ) // Wishbone flops.
 begin
@@ -787,7 +788,7 @@ begin: flags_bp_feedback
 
         if ( (opcode == {1'd0, FMOV}) && o_dav_nxt ) // Writes to CPSR...
         begin
-                w_clear_from_alu        = 2'd1; // Resync pipeline.
+                w_clear_from_alu        = 2'd3; // Resync pipeline.
 
                 // USR cannot change mode. Will silently fail.
                 flags_nxt[23:0]   = (flags_ff[`ZAP_CPSR_MODE] == USR) ? flags_ff[23:0] :
@@ -901,12 +902,7 @@ begin: adder_ip_mux
         op         = i_alu_operation_ff;
 
         case ( op )
-        {1'd0, FMOV}:
-        begin
-                op1 = i_pc_plus_8_ff    ;
-                op2 = ~32'd4            ;
-                cin = 1'd1              ;
-        end
+
         {2'd0, ADD},
         {1'd0, OP_QADD},
         {1'd0, OP_QDADD}:
@@ -945,15 +941,15 @@ begin: adder_ip_mux
         begin
                 op1 = rm     ;
                 op2 = not_rn ;
-                cin = flag  ;
+                cin = flag   ;
         end
 
         // Target is not written.
         {2'd0, CMP}:
         begin
-                op1 = rn  ;
+                op1 = rn     ;
                 op2 = not_rm ;
-                cin = 1'd1;
+                cin = 1'd1   ;
         end
         {2'd0, CMN}:
         begin
@@ -1019,6 +1015,7 @@ begin: blk2
         if ( flag_upd ) // 0x0 for SAT_MOV.
         begin
                 // V is preserved since flags_out = flags
+
                 flags_out[_C] = shift_carry;
 
                 if ( nozero )
@@ -1160,7 +1157,6 @@ begin
                 o_mem_unsigned_halfword_enable_ff<= 0;
                 o_mem_translate_ff               <= 0;
                 w_pc_from_alu_0                  <= 0;
-                w_pc_from_alu_1                  <= 0;
                 w_pc_from_alu_2                  <= 0;
                 w_pc_from_alu_3                  <= 0;
                 o_decompile                      <= 0;
