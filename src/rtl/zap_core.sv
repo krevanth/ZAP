@@ -155,8 +155,6 @@ output  logic [63:0]                     o_dc_reg_idx  // Register index.
 
 );
 
-// ----------------------------------------------------------------------------
-
 `include "zap_localparams.svh"
 `include "zap_defines.svh"
 
@@ -165,8 +163,6 @@ localparam ALU_OPS   = 64;
 localparam SHIFT_OPS = 8;
 localparam PHY_REGS  = TOTAL_PHY_REGS;
 localparam FLAG_WDT  = 32;
-
-// ----------------------------------------------------------------------------
 
 // Low Bandwidth Coprocessor (COP) I/F to CP15 control block.
 logic                             copro_done;        // COP done.
@@ -495,7 +491,7 @@ logic [64*8-1:0]                 postalu1_decompile;
 logic [64*8-1:0]                 memory_decompile;
 logic [64*8-1:0]                 rb_decompile;
 
-logic [(8*8)-1:0] CPU_MODE; // Max 8 characters i.e. 64-bit string.
+logic [(8*8)-1:0] CPU_MODE;
 
 wire unused = |{rb_decompile, CPU_MODE, alu_cpsr_nxt[31:30], alu_cpsr_nxt[28:0],
                 predecode_inst[39:36], postalu_mem_translate_ff,
@@ -513,7 +509,10 @@ assign fiq                      = i_fiq;
 assign data_stall   = o_data_wb_stb & o_data_wb_cyc & ~i_data_wb_ack;
 assign instr_valid  = o_instr_wb_stb & o_instr_wb_cyc & i_instr_wb_ack  & ~shelve;
 
-// CP registers are changed only when pipe is EMPTY.
+//
+// CP registers are changed only when pipe ahead of it is EMPTY. Such
+// instructions can be used as fences in ZAP.
+//
 assign pipeline_is_not_empty    = predecode_val                      ||
                                   (decode_condition_code    != NV)   ||
                                   (issue_condition_code_ff  != NV)   ||
@@ -535,6 +534,33 @@ assign o_data_wb_we_check  =   postalu1_data_wb_we && postalu1_data_wb_cyc;
 assign o_data_wb_re_check  =  !postalu1_data_wb_we && postalu1_data_wb_cyc;
 assign o_code_stall        =   code_stall;
 assign o_dc_reg_idx        =   64'd1 << {58'd0, postalu_mem_srcdest_index_ff};
+
+localparam [31:0] MIN_SAT = {1'd1, {31{1'd0}}}; // Smallest -ve value.
+localparam [31:0] MAX_SAT = {1'd0, {31{1'd1}}}; // Largest +ve value.
+
+logic [31:0] alu_x_ppr; // alu_result_ff passes through this.
+
+//
+// ALU outputs CLZ and saturation on parallel ports. The saturation
+// must be combined with overflow to get the actual result.
+//
+// By not doing this in the ALU itself but in the next stage, it
+// improves processor timing.
+//
+always_comb
+begin
+        case (alu_x_valid)
+        2'b00   : alu_x_ppr = alu_alu_result_ff;// Normal
+        2'b01   : alu_x_ppr = alu_x_result;     // CLZ
+
+        // Saturation
+        2'b10   : alu_x_ppr = alu_flags_ff[27] ? // Overflow set ?
+                ( alu_x_result[0] ? MIN_SAT : MAX_SAT ) :
+                  alu_alu_result_ff ; // Pass on normal result.
+        default : alu_x_ppr = {32{1'dx}};
+        endcase
+end
+
 
 /////////////////////////////////
 // Instantiations
@@ -614,9 +640,15 @@ zap_thumb_decoder_main u_zap_thumb_decoder (
 .i_taken                                (fifo_bp_state),
 .i_instruction                          (fifo_instruction),
 .i_instruction_valid                    (fifo_valid),
-.i_irq                                  (fifo_valid ? irq && !alu_flags_ff[I] : 1'd0), // Pass interrupt only if mask = 0 and instruction exists.
-.i_fiq                                  (fifo_valid ? fiq && !alu_flags_ff[F] : 1'd0), // Pass interrupt only if mask = 0 and instruction exists.
-.i_iabort                               (fifo_valid ? fifo_instr_abort : 1'd0),        // Pass abort only if instruction valid.
+
+.i_irq                                  (fifo_valid ? irq && !alu_flags_ff[I] : 1'd0),
+// Pass interrupt only if mask = 0 and instruction exists.
+
+.i_fiq                                  (fifo_valid ? fiq && !alu_flags_ff[F] : 1'd0),
+// Pass interrupt only if mask = 0 and instruction exists.
+
+.i_iabort                               (fifo_valid ? fifo_instr_abort : 1'd0),
+// Pass abort only if instruction valid.
 
 .o_iabort                               (thumb_iabort),
 .i_cpsr_ff_t                            (alu_flags_ff[T]),
@@ -1092,7 +1124,7 @@ u_zap_alu_main
          .i_mem_translate_ff               (shifter_mem_translate_ff),
          .i_condition_code_ff              (shifter_condition_code_ff),
          .i_destination_index_ff           (shifter_destination_index_ff),
-         .i_alu_operation_ff               (shifter_alu_operation_ff),  // {OP,S}
+         .i_alu_operation_ff               (shifter_alu_operation_ff),
          .i_data_mem_fault                 (i_data_wb_err | i_dcache_err2),
 
          .o_uop_last                       (alu_uop_last),
@@ -1122,7 +1154,7 @@ u_zap_alu_main
          .o_mem_signed_byte_enable_ff      (alu_sbyte_ff),
          .o_mem_signed_halfword_enable_ff  (alu_shalf_ff),
          .o_mem_unsigned_halfword_enable_ff(alu_uhalf_ff),
-         .o_mem_translate_ff               (alu_mem_translate_ff),           // Must go to post ALU.
+         .o_mem_translate_ff               (alu_mem_translate_ff),
          .o_data_wb_we_ff                  (alu_data_wb_we),
          .o_data_wb_cyc_ff                 (alu_data_wb_cyc),
          .o_data_wb_stb_ff                 (alu_data_wb_stb),
@@ -1132,21 +1164,6 @@ u_zap_alu_main
          .o_alt_dav_ff                     (alu_x_valid)
 
 );
-
-localparam [31:0] MIN_SAT = {1'd1, {31{1'd0}}}; // Smallest -ve value.
-localparam [31:0] MAX_SAT = {1'd0, {31{1'd1}}}; // Largest +ve value.
-
-logic [31:0] alu_x_ppr;
-
-always_comb
-begin
-        case (alu_x_valid)
-        2'b00   : alu_x_ppr = alu_alu_result_ff;
-        2'b01   : alu_x_ppr = alu_x_result;
-        2'b10   : alu_x_ppr = alu_flags_ff[27] ? ( alu_x_result[0] ? MIN_SAT : MAX_SAT ) : alu_alu_result_ff ;
-        default : alu_x_ppr = {32{1'dx}};
-        endcase
-end
 
 //
 // Post ALU 0 stage. For tag RAM reads etc. The actual tag RAMs are outside
@@ -1569,6 +1586,7 @@ zap_cp15_cb #(
         .i_icache_clean_done    (i_icache_clean_done)
 );
 
+// Readout of CPU mode. Useful for debugging.
 always_comb
 case(o_cpsr[`ZAP_CPSR_MODE])
 FIQ:     CPU_MODE = "FIQ";
@@ -1581,6 +1599,7 @@ SYS:     CPU_MODE = "SYS";
 default: CPU_MODE = "???";
 endcase
 
+// Assertion to catch if CPU is in a bad mode.
 always @ ( posedge i_clk )
 begin
         if ( !i_reset )
