@@ -173,7 +173,14 @@ module zap_alu_main #(
         output logic                              o_data_wb_cyc_ff,
         output logic                              o_data_wb_stb_ff,
         output logic [31:0]                       o_data_wb_dat_ff,
-        output logic [3:0]                        o_data_wb_sel_ff
+        output logic [3:0]                        o_data_wb_sel_ff,
+
+        // -------------------------------------------------------------
+        // Alternate result
+        // -------------------------------------------------------------
+
+        output logic    [31:0]                    o_alt_result_ff,
+        output logic    [1:0]                     o_alt_dav_ff
 );
 
 // ----------------------------------------------------------------------------
@@ -243,7 +250,7 @@ logic                             cin;
 logic [32:0]                      sum;
 
 logic [31:0]                      tmp_flags, tmp_sum, tmp_sum_x;
-logic                             valid_x;
+logic [1:0]                       valid_x;
 
 // Opcode.
 logic [$clog2   (ALU_OPS)-1:0]   opcode;
@@ -257,7 +264,11 @@ logic [3:0]                      o_data_wb_sel_nxt;
 
 // Clear
 logic [1:0]                      w_clear_from_alu;
-logic [31:0]                     w_pc_from_alu_0, w_pc_from_alu_1, w_pc_from_alu_2, w_pc_from_alu_3;
+
+logic [31:0]                     w_pc_from_alu_0;
+logic [31:0]                     w_pc_from_alu_2;
+logic [31:0]                     w_pc_from_alu_3;
+
 logic [1:0]                      r_clear_from_alu;
 logic                            w_confirm_from_alu;
 
@@ -385,6 +396,7 @@ begin
                 clear ( flags_ff );
                 sleep_ff                         <= 1'd1;
                 o_dav_ff                         <= 1'd0; // Don't give any output.
+                o_alt_dav_ff                     <= 2'd0;
                 o_decompile_valid                <= 1'd0;
                 o_uop_last                       <= 1'd0;
         end
@@ -396,7 +408,12 @@ begin
         begin
                 // Clock out all flops normally.
 
-                o_alu_result_ff                  <= valid_x ? tmp_sum_x : o_alu_result_nxt;
+                o_alu_result_ff                  <= o_alu_result_nxt;
+
+                // Alternate result.
+                o_alt_result_ff                  <= tmp_sum_x;
+                o_alt_dav_ff                     <= valid_x;
+
                 o_dav_ff                         <= o_dav_nxt;
                 o_pc_plus_8_ff                   <= i_pc_plus_8_ff;
                 o_destination_index_ff           <= o_destination_index_nxt;
@@ -425,7 +442,6 @@ begin
                 r_clear_from_alu                <= w_clear_from_alu;
 
                 w_pc_from_alu_0                 <= i_ppc_ff;
-                w_pc_from_alu_1                 <= sum[31:0];
                 w_pc_from_alu_2                 <= tmp_sum;
                 w_pc_from_alu_3                 <= i_pc_ff + (flags_ff[T] ? 32'd2 : 32'd4);
 
@@ -442,13 +458,11 @@ always_comb
 begin
         case(r_clear_from_alu)
         2'd0   : o_pc_from_alu = w_pc_from_alu_0;
-        2'd1   : o_pc_from_alu = w_pc_from_alu_1;
         2'd2   : o_pc_from_alu = w_pc_from_alu_2;
         2'd3   : o_pc_from_alu = w_pc_from_alu_3;
+        default: o_pc_from_alu = 'dx;
         endcase
 end
-
-// ----------------------------------------------------------------------------
 
 always_ff @ ( posedge i_clk ) // Wishbone flops.
 begin
@@ -680,10 +694,13 @@ end
 // Handle CLZ and saturating operations.
 always_comb
 begin
+        valid_x   = 2'd0;
+        tmp_sum_x = '0;
+
         if ( opcode == {1'd0, CLZ} )
         begin
                 tmp_sum_x = {26'd0, clz_rm};
-                valid_x   = 1'd1;
+                valid_x   = 2'd1;
         end
         else if
         (
@@ -693,37 +710,10 @@ begin
              opcode == {1'd0, OP_QDSUB}
         )
         begin
-                if ( tmp_flags[27] ) // result saturated due to ALU operation.
-                begin
-                        valid_x = 1'd1;
-
-                        if ( opcode == {1'd0, OP_QADD} || opcode == {1'd0, OP_QDADD} )
-                        begin
-                                // Find the direction of saturation.
-                                if ( rm[31] )
-                                        tmp_sum_x = {1'd1, {31{1'd0}}};
-                                else
-                                        tmp_sum_x = {1'd0, {31{1'd1}}};
-                        end
-                        else
-                        begin
-                                // Use rn to determine saturation.
-                                if ( rn[31] )
-                                        tmp_sum_x = {1'd1, {31{1'd0}}};
-                                else
-                                        tmp_sum_x = {1'd0, {31{1'd1}}};
-                        end
-                end
-                else
-                begin
-                        valid_x   = 1'd0;
-                        tmp_sum_x = {32{1'dx}};
-                end
-        end
-        else
-        begin
-                valid_x   = 1'd0;
-                tmp_sum_x = {32{1'dx}};
+                valid_x   = 2'd2;
+                tmp_sum_x =  opcode == {1'd0, OP_QADD } ||
+                             opcode == {1'd0, OP_QDADD} ?
+                             {31'd0, rm[31]} : {31'd0, rn[31]};
         end
 end
 
@@ -787,7 +777,7 @@ begin: flags_bp_feedback
 
         if ( (opcode == {1'd0, FMOV}) && o_dav_nxt ) // Writes to CPSR...
         begin
-                w_clear_from_alu        = 2'd1; // Resync pipeline.
+                w_clear_from_alu        = 2'd3; // Resync pipeline.
 
                 // USR cannot change mode. Will silently fail.
                 flags_nxt[23:0]   = (flags_ff[`ZAP_CPSR_MODE] == USR) ? flags_ff[23:0] :
@@ -901,12 +891,7 @@ begin: adder_ip_mux
         op         = i_alu_operation_ff;
 
         case ( op )
-        {1'd0, FMOV}:
-        begin
-                op1 = i_pc_plus_8_ff    ;
-                op2 = ~32'd4            ;
-                cin = 1'd1              ;
-        end
+
         {2'd0, ADD},
         {1'd0, OP_QADD},
         {1'd0, OP_QDADD}:
@@ -945,15 +930,15 @@ begin: adder_ip_mux
         begin
                 op1 = rm     ;
                 op2 = not_rn ;
-                cin = flag  ;
+                cin = flag   ;
         end
 
         // Target is not written.
         {2'd0, CMP}:
         begin
-                op1 = rn  ;
+                op1 = rn     ;
                 op2 = not_rm ;
-                cin = 1'd1;
+                cin = 1'd1   ;
         end
         {2'd0, CMN}:
         begin
@@ -1019,6 +1004,7 @@ begin: blk2
         if ( flag_upd ) // 0x0 for SAT_MOV.
         begin
                 // V is preserved since flags_out = flags
+
                 flags_out[_C] = shift_carry;
 
                 if ( nozero )
@@ -1046,6 +1032,7 @@ begin
                 o_uop_last                       <= 1'd0;
                 o_clear_from_alu                 <= 0;
                 o_dav_ff                         <= 0;
+                o_alt_dav_ff                     <= 0;
                 flags_ff                         <= flags;
                 o_abt_ff                         <= 0;
                 o_irq_ff                         <= 0;
@@ -1142,6 +1129,8 @@ endfunction // generate_ben
 
 task automatic reset;
 begin
+                o_alt_result_ff                  <= 0;
+                o_alt_dav_ff                     <= 0;
                 o_alu_result_ff                  <= 0;
                 o_dav_ff                         <= 0;
                 o_pc_plus_8_ff                   <= 0;
@@ -1160,7 +1149,6 @@ begin
                 o_mem_unsigned_halfword_enable_ff<= 0;
                 o_mem_translate_ff               <= 0;
                 w_pc_from_alu_0                  <= 0;
-                w_pc_from_alu_1                  <= 0;
                 w_pc_from_alu_2                  <= 0;
                 w_pc_from_alu_3                  <= 0;
                 o_decompile                      <= 0;

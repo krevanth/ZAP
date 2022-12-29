@@ -347,6 +347,8 @@ logic [31:0]                     shifter_ppc_ff;
 logic                            shifter_uop_last;
 
 // ALU
+logic [31:0]                     alu_x_result;
+logic [1:0]                      alu_x_valid;
 logic [31:0]                     alu_alu_result_nxt;
 logic [31:0]                     alu_alu_result_ff;
 logic                            alu_abt_ff;
@@ -1125,9 +1127,26 @@ u_zap_alu_main
          .o_data_wb_cyc_ff                 (alu_data_wb_cyc),
          .o_data_wb_stb_ff                 (alu_data_wb_stb),
          .o_data_wb_dat_ff                 (alu_data_wb_dat),
-         .o_data_wb_sel_ff                 (alu_data_wb_sel)
+         .o_data_wb_sel_ff                 (alu_data_wb_sel),
+         .o_alt_result_ff                  (alu_x_result),
+         .o_alt_dav_ff                     (alu_x_valid)
 
 );
+
+localparam [31:0] MIN_SAT = {1'd1, {31{1'd0}}}; // Smallest -ve value.
+localparam [31:0] MAX_SAT = {1'd0, {31{1'd1}}}; // Largest +ve value.
+
+logic [31:0] alu_x_ppr;
+
+always_comb
+begin
+        case (alu_x_valid)
+        2'b00   : alu_x_ppr = alu_alu_result_ff;
+        2'b01   : alu_x_ppr = alu_x_result;
+        2'b10   : alu_x_ppr = alu_flags_ff[27] ? ( alu_x_result[0] ? MIN_SAT : MAX_SAT ) : alu_alu_result_ff ;
+        default : alu_x_ppr = {32{1'dx}};
+        endcase
+end
 
 //
 // Post ALU 0 stage. For tag RAM reads etc. The actual tag RAMs are outside
@@ -1148,7 +1167,7 @@ zap_postalu_main #(
 
          .i_decompile_valid                (alu_decompile_valid),
          .i_decompile                      (alu_decompile),
-         .i_alu_result_ff                  (alu_alu_result_ff),
+         .i_alu_result_ff                  (alu_x_ppr),
          .i_und_ff                         (alu_und_ff),
          .i_abt_ff                         (alu_abt_ff),
          .i_irq_ff                         (alu_irq_ff),

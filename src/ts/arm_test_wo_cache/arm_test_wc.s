@@ -218,6 +218,12 @@ passed:
         msr cpsr, #0x20
         msr cpsr, #0x30
 
+        // Check if we're still in user mode.
+        mrs r0, cpsr
+        and r0, r0, #0x1F
+        cmp r0, #0x10
+        bne passed
+
         mvn  r0, #0
         mov  r1, r0
         mov  r2, r0

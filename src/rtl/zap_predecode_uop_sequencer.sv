@@ -134,6 +134,7 @@ localparam LDR_TO_PC_S0 = 18;
 localparam DEP_WAIT     = 19;
 localparam DEP_WAIT_1   = 20;
 localparam DEP_WAIT_2   = 21;
+localparam DEP_WAIT_3   = 22;
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -349,15 +350,20 @@ begin:blk_a
                 end
 
                 // Issue ANDEQ R0, R0, R0 - block interrupts.
-                DEP_WAIT, DEP_WAIT_1:
+                DEP_WAIT, DEP_WAIT_1, DEP_WAIT_2:
                 begin
                         o_stall_from_decode = 1'd1;
                         o_instruction       = '0;
-                        state_nxt           = state_ff == DEP_WAIT ? DEP_WAIT_1 : DEP_WAIT_2;
+                        state_nxt           =
+                                state_ff == DEP_WAIT   ? DEP_WAIT_1 :
+                                state_ff == DEP_WAIT_1 ? DEP_WAIT_2 :
+                                state_ff == DEP_WAIT_2 ? DEP_WAIT_3 :
+                                state_ff;
+
                 end
 
                 // Issue ANDEQ R0, R0, R0 - block interrupts.
-                DEP_WAIT_2:
+                DEP_WAIT_3:
                 begin
                         o_stall_from_decode = 1'd0;
                         o_instruction       = '0;
