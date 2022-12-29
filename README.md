@@ -37,7 +37,7 @@ The default processor specification is as follows (The table below is based on d
 
 A simplified block diagram of the ZAP pipeline is shown below. Note that ZAP is mostly a single issue scalar processor.
 
-![Pipeline](Pipeline.drawio.svg)
+![Pipeline](./Pipeline.drawio.svg)
 
 ZAP includes several microarchitectural enhancements to improve instruction throughput, hide external bus and memory latency and boost performance:
 
@@ -255,11 +255,11 @@ They are described below.
 
 - The diagram below shows 16 x 4 byte = 64 bytes of memory being fetched for a cache linefill.
 
-![](mem_read_burst.png)
+![Read Burst Access](./mem_read_burst.png)
 
 - The diagram below shows 16 x 4 byte = 64 bytes of cache (1 cacheline) being written back to memory. 
 
-![](mem_write_burst.png)
+![Write Burst Access](./mem_write_burst.png)
 
 ##### 1.2.2. Uncacheable Operations
 
@@ -271,7 +271,7 @@ They are described below.
   
   - MMU page table walk.
 
-<img title="" src="peripheral_access.png" alt="" width="679">
+![Peripheral Access](./peripheral_access.png)
 
 #### 1.2.2. Cache-less and MMU-less Configuration (ONLY_CORE = 0x1)
 
@@ -285,7 +285,7 @@ They are described below.
 
 - The processor can issue a BLOCK Wishbone access every cycle.
 
-![](./block_access.png)
+![Block Access](./block_access.png)
 
 ### 1.3. System Control
 
@@ -685,7 +685,7 @@ Timing report will be available in `obj/syn/syn_timing.rpt`
 
 #### 3.4.1. XDC Setup (Vivado FPGA Synthesis)
 
-* The XDC assumes a 160MHz clock for an Artix 7 FPGA part with -3 speed grade.
+* The XDC assumes a 170MHz clock for an Artix 7 FPGA part with -3 speed grade.
 * All inputs are given an input delay of 1ns, typical for an FPGA flip-flop.
 * Outputs assume they are driving flip-flops with Tsu = 2ns Th=1ns.
 
