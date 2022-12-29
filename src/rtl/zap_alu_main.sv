@@ -1,34 +1,26 @@
-// ---------------------------------------------------------------------------
-// --                                                                       --
-// --    (C) 2016-2022 Revanth Kamaraj (krevanth)                           --
-// --                                                                       --
-// -- ------------------------------------------------------------------------
-// --                                                                       --
-// -- This program is free software; you can redistribute it and/or         --
-// -- modify it under the terms of the GNU General Public License           --
-// -- as published by the Free Software Foundation; either version 2        --
-// -- of the License, or (at your option) any later version.                --
-// --                                                                       --
-// -- This program is distributed in the hope that it will be useful,       --
-// -- but WITHOUT ANY WARRANTY; without even the implied warranty of        --
-// -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         --
-// -- GNU General Public License for more details.                          --
-// --                                                                       --
-// -- You should have received a copy of the GNU General Public License     --
-// -- along with this program; if not, write to the Free Software           --
-// -- Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA         --
-// -- 02110-1301, USA.                                                      --
-// --                                                                       --
-// ---------------------------------------------------------------------------
-// --                                                                       --
-// -- This is the main ZAP arithmetic and logic unit. Apart from shfits     --
-// -- and multiplies, all other arithmetic and logic is performed here.     --
-// -- Also data memory access signals are generated at the end of the clock --
-// -- cycle.  Instructions that fail condition checks are invalidated here. --
-// --                                                                       --
-// ---------------------------------------------------------------------------
-
-
+//
+// (C) 2016-2022 Revanth Kamaraj (krevanth)
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+// 02110-1301, USA.
+//
+// This is the main ZAP arithmetic and logic unit. Apart from shfits
+// and multiplies, all other arithmetic and logic is performed here.
+// Also data memory access signals are generated at the end of the clock
+// cycle.  Instructions that fail condition checks are invalidated here.
+//
 
 module zap_alu_main #(
 
@@ -460,7 +452,7 @@ begin
         2'd0   : o_pc_from_alu = w_pc_from_alu_0;
         2'd2   : o_pc_from_alu = w_pc_from_alu_2;
         2'd3   : o_pc_from_alu = w_pc_from_alu_3;
-        default: o_pc_from_alu = 'dx;
+        default: o_pc_from_alu = 'dx; // Synthesis will optimize.
         endcase
 end
 
@@ -800,10 +792,6 @@ begin: flags_bp_feedback
                         if ( i_taken_ff == SNT || i_taken_ff == WNT )
                         // Incorrectly predicted. Need to branch.
                         begin
-                                // Quick branches - Flush everything before.
-                                // Dumping ground since PC change is done.
-                                // Jump to branch target for fast switching.
-
                                 o_destination_index_nxt = PHY_RAZ_REGISTER;
                                 w_clear_from_alu        = 2'd2;
 
@@ -817,9 +805,6 @@ begin: flags_bp_feedback
                                 // If thumb bit changes, flush everything before
                                 if ( i_switch_ff && (tmp_sum[0] != flags_ff[T]) )
                                 begin
-                                        // Quick branches! PC goes to RAZ register since
-                                        // change is done. Flush pipe before.
-
                                         o_destination_index_nxt = PHY_RAZ_REGISTER;
                                         w_clear_from_alu        = 2'd2;
                                         flags_nxt[T]            = tmp_sum[0];
