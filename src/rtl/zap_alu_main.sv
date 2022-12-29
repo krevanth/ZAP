@@ -72,7 +72,7 @@ module zap_alu_main #(
         input logic  [31:0]                      i_alu_source_value_ff,       // ALU source value.
         input logic  [31:0]                      i_shifted_source_value_ff,   // Shifted source value.
         input logic                              i_shift_carry_ff,            // Carry from shifter.
-        input logic                              i_shift_sat_ff,              // Saturation indication from shifter.
+        input logic                              i_shift_sat_ff,              // Sat. indication from shifter.
         input logic  [31:0]                      i_pc_plus_8_ff,              // PC + 8 value.
 
         // ------------------------------------------------------------------
@@ -83,7 +83,7 @@ module zap_alu_main #(
         input logic                              i_irq_ff,                    // IRQ flagged.
         input logic                              i_fiq_ff,                    // FIQ flagged.
         input logic                              i_swi_ff,                    // SWI flagged.
-        input logic                              i_und_ff,                    // Flagged undefined instructions.
+        input logic                              i_und_ff,                    // Flagged undef instructions.
         input logic                              i_data_mem_fault,            // Flagged Data abort.
 
         // ------------------------------------------------------------------
@@ -91,7 +91,7 @@ module zap_alu_main #(
         // ------------------------------------------------------------------
 
         input logic  [31:0]                      i_mem_srcdest_value_ff,           // Value to store.
-        input logic  [$clog2   (PHY_REGS)-1:0]   i_mem_srcdest_index_ff,           // LD/ST Memory data register index.
+        input logic  [$clog2   (PHY_REGS)-1:0]   i_mem_srcdest_index_ff,           // LD/ST Memory datareg idx.
         input logic                              i_mem_load_ff,                    // LD/ST Memory load.
         input logic                              i_mem_store_ff,                   // LD/ST Memory store.
         input logic                              i_mem_pre_index_ff,               // LD/ST Pre/Post index.
@@ -99,7 +99,7 @@ module zap_alu_main #(
         input logic                              i_mem_signed_byte_enable_ff,      // LD/ST int8_t   data type.
         input logic                              i_mem_signed_halfword_enable_ff,  // LD/ST int16_t data type.
         input logic                              i_mem_unsigned_halfword_enable_ff,// LD/ST uint16_t  data type.
-        input logic                              i_mem_translate_ff,               // LD/ST Force user view of memory.
+        input logic                              i_mem_translate_ff,               // LD/ST Force user view.
         input logic                              i_force32align_ff,                // Force address alignment to 32-bit.
 
         // -------------------------------------------------------------------
@@ -115,7 +115,7 @@ module zap_alu_main #(
         // ALU result
         // -----------------------------------------------------------------
 
-        output logic [31:0]                       o_alu_result_nxt,           // For feedback. ALU result _nxt version.
+        output logic [31:0]                       o_alu_result_nxt,           // For feedback.
         output logic [31:0]                       o_alu_result_ff,            // ALU result flopped version.
         output logic                              o_dav_ff,                   // Instruction valid.
         output logic                              o_dav_nxt,                  // Instruction valid _nxt version.
@@ -138,23 +138,30 @@ module zap_alu_main #(
         // -----------------------------------------------------------------
 
         output logic [31:0]                       o_pc_plus_8_ff,             // Instr address + 8.
-        output logic                              o_clear_from_alu,           // ALU commands a pipeline clear and a predictor correction.
-        output logic [31:0]                       o_pc_from_alu,              // Corresponding address to go to is provided here.
-        output logic                              o_confirm_from_alu,         // Tell branch predictor it was correct.
+
+        // ALU commands pipeline clear and a predictor correction.
+        output logic                              o_clear_from_alu,
+
+        // Corresponding address to go to is provided here.
+        output logic [31:0]                       o_pc_from_alu,
+
+        // Tell branch predictor it was correct.
+        output logic                              o_confirm_from_alu,
+
         output logic [1:0]                        o_taken_ff,
 
         // ----------------------------------------------------------------
         // Memory access related
         // ----------------------------------------------------------------
 
-        output logic  [$clog2   (PHY_REGS)-1:0]   o_mem_srcdest_index_ff,                 // LD/ST data register.
-        output logic                              o_mem_load_ff,                          // LD/ST load indicator.
-        output logic [31:0]                       o_mem_address_ff,                       // LD/ST address to access.
-        output logic                              o_mem_unsigned_byte_enable_ff,          // uint8_t
-        output logic                              o_mem_signed_byte_enable_ff,            // int8_t
-        output logic                              o_mem_signed_halfword_enable_ff,        // int16_t
-        output logic                              o_mem_unsigned_halfword_enable_ff,      // uint16_t
-        output logic                              o_mem_translate_ff,                     // LD/ST force user view of memory.
+        output logic  [$clog2   (PHY_REGS)-1:0]   o_mem_srcdest_index_ff,             // LD/ST data register.
+        output logic                              o_mem_load_ff,                      // LD/ST load indicator.
+        output logic [31:0]                       o_mem_address_ff,                   // LD/ST address to access.
+        output logic                              o_mem_unsigned_byte_enable_ff,      // uint8_t
+        output logic                              o_mem_signed_byte_enable_ff,        // int8_t
+        output logic                              o_mem_signed_halfword_enable_ff,    // int16_t
+        output logic                              o_mem_unsigned_halfword_enable_ff,  // uint16_t
+        output logic                              o_mem_translate_ff,                 // LD/ST force user view.
 
         // -------------------------------------------------------------
         // Wishbone signal outputs.
@@ -204,18 +211,18 @@ logic [3:0]                      ben_nxt;
 // Address about to be output. Used to drive tag RAMs etc.
 logic [31:0]                      mem_address_nxt;
 
-/*
-   Sleep flop. When 1 unit sleeps i.e., does not produce any output except on
-   the first clock cycle where LR is calculated using the ALU.
-*/
+//
+//  Sleep flop. When 1 unit sleeps i.e., does not produce any output except on
+//  the first clock cycle where LR is calculated using the ALU.
+//
 logic                             sleep_ff, sleep_nxt;
 
-/*
-   CPSR (Active CPSR). The active CPSR is from the where the CPU flags are
-   read out and the mode also is. Mode changes via manual writes to CPSR
-   are first written to the active and they then propagate to the passive CPSR
-   in the writeback stage. This reduces the pipeline flush penalty.
-*/
+//
+// CPSR (Active CPSR). The active CPSR is from the where the CPU flags are
+// read out and the mode also is. Mode changes via manual writes to CPSR
+// are first written to the active and they then propagate to the passive CPSR
+// in the writeback stage. This reduces the pipeline flush penalty.
+//
 logic [31:0]                      flags_ff, flags_nxt;
 
 logic [31:0]                      rm, rn; // RM = shifted source value Rn for
@@ -250,12 +257,15 @@ logic [31:0]                     o_data_wb_dat_nxt;
 logic [3:0]                      o_data_wb_sel_nxt;
 
 // Clear
-logic [1:0]                      w_clear_from_alu;
+enum logic [1:0] {
+        CONTINUE,
+        BRANCH_TARGET,
+        NEXT_INSTR_RESYNC
+} w_clear_from_alu;
 
 // PCs
-logic [31:0]                     w_pc_from_alu_0;
-logic [31:0]                     w_pc_from_alu_2;
-logic [31:0]                     w_pc_from_alu_3;
+logic [31:0]                     w_pc_from_alu_btarget;
+logic [31:0]                     w_pc_from_alu_resync;
 
 // BP controls.
 logic [1:0]                      r_clear_from_alu;
@@ -286,11 +296,11 @@ assign  o_flags_nxt = o_dav_nxt ? flags_nxt : flags_ff;
 // Memory byte enable/duplicate calculation.
 // -----------------------------------------------------------------------------
 
-/*
-   For memory stores, we must generate correct byte enables. This is done
-   by examining access type inputs.Same for loads too.
-   If there is neither a load or a store, the old value is preserved.
-*/
+//
+// For memory stores, we must generate correct byte enables. This is done
+// by examining access type inputs.Same for loads too.
+// If there is neither a load or a store, the old value is preserved.
+//
 always_comb ben_nxt =                generate_ben (
                                                  i_mem_unsigned_byte_enable_ff,
                                                  i_mem_signed_byte_enable_ff,
@@ -332,6 +342,11 @@ assign {op1, op2, cin}
 // ----------------------------------------------------------------------------
 
 assign sum[32:0] = {1'd0, op1} + {1'd0, op2} + {32'd0, cin};
+
+//
+// Overflow is true is both operands are of the same sign but the sum isn't of
+// the same sign.
+//
 assign arith_overflow = (op1[31] == op2[31]) & (op1[31] != sum[31]);
 
 // -----------------------------------------------------------------------------
@@ -448,11 +463,10 @@ begin
                 o_und_ff                         <= i_und_ff;
 
                 o_clear_from_alu                <= |w_clear_from_alu;
-                r_clear_from_alu                <= w_clear_from_alu;
+                r_clear_from_alu                <=  w_clear_from_alu;
 
-                w_pc_from_alu_0                 <= i_ppc_ff;
-                w_pc_from_alu_2                 <= tmp_sum;
-                w_pc_from_alu_3                 <= i_pc_ff + (flags_ff[T] ? 32'd2 : 32'd4);
+                w_pc_from_alu_btarget           <= tmp_sum;
+                w_pc_from_alu_resync            <= i_pc_ff + (flags_ff[T] ? 32'd2 : 32'd4);
 
                 o_confirm_from_alu              <= w_confirm_from_alu;
 
@@ -465,11 +479,10 @@ end
 // Retime the output.
 always_comb
 begin
-        case(r_clear_from_alu)
-        2'd0   : o_pc_from_alu = w_pc_from_alu_0;
-        2'd2   : o_pc_from_alu = w_pc_from_alu_2;
-        2'd3   : o_pc_from_alu = w_pc_from_alu_3;
-        default: o_pc_from_alu = 'dx; // Synthesis will optimize.
+        case ( r_clear_from_alu )
+        BRANCH_TARGET     : o_pc_from_alu = w_pc_from_alu_btarget;
+        NEXT_INSTR_RESYNC : o_pc_from_alu = w_pc_from_alu_resync;
+        default:            o_pc_from_alu = 'dx; // Synthesis will optimize.
         endcase
 end
 
@@ -546,11 +559,11 @@ end
 
 always_comb
 begin:pre_post_index_address_generator
-        /*
-         * Memory address output based on pre or post index.
-         * For post-index, update is done after memory access.
-         * For pre-index, update is done before memory access.
-         */
+        //
+        // Memory address output based on pre or post index.
+        // For post-index, update is done after memory access.
+        // For pre-index, update is done before memory access.
+        //
         if ( i_mem_pre_index_ff == 0 )
                 mem_address_nxt = rn;               // Postindex;
         else
@@ -596,12 +609,18 @@ begin: alu_result
         begin
                 // Call the logical processing function.
                 {tmp_flags[31:28], tmp_sum} = process_logical_instructions (
-                        rn, rm, flags_ff[31:28],
-                        opcode, opcode == SAT_MOV ? 1'd0 : i_flag_update_ff, i_nozero_ff,
+                        rn,
+                        rm,
+                        flags_ff[31:28],
+                        opcode, opcode == SAT_MOV ? 1'd0 : i_flag_update_ff,
+                        i_nozero_ff,
                         i_shift_carry_ff
                 );
 
+                //
+                // If SAT_MOV = 0x1
                 // Set only Q flag from shift stage. Don't touch other Flags.
+                //
                 if ( opcode == SAT_MOV )
                 begin
                         tmp_flags      = flags_ff;
@@ -609,11 +628,11 @@ begin: alu_result
                 end
         end
 
-        /*
-         * Flag MOV(FMOV) i.e., MOV to CPSR and MMOV handler.
-         * FMOV moves to CPSR and flushes the pipeline.
-         * MMOV moves to SPSR and does not flush the pipeline.
-         */
+        //
+        // Flag MOV(FMOV) i.e., MOV to CPSR and MMOV handler.
+        // FMOV moves to CPSR and flushes the pipeline.
+        // MMOV moves to SPSR and does not flush the pipeline.
+        //
         else if ( opcode == {1'd0, FMOV} || opcode == {1'd0, MMOV} )
         begin: fmov_mmov
                 // Read entire CPSR or SPSR.
@@ -629,11 +648,11 @@ begin: alu_result
                                 tmp_sum[i] = rm[i];
                 end
 
-                /*
-                 * FMOV moves to the CPSR in ALU and writeback.
-                 * No register is changed. The MSR out of this will have
-                 * a target to CPSR.
-                 */
+                //
+                //  FMOV moves to the CPSR in ALU and writeback.
+                 // No R* register is changed. The MSR out of this will have
+                 // a target to CPSR.
+                 //
                 if ( opcode == {1'd0, FMOV} )
                 begin
                         tmp_flags = tmp_sum;
@@ -675,7 +694,9 @@ begin: alu_result
         o_alu_result_nxt = tmp_sum;
 end
 
-// Handle CLZ and saturating operations.
+//
+// Partially handle CLZ and saturating operations.
+//
 always_comb
 begin
         valid_x   = 2'd0;
@@ -754,104 +775,86 @@ end
 always_comb
 begin: flags_bp_feedback
 
-        w_clear_from_alu         = 2'd0;
+        w_clear_from_alu         = CONTINUE;
         flags_nxt                = tmp_flags;
         o_destination_index_nxt  = i_destination_index_ff;
         w_confirm_from_alu       = 1'd0;
 
         if ( (opcode == {1'd0, FMOV}) && o_dav_nxt ) // Writes to CPSR...
         begin
-                w_clear_from_alu        = 2'd3; // Resync pipeline.
+                //
+                // Resync pipeline. We might end up fetching things in the
+                // wrong mode.
+                //
+                w_clear_from_alu        = NEXT_INSTR_RESYNC;
 
-                // USR cannot change mode. Will silently fail.
+                // USR cannot change 23:0. Will silently fail.
                 flags_nxt[23:0]   = (flags_ff[`ZAP_CPSR_MODE] == USR) ? flags_ff[23:0] :
                 flags_nxt[23:0]; // Security.
         end
-        else if ( i_destination_index_ff == {2'd0, ARCH_PC} && (i_condition_code_ff != NV))
-        begin
-                if ( i_flag_update_ff && o_dav_nxt ) // PC update with S bit. Context restore.
+        else if ( i_destination_index_ff == {2'd0, ARCH_PC} && (i_condition_code_ff != NV) )
+        begin: branch_block
+                o_destination_index_nxt = PHY_RAZ_REGISTER;
+
+                if ( i_flag_update_ff && o_dav_nxt )
+                // PC update with S bit. Context restore.
                 begin
-                        o_destination_index_nxt     = PHY_RAZ_REGISTER;
-                        w_clear_from_alu            = 2'd2;
+                        w_clear_from_alu            = BRANCH_TARGET;
 
-                        flags_nxt                   = i_mem_srcdest_value_ff;   // Restore CPSR from SPSR.
+                        // Restore CPSR from SPSR.
+                        flags_nxt                   = i_mem_srcdest_value_ff;
 
+                        // USR cannot change 23:0, will silently fail.
                         flags_nxt[23:0]   = (flags_ff[`ZAP_CPSR_MODE] == USR) ? flags_ff[23:0] :
                         flags_nxt[23:0]; // Security.
                 end
                 else if ( o_dav_nxt ) // Branch taken and no flag update.
                 begin
-                        if ( i_taken_ff == SNT || i_taken_ff == WNT )
+                        // A/T mode switch. Resync anyway.
+                        if ( i_switch_ff && flags_nxt[T] != tmp_sum[0] )
+                        begin
+                                w_clear_from_alu = BRANCH_TARGET;
+                                flags_nxt[T]     = tmp_sum[0];
+                        end
                         // Incorrectly predicted. Need to branch.
+                        else if ( i_taken_ff == SNT || i_taken_ff == WNT )
                         begin
-                                o_destination_index_nxt = PHY_RAZ_REGISTER;
-                                w_clear_from_alu        = 2'd2;
-
-                                if ( i_switch_ff )
-                                begin
-                                        flags_nxt[T]            = tmp_sum[0];
-                                end
+                                w_clear_from_alu        = BRANCH_TARGET;
                         end
-                        else    // Correctly predicted as taken...
+                        //
+                        // Correctly predicted as taken. Check predicted PC based
+                        // on opcode.  Two ways to branch: First line is for B/BL/ADD.
+                        // Second line is for MOV PC, LR ALU will only check
+                        // these conditions. i.e., MOV and ADD instructions
+                        // which destine to PC.
+                        //
+                        else if
+                        (
+                                // Check branch target address.
+                                opcode == {2'd0, ADD} ? (i_ppc_ff == quick_sum):
+                                opcode == {2'd0, MOV} ? (i_ppc_ff == rm) : 1'd0
+                        )
+                        begin // Everything's good.
+                                w_clear_from_alu        = CONTINUE;
+                        end
+                        else // PC not predicted correctly. Go to correct vector.
                         begin
-                                // If thumb bit changes, flush everything before
-                                if ( i_switch_ff && (tmp_sum[0] != flags_ff[T]) )
-                                begin
-                                        o_destination_index_nxt = PHY_RAZ_REGISTER;
-                                        w_clear_from_alu        = 2'd2;
-                                        flags_nxt[T]            = tmp_sum[0];
-                                end
-                                else
-                                begin
-                                        //
-                                        // Check predicted PC based on opcode...
-                                        // Two ways to branch:
-                                        // First line is for B/BL/ADD.
-                                        // Second line is for MOV PC, LR
-                                        // ALU will only check these conditions.
-                                        // i.e., MOV and ADD instructions which
-                                        // destine to PC.
-                                        //
-                                        if ( opcode == {2'd0, ADD} ? (i_ppc_ff == quick_sum) :
-                                             opcode == {2'd0, MOV} ? (i_ppc_ff == rm) : 1'd0 )
-                                        begin
-                                                // No mode change, do not change anything.
-
-                                                o_destination_index_nxt = PHY_RAZ_REGISTER;
-                                                w_clear_from_alu        = 2'd0;
-
-                                                // Send confirmation message to branch predictor.
-
-                                                // This DOES matter.
-                                                w_confirm_from_alu = 1'd1;
-                                        end
-                                        else // PC not predicted correctly. Go to correct vector.
-                                        begin
-                                                o_destination_index_nxt = PHY_RAZ_REGISTER;
-                                                w_clear_from_alu        = 2'd2;
-                                        end
-                                end
+                                w_clear_from_alu        = BRANCH_TARGET;
                         end
                 end
-                else    // Branch not taken. CC failed.
+                else
+                // Branch not taken. CC failed.
                 begin
-                        //
-                        // Wrong prediction as taken. Go back to the same
-                        // branch. Non branches are always predicted as not-taken.
-                        // Inform predictor of its mistake.
-                        //
-                        if ( i_taken_ff == WT || i_taken_ff == ST )
-                        begin
-                                // Go to the next instruction as this branch
-                                // is NOT taken.
-                                w_clear_from_alu = 2'd3;
-                        end
-                        else // Correct prediction. Branch is not taken.
-                        begin
-                                w_clear_from_alu = 2'd0;
-                        end
+                        w_clear_from_alu =
+                        // Predicted taken
+                        ( i_taken_ff == WT || i_taken_ff == ST ) ?
+                         NEXT_INSTR_RESYNC : // Resync to next instruction.
+                         CONTINUE;           // Keep going.
                 end
-        end
+
+                w_confirm_from_alu = ( w_clear_from_alu == CONTINUE );
+
+        end: branch_block
 end
 
 // ----------------------------------------------------------------------------
@@ -918,11 +921,11 @@ begin: blk2
 end
 endfunction
 
-/*
- * This task automatic clears out the flip-flops in this module.
- * The flag input is used to preserve/force flags to
- * a specific state.
- */
+//
+// This task automatic clears out the flip-flops in this module.
+// The flag input is used to preserve/force flags to
+// a specific state.
+//
 task automatic clear ( input [31:0] flags );
 begin
                 o_decompile_valid                <= 1'd0;
@@ -941,17 +944,17 @@ begin
 end
 endtask
 
-/*
- * The reason we use the duplicate function is to copy value over the memory
- * bus for memory stores. If we have a byte write to address 1, then the
- * memory controller basically takes address 0 and byte enable 0010 and writes
- * to address 1. This enables implementation of a 32-bit memory controller
- * with byte enables to control updates as is commonly done. Basically this
- * is to faciliate byte and halfword based writes on a 32-bit aligned memory
- * bus using byte enables. The rules are simple:
- * For a byte access - duplicate the lower byte of the register 4 times.
- * For halfword access - duplicate the lower 16-bit of the register twice.
- */
+//
+// The reason we use the duplicate function is to copy value over the memory
+// bus for memory stores. If we have a byte write to address 1, then the
+// memory controller basically takes address 0 and byte enable 0010 and writes
+// to address 1. This enables implementation of a 32-bit memory controller
+// with byte enables to control updates as is commonly done. Basically this
+// is to faciliate byte and halfword based writes on a 32-bit aligned memory
+// bus using byte enables. The rules are simple:
+// For a byte access - duplicate the lower byte of the register 4 times.
+// For halfword access - duplicate the lower 16-bit of the register twice.
+//
 
 function [31:0] duplicate (     input ub, // Unsigned byte.
                                 input sb, // Signed byte.
@@ -979,19 +982,19 @@ begin
 end
 endfunction
 
-/*
- *  Generate byte enables based on access mode.
- *  This function is similar in spirit to the previous one. The
- *  byte enables are generated in such a way that along with
- *  duplicate - byte and halfword accesses are possible.
- *  Rules -
- *  For a byte access, generate a byte enable with a 1 at the
- *  position that the lower 2-bits read (0,1,2,3).
- *  For a halfword access, based on lower 2-bits, if it is 00,
- *  make no change to byte enable (0011) else if it is 10, then
- *  make byte enable as (1100) which is basically the 32-bit
- *  address + 2 (and 3) which will be written.
- */
+//
+// Generate byte enables based on access mode.
+// This function is similar in spirit to the previous one. The
+// byte enables are generated in such a way that along with
+// duplicate - byte and halfword accesses are possible.
+// Rules -
+// For a byte access, generate a byte enable with a 1 at the
+// position that the lower 2-bits read (0,1,2,3).
+// For a halfword access, based on lower 2-bits, if it is 00,
+// make no change to byte enable (0011) else if it is 10, then
+// make byte enable as (1100) which is basically the 32-bit
+// address + 2 (and 3) which will be written.
+//
 function [3:0] generate_ben (   input ub, // Unsigned byte.
                                 input sb, // Signed byte.
                                 input uh, // Unsigned halfword.
@@ -1045,9 +1048,8 @@ begin
                 o_mem_signed_halfword_enable_ff  <= 0;
                 o_mem_unsigned_halfword_enable_ff<= 0;
                 o_mem_translate_ff               <= 0;
-                w_pc_from_alu_0                  <= 0;
-                w_pc_from_alu_2                  <= 0;
-                w_pc_from_alu_3                  <= 0;
+                w_pc_from_alu_btarget            <= 0;
+                w_pc_from_alu_resync             <= 0;
                 o_decompile                      <= 0;
                 o_taken_ff                       <= 0;
                 o_confirm_from_alu               <= 0;
