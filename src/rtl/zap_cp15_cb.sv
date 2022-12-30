@@ -24,13 +24,14 @@
 //
 
 module zap_cp15_cb #(
-        parameter BE_32_ENABLE         = 0,
-        parameter PHY_REGS             = 64,
-        parameter ONLY_CORE            = 0,
-        parameter CODE_CACHE_LINE      = 64,
-        parameter DATA_CACHE_LINE      = 64,
-        parameter CODE_CACHE_SIZE      = 1024,
-        parameter DATA_CACHE_SIZE      = 1024
+        parameter bit BE_32_ENABLE         = 1'd0,
+        parameter bit ONLY_CORE            = 1'd0,
+
+        parameter bit [31:0] PHY_REGS          = 32'd64,
+        parameter bit [31:0] CODE_CACHE_LINE   = 32'd64,
+        parameter bit [31:0] DATA_CACHE_LINE   = 32'd64,
+        parameter bit [31:0] CODE_CACHE_SIZE   = 32'd1024,
+        parameter bit [31:0] DATA_CACHE_SIZE   = 32'd1024
 )
 (
         // ----------------------------------------------------------------
@@ -181,8 +182,6 @@ localparam CASE_FLUSH_D_TLB          = 7'b00?_0110;
 logic [1:0][11:0] xCACHE_TYPE_WORD;
 logic [31:0]      CACHE_TYPE_WORD ; // Provides cache info.
 
-///////////////////////////////////////////////////////////////////////////
-
 assign xCACHE_TYPE_WORD[0][1:0]  = CODE_CACHE_LINE == 16 ? 2'd1 :
                                    CODE_CACHE_LINE == 32 ? 2'd2 : 2'd3;
 
@@ -209,8 +208,6 @@ begin
 end
 
 assign xCACHE_TYPE_WORD[0][11:9] = '0;
-
-//////////////////////////////////////////////////////////////////////////
 
 assign xCACHE_TYPE_WORD[1][1:0]  = DATA_CACHE_LINE == 16 ? 2'd1 :
                                    DATA_CACHE_LINE == 32 ? 2'd2 : 2'd3;
@@ -375,94 +372,99 @@ begin
 
                         r [ i_cp_word[`ZAP_CRN] ] <= i_reg_rd_data;
 
-                        if (
+                        if
+                        (
                                 i_cp_word[`ZAP_CRN] == TLB_REG  // TLB control.
                         )
                         begin
-                                casez({i_cp_word[`ZAP_OPCODE_2], i_cp_word[`ZAP_CRM]})
+                                casez({i_cp_word[`ZAP_OPCODE_2],
+                                       i_cp_word[`ZAP_CRM]})
 
-                                        CASE_FLUSH_ID_TLB:
-                                        begin
-                                                o_itlb_inv  <= 1'd1;
-                                                o_dtlb_inv  <= 1'd1;
-                                        end
+                                CASE_FLUSH_ID_TLB:
+                                begin
+                                        o_itlb_inv  <= 1'd1;
+                                        o_dtlb_inv  <= 1'd1;
+                                end
 
-                                        CASE_FLUSH_I_TLB:
-                                        begin
-                                                o_itlb_inv <= 1'd1;
-                                        end
+                                CASE_FLUSH_I_TLB:
+                                begin
+                                        o_itlb_inv <= 1'd1;
+                                end
 
-                                        CASE_FLUSH_D_TLB:
-                                        begin
-                                                o_dtlb_inv <= 1'd1;
-                                        end
+                                CASE_FLUSH_D_TLB:
+                                begin
+                                        o_dtlb_inv <= 1'd1;
+                                end
 
-                                        default:
-                                        begin
-                                                o_itlb_inv <= 1'd1;
-                                                o_dtlb_inv <= 1'd1;
-                                        end
+                                default:
+                                begin
+                                        o_itlb_inv <= 1'd1;
+                                        o_dtlb_inv <= 1'd1;
+                                end
 
                                 endcase
                         end
-                        else if ( i_cp_word[`ZAP_CRN] == CACHE_REG ) // Cache control.
+                        else if ( i_cp_word[`ZAP_CRN] == CACHE_REG )
+                        // Cache control selected.
                         begin
-                                casez({i_cp_word[`ZAP_OPCODE_2], i_cp_word[`ZAP_CRM]})
-                                        CASE_FLUSH_ID_CACHE:
-                                        begin
-                                                // Invalidate caches.
-                                                o_dcache_inv    <= 1'd1;
-                                                state           <= CLR_D_CACHE_AND;
-                                        end
+                                casez({i_cp_word[`ZAP_OPCODE_2],
+                                       i_cp_word[`ZAP_CRM]})
 
-                                        CASE_FLUSH_D_CACHE:
-                                        begin
+                                CASE_FLUSH_ID_CACHE:
+                                begin
+                                        // Invalidate ALL caches.
+                                        o_dcache_inv    <= 1'd1;
+                                        state           <= CLR_D_CACHE_AND;
+                                end
 
-                                                // Invalidate data cache.
-                                                o_dcache_inv    <= 1'd1;
-                                                state           <= CLR_D_CACHE;
-                                        end
+                                CASE_FLUSH_D_CACHE:
+                                begin
 
-                                        CASE_FLUSH_I_CACHE:
-                                        begin
+                                        // Invalidate data cache.
+                                        o_dcache_inv    <= 1'd1;
+                                        state           <= CLR_D_CACHE;
+                                end
 
-                                                // Invalidate instruction cache.
-                                                o_icache_inv    <= 1'd1;
-                                                state           <= CLR_I_CACHE;
-                                        end
+                                CASE_FLUSH_I_CACHE:
+                                begin
 
-                                        CASE_CLEAN_ID_CACHE, CASE_CLEAN_D_CACHE:
-                                        begin
+                                        // Invalidate instruction cache.
+                                        o_icache_inv    <= 1'd1;
+                                        state           <= CLR_I_CACHE;
+                                end
 
-                                                o_dcache_clean <= 1'd1;
-                                                state          <= CLEAN_D_CACHE;
-                                        end
+                                CASE_CLEAN_ID_CACHE, CASE_CLEAN_D_CACHE:
+                                begin
+                                        // Clean D cache.
+                                        o_dcache_clean <= 1'd1;
+                                        state          <= CLEAN_D_CACHE;
+                                end
 
-                                        CASE_CLFLUSH_D_CACHE:
-                                        begin
+                                CASE_CLFLUSH_D_CACHE:
+                                begin
+                                        // Clean D cache.
+                                        o_dcache_clean <= 1'd1;
+                                        state          <= CLFLUSH_D_CACHE;
+                                end
 
-                                                o_dcache_clean <= 1'd1;
-                                                state          <= CLFLUSH_D_CACHE;
-                                        end
+                                CASE_CLFLUSH_ID_CACHE:
+                                begin
+                                        // Clean D cache.
+                                        o_dcache_clean <= 1'd1;
+                                        state          <= CLFLUSH_ID_CACHE;
+                                end
 
-                                        CASE_CLFLUSH_ID_CACHE:
-                                        begin
-
-                                                o_dcache_clean <= 1'd1;
-                                                state          <= CLFLUSH_ID_CACHE;
-                                        end
-
-                                        default:
-                                        begin
-                                                o_dcache_clean <= 1'd1;
-                                                state          <= CLFLUSH_ID_CACHE;
-                                        end
+                                default:
+                                begin
+                                        // Clean D cache.
+                                        o_dcache_clean <= 1'd1;
+                                        state          <= CLFLUSH_ID_CACHE;
+                                end
 
                                 endcase
                         end
                 end
 
-                // States.
                 CLEAN_D_CACHE,
                 CLFLUSH_ID_CACHE,
                 CLFLUSH_D_CACHE:
@@ -483,7 +485,7 @@ begin
                                         o_dcache_inv    <= 1'd1;
                                         state           <= CLR_D_CACHE_AND;
                                 end
-                                else // CLEAN_D_CACHE
+                                else // Clean D cache alone.
                                 begin
                                         state <= DONE;
                                 end
@@ -525,25 +527,18 @@ begin
                         begin
                                         if ( i_cp_word[20] ) // Load to CPU reg.
                                         begin
-                                                // Generate CPU Register write command. CP read.
-                                                o_reg_en        <= 1'd1;
-                                                o_reg_wr_index  <= translate( {2'd0, i_cp_word[15:12]}, i_cpsr[`ZAP_CPSR_MODE] );
-                                                o_reg_wr_data   <= i_cp_word[19:16] == 0 && i_cp_word[`ZAP_OPCODE_2] == 1 ? CACHE_TYPE_WORD :
-                                                                r[ i_cp_word[19:16] ];
-                                                state           <= DONE;
+                                                load_to_cpu_reg;
+                                                state <= DONE;
                                         end
-                                        else // Store to CPU register.
+                                        else // Store from CPU register.
                                         begin
-                                                // Generate CPU register read command. CP write.
-                                                o_reg_en        <= 1'd1;
-                                                o_reg_rd_index  <= translate({2'd0, i_cp_word[15:12]}, i_cpsr[`ZAP_CPSR_MODE]);
-                                                o_reg_wr_index  <= 16;
+                                                load_to_cp_reg;
                                                 state           <= READ_DLY;
                                         end
                         end
                         else
                         begin
-                                state        <= DONE;
+                                state <= DONE;
                         end
 
                         // Process unconditional words to CP15.
@@ -552,20 +547,14 @@ begin
                         begin
                                 if ( i_cp_word[20] ) // Load to CPU reg.
                                 begin
-                                        // Register write command.
-                                        o_reg_en        <= 1'd1;
-                                        o_reg_wr_index  <= translate( {2'd0, i_cp_word[15:12]}, i_cpsr[`ZAP_CPSR_MODE] );
-                                        o_reg_wr_data   <= i_cp_word[19:16] == 0 && i_cp_word[`ZAP_OPCODE_2] == 1 ? CACHE_TYPE_WORD :
-                                                        r[ i_cp_word[19:16] ];
-                                        state           <= DONE;
+                                        load_to_cpu_reg;
+                                        state <= DONE;
                                 end
-                                else // Store to CPU register.
+                                else // Store from CPU register.
                                 begin
                                         // Generate register read command.
-                                        o_reg_en        <= 1'd1;
-                                        o_reg_rd_index  <= translate( {2'd0, i_cp_word[15:12]}, i_cpsr[`ZAP_CPSR_MODE]);
-                                        o_reg_wr_index  <= 16;
-                                        state           <= READ_DLY;
+                                        load_to_cp_reg;
+                                        state <= READ_DLY;
                                 end
                         end
                         endcase
@@ -578,6 +567,31 @@ begin
         end
 end
 
+// Load to CP register.
+task automatic load_to_cp_reg;
+        // Generate CPU register read command. CP write.
+        o_reg_en        <= 1'd1;
+        o_reg_rd_index  <= translate({2'd0, i_cp_word[15:12]},
+                                     i_cpsr[`ZAP_CPSR_MODE]);
+        o_reg_wr_index  <= 16;
+endtask
+
+// Load to CPU register.
+task automatic load_to_cpu_reg;
+        // Register write command.
+        o_reg_en        <= 1'd1;
+        o_reg_wr_index  <= translate( {2'd0, i_cp_word[15:12]},
+                                       i_cpsr[`ZAP_CPSR_MODE] );
+        //
+        // The condition checks for CP WORD = 0 and OPCODE2 = 1 to access the
+        // hidden cache type register.
+        //
+        o_reg_wr_data   <=
+                i_cp_word[19:16] == 0 && i_cp_word[`ZAP_OPCODE_2] == 1 ?
+                CACHE_TYPE_WORD                                        :
+                r[ i_cp_word[19:16] ];
+endtask
+
 // CPU info register.
 task automatic generate_r0;
 begin
@@ -589,6 +603,7 @@ begin
 end
 endtask
 
+// CP15 R1 register.
 task automatic generate_r1;
         r[1][1]         <= 1'd0;    // Alignment fault check disabled.
         r[1][3]         <= 1'd0;    // Write buffer always disabled.
@@ -601,8 +616,10 @@ task automatic generate_r1;
                                     // 1 = 32-bit handlers enabled.
         r[1][11]        <= 1'd1;    // Branch predictor always enabled.
 
+        //
         // If only core is present, there is no cache -
         // so in that case, always set to 0.
+        //
         if ( ONLY_CORE )
         begin
                 r[1][2]  <= 1'd0;
@@ -618,20 +635,19 @@ logic [31:0] r3;
 logic [31:0] r4;
 logic [31:0] r5;
 logic [31:0] r6;
-logic unused;
 
-always_comb r0 = r[0];
-always_comb r1 = r[1];
-always_comb r2 = r[2];
-always_comb r3 = r[3];
-always_comb r4 = r[4];
-always_comb r5 = r[5];
-always_comb r6 = r[6];
-always_comb unused = |{r0, r1, r2, r3, r4, r5, r6, i_cpsr[27:5], i_icache_clean_done};
+assign r0 = r[0];
+assign r1 = r[1];
+assign r2 = r[2];
+assign r3 = r[3];
+assign r4 = r[4];
+assign r5 = r[5];
+assign r6 = r[6];
+
+wire unused = |{r0, r1, r2, r3, r4, r5, r6, i_cpsr[27:5],
+                i_icache_clean_done};
 
 endmodule
-
-
 
 // ----------------------------------------------------------------------------
 // EOF

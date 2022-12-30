@@ -33,111 +33,220 @@ module zap_alu_main #(
         // Decompile Interface. Only for debug.
         // ------------------------------------------------------------------
 
+        //
+        // Decompile interface. Decompile valid is generated from here. It
+        // is intended to be used to indicate those decompiles that did
+        // not pass CC test.
+        //
         input logic      [64*8-1:0]              i_decompile,
         output logic      [64*8-1:0]             o_decompile,
+        output logic                             o_decompile_valid,
+
+        // Last uop indication interface.
         input logic                              i_uop_last,
         output logic                             o_uop_last,
-        output logic                             o_decompile_valid,
 
         // ------------------------------------------------------------------
         // Clock and reset
         // ------------------------------------------------------------------
 
-        input logic                              i_clk,                       // Clock.
-        input logic                              i_reset,                     // sync active high reset.
+        // Clock
+        input logic                              i_clk,
+
+        // Reset
+        input logic                              i_reset,
 
         // -------------------------------------------------------------------
         // Clear and Stall signals.
         // -------------------------------------------------------------------
 
-        input logic                              i_clear_from_writeback,      // Clear unit.
-        input logic                              i_data_stall,                // DCACHE stall.
+        // Unit is flushed from writeback.
+        input logic                              i_clear_from_writeback,
+
+        // Stall from data cache.
+        input logic                              i_data_stall,
 
         // -------------------------------------------------------------------
         // Misc. signals
         // -------------------------------------------------------------------
 
-        input logic  [6:0]                       i_cpu_pid,                   // CPU process ID.
-        input logic  [31:0]                      i_cpsr_nxt,                  // From passive CPSR.
-        input logic                              i_switch_ff,                 // Switch state.
-        input logic   [1:0]                      i_taken_ff,                  // Branch prediction.
-        input logic   [31:0]                     i_ppc_ff,                    // Predicted PC.
-        input logic   [31:0]                     i_pc_ff,                     // Addr of instr.
-        input logic                              i_nozero_ff,                 // Zero flag will not be set.
+        // CPU process ID for FCSE.
+        input logic  [6:0]                       i_cpu_pid,
+
+        //
+        // CPSR from writeback. This is the passive CPSR. Assign to active
+        // CPSR on clear from writeback.
+        //
+        input logic  [31:0]                      i_cpsr_nxt,
+
+        // Switch A/T states based on bit 0 of the jump address.
+        input logic                              i_switch_ff,
+
+        // Branch state.
+        input logic   [1:0]                      i_taken_ff,
+
+        // Predicted PC from BTB.
+        input logic   [31:0]                     i_ppc_ff,
+
+        // Instruction address.
+        input logic   [31:0]                     i_pc_ff,
+
+        // When asserted, zero flag is not set.
+        input logic                              i_nozero_ff,
 
         // ------------------------------------------------------------------
-        // Source values
+        // Operand Interface
         // ------------------------------------------------------------------
 
-        input logic  [31:0]                      i_alu_source_value_ff,       // ALU source value.
-        input logic  [31:0]                      i_shifted_source_value_ff,   // Shifted source value.
-        input logic                              i_shift_carry_ff,            // Carry from shifter.
-        input logic                              i_shift_sat_ff,              // Sat. indication from shifter.
-        input logic  [31:0]                      i_pc_plus_8_ff,              // PC + 8 value.
+        // ALU source's value.
+        input logic  [31:0]                      i_alu_source_value_ff,
+
+        // Shifted source's value.
+        input logic  [31:0]                      i_shifted_source_value_ff,
+
+        // Carry from barrel shifter.
+        input logic                              i_shift_carry_ff,
+
+        // Saturation indication from barrel shifter.
+        input logic                              i_shift_sat_ff,
+
+        // PC with offet. Need not be +8, can be +4 too.
+        input logic  [31:0]                      i_pc_plus_8_ff,
+
+        // Conditional code
+        input logic  [3:0]                       i_condition_code_ff,
+
+        // Destination register index.
+        input logic  [$clog2   (PHY_REGS)-1:0]   i_destination_index_ff,
+
+        // ALU operation to perform.
+        input logic  [$clog2   (ALU_OPS)-1:0]    i_alu_operation_ff,
+
+        // Update flags if 1.
+        input logic                              i_flag_update_ff,
 
         // ------------------------------------------------------------------
         // Interrupt Tagging
         // ------------------------------------------------------------------
 
-        input logic                              i_abt_ff,                    // ABT flagged.
-        input logic                              i_irq_ff,                    // IRQ flagged.
-        input logic                              i_fiq_ff,                    // FIQ flagged.
-        input logic                              i_swi_ff,                    // SWI flagged.
-        input logic                              i_und_ff,                    // Flagged undef instructions.
-        input logic                              i_data_mem_fault,            // Flagged Data abort.
+        // Instruction abort tagged.
+        input logic                              i_abt_ff,
+
+        // IRQ tagged.
+        input logic                              i_irq_ff,
+
+        // FIQ tagged. Cannot have IRQ and FIQ at the same time.
+        input logic                              i_fiq_ff,
+
+        // SWI tagged. Cannot occur if IRQ/FIQ are present.
+        input logic                              i_swi_ff,
+
+        // Flagged undefined instructions.
+        input logic                              i_und_ff,
+
+        // Fault indication from DCache controller.
+        input logic                              i_data_mem_fault,
+
+        // Passed on from input.
+        output logic                              o_abt_ff,
+        output logic                              o_irq_ff,
+        output logic                              o_fiq_ff,
+        output logic                              o_und_ff,
+
+        // Software interrupt tagged. CC is checked.
+        output logic                              o_swi_ff,
 
         // ------------------------------------------------------------------
         // Memory Access Related
         // ------------------------------------------------------------------
 
-        input logic  [31:0]                      i_mem_srcdest_value_ff,           // Value to store.
-        input logic  [$clog2   (PHY_REGS)-1:0]   i_mem_srcdest_index_ff,           // LD/ST Memory datareg idx.
-        input logic                              i_mem_load_ff,                    // LD/ST Memory load.
-        input logic                              i_mem_store_ff,                   // LD/ST Memory store.
-        input logic                              i_mem_pre_index_ff,               // LD/ST Pre/Post index.
-        input logic                              i_mem_unsigned_byte_enable_ff,    // LD/ST uint8_t  data type.
-        input logic                              i_mem_signed_byte_enable_ff,      // LD/ST int8_t   data type.
-        input logic                              i_mem_signed_halfword_enable_ff,  // LD/ST int16_t data type.
-        input logic                              i_mem_unsigned_halfword_enable_ff,// LD/ST uint16_t  data type.
-        input logic                              i_mem_translate_ff,               // LD/ST Force user view.
-        input logic                              i_force32align_ff,                // Force address alignment to 32-bit.
+        // Value to store to memory.
+        input logic  [31:0]                      i_mem_srcdest_value_ff,
 
-        // -------------------------------------------------------------------
-        // ALU controls
-        // -------------------------------------------------------------------
+        // Data register index.
+        input logic  [$clog2   (PHY_REGS)-1:0]   i_mem_srcdest_index_ff,
 
-        input logic  [3:0]                       i_condition_code_ff,            // CC associated with instr.
-        input logic  [$clog2   (PHY_REGS)-1:0]   i_destination_index_ff,         // Target register index.
-        input logic  [$clog2   (ALU_OPS)-1:0]    i_alu_operation_ff,             // Operation to perform.
-        input logic                              i_flag_update_ff,               // Update flags if 1.
+        // Indicates a memory load.
+        input logic                              i_mem_load_ff,
+
+        // Indicates a memory store.
+        input logic                              i_mem_store_ff,
+
+        // Preindex/Postindex_n
+        input logic                              i_mem_pre_index_ff,
+
+        // Memory transfer data types.
+        input logic                              i_mem_unsigned_byte_enable_ff,
+        input logic                              i_mem_signed_byte_enable_ff,
+        input logic                              i_mem_signed_halfword_enable_ff,
+        input logic                              i_mem_unsigned_halfword_enable_ff,
+
+        // Force user view of memory.
+        input logic                              i_mem_translate_ff,
+
+        //
+        // Force address to be 32-bit aligned before generating byte
+        // enables.
+        //
+        input logic                              i_force32align_ff,
+
+        // Load/Store data register index.
+        output logic  [$clog2   (PHY_REGS)-1:0]   o_mem_srcdest_index_ff,
+
+        // Memory load required.
+        output logic                              o_mem_load_ff,
+
+        // Memory access address. Need not be 32-bit aligned.
+        output logic [31:0]                       o_mem_address_ff,
+
+        // Memory access data types.
+        output logic                              o_mem_unsigned_byte_enable_ff,
+        output logic                              o_mem_signed_byte_enable_ff,
+        output logic                              o_mem_signed_halfword_enable_ff,
+        output logic                              o_mem_unsigned_halfword_enable_ff,
+
+        //  Force user's view of memory.
+        output logic                              o_mem_translate_ff,
 
         // -----------------------------------------------------------------
-        // ALU result
+        // ALU result interface.
         // -----------------------------------------------------------------
 
-        output logic [31:0]                       o_alu_result_nxt,           // For feedback.
-        output logic [31:0]                       o_alu_result_ff,            // ALU result flopped version.
-        output logic                              o_dav_ff,                   // Instruction valid.
-        output logic                              o_dav_nxt,                  // Instruction valid _nxt version.
-        output logic [FLAG_WDT-1:0]               o_flags_ff,                 // Output flags (CPSR).
-        output logic [FLAG_WDT-1:0]               o_flags_nxt,                // CPSR next.
-        output logic [$clog2   (PHY_REGS)-1:0]    o_destination_index_ff,     // Destination register index.
+        //
+        // Note that these do not include CLZ/saturated values. That
+        // comes on the alternate port, partially.
+        //
 
-        // -----------------------------------------------------------------
-        // Interrupt Tagging
-        // -----------------------------------------------------------------
+        // ALU next value to allow back-to-back execution.
+        output logic [31:0]                       o_alu_result_nxt,
 
-        output logic                              o_abt_ff,                   // Instruction abort flagged.
-        output logic                              o_irq_ff,                   // IRQ flagged.
-        output logic                              o_fiq_ff,                   // FIQ flagged.
-        output logic                              o_swi_ff,                   // SWI flagged.
-        output logic                              o_und_ff,                   // Flagged undefined instructions
+        // Flopped ALU result.
+        output logic [31:0]                       o_alu_result_ff,
+
+        // ALU stage output valid. CC success/interrupt tagged.
+        output logic                              o_dav_ff,
+
+        // Next version of the above to allow back-to-back execution.
+        output logic                              o_dav_nxt,
+
+        // Active CPSR out.
+        output logic [FLAG_WDT-1:0]               o_flags_ff,
+
+        //
+        // Active CPSR next. For back-to-back execution. Doesn't go through
+        // a lot of logic in the shifter (the module which consumes this).
+        //
+        output logic [FLAG_WDT-1:0]               o_flags_nxt,
+
+        // Destination register index.
+        output logic [$clog2   (PHY_REGS)-1:0]    o_destination_index_ff,
 
         // -----------------------------------------------------------------
         // Jump Controls, BP Confirm, PC + 8
         // -----------------------------------------------------------------
 
-        output logic [31:0]                       o_pc_plus_8_ff,             // Instr address + 8.
+        // PC ahead value. Need not always be +8 - depends on A/T mode.
+        output logic [31:0]                       o_pc_plus_8_ff,
 
         // ALU commands pipeline clear and a predictor correction.
         output logic                              o_clear_from_alu,
@@ -148,28 +257,19 @@ module zap_alu_main #(
         // Tell branch predictor it was correct.
         output logic                              o_confirm_from_alu,
 
+        // Tells the current branch state.
         output logic [1:0]                        o_taken_ff,
 
-        // ----------------------------------------------------------------
-        // Memory access related
-        // ----------------------------------------------------------------
-
-        output logic  [$clog2   (PHY_REGS)-1:0]   o_mem_srcdest_index_ff,             // LD/ST data register.
-        output logic                              o_mem_load_ff,                      // LD/ST load indicator.
-        output logic [31:0]                       o_mem_address_ff,                   // LD/ST address to access.
-        output logic                              o_mem_unsigned_byte_enable_ff,      // uint8_t
-        output logic                              o_mem_signed_byte_enable_ff,        // int8_t
-        output logic                              o_mem_signed_halfword_enable_ff,    // int16_t
-        output logic                              o_mem_unsigned_halfword_enable_ff,  // uint16_t
-        output logic                              o_mem_translate_ff,                 // LD/ST force user view.
-
         // -------------------------------------------------------------
-        // Wishbone signal outputs.
+        // Standard Wishbone B3 signal outputs.
         // -------------------------------------------------------------
 
         output logic                              o_data_wb_we_ff,
+
+        // Driven together.
         output logic                              o_data_wb_cyc_ff,
         output logic                              o_data_wb_stb_ff,
+
         output logic [31:0]                       o_data_wb_dat_ff,
         output logic [3:0]                        o_data_wb_sel_ff,
 
@@ -177,7 +277,17 @@ module zap_alu_main #(
         // Alternate result
         // -------------------------------------------------------------
 
+        //
+        // Either CLZ data is presented here on the sign bit of the
+        // rm/rn registers.
+        //
         output logic    [31:0]                    o_alt_result_ff,
+
+        //
+        // 0x0 - Take from alu_result.
+        // 0x1 - CLZ output is presented on alt_result.
+        // 0x2 - Potential overflow (Sign bit is present on LSB of alt_result).
+        //       See o_flags_ff[27] for overflow.
         output logic    [1:0]                     o_alt_dav_ff
 );
 
@@ -225,12 +335,14 @@ logic                             sleep_ff, sleep_nxt;
 //
 logic [31:0]                      flags_ff, flags_nxt;
 
-logic [31:0]                      rm, rn; // RM = shifted source value Rn for
-                                        // non shifted source value. These are
-                                        // values and not indices.
+//
+// RM = shifted source value Rn for non shifted source value. These are
+// values and not indices.
+//
+logic [31:0]                      rm, rn;
 
-
-logic [5:0]                       clz_rm; // Count leading zeros in Rm.
+// clz_rm = CLZ (rm)
+logic [5:0]                       clz_rm;
 
 // Destination index about to be output.
 logic [$clog2   (PHY_REGS)-1:0]      o_destination_index_nxt;
@@ -533,21 +645,21 @@ begin
                 o_data_wb_cyc_nxt = 0;
                 o_data_wb_stb_nxt = 0;
         end
-        else if ( i_data_stall )
-        begin
-                // Save state.
-        end
-        else if ( i_data_mem_fault || sleep_ff || o_clear_from_alu )
+        else if
+        (
+                (~i_data_stall) &
+                (i_data_mem_fault | sleep_ff | o_clear_from_alu )
+        )
         begin
                 o_data_wb_cyc_nxt = 0;
                 o_data_wb_stb_nxt = 0;
                 o_data_wb_we_nxt  = 0;
         end
-        else
+        else if ( !i_data_stall )
         begin
-                o_data_wb_cyc_nxt = o_dav_nxt ? i_mem_load_ff | i_mem_store_ff : 1'd0;
-                o_data_wb_stb_nxt = o_dav_nxt ? i_mem_load_ff | i_mem_store_ff : 1'd0;
-                o_data_wb_we_nxt  = o_dav_nxt ? i_mem_store_ff                 : 1'd0;
+                o_data_wb_cyc_nxt = o_dav_nxt & (i_mem_load_ff | i_mem_store_ff);
+                o_data_wb_stb_nxt = o_dav_nxt & (i_mem_load_ff | i_mem_store_ff);
+                o_data_wb_we_nxt  = o_dav_nxt & i_mem_store_ff;
                 o_data_wb_dat_nxt = mem_srcdest_value_nxt;
                 o_data_wb_sel_nxt = ben_nxt;
         end
@@ -726,17 +838,19 @@ end
 // Flag propagation and branch prediction feedback unit
 // ----------------------------------------------------------------------------
 
-always_comb
-begin
-        o_dav_nxt  = is_cc_satisfied ( i_condition_code_ff, flags_ff[31:28] );
-        o_dav_nxt |= i_irq_ff || i_fiq_ff || i_abt_ff || i_und_ff;
-end
+wire load_to_pc = i_mem_srcdest_index_ff == {2'd0, ARCH_PC} &&
+                  o_dav_nxt                                 &&
+                  i_mem_load_ff;
 
-always_comb
-begin
-        sleep_nxt  = i_irq_ff || i_fiq_ff || i_abt_ff || i_und_ff || (i_swi_ff && o_dav_nxt);
-        sleep_nxt |= i_mem_srcdest_index_ff == {2'd0, ARCH_PC} && o_dav_nxt && i_mem_load_ff;
-end
+assign  o_dav_nxt  = is_cc_satisfied ( i_condition_code_ff, flags_ff[31:28] )
+                     || i_irq_ff || i_fiq_ff || i_abt_ff || i_und_ff;
+
+assign  sleep_nxt  =    i_irq_ff   ||
+                        i_fiq_ff   ||
+                        i_abt_ff   ||
+                        i_und_ff   ||
+                        load_to_pc ||
+                        (i_swi_ff && o_dav_nxt);
 
 // Debug
 always_comb
@@ -761,16 +875,21 @@ begin
         begin
                 if ( flags_ff[`ZAP_CPSR_MODE] == USR )
                         assert ( tmp_flags[23:0] == flags_ff[23:0] ) else
-                                $info("Info: USR attempting to change 23:0 of CPSR. Blocked.");
+                $info("Info: USR attempting to change 23:0 of CPSR. Blocked.");
         end
-        else if ( i_destination_index_ff == {2'd0, ARCH_PC} && i_condition_code_ff != NV && !i_reset )
+        else if ( i_destination_index_ff == {2'd0, ARCH_PC} &&
+                  i_condition_code_ff != NV && !i_reset )
         begin
                 if ( flags_ff[`ZAP_CPSR_MODE] == USR )
                         if ( i_flag_update_ff && o_dav_nxt )
-                                 assert ( i_mem_srcdest_value_ff[23:0] == flags_ff[23:0] ) else
-                                        $info("Info: USR attempting to change 23:0 of CPSR. Blocked.");
+                                 assert ( i_mem_srcdest_value_ff[23:0] ==
+                                          flags_ff[23:0] ) else
+                $info("Info: USR attempting to change 23:0 of CPSR. Blocked.");
         end
 end
+
+wire branch_instruction = i_destination_index_ff == {2'd0, ARCH_PC} &&
+                          (i_condition_code_ff != NV);
 
 always_comb
 begin: flags_bp_feedback
@@ -789,10 +908,11 @@ begin: flags_bp_feedback
                 w_clear_from_alu        = NEXT_INSTR_RESYNC;
 
                 // USR cannot change 23:0. Will silently fail.
-                flags_nxt[23:0]   = (flags_ff[`ZAP_CPSR_MODE] == USR) ? flags_ff[23:0] :
-                flags_nxt[23:0]; // Security.
+                flags_nxt[23:0]   = (flags_ff[`ZAP_CPSR_MODE] == USR) ?
+                 flags_ff[23:0] :
+                flags_nxt[23:0] ; // Security.
         end
-        else if ( i_destination_index_ff == {2'd0, ARCH_PC} && (i_condition_code_ff != NV) )
+        else if ( branch_instruction )
         begin: branch_block
                 o_destination_index_nxt = PHY_RAZ_REGISTER;
 
@@ -805,8 +925,9 @@ begin: flags_bp_feedback
                         flags_nxt                   = i_mem_srcdest_value_ff;
 
                         // USR cannot change 23:0, will silently fail.
-                        flags_nxt[23:0]   = (flags_ff[`ZAP_CPSR_MODE] == USR) ? flags_ff[23:0] :
-                        flags_nxt[23:0]; // Security.
+                        flags_nxt[23:0] = (flags_ff[`ZAP_CPSR_MODE] == USR) ?
+                         flags_ff[23:0] :
+                        flags_nxt[23:0] ; // Security.
                 end
                 else if ( o_dav_nxt ) // Branch taken and no flag update.
                 begin
