@@ -1,32 +1,26 @@
-// -----------------------------------------------------------------------------
-// --                                                                         --
-// --    (C) 2016-2022 Revanth Kamaraj (krevanth)                             --
-// --                                                                         --
-// -- --------------------------------------------------------------------------
-// --                                                                         --
-// -- This program is free software; you can redistribute it and/or           --
-// -- modify it under the terms of the GNU General Public License             --
-// -- as published by the Free Software Foundation; either version 2          --
-// -- of the License, or (at your option) any later version.                  --
-// --                                                                         --
-// -- This program is distributed in the hope that it will be useful,         --
-// -- but WITHOUT ANY WARRANTY; without even the implied warranty of          --
-// -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           --
-// -- GNU General Public License for more details.                            --
-// --                                                                         --
-// -- You should have received a copy of the GNU General Public License       --
-// -- along with this program; if not, write to the Free Software             --
-// -- Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA           --
-// -- 02110-1301, USA.                                                        --
-// --                                                                         --
-// -----------------------------------------------------------------------------
-// --                                                                         --
-// -- This module performs core ARM instruction decoding by translating ARM   --
-// -- instructions into an internal long format that can be processed by core --
-// -- logic. Note that the predecode stage must change the 32-bit instr. to   --
-// -- 36-bit before feeding it into this unit.                                --
-// --                                                                         --
-// -----------------------------------------------------------------------------
+//
+//    (C) 2016-2022 Revanth Kamaraj (krevanth)
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+// 02110-1301, USA.
+//
+// This module performs core ARM instruction decoding by translating ARM
+// instructions into an internal long format that can be processed by core
+// logic. Note that the predecode stage must change the 32-bit instr. to
+// 36-bit before feeding it into this unit.
+//
 
 module zap_decode (
 
@@ -69,39 +63,39 @@ o_switch // Switch between ARM and Thumb may be needed if this is 1.
 
 // ----------------------------------------------------------------------------
 
-        // Number of architectural registers.
-        parameter ARCH_REGS = 32;
+// Number of architectural registers.
+parameter ARCH_REGS = 32;
 
-        // Number of opcodes.
-        parameter ALU_OPS   = 32;
+// Number of opcodes.
+parameter ALU_OPS   = 32;
 
-        // Number of shift operations.
-        parameter SHIFT_OPS = 6;
+// Number of shift operations.
+parameter SHIFT_OPS = 6;
 
 
-                // I/O Ports.
-                input   logic                             i_irq, i_fiq, i_abt;
-                input    logic   [35:0]                   i_instruction;
-                input    logic                            i_instruction_valid;
-                output   logic    [3:0]                   o_condition_code;
-                output   logic    [$clog2(ARCH_REGS)-1:0] o_destination_index;
-                output   logic    [32:0]                  o_alu_source;
-                output   logic    [$clog2(ALU_OPS)-1:0]   o_alu_operation;
-                output   logic    [32:0]                  o_shift_source;
-                output   logic    [$clog2(SHIFT_OPS)-1:0] o_shift_operation;
-                output   logic    [32:0]                  o_shift_length;
-                output  logic                             o_flag_update;
-                output  logic   [$clog2(ARCH_REGS)-1:0]   o_mem_srcdest_index;
-                output  logic                             o_mem_load;
-                output  logic                             o_mem_store;
-                output  logic                             o_mem_pre_index;
-                output  logic                             o_mem_unsigned_byte_enable;
-                output  logic                             o_mem_signed_byte_enable;
-                output  logic                             o_mem_signed_halfword_enable;
-                output  logic                             o_mem_unsigned_halfword_enable;
-                output  logic                             o_mem_translate;
-                output  logic                             o_und;
-                output  logic                             o_switch;
+// I/O Ports.
+input   logic                             i_irq, i_fiq, i_abt;
+input    logic   [35:0]                   i_instruction;
+input    logic                            i_instruction_valid;
+output   logic    [3:0]                   o_condition_code;
+output   logic    [$clog2(ARCH_REGS)-1:0] o_destination_index;
+output   logic    [32:0]                  o_alu_source;
+output   logic    [$clog2(ALU_OPS)-1:0]   o_alu_operation;
+output   logic    [32:0]                  o_shift_source;
+output   logic    [$clog2(SHIFT_OPS)-1:0] o_shift_operation;
+output   logic    [32:0]                  o_shift_length;
+output  logic                             o_flag_update;
+output  logic   [$clog2(ARCH_REGS)-1:0]   o_mem_srcdest_index;
+output  logic                             o_mem_load;
+output  logic                             o_mem_store;
+output  logic                             o_mem_pre_index;
+output  logic                             o_mem_unsigned_byte_enable;
+output  logic                             o_mem_signed_byte_enable;
+output  logic                             o_mem_signed_halfword_enable;
+output  logic                             o_mem_unsigned_halfword_enable;
+output  logic                             o_mem_translate;
+output  logic                             o_und;
+output  logic                             o_switch;
 
 // ----------------------------------------------------------------------------
 
@@ -862,3 +856,6 @@ endfunction
 
 endmodule // zap_decode.v
 
+// ----------------------------------------------------------------------------
+// EOF
+// ----------------------------------------------------------------------------
