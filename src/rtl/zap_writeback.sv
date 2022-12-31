@@ -375,7 +375,7 @@ begin: register_file_write
         else if ( i_swi )
         begin
                 wen                     = 1;
-                wdata1                  = arm_mode ? i_wr_data : i_pc_plus_8_buf_ff ;
+                wdata1                  = arm_mode ? i_wr_data : i_pc_plus_8_buf_ff - 32'd4;
                 wa1                     = PHY_SVC_R14;
                 wa2                     = PHY_SVC_SPSR;
                 wdata2                  = cpsr_ff;
@@ -386,7 +386,7 @@ begin: register_file_write
         else if ( i_und )
         begin
                 wen                     = 1;
-                wdata1                  = arm_mode ? i_wr_data : i_pc_plus_8_buf_ff ;
+                wdata1                  = arm_mode ? i_wr_data : i_pc_plus_8_buf_ff - 32'd4;
                 wa1                     = PHY_UND_R14;
                 wa2                     = PHY_UND_SPSR;
                 wdata2                  = cpsr_ff;
