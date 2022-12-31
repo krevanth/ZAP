@@ -1,31 +1,27 @@
-// -----------------------------------------------------------------------------
-// --                                                                         --
-// --    (C) 2016-2022 Revanth Kamaraj (krevanth)                             --
-// --                                                                         --
-// -- --------------------------------------------------------------------------
-// --                                                                         --
-// -- This program is free software; you can redistribute it and/or           --
-// -- modify it under the terms of the GNU General Public License             --
-// -- as published by the Free Software Foundation; either version 2          --
-// -- of the License, or (at your option) any later version.                  --
-// --                                                                         --
-// -- This program is distributed in the hope that it will be useful,         --
-// -- but WITHOUT ANY WARRANTY; without even the implied warranty of          --
-// -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           --
-// -- GNU General Public License for more details.                            --
-// --                                                                         --
-// -- You should have received a copy of the GNU General Public License       --
-// -- along with this program; if not, write to the Free Software             --
-// -- Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA           --
-// -- 02110-1301, USA.                                                        --
-// --                                                                         --
-// -----------------------------------------------------------------------------
-// --                                                                        --
-// --  This is the top module of the ZAP processor. It contains instances of --
-// --  processor core and the memory management units. I and D WB busses     --
-// --  are provided.                                                         --
-// --                                                                        --
-// ----------------------------------------------------------------------------
+//
+// (C) 2016-2022 Revanth Kamaraj (krevanth)
+//
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+// 02110-1301, USA.
+//
+//
+// This is the top module of the ZAP processor. It contains instances of
+// processor core and the memory management units. I and D WB busses
+// are provided.
+//
 
 module zap_top #(
 
@@ -134,7 +130,8 @@ always_comb o_wb_bte = 2'b00; // Linear Burst.
 `include "zap_functions.svh"
 
 // Assertion.
-always@(posedge i_clk) if (!i_reset && o_wb_cyc) assert ( |o_wb_cti ) else  $fatal(2, "O_WB_CTI is not EOB.");
+always@(posedge i_clk) if (!i_reset && o_wb_cyc)
+        assert ( |o_wb_cti ) else  $fatal(2, "O_WB_CTI is not EOB.");
 
 logic            wb_cyc, wb_stb, wb_we;
 logic [3:0]      wb_sel;
@@ -198,9 +195,9 @@ zap_dual_rank_synchronizer #(.WIDTH(2)) u_sync (
 
 /* verilator lint_off UNUSEDSIGNAL */
 
-wire [2047:0] o_trace;
-wire          o_trace_valid;
-wire          o_trace_uop_last;
+wire [2047:0]       o_trace;
+wire                o_trace_valid;
+wire                o_trace_uop_last;
 
 /* verilator lint_on UNUSEDSIGNAL */
 
@@ -278,11 +275,13 @@ zap_core #(
 .o_itlb_inv             (cpu_itlb_inv),
 .o_dcache_en            (cpu_dc_en),
 .o_icache_en            (cpu_ic_en),
-.o_data_wb_adr_nxt      (cpu_daddr_nxt), // Data addr nxt. Used to drive address of data tag RAM.
+.o_data_wb_adr_nxt      (cpu_daddr_nxt),
+// Data addr nxt. Used to drive address of data tag RAM.
 .o_data_wb_adr_check    (cpu_daddr_check),
 .o_data_wb_we_check     (cpu_dwe_check),
 .o_data_wb_re_check     (cpu_dre_check),
-.o_instr_wb_adr_nxt     (cpu_iaddr_nxt), // PC addr nxt. Drives read address of code tag RAM.
+.o_instr_wb_adr_nxt     (cpu_iaddr_nxt),
+// PC addr nxt. Drives read address of code tag RAM.
 .o_instr_wb_adr_check   (cpu_iaddr_check),
 .o_cpsr                 (cpu_cpsr[`ZAP_CPSR_MODE]),
 .o_dc_reg_idx           (dc_rreg_idx),
@@ -466,7 +465,10 @@ else // if ( ONLY_CORE )
         .i_d_wb_stb(cpu_dc_stb),
         .i_d_wb_cyc(cpu_dc_stb),
         .i_d_wb_wen(cpu_dc_we),
-        .i_d_wb_sel(BE_32_ENABLE ? be_sel_32(cpu_dc_sel) : cpu_dc_sel), // Swap sel from CPU.
+
+        // Swap sel from CPU if BE_32_ENABLE = 1.
+        .i_d_wb_sel(BE_32_ENABLE ? be_sel_32(cpu_dc_sel) : cpu_dc_sel),
+
         .i_d_wb_dat(cpu_dc_dat),
         .i_d_wb_adr(cpu_daddr),
         .i_d_wb_cti(3'b111),
@@ -485,9 +487,9 @@ else // if ( ONLY_CORE )
 
 endgenerate
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 // Put cache and MMU only if ONLY_CORE == 0
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 
 generate
 if ( !ONLY_CORE )
@@ -645,4 +647,6 @@ endgenerate
 
 endmodule // zap_top.v
 
-
+///////////////////////////////////////////////////////////////////////////////
+// EOF
+///////////////////////////////////////////////////////////////////////////////

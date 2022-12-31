@@ -1,35 +1,29 @@
-// ---------------------------------------------------------------------------
-// --                                                                       --
-// --    (C) 2016-2022 Revanth Kamaraj (krevanth)                           --
-// --                                                                       --
-// -- ------------------------------------------------------------------------
-// --                                                                       --
-// -- This program is free software; you can redistribute it and/or         --
-// -- modify it under the terms of the GNU General Public License           --
-// -- as published by the Free Software Foundation; either version 2        --
-// -- of the License, or (at your option) any later version.                --
-// --                                                                       --
-// -- This program is distributed in the hope that it will be useful,       --
-// -- but WITHOUT ANY WARRANTY; without even the implied warranty of        --
-// -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         --
-// -- GNU General Public License for more details.                          --
-// --                                                                       --
-// -- You should have received a copy of the GNU General Public License     --
-// -- along with this program; if not, write to the Free Software           --
-// -- Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA         --
-// -- 02110-1301, USA.                                                      --
-// --                                                                       --
-// ---------------------------------------------------------------------------
-// --                                                                       --
-// -- This stage converts register indices into actual values. Register     --
-// -- indices are also pumped forward to allow resolution in the shift      --
-// -- stage. PC references must be resolved here since the value gives      --
-// -- PC + 8. Instructions requiring shifts stall if the target registers   --
-// -- are in the outputs of this stage. We do not issue a multiply if the   --
-// -- source is still in the output of this stage just like shifts. That's  --
-// -- to ensure incorrect registers are not read.                           --
-// --                                                                       --
-// ---------------------------------------------------------------------------
+//
+// (C) 2016-2022 Revanth Kamaraj (krevanth)
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+// 02110-1301, USA.
+//
+// This stage converts register indices into actual values. Register
+// indices are also pumped forward to allow resolution in the shift
+// stage. PC references must be resolved here since the value gives
+// PC + 8. Instructions requiring shifts stall if the target registers
+// are in the outputs of this stage. We do not issue a multiply if the
+// source is still in the output of this stage just like shifts. That's
+// to ensure incorrect registers are not read.
+//
 
 module zap_issue_main
 #(
@@ -46,9 +40,9 @@ module zap_issue_main
         parameter SHIFT_OPS = 5
 )
 (
-        // Clock and reset and other controls.
-        input  logic                             i_clk,    // ZAP clock.
-        input  logic                             i_reset, // Active high sync.
+        // Clock and reset.
+        input  logic                             i_clk,
+        input  logic                             i_reset,
 
         // UOP
         input   logic                            i_uop_last,
@@ -62,13 +56,10 @@ module zap_issue_main
         input logic                              i_clear_from_alu,
         input logic                              i_stall_from_shifter,
 
-        // From decode
-
-        // -----------------------------------
-        // Inputs from decode.
-        // Look at the decode stage for the
+        // ------------------------------------------------------
+        // Inputs from decode. Look at the decode stage for the
         // meaning of these ports...
-        // -----------------------------------
+        // ------------------------------------------------------
 
         input logic  [31:0]                      i_pc_plus_8_ff,
         input logic  [31:0]                      i_pc_ff,
@@ -128,9 +119,9 @@ module zap_issue_main
         input logic  [$clog2(PHY_REGS )-1:0]     i_alu_destination_index_ff,
 
         // Flopped destination from the post ALU.
-        input logic  [$clog2(PHY_REGS)-1:0]     i_postalu0_destination_index_ff, // ADDED+
-        input logic  [$clog2(PHY_REGS)-1:0]     i_postalu1_destination_index_ff, // ADDED++
-        input logic  [$clog2(PHY_REGS)-1:0]     i_postalu_destination_index_ff, // ADDED
+        input logic  [$clog2(PHY_REGS)-1:0]     i_postalu0_destination_index_ff,
+        input logic  [$clog2(PHY_REGS)-1:0]     i_postalu1_destination_index_ff,
+        input logic  [$clog2(PHY_REGS)-1:0]     i_postalu_destination_index_ff,
 
         // Flopped destination from the memory stage.
         input logic  [$clog2(PHY_REGS )-1:0]     i_memory_destination_index_ff,
@@ -143,9 +134,9 @@ module zap_issue_main
         input logic                              i_shifter_dav_ff,
         input logic                              i_alu_dav_nxt,
         input logic                              i_alu_dav_ff,
-        input logic                              i_postalu0_dav_ff, // ADDED+
-        input logic                              i_postalu1_dav_ff, // ADDED++
-        input logic                              i_postalu_dav_ff, // ADDED
+        input logic                              i_postalu0_dav_ff,
+        input logic                              i_postalu1_dav_ff,
+        input logic                              i_postalu_dav_ff,
         input logic                              i_memory_dav_ff,
 
         //
@@ -160,9 +151,9 @@ module zap_issue_main
         input logic  [31:0]                      i_alu_destination_value_ff,
 
         // PostALU result
-        input logic  [31:0]                      i_postalu0_destination_value_ff, // ADDED+
-        input logic  [31:0]                      i_postalu1_destination_value_ff, // ADDED++
-        input logic  [31:0]                      i_postalu_destination_value_ff, // ADDED
+        input logic  [31:0]                      i_postalu0_destination_value_ff,
+        input logic  [31:0]                      i_postalu1_destination_value_ff,
+        input logic  [31:0]                      i_postalu_destination_value_ff,
 
         // Result in the memory stage of the pipeline.
         input logic  [31:0]                      i_memory_destination_value_ff,
@@ -174,16 +165,16 @@ module zap_issue_main
         //
         input logic  [5:0]                       i_shifter_mem_srcdest_index_ff,
         input logic  [5:0]                       i_alu_mem_srcdest_index_ff,
-        input logic  [5:0]                       i_postalu0_mem_srcdest_index_ff, // ADDED+
-        input logic  [5:0]                       i_postalu1_mem_srcdest_index_ff, // ADDED++
-        input logic  [5:0]                       i_postalu_mem_srcdest_index_ff, // ADDED
+        input logic  [5:0]                       i_postalu0_mem_srcdest_index_ff,
+        input logic  [5:0]                       i_postalu1_mem_srcdest_index_ff,
+        input logic  [5:0]                       i_postalu_mem_srcdest_index_ff,
         input logic  [5:0]                       i_memory_mem_srcdest_index_ff,
 
-        input logic                              i_shifter_mem_load_ff,//1 if load.
+        input logic                              i_shifter_mem_load_ff,
         input logic                              i_alu_mem_load_ff,
-        input logic                              i_postalu0_mem_load_ff, // ADDED+
-        input logic                              i_postalu1_mem_load_ff, // ADDED++
-        input logic                              i_postalu_mem_load_ff, // ADDED
+        input logic                              i_postalu0_mem_load_ff,
+        input logic                              i_postalu1_mem_load_ff,
+        input logic                              i_postalu_mem_load_ff,
         input logic                              i_memory_mem_load_ff,
 
         // -----------------------------------
@@ -246,7 +237,7 @@ module zap_issue_main
         output logic      [32:0]                  o_alu_source_ff,
         output logic      [32:0]                  o_shift_source_ff,
 
-        // *********** Stall everything before this if 1 *********.
+        // Stall all stages before this if this is 1.
         output logic                               o_stall_from_issue,
 
         // The PC value.
@@ -273,7 +264,6 @@ module zap_issue_main
 `include "zap_localparams.svh"
 
 logic o_shifter_disable_nxt;
-logic unused;
 logic [31:0] o_alu_source_value_nxt,
            o_shift_source_value_nxt,
            o_shift_length_value_nxt,
@@ -287,7 +277,11 @@ logic shift_lock;
 logic load_lock;
 logic flag_lock;
 logic lock;
-// Asserted when an instruction cannot be issued and leads to all stages before it stalling.
+
+//
+// Asserted when an instruction cannot be issued and leads to all stages
+// before it stalling.
+//
 
 // Skid MUX output.
 logic  [31:0]                      skid_pc_plus_8_ff;
@@ -321,54 +315,69 @@ logic                              skid_force32align_ff;
 logic                              skid_und_ff;
 logic  [31:0]                      skid_ppc_ff;
 
-always_comb  lock = shift_lock | load_lock | flag_lock;
+assign lock = (shift_lock | load_lock | flag_lock) &
+              (skid_condition_code_ff != NV);
 
-task automatic clear;
-begin
-        o_condition_code_ff               <= NV;
-        o_irq_ff                          <= 0;
-        o_fiq_ff                          <= 0;
-        o_abt_ff                          <= 0;
-        o_swi_ff                          <= 0;
-        o_und_ff                          <= 0;
-        o_flag_update_ff                  <= 0;
-end
-endtask
+wire clear = i_clear_from_writeback | i_clear_from_alu;
+wire stall = i_data_stall           | i_stall_from_shifter;
 
 always_ff @ ( posedge i_clk )
 begin
         if ( i_reset )
         begin
-                reset;
-                clear;
+                o_condition_code_ff               <= 0;
+                o_destination_index_ff            <= 0;
+                o_alu_operation_ff                <= 0;
+                o_shift_operation_ff              <= 0;
+                o_flag_update_ff                  <= 0;
+                o_mem_srcdest_index_ff            <= 0;
+                o_mem_load_ff                     <= 0;
+                o_mem_store_ff                    <= 0;
+                o_mem_pre_index_ff                <= 0;
+                o_mem_unsigned_byte_enable_ff     <= 0;
+                o_mem_signed_byte_enable_ff       <= 0;
+                o_mem_signed_halfword_enable_ff   <= 0;
+                o_mem_unsigned_halfword_enable_ff <= 0;
+                o_mem_translate_ff                <= 0;
+                o_irq_ff                          <= 0;
+                o_fiq_ff                          <= 0;
+                o_abt_ff                          <= 0;
+                o_swi_ff                          <= 0;
+                o_pc_plus_8_ff                    <= 0;
+                o_shifter_disable_ff              <= 0;
+                o_alu_source_ff                   <= 0;
+                o_shift_source_ff                 <= 0;
+                o_alu_source_value_ff             <= 0;
+                o_shift_source_value_ff           <= 0;
+                o_shift_length_value_ff           <= 0;
+                o_mem_srcdest_value_ff            <= 0;
+                o_switch_ff                       <= 0;
+                o_force32align_ff                 <= 0;
+                o_und_ff                          <= 0;
+                o_taken_ff                        <= 0;
+                o_pc_ff                           <= 0;
+                o_decompile                       <= 0;
+                o_ppc_ff                          <= 0;
+                o_stall_from_issue                <= 0;
         end
-        else if ( i_clear_from_writeback )
+        else if ( clear )
         begin
-                clear;
+                o_condition_code_ff  <= NV;
+                o_irq_ff             <= 0;
+                o_fiq_ff             <= 0;
+                o_abt_ff             <= 0;
+                o_swi_ff             <= 0;
+                o_und_ff             <= 0;
+                o_flag_update_ff     <= 0;
+                o_stall_from_issue   <= 0;
         end
-        else if ( i_data_stall )
+        else if ( ~stall )
         begin
-                // Preserve values.
-        end
-        else if ( i_clear_from_alu )
-        begin
-                clear;
-        end
-        else if ( i_stall_from_shifter )
-        begin
-                // Preserve values.
-        end
-        else if ( lock )
-        begin
-                clear;
-        end
-        else
-        begin
-                o_condition_code_ff               <= skid_condition_code_ff;
+                o_condition_code_ff               <= lock ? NV : skid_condition_code_ff;
                 o_destination_index_ff            <= skid_destination_index_ff;
                 o_alu_operation_ff                <= skid_alu_operation_ff;
                 o_shift_operation_ff              <= skid_shift_operation_ff;
-                o_flag_update_ff                  <= skid_flag_update_ff;
+                o_flag_update_ff                  <= lock ? 1'd0 : skid_flag_update_ff;
                 o_mem_srcdest_index_ff            <= skid_mem_srcdest_index_ff;
                 o_mem_load_ff                     <= skid_mem_load_ff;
                 o_mem_store_ff                    <= skid_mem_store_ff;
@@ -378,10 +387,10 @@ begin
                 o_mem_signed_halfword_enable_ff   <= skid_mem_signed_halfword_enable_ff;
                 o_mem_unsigned_halfword_enable_ff <= skid_mem_unsigned_halfword_enable_ff;
                 o_mem_translate_ff                <= skid_mem_translate_ff;
-                o_irq_ff                          <= skid_irq_ff;
-                o_fiq_ff                          <= skid_fiq_ff;
-                o_abt_ff                          <= skid_abt_ff;
-                o_swi_ff                          <= skid_swi_ff;
+                o_irq_ff                          <= lock ? 1'd0 : skid_irq_ff;
+                o_fiq_ff                          <= lock ? 1'd0 : skid_fiq_ff;
+                o_abt_ff                          <= lock ? 1'd0 : skid_abt_ff;
+                o_swi_ff                          <= lock ? 1'd0 : skid_swi_ff;
                 o_pc_plus_8_ff                    <= skid_pc_plus_8_ff;
                 o_shifter_disable_ff              <= o_shifter_disable_nxt;
                 o_alu_source_ff                   <= skid_alu_source_ff;
@@ -396,18 +405,51 @@ begin
                 o_taken_ff                        <= skid_taken_ff;
                 o_ppc_ff                          <= skid_ppc_ff;
                 o_pc_ff                           <= skid_pc_ff;
-
-                // For debug
                 o_decompile                       <= skid_decompile;
                 o_uop_last                        <= skid_uop_last;
+                o_stall_from_issue                <= lock;
         end
 end
+
+// Skid buffer.
+always_ff @ ( posedge i_clk ) if ( ~o_stall_from_issue )
+        skid <= {
+                i_pc_plus_8_ff,
+                i_pc_ff,
+                i_switch_ff,
+                i_taken_ff,
+                i_decompile,
+                i_uop_last,
+                i_condition_code_ff,
+                i_destination_index_ff,
+                i_alu_source_ff,
+                i_alu_operation_ff,
+                i_shift_source_ff,
+                i_shift_operation_ff,
+                i_shift_length_ff,
+                i_flag_update_ff,
+                i_mem_srcdest_index_ff,
+                i_mem_load_ff,
+                i_mem_store_ff,
+                i_mem_pre_index_ff,
+                i_mem_unsigned_byte_enable_ff,
+                i_mem_signed_byte_enable_ff,
+                i_mem_signed_halfword_enable_ff,
+                i_mem_unsigned_halfword_enable_ff,
+                i_mem_translate_ff,
+                i_irq_ff,
+                i_fiq_ff,
+                i_abt_ff,
+                i_swi_ff,
+                i_force32align_ff,
+                i_und_ff,
+                i_ppc_ff
+        };
+
 
 // Get values from the feedback network.
 always_comb
 begin
-
-
         o_alu_source_value_nxt  =
         get_register_value (    skid_alu_source_ff,
                                 2'd0,
@@ -545,215 +587,10 @@ end
 
 
 // Apply index to register file.
-always_comb
-begin
-        o_rd_index_0 = skid_alu_source_ff[5:0];
-        o_rd_index_1 = skid_shift_source_ff[5:0];
-        o_rd_index_2 = skid_shift_length_ff[5:0];
-        o_rd_index_3 = skid_mem_srcdest_index_ff[5:0];
-end
-
-
-//
-// Straightforward read feedback function. Looks at all stages of the pipeline
-// to extract the latest value of the register.
-//
-function [31:0] get_register_value (
-
-        // The register inex to search for. This might be a constant too.
-        input [32:0]                    index,
-
-        // Register read port activated for this function.
-        input [1:0]                     rd_port,
-
-        // Destination on the output of the shifter stage.
-        input [$clog2(PHY_REGS)-1:0]    shifter_destination_index_ff,
-
-        // ALU output is valid.
-        input                           alu_dav_nxt,
-
-        // ALU output.
-        input [31:0]                    alu_destination_value_nxt,
-
-        // ALU flopped result.
-        input [31:0]                    alu_destination_value_ff,
-
-        // ALU flopped destination index.
-        input [$clog2(PHY_REGS)-1:0]    alu_destination_index_ff,
-
-        // Valid flopped (EX stage).
-        input                           alu_dav_ff,
-
-        input  [$clog2(PHY_REGS)-1:0]   postalu0_destination_index_ff,
-        input  [31:0]                   postalu0_destination_value_ff,
-        input                           postalu0_dav_ff,
-
-        input  [$clog2(PHY_REGS)-1:0]   postalu1_destination_index_ff,
-        input  [31:0]                   postalu1_destination_value_ff,
-        input                           postalu1_dav_ff,
-
-        input  [$clog2(PHY_REGS)-1:0]   postalu_destination_index_ff,
-        input  [31:0]                   postalu_destination_value_ff,
-        input                           postalu_dav_ff,
-
-        // Memory stage destination index (pointer)
-        input [$clog2(PHY_REGS)-1:0]    memory_destination_index_ff,
-        input [31:0]                    memory_destination_value_ff,
-        input                           memory_dav_ff,
-
-        // Data read from register file.
-        input [31:0]                    rd_data_0,
-        input [31:0]                    rd_data_1,
-        input [31:0]                    rd_data_2,
-        input [31:0]                    rd_data_3,
-
-        // CPU mode and PC.
-        input [31:0]                    cpu_mode,
-        input [31:0]                    pc_plus_8_ff
-);
-
-logic [31:0] get;
-
-begin
-        if   ( index[32] )                 // Catch constant here.
-        begin
-                get = index[31:0];
-        end
-        else if ( index[5:0] == PHY_RAZ_REGISTER[5:0] )   // Catch RAZ here.
-        begin
-               // Return 0.
-                get = 32'd0;
-        end
-        else if   ( index[5:0] == {2'd0, ARCH_PC[3:0]} ) // Catch PC here. ARCH index = PHY index so no problem.
-        begin
-                 get = pc_plus_8_ff;
-        end
-        else if ( index[5:0] == PHY_CPSR[5:0] )   // Catch CPSR here.
-        begin
-                get = cpu_mode[31:0];
-        end
-        // Match in ALU stage.
-        else if   ( index[5:0] == shifter_destination_index_ff[5:0] && alu_dav_nxt  )
-        begin   // ALU effectively never changes destination so no need to look at _nxt.
-                        get =  alu_destination_value_nxt;
-        end
-        // Match in output of ALU stage.
-        else if   ( index[5:0] == alu_destination_index_ff[5:0] &&   alu_dav_ff       )
-        begin
-                        get =  alu_destination_value_ff;
-        end
-        // Match is output of postALU0 stage.
-        else if   ( index[5:0] == postalu0_destination_index_ff[5:0] && postalu0_dav_ff )
-        begin
-                        get = postalu0_destination_value_ff;
-        end
-        // Match is in output of postALU1 stage.
-        else if ( index[5:0] == postalu1_destination_index_ff[5:0] && postalu1_dav_ff )
-        begin
-                        get = postalu1_destination_value_ff;
-        end
-        // Match in output of postALU stage.
-        else if   ( index[5:0] == postalu_destination_index_ff[5:0] && postalu_dav_ff )
-        begin
-                        get = postalu_destination_value_ff;
-        end
-        // Match in output of memory stage.
-        else if   ( index[5:0] ==   memory_destination_index_ff[5:0] &&   memory_dav_ff )
-        begin
-                        get =    memory_destination_value_ff;
-        end
-        else    // Index not found in the pipeline, fallback to register access.
-        begin
-                case ( rd_port )
-                        0: get =   rd_data_0;
-                        1: get =   rd_data_1;
-                        2: get =   rd_data_2;
-                        3: get =   rd_data_3;
-                endcase
-        end
-
-        get_register_value = get;
-end
-endfunction
-
-// ############################################################################
-
-always_ff @ ( posedge i_clk )
-begin
-        if ( i_reset )
-        begin
-                o_stall_from_issue <= 1'd0;
-                skid               <= '0;
-        end
-        else if ( i_clear_from_writeback )
-        begin
-                o_stall_from_issue <= 1'd0;
-        end
-        else if ( i_data_stall )
-        begin
-
-        end
-        else if ( i_clear_from_alu )
-        begin
-                o_stall_from_issue <= 1'd0;
-        end
-        else if ( i_stall_from_shifter )
-        begin
-
-        end
-        else case ( o_stall_from_issue )
-
-        1'd0:
-        begin
-                if ( lock )
-                begin
-                        o_stall_from_issue <= 1'd1;
-
-                        skid <= {
-                                        i_pc_plus_8_ff,
-                                        i_pc_ff,
-                                        i_switch_ff,
-                                        i_taken_ff,
-                                        i_decompile,
-                                        i_uop_last,
-                                        i_condition_code_ff,
-                                        i_destination_index_ff,
-                                        i_alu_source_ff,
-                                        i_alu_operation_ff,
-                                        i_shift_source_ff,
-                                        i_shift_operation_ff,
-                                        i_shift_length_ff,
-                                        i_flag_update_ff,
-                                        i_mem_srcdest_index_ff,
-                                        i_mem_load_ff,
-                                        i_mem_store_ff,
-                                        i_mem_pre_index_ff,
-                                        i_mem_unsigned_byte_enable_ff,
-                                        i_mem_signed_byte_enable_ff,
-                                        i_mem_signed_halfword_enable_ff,
-                                        i_mem_unsigned_halfword_enable_ff,
-                                        i_mem_translate_ff,
-                                        i_irq_ff,
-                                        i_fiq_ff,
-                                        i_abt_ff,
-                                        i_swi_ff,
-                                        i_force32align_ff,
-                                        i_und_ff,
-                                        i_ppc_ff
-                        };
-                end
-        end
-
-        1'd1:
-        begin
-                if ( !lock )
-                begin
-                        o_stall_from_issue <= 1'd0;
-                end
-        end
-
-        endcase
-end
+assign o_rd_index_0 = skid_alu_source_ff[5:0];
+assign o_rd_index_1 = skid_shift_source_ff[5:0];
+assign o_rd_index_2 = skid_shift_length_ff[5:0];
+assign o_rd_index_3 = skid_mem_srcdest_index_ff[5:0];
 
 always_comb
 begin
@@ -855,15 +692,54 @@ begin
         end
 end
 
-//#############################################################################
+wire skid_is_lsl_0 = skid_shift_operation_ff    == {1'd0, LSL} &&
+                     skid_shift_length_ff[31:0] == 32'd0 &&
+                     skid_shift_length_ff[32]   == IMMED_EN;
 
-always_comb
-begin
-        unused = 1'd0;
+wire skid_is_rori            = skid_shift_operation_ff == RORI;
+assign o_shifter_disable_nxt = skid_is_lsl_0;
 
-        // Look for reads from registers to be loaded from memory. Four
-        // register sources may cause a load lock.
-        load_lock =     determine_load_lock
+wire w_shift_lock
+=  shifter_lock_check ( skid_shift_source_ff,
+                        o_destination_index_ff, o_condition_code_ff )
+|| shifter_lock_check ( skid_shift_length_ff,
+                        o_destination_index_ff, o_condition_code_ff )
+|| shifter_lock_check ( skid_alu_source_ff  ,
+                        o_destination_index_ff, o_condition_code_ff )
+|| shifter_lock_check ( {27'd0, skid_mem_srcdest_index_ff},
+                        o_destination_index_ff, o_condition_code_ff );
+
+
+wire skid_is_mult = skid_alu_operation_ff == {1'd0, UMLALL}     ||
+                    skid_alu_operation_ff == {1'd0, UMLALH}     ||
+                    skid_alu_operation_ff == {1'd0, SMLALL}     ||
+                    skid_alu_operation_ff == {1'd0, SMLALH}     ||
+                    skid_alu_operation_ff == SMULW0             ||
+                    skid_alu_operation_ff == SMULW1             ||
+                    skid_alu_operation_ff == SMUL00             ||
+                    skid_alu_operation_ff == SMUL01             ||
+                    skid_alu_operation_ff == SMUL10             ||
+                    skid_alu_operation_ff == SMUL11             ||
+                    skid_alu_operation_ff == SMLA00             ||
+                    skid_alu_operation_ff == SMLA01             ||
+                    skid_alu_operation_ff == SMLA10             ||
+                    skid_alu_operation_ff == SMLA11             ||
+                    skid_alu_operation_ff == SMLAW0             ||
+                    skid_alu_operation_ff == SMLAW1             ||
+                    skid_alu_operation_ff == SMLAL00L           ||
+                    skid_alu_operation_ff == SMLAL01L           ||
+                    skid_alu_operation_ff == SMLAL10L           ||
+                    skid_alu_operation_ff == SMLAL11L           ||
+                    skid_alu_operation_ff == SMLAL00H           ||
+                    skid_alu_operation_ff == SMLAL01H           ||
+                    skid_alu_operation_ff == SMLAL10H           ||
+                    skid_alu_operation_ff == SMLAL11H;
+
+//
+// Look for reads from registers to be loaded from memory. Four
+// register sources may cause a load lock.
+//
+assign  load_lock =     determine_load_lock
                         ( skid_alu_source_ff  ,
                         o_mem_srcdest_index_ff,
                         o_condition_code_ff,
@@ -970,108 +846,50 @@ begin
                         i_memory_dav_ff,
                         i_dc_lock,
                         i_irq_ff || i_fiq_ff || i_abt_ff || i_swi_ff || i_abt_ff
-                        );
-
-        // BUG FIX:
-        // If a register is locked by load, don't issue an instruction that
-        // writes to that register. Assert load lock. Else, background
-        // load will overwrite the latest value.
-        if ( skid_destination_index_ff[5:0] != PHY_RAZ_REGISTER[5:0] )
-        begin
-                if ( skid_condition_code_ff != NV )
-                begin
-                        if ( i_dc_lock[skid_destination_index_ff] )
-                        begin
-                                load_lock = 1'd1;
-                        end
-                end
-        end
-
-        // A shift lock occurs if the current instruction requires a shift amount as a register
-        // other than LSL #0 or RORI if the operands are right on the output of this
-        // stage because in that case we do not have the register value and thus
-        // a shift lock.
-        shift_lock =    (!(
-                                skid_shift_operation_ff    == {1'd0, LSL} &&
-                                skid_shift_length_ff[31:0] == 32'd0 &&
-                                skid_shift_length_ff[32]   == IMMED_EN
-                        )
-                        && // If it is not LSL #0 AND...
-                        !(
-                                skid_shift_operation_ff == RORI // The amount to rotate and rotate are self contained.
-                        )
-                        && // If it is not RORI AND...
-                        (
-                                // Stuff is locked.
-                                shifter_lock_check ( skid_shift_source_ff, o_destination_index_ff, o_condition_code_ff ) ||
-                                shifter_lock_check ( skid_shift_length_ff, o_destination_index_ff, o_condition_code_ff ) ||
-                                shifter_lock_check ( skid_alu_source_ff  , o_destination_index_ff, o_condition_code_ff )
-                        )) ||
-                        (
-                                // If it is a multiply and stuff is locked.
-                                (
-                                 skid_alu_operation_ff == {1'd0, UMLALL}     ||
-                                 skid_alu_operation_ff == {1'd0, UMLALH}     ||
-                                 skid_alu_operation_ff == {1'd0, SMLALL}     ||
-                                 skid_alu_operation_ff == {1'd0, SMLALH}     ||
-                                 skid_alu_operation_ff == SMULW0     ||
-                                 skid_alu_operation_ff == SMULW1     ||
-                                 skid_alu_operation_ff == SMUL00     ||
-                                 skid_alu_operation_ff == SMUL01     ||
-                                 skid_alu_operation_ff == SMUL10     ||
-                                 skid_alu_operation_ff == SMUL11     ||
-                                 skid_alu_operation_ff == SMLA00     ||
-                                 skid_alu_operation_ff == SMLA01     ||
-                                 skid_alu_operation_ff == SMLA10     ||
-                                 skid_alu_operation_ff == SMLA11     ||
-                                 skid_alu_operation_ff == SMLAW0     ||
-                                 skid_alu_operation_ff == SMLAW1     ||
-                                 skid_alu_operation_ff == SMLAL00L   ||
-                                 skid_alu_operation_ff == SMLAL01L   ||
-                                 skid_alu_operation_ff == SMLAL10L   ||
-                                 skid_alu_operation_ff == SMLAL11L   ||
-                                 skid_alu_operation_ff == SMLAL00H   ||
-                                 skid_alu_operation_ff == SMLAL01H   ||
-                                 skid_alu_operation_ff == SMLAL10H   ||
-                                 skid_alu_operation_ff == SMLAL11H
-                                )
-                                &&
-                                (
-                                        shifter_lock_check ( skid_shift_source_ff, o_destination_index_ff, o_condition_code_ff ) ||
-                                        shifter_lock_check ( skid_shift_length_ff, o_destination_index_ff, o_condition_code_ff ) ||
-                                        shifter_lock_check ( skid_alu_source_ff  , o_destination_index_ff, o_condition_code_ff ) ||
-                                        shifter_lock_check ( {27'd0, skid_mem_srcdest_index_ff}, o_destination_index_ff, o_condition_code_ff )
-                                )
                         )
                         ||
+                        //
+                        // If a register is locked by load, don't issue an instruction that
+                        // writes to that register. Assert load lock. Else, background
+                        // load will overwrite the latest value.
+                        //
                         (
-                                // If the instruction is not LSL #0 and previous
-                                // instruction has flag updates, we stall.
-
-                               !o_shifter_disable_nxt &&
-                                o_flag_update_ff
+                          skid_destination_index_ff[5:0] != PHY_RAZ_REGISTER[5:0]
+                          &&
+                          i_dc_lock[skid_destination_index_ff]
                         );
 
-        flag_lock       = determine_flag_lock ( skid_shift_source_ff, o_flag_update_ff, i_shifter_dav_ff,
-                                                i_shifter_flag_update_ff  ) ||
-                          determine_flag_lock ( skid_shift_length_ff, o_flag_update_ff, i_shifter_dav_ff,
-                                                i_shifter_flag_update_ff  ) ||
-                          determine_flag_lock ( skid_alu_source_ff  , o_flag_update_ff, i_shifter_dav_ff,
-                                                i_shifter_flag_update_ff  );
-end
+//
+// A shift lock occurs if the current instruction requires a shift
+// amount as a register other than LSL #0 or RORI if the operands are
+// right on the output of this stage because in that case we do not
+// have the register value and thus a shift lock.
+//
+assign shift_lock =
+  (((skid_is_mult |  ((~skid_is_lsl_0) & (~skid_is_rori)))) & w_shift_lock)
+| (o_flag_update_ff & (~skid_is_lsl_0));
 
-always_comb
-begin
-        // Shifter disable.
-        o_shifter_disable_nxt = (
-                                        skid_shift_operation_ff    == {1'd0, LSL} &&
-                                        skid_shift_length_ff[31:0] == 32'd0       &&
-                                        skid_shift_length_ff[32]   == IMMED_EN
-                                );
-        // If it is LSL #0, we can disable the shifter.
-end
+//
+// Detect if an instruction reads CPSR, halt it if previous
+// instruction is updating flags is in the shifter stage. This
+// currently is used only by MRS.
+//
+assign flag_lock = determine_flag_lock ( skid_shift_source_ff,
+                                         o_flag_update_ff,
+                                         i_shifter_dav_ff,
+                                         i_shifter_flag_update_ff  ) ||
+                   determine_flag_lock ( skid_shift_length_ff,
+                                          o_flag_update_ff,
+                                          i_shifter_dav_ff,
+                                          i_shifter_flag_update_ff  ) ||
+                   determine_flag_lock ( skid_alu_source_ff  ,
+                                          o_flag_update_ff,
+                                          i_shifter_dav_ff,
+                                          i_shifter_flag_update_ff  );
 
-// ----------------------------------------------------------------------------
+////////////////////////////////////
+// Functions
+////////////////////////////////////
 
 // Shifter lock check.
 function shifter_lock_check (
@@ -1084,13 +902,14 @@ begin
         // and that the output is valid.
         // If immediate, no lock obviously.
 
-        if ( index[32] == IMMED_EN || index == PHY_RAZ_REGISTER )                 shifter_lock_check = 1'd0;
-        else if ( destination_index_ff == index[5:0] && condition_code_ff != NV ) shifter_lock_check = 1'd1;
-        else                                                                      shifter_lock_check = 1'd0;
+        if ( index[32] == IMMED_EN || index == PHY_RAZ_REGISTER )
+                shifter_lock_check = 1'd0;
+        else if ( destination_index_ff == index[5:0] && condition_code_ff != NV )
+                shifter_lock_check = 1'd1;
+        else
+                shifter_lock_check = 1'd0;
 end
 endfunction
-
-// ----------------------------------------------------------------------------
 
 // Load lock. Activated when a read from a register follows a load to that
 // register.
@@ -1121,6 +940,8 @@ input  [63:0]                   xlock,
 input                           ext_lock
 );
 begin
+        logic unused;
+
         determine_load_lock = 1'd0;
 
         //
@@ -1128,7 +949,8 @@ begin
         // If found, we cannot issue the current instruction since old value
         // will be read.
         //
-        if ( index[32] == IMMED_EN || index[5:0] == PHY_RAZ_REGISTER[5:0] ) // Lock only occurs for indices.
+        if ( index[32] == IMMED_EN || index[5:0] == PHY_RAZ_REGISTER[5:0] )
+        // Lock only occurs for indices.
         begin
                 determine_load_lock = 1'd0;
         end
@@ -1168,11 +990,11 @@ begin
 end
 endfunction
 
-// ---------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 
 //
 // Anyone needs CPSR, and flag update is going on in the previous instruction,
-// lock the issue.
+// lock the issue. Only for MRS.
 //
 function determine_flag_lock (
         input   [32:0]  index,
@@ -1180,6 +1002,8 @@ function determine_flag_lock (
         input           alu_dav_nxt,
         input           shifter_flag_update_ff
 );
+        logic unused;
+
         determine_flag_lock = 1'd0;
 
         if ( index[32] != IMMED_EN && index[5:0] == PHY_CPSR[5:0] )
@@ -1193,48 +1017,134 @@ function determine_flag_lock (
         unused = |{index[31:6]};
 endfunction
 
-// ---------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 
-task automatic reset;
+//
+// Straightforward read feedback function. Looks at all stages of the pipeline
+// to extract the latest value of the register.
+//
+function [31:0] get_register_value (
+
+        // The register inex to search for. This might be a constant too.
+        input [32:0]                    index,
+
+        // Register read port activated for this function.
+        input [1:0]                     rd_port,
+
+        // Destination on the output of the shifter stage.
+        input [$clog2(PHY_REGS)-1:0]    shifter_destination_index_ff,
+
+        // ALU output is valid.
+        input                           alu_dav_nxt,
+
+        // ALU output.
+        input [31:0]                    alu_destination_value_nxt,
+
+        // ALU flopped result.
+        input [31:0]                    alu_destination_value_ff,
+
+        // ALU flopped destination index.
+        input [$clog2(PHY_REGS)-1:0]    alu_destination_index_ff,
+
+        // Valid flopped (EX stage).
+        input                           alu_dav_ff,
+
+        input  [$clog2(PHY_REGS)-1:0]   postalu0_destination_index_ff,
+        input  [31:0]                   postalu0_destination_value_ff,
+        input                           postalu0_dav_ff,
+
+        input  [$clog2(PHY_REGS)-1:0]   postalu1_destination_index_ff,
+        input  [31:0]                   postalu1_destination_value_ff,
+        input                           postalu1_dav_ff,
+
+        input  [$clog2(PHY_REGS)-1:0]   postalu_destination_index_ff,
+        input  [31:0]                   postalu_destination_value_ff,
+        input                           postalu_dav_ff,
+
+        // Memory stage destination index (pointer)
+        input [$clog2(PHY_REGS)-1:0]    memory_destination_index_ff,
+        input [31:0]                    memory_destination_value_ff,
+        input                           memory_dav_ff,
+
+        // Data read from register file.
+        input [31:0]                    rd_data_0,
+        input [31:0]                    rd_data_1,
+        input [31:0]                    rd_data_2,
+        input [31:0]                    rd_data_3,
+
+        // CPU mode and PC.
+        input [31:0]                    cpu_mode,
+        input [31:0]                    pc_plus_8_ff
+);
+
+logic [31:0] get;
+
 begin
-                o_condition_code_ff               <= 0;
-                o_destination_index_ff            <= 0;
-                o_alu_operation_ff                <= 0;
-                o_shift_operation_ff              <= 0;
-                o_flag_update_ff                  <= 0;
-                o_mem_srcdest_index_ff            <= 0;
-                o_mem_load_ff                     <= 0;
-                o_mem_store_ff                    <= 0;
-                o_mem_pre_index_ff                <= 0;
-                o_mem_unsigned_byte_enable_ff     <= 0;
-                o_mem_signed_byte_enable_ff       <= 0;
-                o_mem_signed_halfword_enable_ff   <= 0;
-                o_mem_unsigned_halfword_enable_ff <= 0;
-                o_mem_translate_ff                <= 0;
-                o_irq_ff                          <= 0;
-                o_fiq_ff                          <= 0;
-                o_abt_ff                          <= 0;
-                o_swi_ff                          <= 0;
-                o_pc_plus_8_ff                    <= 0;
-                o_shifter_disable_ff              <= 0;
-                o_alu_source_ff                   <= 0;
-                o_shift_source_ff                 <= 0;
-                o_alu_source_value_ff             <= 0;
-                o_shift_source_value_ff           <= 0;
-                o_shift_length_value_ff           <= 0;
-                o_mem_srcdest_value_ff            <= 0;
-                o_switch_ff                       <= 0;
-                o_force32align_ff                 <= 0;
-                o_und_ff                          <= 0;
-                o_taken_ff                        <= 0;
-                o_pc_ff                           <= 0;
-                o_decompile                       <= 0;
-                o_ppc_ff                          <= 0;
+        if   ( index[32] )                 // Catch constant here.
+        begin
+                get = index[31:0];
+        end
+        else if ( index[5:0] == PHY_RAZ_REGISTER[5:0] )   // Catch RAZ here.
+        begin
+               // Return 0.
+                get = 32'd0;
+        end
+        else if   ( index[5:0] == {2'd0, ARCH_PC[3:0]} )
+        // Catch PC here. ARCH index = PHY index so no problem.
+        begin
+                 get = pc_plus_8_ff;
+        end
+        else if ( index[5:0] == PHY_CPSR[5:0] )   // Catch CPSR here.
+        begin
+                get = cpu_mode[31:0];
+        end
+        // Match in ALU stage.
+        else if   ( index[5:0] == shifter_destination_index_ff[5:0] && alu_dav_nxt  )
+        begin   // ALU effectively never changes destination so no need to look at _nxt.
+                        get =  alu_destination_value_nxt;
+        end
+        // Match in output of ALU stage.
+        else if   ( index[5:0] == alu_destination_index_ff[5:0] &&   alu_dav_ff       )
+        begin
+                        get =  alu_destination_value_ff;
+        end
+        // Match is output of postALU0 stage.
+        else if   ( index[5:0] == postalu0_destination_index_ff[5:0] && postalu0_dav_ff )
+        begin
+                        get = postalu0_destination_value_ff;
+        end
+        // Match is in output of postALU1 stage.
+        else if ( index[5:0] == postalu1_destination_index_ff[5:0] && postalu1_dav_ff )
+        begin
+                        get = postalu1_destination_value_ff;
+        end
+        // Match in output of postALU stage.
+        else if   ( index[5:0] == postalu_destination_index_ff[5:0] && postalu_dav_ff )
+        begin
+                        get = postalu_destination_value_ff;
+        end
+        // Match in output of memory stage.
+        else if   ( index[5:0] ==   memory_destination_index_ff[5:0] &&   memory_dav_ff )
+        begin
+                        get =    memory_destination_value_ff;
+        end
+        else    // Index not found in the pipeline, fallback to register access.
+        begin
+                case ( rd_port )
+                        0: get =   rd_data_0;
+                        1: get =   rd_data_1;
+                        2: get =   rd_data_2;
+                        3: get =   rd_data_3;
+                endcase
+        end
+
+        get_register_value = get;
 end
-endtask
+endfunction
+
 
 endmodule // zap_issue_main.v
 
-
-
+// ----------------------------------------------------------------------------
+// EOF
 // ----------------------------------------------------------------------------
