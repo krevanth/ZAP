@@ -405,12 +405,12 @@ begin: tskDecAluLo
         7:      o_instruction[31:0] = {AL, 2'b00, 1'b0, MOV, 1'd1, rd, rd, rs, 1'd0, ROR, 1'd1, rd};    // MOVS Rd, Rd, ROR Rs.
         8:      o_instruction[31:0] = {AL, 2'b00, 1'b0, TST, 1'd1, rd, rd, 8'd0, rs};                   // TST Rd, Rs
         9:      o_instruction[31:0] = {AL, 2'b00, 1'b1, RSB, 1'd1, rs, rd, 12'd0};                      // Rd = 0 - Rs
-        10:     o_instruction[31:0] = {AL, 2'b00, 1'b1, CMP, 1'd1, rd, rd, 8'd0, rs};                   // CMP Rd, Rs
-        11:     o_instruction[31:0] = {AL, 2'b00, 1'b1, CMN, 1'd1, rd, rd, 8'd0, rs};                   // CMN Rd, Rs
-        12:     o_instruction[31:0] = {AL, 2'b00, 1'b1, ORR, 1'd1, rd, rd, 8'd0, rs};                   // ORRS Rd, Rd, rs
-        13:     o_instruction[31:0] = {AL, 4'b0000,  3'b000, 1'd1, rd, 4'd0, rd, 4'b1001, rs};           // MULS Rd, Rs, Rd
-        14:     o_instruction[31:0] = {AL, 2'b00, 1'b1, BIC, 1'd1, rd, rd, 8'd0, rs};                   // BICS rd, rd, rs
-        15:     o_instruction[31:0] = {AL, 2'b00, 1'b1, MVN, 1'd1, rd, rd, 8'd0, rs};                   // MVNS rd, rd, rs
+        10:     o_instruction[31:0] = {AL, 2'b00, 1'b0, CMP, 1'd1, rd, rd, 8'd0, rs};                   // CMP Rd, Rs
+        11:     o_instruction[31:0] = {AL, 2'b00, 1'b0, CMN, 1'd1, rd, rd, 8'd0, rs};                   // CMN Rd, Rs
+        12:     o_instruction[31:0] = {AL, 2'b00, 1'b0, ORR, 1'd1, rd, rd, 8'd0, rs};                   // ORRS Rd, Rd, rs
+        13:     o_instruction[31:0] = {AL, 4'b0000,  3'b000, 1'd1, rd, 4'd0, rd, 4'b1001, rs};          // MULS Rd, Rs, Rd
+        14:     o_instruction[31:0] = {AL, 2'b00, 1'b0, BIC, 1'd1, rd, rd, 8'd0, rs};                   // BICS rd, rd, rs
+        15:     o_instruction[31:0] = {AL, 2'b00, 1'b0, MVN, 1'd1, rd, rd, 8'd0, rs};                   // MVNS rd, rd, rs
         endcase
 end
 endfunction
