@@ -533,7 +533,12 @@ begin:blk_a
                                 end
 
                                 o_instruction_valid = 1'd1;
-                                reglist_nxt = reglist;
+
+                                //
+                                // When empty register list is specified,
+                                // treat it as all registers set.
+                                //
+                                reglist_nxt = reglist == 0 ? '1 : reglist;
 
                                 state_nxt = MEMOP;
                                 o_stall_from_decode = 1'd1;
