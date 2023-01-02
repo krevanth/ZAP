@@ -165,7 +165,8 @@ begin
         begin
                 o_iabort                <= i_iabort;
                 o_instruction_valid     <= instruction_valid_nxt;
-                o_instruction           <= instruction_nxt;
+                o_instruction           <= instruction_valid_nxt ?
+                                           instruction_nxt : o_instruction;
                 o_und                   <= und_nxt;
                 o_force32_align         <= force32_nxt;
                 o_pc_ff                 <= i_pc_ff;

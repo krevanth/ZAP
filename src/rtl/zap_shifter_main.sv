@@ -354,7 +354,8 @@ U_SHIFT
 always_comb
 begin
  rn = resolve_conflict ( i_alu_source_ff, i_alu_source_value_ff,
-                         o_destination_index_ff, i_alu_value_nxt, i_alu_dav_nxt );
+                         o_destination_index_ff, i_alu_value_nxt, i_alu_dav_nxt,
+                         i_force32align_ff );
 end
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -416,7 +417,8 @@ begin
                   i_shift_source_value_ff,
                   o_destination_index_ff,
                   i_alu_value_nxt,
-                  i_alu_dav_nxt
+                  i_alu_dav_nxt,
+                  i_force32align_ff
                 );
 
                 // Do not touch the carry. Get from _nxt for back2back execution.
@@ -432,7 +434,8 @@ end
 always_comb
 begin
         mem_srcdest_value = resolve_conflict ( {27'd0, i_mem_srcdest_index_ff}, i_mem_srcdest_value_ff,
-                                               o_destination_index_ff, i_alu_value_nxt, i_alu_dav_nxt );
+                                               o_destination_index_ff, i_alu_value_nxt, i_alu_dav_nxt,
+                                               i_force32align_ff );
 end
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -446,7 +449,8 @@ function [31:0] resolve_conflict (
         input    [31:0]                  value_from_issue,       // Issue speculatively read value.
         input    [$clog2(PHY_REGS)-1:0]  index_from_this_stage,  // From shift (This) stage output flops.
         input    [31:0]                  result_from_alu,        // From ALU output directly.
-        input                            result_from_alu_valid   // Result from ALU is VALID.
+        input                            result_from_alu_valid,  // Result from ALU is VALID.
+        input                            align32                 // Force 32-bit align on PC read
 );
 begin
         if ( index_from_issue[32] == IMMED_EN )
@@ -455,7 +459,10 @@ begin
         end
         else if ( index_from_issue == PHY_PC )
         begin
-                resolve_conflict = i_pc_plus_8_ff;
+                if ( align32 )
+                        resolve_conflict = i_pc_plus_8_ff & 32'hffff_fffc;
+                else
+                        resolve_conflict = i_pc_plus_8_ff;
         end
         else if ( index_from_this_stage == index_from_issue[$clog2(PHY_REGS)-1:0] && result_from_alu_valid )
         begin

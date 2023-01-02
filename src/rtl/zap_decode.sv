@@ -432,17 +432,12 @@ begin: tskDecodeHalfWordLs
 
         // Transfer size.
 
-        o_mem_unsigned_byte_enable      = 1'd0;
-        o_mem_unsigned_halfword_enable  = 1'd0;
-        o_mem_signed_halfword_enable    = 1'd0;
-
         case ( instruction[6:5] )
         SIGNED_BYTE:            o_mem_signed_byte_enable       = 1'd1;
         UNSIGNED_HALF_WORD:     o_mem_unsigned_halfword_enable = 1'd1;
         SIGNED_HALF_WORD:       o_mem_signed_halfword_enable   = 1'd1;
         default:
         begin
-                o_mem_unsigned_byte_enable      = 1'd0;
                 o_mem_unsigned_halfword_enable  = 1'd0;
                 o_mem_signed_halfword_enable    = 1'd0;
         end

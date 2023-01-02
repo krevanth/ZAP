@@ -476,7 +476,8 @@ begin
                                 i_rd_data_2,
                                 i_rd_data_3,
                                 i_cpu_mode,
-                                skid_pc_plus_8_ff
+                                skid_pc_plus_8_ff,
+                                skid_force32align_ff
         );
 
 
@@ -510,7 +511,8 @@ begin
                                 i_rd_data_2,
                                 i_rd_data_3,
                                 i_cpu_mode,
-                                skid_pc_plus_8_ff
+                                skid_pc_plus_8_ff,
+                                skid_force32align_ff
         );
 
         o_shift_length_value_nxt=
@@ -543,7 +545,8 @@ begin
                                 i_rd_data_2,
                                 i_rd_data_3,
                                 i_cpu_mode,
-                                skid_pc_plus_8_ff
+                                skid_pc_plus_8_ff,
+                                skid_force32align_ff
         );
 
         // Value of a register index, never an immediate.
@@ -577,7 +580,8 @@ begin
                                 i_rd_data_2,
                                 i_rd_data_3,
                                 i_cpu_mode,
-                                skid_pc_plus_8_ff
+                                skid_pc_plus_8_ff,
+                                skid_force32align_ff
         );
 end
 
@@ -1030,7 +1034,10 @@ function [31:0] get_register_value (
 
         // CPU mode and PC.
         input [31:0]                    cpu_mode,
-        input [31:0]                    pc_plus_8_ff
+        input [31:0]                    pc_plus_8_ff,
+
+        // PC access control.
+        input                           force32_align_ff,
 );
 
 logic [31:0] get;
@@ -1048,7 +1055,10 @@ begin
         else if   ( index[5:0] == {2'd0, ARCH_PC[3:0]} )
         // Catch PC here. ARCH index = PHY index so no problem.
         begin
-                 get = pc_plus_8_ff;
+                if ( force32_align_ff )
+                        get = pc_plus_8_ff & 32'hffff_fffc;
+                else
+                        get = pc_plus_8_ff;
         end
         else if ( index[5:0] == PHY_CPSR[5:0] )   // Catch CPSR here.
         begin

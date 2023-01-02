@@ -120,6 +120,7 @@ begin
                         T_MCAS_IMM              : decode_mcas_imm();    // MOV,CMP,ADD,SUB IMM.
                         T_ALU_LO                : decode_alu_lo();
                         T_ALU_HI                : decode_alu_hi();
+
                         T_PC_REL_LOAD           : decode_pc_rel_load(); // LDR Rd, [PC, {#imm8,0,0}]
                         T_LDR_STR_5BIT_OFF      : decode_ldr_str_5bit_off();
                         T_LDRH_STRH_5BIT_OFF    : decode_ldrh_strh_5bit_off();
@@ -127,6 +128,7 @@ begin
                         T_SP_REL_LDR_STR        : decode_sp_rel_ldr_str();
                         T_LDMIA_STMIA           : decode_ldmia_stmia();
                         T_POP_PUSH              : decode_pop_push();
+
                         T_GET_ADDR              : decode_get_addr();
                         T_MOD_SP                : decode_mod_sp();
                         default:
@@ -160,6 +162,7 @@ begin: dcdGetAddr
 
         // ADD Rd, PC, imm
         o_instruction[31:0] = {AL, 2'b00, 1'b1, ADD, 1'd0, 4'd15, rd, imm};
+        o_force32_align = 1;
 
         // ADD Rd, SP, imm
         if ( i_instruction[11] ) // SP
@@ -285,10 +288,11 @@ begin: dcdLdrhStrh
         else
         begin
           case({S,H})
-          2'd0: o_instruction = {3'd0, AL, 3'b000, 1'd1, 1'd0, 1'd0, 1'd0, 1'd0, base, srcdest, 4'd0, 1'd1, 2'b01, 1'd1, offset[3:0]};// STRH
-          2'd1: o_instruction = {3'd0, AL, 3'b000, 1'd1, 1'd0, 1'd0, 1'd0, 1'd1, base, srcdest, 4'd0, 1'd1, 2'b01, 1'd1, offset[3:0]};// LDRH
-          2'd2: o_instruction = {3'd0, AL, 3'b000, 1'd1, 1'd0, 1'd0, 1'd0, 1'd1, base, srcdest, 4'd0, 1'd1, 2'b10, 1'd1, offset[3:0]};// LDSB
-          2'd3: o_instruction = {3'd0, AL, 3'b000, 1'd1, 1'd0, 1'd0, 1'd0, 1'd1, base, srcdest, 4'd0, 1'd1, 2'b11, 1'd1, offset[3:0]};// LDSH
+                //                                  P      U     I     W                                                   SH
+          2'd0: o_instruction = {3'd0, AL, 3'b000, 1'd1, 1'd1, 1'd0, 1'd0, 1'd0, base, srcdest, 4'd0, 1'd1, 2'b01, 1'd1, offset[3:0]};// STRH
+          2'd1: o_instruction = {3'd0, AL, 3'b000, 1'd1, 1'd1, 1'd0, 1'd0, 1'd1, base, srcdest, 4'd0, 1'd1, 2'b01, 1'd1, offset[3:0]};// LDRH
+          2'd2: o_instruction = {3'd0, AL, 3'b000, 1'd1, 1'd1, 1'd0, 1'd0, 1'd1, base, srcdest, 4'd0, 1'd1, 2'b10, 1'd1, offset[3:0]};// LDSB
+          2'd3: o_instruction = {3'd0, AL, 3'b000, 1'd1, 1'd1, 1'd0, 1'd0, 1'd1, base, srcdest, 4'd0, 1'd1, 2'b11, 1'd1, offset[3:0]};// LDSH
           endcase
         end
 end
@@ -310,8 +314,18 @@ begin: dcdLdrhStrh5BitOff
         imm[7:0] = {2'd0, i_instruction[10:6], 1'd0};
 
         // Unsigned halfword transfer
-        o_instruction = {3'd0, AL, 3'b000, 1'd1, 1'd0, 1'd1, 1'd0, i_instruction[11],
-                         rn, rd, imm[7:4], 1'd1, 2'b01,1'd1, imm[3:0]};
+        o_instruction = {3'd0,
+                                AL,                     // 31:28
+                                3'b000,                 // 27:25
+                                4'b1110,                // 24:21 (P=1,U=1,I=1,W=0)
+                                i_instruction[11],      // 20
+                                rn,                     // 19:16
+                                rd,                     // 15:12
+                                imm[7:4],               // 11:8
+                                1'd1,                   // 7
+                                2'b01,                  // 6:5
+                                1'd1,                   // 4
+                                imm[3:0]};              // 3:0
 end
 endfunction
 
@@ -333,7 +347,8 @@ begin: dcLdrStr5BitOff
         else
                 imm[11:0] = {7'd0, i_instruction[10:6]};
 
-        o_instruction = {3'd0, AL, 3'b010, 1'd1, 1'd0, i_instruction[12], 1'd0,
+                           //  CC                 U          B             0
+        o_instruction = {3'd0, AL, 3'b010, 1'd1, 1'd1, i_instruction[12], 1'd0,
                                                i_instruction[11], rn, rd, imm};
 end
 endfunction
@@ -349,8 +364,9 @@ begin: dcPcRelLoad
         imm = {2'd0, i_instruction[7:0], 2'd0};
 
         o_force32_align = 1'd1;
-        o_instruction = {3'd0, AL, 3'b010, 1'd1, 1'd0, 1'd0, 1'd0,
-                                        1'd1, 4'b1111, rd, imm};
+                              // CC                 U       B     0
+        o_instruction   = {3'd0, AL, 3'b010, 1'd1, 1'd1,  1'd0, 1'd0,
+                                             1'd1, 4'b1111, rd, imm};
 end
 endfunction
 

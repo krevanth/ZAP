@@ -669,6 +669,19 @@ end
 // Used to generate access address.
 // ----------------------------------------------------------------------------
 
+// Assertion
+always @ ( posedge i_clk )
+begin
+        if ( !i_reset )
+        begin
+                assert ( !(i_force32align_ff              &&
+                          (mem_address_nxt[1:0] != 2'b00) &&
+                           o_data_wb_cyc_nxt) )
+                else
+                        $fatal(2, "Error: Final access address is not aligned.");
+        end
+end
+
 always_comb
 begin:pre_post_index_address_generator
         //
@@ -681,10 +694,7 @@ begin:pre_post_index_address_generator
         else
                 mem_address_nxt = sum[31:0];        // Preindex.
 
-        // If a force 32 align is set, make the lower 2 bits as zero.
-        if ( i_force32align_ff )
-                mem_address_nxt[1:0] = 2'b00;
-
+        // FCSE.
         if ( mem_address_nxt[31:25] == 0 )
                 mem_address_nxt[31:25] = i_cpu_pid;
 end
