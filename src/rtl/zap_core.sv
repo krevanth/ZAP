@@ -23,6 +23,7 @@
 module zap_core #(
 
         // For CP15 purposes.
+        parameter bit [0:0]  CP15_L4_DEFAULT = 0,
         parameter bit [31:0] DATA_CACHE_SIZE = 1024,
         parameter bit [31:0] CODE_CACHE_SIZE = 1024,
         parameter bit [31:0] DATA_CACHE_LINE = 64,
@@ -1546,6 +1547,7 @@ u_zap_writeback
 zap_cp15_cb #(
 .BE_32_ENABLE(BE_32_ENABLE),
 .PHY_REGS(PHY_REGS),
+.CP15_L4_DEFAULT(CP15_L4_DEFAULT),
 .DATA_CACHE_SIZE(DATA_CACHE_SIZE),
 .CODE_CACHE_SIZE(CODE_CACHE_SIZE),
 .DATA_CACHE_LINE(DATA_CACHE_LINE),
