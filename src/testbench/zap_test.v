@@ -416,6 +416,7 @@ end
 // =========================
 
 zap_top #(
+        .CP15_L4_DEFAULT(1'd1),
         .BE_32_ENABLE(BE_32_ENABLE),
         .ONLY_CORE(ONLY_CORE),
         .FIFO_DEPTH(FIFO_DEPTH),

@@ -8,32 +8,28 @@ The ZAP is intended to be used in FPGA projects that need a high performance app
 
 The default processor specification is as follows (The table below is based on default parameters):
 
-| **Property**               | **Value**                                                                                                                                                                                                                  |
-| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Performance                | Synthesized at 170MHz @ xc7a75tcsg324-3 Artix-7 FPGA with 0 slack. <br/>130 DMIPS @ 170MHz with cache enabled. **Cache must be enabled, and utilized effectively, for peak performance.**                                  |
-| Clock and Reset            | Purely synchronous reset scheme. Purely rising edge clock driven design.                                                                                                                                                   |
-| IRQ                        | Supported. Level sensitive interrupt signal. CPU uses a dual rank synchronizer to sample this and make it synchronous to the rising edge of clock.                                                                         |
-| FIQ                        | Supported. Level sensitive interrupt signal. CPU uses a dual rank synchronizer to sample this and make it synchronous to the rising edge of clock.                                                                         |
-| Pipeline Depth             | 17                                                                                                                                                                                                                         |
-| Issue and Execution Width  | Single issue, in order, scalar core, with very limited out-of-order completion for some loads/stores that miss in cache.                                                                                                   |
-| Data Width                 | 32                                                                                                                                                                                                                         |
-| Address Width              | 32                                                                                                                                                                                                                         |
-| Virtual Address Width      | 32                                                                                                                                                                                                                         |
-| Instruction Set Version    | V5TE (1999)                                                                                                                                                                                                                |
-| L1 I-Cache                 | 16KB Direct Mapped VIVT Cache.<br/>64 Byte Cache Line                                                                                                                                                                      |
-| L1 D-Cache                 | 16KB Direct Mapped VIVT Cache<br>64 Byte Cache Line                                                                                                                                                                        |
-| Section I-TLB Structure    | Direct mapped 128 entries.                                                                                                                                                                                                 |
-| Small Page I-TLB Structure | Direct mapped 128 entries.                                                                                                                                                                                                 |
-| Large Page I-TLB Structure | Direct mapped 128 entries.                                                                                                                                                                                                 |
-| Section D-TLB Structure    | Direct mapped 128 entries.                                                                                                                                                                                                 |
-| Small Page D-TLB Structure | Direct mapped 128 entries.                                                                                                                                                                                                 |
-| Large Page D-TLB Structure | Direct mapped 128 entries.                                                                                                                                                                                                 |
-| Branch Prediction          | Direct Mapped Bimodal Predictor. <br/>Direct Mapped BTB.<br>1K entries in T state (16-bit instructions).<br>512 entries in 32-bit instruction state.                                                                       |
-| RAS Depth                  | 4 deep return address stack.                                                                                                                                                                                               |
-| Branch latency             | 12 cycles (wrong prediction or unrecognized branch)<br>3 cycles (taken, correctly predicted)<br>1 cycle (not-taken, correctly predicted)<br>12 cycles (32-bit/16-bit switch)<br>18 cycles (Exception/Interrupt Entry/Exit) |
-| Fetch Buffer               | FIFO, 16 x 32-bit.                                                                                                                                                                                                         |
-| Bus Interface              | Unified 32-Bit Wishbone B3 bus with CTI and BTE signals.<br/>BTE and CTI signals are used only when cache is enabled.                                                                                                      |
-| FPGA Resource Utilization  | 23K LUTs<br>116 LUTRAMs<br>15.3K FFs<br>29 BRAMs<br>4 DSP Blocks                                                                                                                                                           |
+| **Property**              | **Value**                                                                                                                                                                                                                  |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Performance               | Synthesized at 170MHz @ xc7a75tcsg324-3 Artix-7 FPGA with 0 slack. <br/>130 DMIPS @ 170MHz with cache enabled. **Cache must be enabled, and utilized effectively, for peak performance.**                                  |
+| Clock and Reset           | Purely synchronous reset scheme. Purely rising edge clock driven design.                                                                                                                                                   |
+| IRQ                       | Supported. Level sensitive interrupt signal. CPU uses a dual rank synchronizer to sample this and make it synchronous to the rising edge of clock.                                                                         |
+| FIQ                       | Supported. Level sensitive interrupt signal. CPU uses a dual rank synchronizer to sample this and make it synchronous to the rising edge of clock.                                                                         |
+| Pipeline Depth            | 17                                                                                                                                                                                                                         |
+| Issue and Execution Width | Single issue, in order, scalar core, with very limited out-of-order completion for some loads/stores that miss in cache.                                                                                                   |
+| Data Width                | 32                                                                                                                                                                                                                         |
+| Address Width             | 32                                                                                                                                                                                                                         |
+| Virtual Address Width     | 32                                                                                                                                                                                                                         |
+| Instruction Set Versions  | V5TE (1999)<br/>V5 32-bit instruction set.<br/>V5T 16-bit instruction set. Can be switched to V4T by setting bit 14 of CP15 register 1<br/>V5E DSP extensions.                                                             |
+| L1 I-Cache                | 16KB Direct Mapped VIVT Cache.<br/>64 Byte Cache Line                                                                                                                                                                      |
+| L1 D-Cache                | 16KB Direct Mapped VIVT Cache<br>64 Byte Cache Line                                                                                                                                                                        |
+| I-TLB Structure           | 4 x Direct mapped 128 entries, one direct mapped TLB per page size.                                                                                                                                                        |
+| D-TLB Structure           | 4 x Direct mapped 128 entries, one direct mapped TLB per page size.                                                                                                                                                        |
+| Branch Prediction         | Direct Mapped Bimodal Predictor. <br/>Direct Mapped BTB.<br>1K entries in T state (16-bit instructions).<br>512 entries in 32-bit instruction state.                                                                       |
+| RAS Depth                 | 4 deep return address stack.                                                                                                                                                                                               |
+| Branch latency            | 12 cycles (wrong prediction or unrecognized branch)<br>3 cycles (taken, correctly predicted)<br>1 cycle (not-taken, correctly predicted)<br>12 cycles (32-bit/16-bit switch)<br>18 cycles (Exception/Interrupt Entry/Exit) |
+| Fetch Buffer              | FIFO, 16 x 32-bit.                                                                                                                                                                                                         |
+| Bus Interface             | Unified 32-Bit Wishbone B3 bus with CTI and BTE signals.<br/>BTE and CTI signals are used only when cache is enabled.                                                                                                      |
+| FPGA Resource Utilization | 23K LUTs<br>116 LUTRAMs<br>15.3K FFs<br>29 BRAMs<br>4 DSP Blocks                                                                                                                                                           |
 
 A simplified block diagram of the ZAP pipeline is shown below. Note that ZAP is mostly a single issue scalar processor.
 
@@ -492,6 +488,7 @@ Note that all parameters should be 2^n. Cache size should be multiple of line si
 
 | Parameter                   | Default                            | Description                                                                               |
 | --------------------------- | ---------------------------------- | ----------------------------------------------------------------------------------------- |
+| CP15_L4_DEFAULT             | 0                                  | When 1, the thumb ISA is compliant with V4T, right out of reset.                          |
 | ONLY\_CORE                  | 0                                  | When 1, the core is stripped of the cache/MMU. When 0, the core comes with cache and MMU. |
 | RESET_VECTOR                | 0                                  | Initial PC out of reset. Often, it is OK to leave it with the default value.              |
 | CPSR_INIT                   | {24'd0, 1'd1, 1'd, 1'd0, 5'b10011} | Initial CPSR out of reset. Often, it is OK to leave it with the default value.            |
@@ -551,7 +548,8 @@ Note that all parameters should be 2^n. Cache size should be multiple of line si
   * Instantiate the ZAP processor in your project using this template:
 
 ```
-       zap_top #(.BE_32_ENABLE            (),
+       zap_top #(.CP15_L4_DEFAULT         (),
+                 .BE_32_ENABLE            (),
                  .CPSR_INIT               (),
                  .RESET_VECTOR            (),
                  .FIFO_DEPTH              (),
@@ -626,7 +624,7 @@ To remove existing object/simulation/synthesis files, do:
 
 ```
        %Config = ( 
-               # CPU configuration. Currently, testbench only supports LE.
+               # CPU configuration. Currently, testbench only supports LE and V4T..
                DATA_CACHE_SIZE             => 4096,    
                CODE_CACHE_SIZE             => 4096,    
                CODE_SECTION_TLB_ENTRIES    => 8,       
