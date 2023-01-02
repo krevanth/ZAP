@@ -533,12 +533,7 @@ begin:blk_a
                                 end
 
                                 o_instruction_valid = 1'd1;
-
-                                //
-                                // When empty register list is specified,
-                                // treat it as all registers set.
-                                //
-                                reglist_nxt = reglist == 0 ? '1 : reglist;
+                                reglist_nxt         = reglist;
 
                                 state_nxt = MEMOP;
                                 o_stall_from_decode = 1'd1;
@@ -978,5 +973,14 @@ begin: priEncFn
 end
 endfunction
 
-endmodule // zap_predecode_mem_fsm.v
+always @ ( posedge i_clk )
+begin
+        if ( state_ff == IDLE && state_nxt == MEMOP && !i_reset )
+        begin
+                assert ( reglist_nxt != 'd0 ) else
+                $info("Warning: Empty reglist leads to UNPREDICTABLE behavior.");
+        end
+end
+
+endmodule
 
