@@ -263,8 +263,14 @@ begin: tskDecodeClz
         o_shift_length          =       33'd0;
         o_shift_length[32]      =       IMMED_EN; // Shift length is 0 of course.
 
+        assert(o_shift_source != 'd15) else
+        $info("Warning: CLZ with source R15 is unpredictable.");
+
         // Destination index.
         o_destination_index     =       {1'd0, instruction[15:12]};
+
+        assert(o_destination_index != 'd15) else
+        $info("Warning: CLZ to destination R15 is unpredictable.");
 end
 endfunction
 
@@ -426,21 +432,19 @@ begin: tskDecodeHalfWordLs
 
         // Transfer size.
 
-        o_mem_unsigned_byte_enable      = 1'd0;
-        o_mem_unsigned_halfword_enable  = 1'd0;
-        o_mem_signed_halfword_enable    = 1'd0;
-
         case ( instruction[6:5] )
         SIGNED_BYTE:            o_mem_signed_byte_enable       = 1'd1;
         UNSIGNED_HALF_WORD:     o_mem_unsigned_halfword_enable = 1'd1;
         SIGNED_HALF_WORD:       o_mem_signed_halfword_enable   = 1'd1;
         default:
         begin
-                o_mem_unsigned_byte_enable      = 1'd0;
                 o_mem_unsigned_halfword_enable  = 1'd0;
                 o_mem_signed_halfword_enable    = 1'd0;
         end
         endcase
+
+        assert(~(o_mem_load == 0 && instruction[6] == 1)) else
+        $info("Warning: UNPREDICTABLE behavior of halfword LD/ST.");
 end
 endfunction
 
@@ -603,8 +607,8 @@ endfunction
 // =============================
 // BX decode.
 // =============================
-// Converted into a MOV to PC. The function void of setting the T-bit in the CPSR is
-// the job of the writeback stage.
+// Converted into a MOV to PC. The ALU will set the T bit in the CPSR
+
 function void decode_bx ();
 begin: tskDecodeBx
         logic [32:0] temp;
@@ -613,6 +617,10 @@ begin: tskDecodeBx
         temp[31:4] = 0; // Zero out stuff to avoid conflicts in the function.
 
         process_instruction_specified_shift(temp);
+
+        // Ensure R is not PC.
+        assert(temp[3:0] != 'd15) else
+        $info(2, "Warning: PC as a source is UNPREDICTABLE for BX.");
 
         // The RAW ALU source does not matter.
         o_condition_code        = instruction[31:28];
@@ -623,7 +631,8 @@ begin: tskDecodeBx
         o_alu_source            = 0;
         o_alu_source[32]        = IMMED_EN;
 
-        // Indicate switch. This is a primary differentiator.
+        // Indicate switch. This is a primary differentiator. The actual
+        // switch happens only if the target LSB = 0 (ALU output).
         o_switch = 1;
 end
 endfunction
@@ -650,6 +659,9 @@ begin: tskDecodeLs
         else
         begin
               process_instruction_specified_shift ( {21'd0, instruction[11:0]} );
+
+              assert ( instruction [3:0] != 'd15 ) else
+                $info("Warning: Use of PC as Rm in LDR/STR with ISS is UNPREDICTABLE.");
         end
 
         o_alu_operation = instruction[23] ? {2'd0, ADD} : {2'd0, SUB};
@@ -669,6 +681,9 @@ begin: tskDecodeLs
         o_mem_unsigned_byte_enable = instruction[22];
 
         o_mem_srcdest_index = {instruction[`ZAP_SRCDEST_EXTEND], instruction[`ZAP_SRCDEST]};
+
+        assert ( ~(o_mem_load && o_mem_srcdest_index == 'd15) ) else
+                $info("Warning: Use of PC as a source reg of STORE is UNPREDICTABLE.");
 
         if ( !o_mem_pre_index ) // Post-index, writeback has no meaning.
         begin
@@ -712,6 +727,9 @@ begin
 
         // Destination.
         o_destination_index = instruction[22] ? ARCH_CURR_SPSR : ARCH_CPSR;
+
+        // Set flag update=1 for CPSR updates.
+        o_flag_update = instruction[22] ? 1'd0 : 1'd1;
 
         o_condition_code = instruction[31:28];
 
@@ -851,6 +869,9 @@ begin
         o_shift_source          = {28'd0, xinstruction[`ZAP_DP_RB_EXTEND], xinstruction[`ZAP_DP_RB]};
         o_shift_source[32]      = INDEX_EN;
         o_shift_operation       = {1'd0, xinstruction[6:5]};
+
+        assert(o_shift_length != 'd15) else
+        $info("Warning: Using PC here as a source is UNPREDICTABLE.");
 end
 endfunction
 

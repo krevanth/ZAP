@@ -109,9 +109,6 @@ module zap_issue_main
         // combinational logic followed by flops(FFs).
         //
 
-        // ALU flags.
-        input   logic                            i_shifter_flag_update_ff,
-
         // The ALU never changes destination anyway. Destination from shifter.
         input logic  [$clog2(PHY_REGS )-1:0]     i_shifter_destination_index_ff,
 
@@ -275,7 +272,6 @@ logic [32+32+1+2+64*8+1+4+$clog2(PHY_REGS)+33+$clog2(ALU_OPS)+33+$clog2(SHIFT_OP
 // Individual lock signals. These are ORed to get the final lock.
 logic shift_lock;
 logic load_lock;
-logic flag_lock;
 logic lock;
 
 //
@@ -315,7 +311,7 @@ logic                              skid_force32align_ff;
 logic                              skid_und_ff;
 logic  [31:0]                      skid_ppc_ff;
 
-assign lock = (shift_lock | load_lock | flag_lock) &
+assign lock = (shift_lock | load_lock) &
               (skid_condition_code_ff != NV);
 
 wire clear = i_clear_from_writeback | i_clear_from_alu;
@@ -480,7 +476,8 @@ begin
                                 i_rd_data_2,
                                 i_rd_data_3,
                                 i_cpu_mode,
-                                skid_pc_plus_8_ff
+                                skid_pc_plus_8_ff,
+                                skid_force32align_ff
         );
 
 
@@ -514,7 +511,8 @@ begin
                                 i_rd_data_2,
                                 i_rd_data_3,
                                 i_cpu_mode,
-                                skid_pc_plus_8_ff
+                                skid_pc_plus_8_ff,
+                                skid_force32align_ff
         );
 
         o_shift_length_value_nxt=
@@ -547,7 +545,8 @@ begin
                                 i_rd_data_2,
                                 i_rd_data_3,
                                 i_cpu_mode,
-                                skid_pc_plus_8_ff
+                                skid_pc_plus_8_ff,
+                                skid_force32align_ff
         );
 
         // Value of a register index, never an immediate.
@@ -581,7 +580,8 @@ begin
                                 i_rd_data_2,
                                 i_rd_data_3,
                                 i_cpu_mode,
-                                skid_pc_plus_8_ff
+                                skid_pc_plus_8_ff,
+                                skid_force32align_ff
         );
 end
 
@@ -865,27 +865,14 @@ assign  load_lock =     determine_load_lock
 // right on the output of this stage because in that case we do not
 // have the register value and thus a shift lock.
 //
+// Another case is when the output of this stage has a flag update, a
+// shift operation that is not LSL#0 cannot be issued since flags are not
+// actually available in the next cycle. They are only available in the
+// next-2-next cycle.
+//
 assign shift_lock =
   (((skid_is_mult |  ((~skid_is_lsl_0) & (~skid_is_rori)))) & w_shift_lock)
 | (o_flag_update_ff & (~skid_is_lsl_0));
-
-//
-// Detect if an instruction reads CPSR, halt it if previous
-// instruction is updating flags is in the shifter stage. This
-// currently is used only by MRS.
-//
-assign flag_lock = determine_flag_lock ( skid_shift_source_ff,
-                                         o_flag_update_ff,
-                                         i_shifter_dav_ff,
-                                         i_shifter_flag_update_ff  ) ||
-                   determine_flag_lock ( skid_shift_length_ff,
-                                          o_flag_update_ff,
-                                          i_shifter_dav_ff,
-                                          i_shifter_flag_update_ff  ) ||
-                   determine_flag_lock ( skid_alu_source_ff  ,
-                                          o_flag_update_ff,
-                                          i_shifter_dav_ff,
-                                          i_shifter_flag_update_ff  );
 
 ////////////////////////////////////
 // Functions
@@ -993,33 +980,6 @@ endfunction
 // ----------------------------------------------------------------------------
 
 //
-// Anyone needs CPSR, and flag update is going on in the previous instruction,
-// lock the issue. Only for MRS.
-//
-function determine_flag_lock (
-        input   [32:0]  index,
-        input           flag_update,
-        input           alu_dav_nxt,
-        input           shifter_flag_update_ff
-);
-        logic unused;
-
-        determine_flag_lock = 1'd0;
-
-        if ( index[32] != IMMED_EN && index[5:0] == PHY_CPSR[5:0] )
-        begin
-                if ( flag_update || (shifter_flag_update_ff && alu_dav_nxt) )
-                begin
-                        determine_flag_lock = 1'd1;
-                end
-        end
-
-        unused = |{index[31:6]};
-endfunction
-
-// ----------------------------------------------------------------------------
-
-//
 // Straightforward read feedback function. Looks at all stages of the pipeline
 // to extract the latest value of the register.
 //
@@ -1074,7 +1034,10 @@ function [31:0] get_register_value (
 
         // CPU mode and PC.
         input [31:0]                    cpu_mode,
-        input [31:0]                    pc_plus_8_ff
+        input [31:0]                    pc_plus_8_ff,
+
+        // PC access control.
+        input                           force32_align_ff,
 );
 
 logic [31:0] get;
@@ -1092,7 +1055,10 @@ begin
         else if   ( index[5:0] == {2'd0, ARCH_PC[3:0]} )
         // Catch PC here. ARCH index = PHY index so no problem.
         begin
-                 get = pc_plus_8_ff;
+                if ( force32_align_ff )
+                        get = pc_plus_8_ff & 32'hffff_fffc;
+                else
+                        get = pc_plus_8_ff;
         end
         else if ( index[5:0] == PHY_CPSR[5:0] )   // Catch CPSR here.
         begin

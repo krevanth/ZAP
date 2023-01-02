@@ -669,6 +669,19 @@ end
 // Used to generate access address.
 // ----------------------------------------------------------------------------
 
+// Assertion
+always @ ( posedge i_clk )
+begin
+        if ( !i_reset )
+        begin
+                assert ( !(i_force32align_ff              &&
+                          (mem_address_nxt[1:0] != 2'b00) &&
+                           o_data_wb_cyc_nxt) )
+                else
+                        $fatal(2, "Error: Final access address is not aligned.");
+        end
+end
+
 always_comb
 begin:pre_post_index_address_generator
         //
@@ -681,10 +694,7 @@ begin:pre_post_index_address_generator
         else
                 mem_address_nxt = sum[31:0];        // Preindex.
 
-        // If a force 32 align is set, make the lower 2 bits as zero.
-        if ( i_force32align_ff )
-                mem_address_nxt[1:0] = 2'b00;
-
+        // FCSE.
         if ( mem_address_nxt[31:25] == 0 )
                 mem_address_nxt[31:25] = i_cpu_pid;
 end
@@ -743,31 +753,19 @@ begin: alu_result
         //
         // Flag MOV(FMOV) i.e., MOV to CPSR and MMOV handler.
         // FMOV moves to CPSR and flushes the pipeline.
-        // MMOV moves to SPSR and does not flush the pipeline.
+        // MMOV moves to SPSR and does not flush the pipeline. (MSR to SPSR)
         //
         else if ( opcode == {1'd0, FMOV} || opcode == {1'd0, MMOV} )
         begin: fmov_mmov
-                // Read entire CPSR or SPSR.
-                tmp_sum = opcode == {1'd0, FMOV} ? flags_ff : i_mem_srcdest_value_ff;
-
-                // Generate a proper mask.
                 exp_mask = {{8{rn[3]}},{8{rn[2]}},{8{rn[1]}},{8{rn[0]}}};
 
-                // Change only specific bits as specified by the mask.
-                for ( int i=0;i<32;i++ )
+                for(int i=0;i<32;i++)
                 begin
-                        if ( exp_mask[i] )
-                                tmp_sum[i] = rm[i];
-                end
-
-                //
-                //  FMOV moves to the CPSR in ALU and writeback.
-                 // No R* register is changed. The MSR out of this will have
-                 // a target to CPSR.
-                 //
-                if ( opcode == {1'd0, FMOV} )
-                begin
-                        tmp_flags = tmp_sum;
+                        case ( opcode )
+                        {1'd0, FMOV}: tmp_flags[i] = exp_mask[i] ? rm[i] : flags_ff[i];
+                        {1'd0, MMOV}: tmp_sum[i]   = exp_mask[i] ? rm[i] : i_mem_srcdest_value_ff[i];
+                        default     : {tmp_flags, tmp_sum} = {64{1'dx}};
+                        endcase
                 end
         end
         else
@@ -871,20 +869,27 @@ end
 // Assertion.
 always @ ( posedge i_clk )
 begin
+        if ( opcode == {1'd0, MMOV} && o_dav_nxt && !i_reset )
+        begin
+                assert ( flags_ff[`ZAP_CPSR_MODE] != USR &&
+                         flags_ff[`ZAP_CPSR_MODE] != SYS ) else
+                $info(2, "Warning: Writing to SPSR in USR/SYS in UNDEFINED.");
+
+                assert ( flags_ff[T] == o_flags_nxt[T] ) else
+                $info(2, "Warning: Changing T bit using MSR in UNDEFINED.");
+        end
+
         if ( opcode == {1'd0, FMOV} && o_dav_nxt && !i_reset )
         begin
                 if ( flags_ff[`ZAP_CPSR_MODE] == USR )
-                        assert ( tmp_flags[23:0] == flags_ff[23:0] ) else
+                        assert ( tmp_flags[7:0] == flags_ff[7:0] ) else
                 $info("Info: USR attempting to change 23:0 of CPSR. Blocked.");
         end
         else if ( i_destination_index_ff == {2'd0, ARCH_PC} &&
-                  i_condition_code_ff != NV && !i_reset )
+                  i_condition_code_ff != NV && !i_reset && i_flag_update_ff )
         begin
-                if ( flags_ff[`ZAP_CPSR_MODE] == USR )
-                        if ( i_flag_update_ff && o_dav_nxt )
-                                 assert ( i_mem_srcdest_value_ff[23:0] ==
-                                          flags_ff[23:0] ) else
-                $info("Info: USR attempting to change 23:0 of CPSR. Blocked.");
+                assert (~(flags_ff[`ZAP_CPSR_MODE] == USR || flags_ff[`ZAP_CPSR_MODE] == SYS))
+                else $info("Warning: Cannot context restore in USR/SYS mode.");
         end
 end
 
@@ -901,16 +906,22 @@ begin: flags_bp_feedback
 
         if ( (opcode == {1'd0, FMOV}) && o_dav_nxt ) // Writes to CPSR...
         begin
-                //
-                // Resync pipeline. We might end up fetching things in the
-                // wrong mode.
-                //
-                w_clear_from_alu        = NEXT_INSTR_RESYNC;
+                // Write destination to NULL.
+                o_destination_index_nxt = PHY_RAZ_REGISTER;
 
-                // USR cannot change 23:0. Will silently fail.
-                flags_nxt[23:0]   = (flags_ff[`ZAP_CPSR_MODE] == USR) ?
-                 flags_ff[23:0] :
-                flags_nxt[23:0] ; // Security.
+                // If 7:0 is touched, RESYNC pipeline.
+                if ( flags_ff[7:0] != flags_nxt[7:0] )
+                        w_clear_from_alu        = NEXT_INSTR_RESYNC;
+                else
+                        w_clear_from_alu        = CONTINUE;
+
+                // USR cannot change 7:0 of CPSR. Will silently fail.
+                flags_nxt[7:0]   =
+                (
+                        flags_ff[`ZAP_CPSR_MODE] == USR
+                ) ?
+                flags_ff [7:0] :
+                flags_nxt[7:0] ; // Security.
         end
         else if ( branch_instruction )
         begin: branch_block
@@ -921,13 +932,13 @@ begin: flags_bp_feedback
                 begin
                         w_clear_from_alu            = BRANCH_TARGET;
 
-                        // Restore CPSR from SPSR.
-                        flags_nxt                   = i_mem_srcdest_value_ff;
+                        // Restore CPSR from SPSR if not in USR/SYS mode.
 
-                        // USR cannot change 23:0, will silently fail.
-                        flags_nxt[23:0] = (flags_ff[`ZAP_CPSR_MODE] == USR) ?
-                         flags_ff[23:0] :
-                        flags_nxt[23:0] ; // Security.
+                        if ( flags_ff[`ZAP_CPSR_MODE] == USR ||
+                             flags_ff[`ZAP_CPSR_MODE] == SYS )
+                                flags_nxt = flags_ff;
+                        else
+                                flags_nxt = i_mem_srcdest_value_ff;
                 end
                 else if ( o_dav_nxt ) // Branch taken and no flag update.
                 begin
