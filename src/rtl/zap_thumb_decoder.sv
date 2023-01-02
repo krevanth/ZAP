@@ -27,8 +27,6 @@
 // --                                                                         --
 // -----------------------------------------------------------------------------
 
-
-
 module zap_thumb_decoder (
         // Input from I-cache.
         // Instruction and valid qualifier.
@@ -36,7 +34,7 @@ module zap_thumb_decoder (
         input logic              i_instruction_valid,
 
         // Offset input.
-        input logic [11:0]       i_offset,
+        input logic [10:0]       i_offset,
 
         // Interrupts. Active high level sensitive signals.
         input logic              i_irq,
@@ -68,14 +66,9 @@ module zap_thumb_decoder (
 
 ///////////////////////////////////////////////////////////////////////////////
 
-logic [11:0] offset_w;  // Previous offset.
+logic [10:0] offset_w;  // Previous offset.
 
-///////////////////////////////////////////////////////////////////////////////
-
-always_comb
-begin
-        offset_w = i_offset;
-end
+assign  offset_w = i_offset[10:0];
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -84,7 +77,7 @@ begin
         // If you are not in compressed mode, just pass stuff on.
         o_instruction_valid     = i_instruction_valid;
         o_und                   = 1'd0;
-        o_instruction           = {3'd0, i_instruction};
+        o_instruction[34:0]     = {3'd0, i_instruction};
         o_irq                   = i_irq;
         o_fiq                   = i_fiq;
         o_force32_align         = 1'd0;
@@ -158,7 +151,7 @@ begin: dcdGetAddr
         imm[7:0]        = i_instruction[7:0];
         imm[11:8]       = 4'd15; // To achieve a left shift of 2 i.e., *4
 
-        o_instruction = 0;
+        o_instruction[34:0] = 0;
 
         // ADD Rd, PC, imm
         o_instruction[31:0] = {AL, 2'b00, 1'b1, ADD, 1'd0, 4'd15, rd, imm};
@@ -181,7 +174,7 @@ begin: dcdModSp
         imm[7:0]        = {1'd0, i_instruction[6:0]};
         imm[11:8]       = 4'd15; // To achieve a left shift of 2 i.e., *4
 
-        o_instruction = 0;
+        o_instruction[34:0] = 0;
 
         o_instruction[31:0] = {AL, 2'b00, 1'b1, ADD, 1'd0, 4'd13, 4'd13, imm};
 
@@ -205,7 +198,7 @@ begin: decodePopPush
         logic [3:0] base;
         logic [15:0] reglist;
 
-        o_instruction = 0;
+        o_instruction[34:0] = 0;
         base = 13;
 
         reglist = {8'd0, i_instruction[7:0]};
@@ -219,7 +212,7 @@ begin: decodePopPush
                 reglist[14] = 1'd1;
         end
 
-        o_instruction = {3'd0, AL, 3'b100, 1'd0, 1'd0, 1'd0, 1'd1, i_instruction[11],
+        o_instruction[34:0] = {3'd0, AL, 3'b100, 1'd0, 1'd0, 1'd0, 1'd1, i_instruction[11],
                                                         base, reglist};
 end
 endfunction
@@ -236,7 +229,7 @@ begin: dcdLdmiaStmia
         base    = {1'd0, i_instruction[10:8]};
         reglist = {8'd0, i_instruction[7:0]};
 
-        o_instruction = {3'd0, AL, 3'b100, 1'd0, 1'd1, 1'd0, 1'd1, i_instruction[11],
+        o_instruction[34:0] = {3'd0, AL, 3'b100, 1'd0, 1'd1, 1'd0, 1'd1, i_instruction[11],
                                 base, reglist};
 end
 endfunction
@@ -253,7 +246,7 @@ begin: dcdLdrRelStr
         base    = ARCH_SP;
         imm    = {2'd0, i_instruction[7:0], 2'd0};
 
-        o_instruction = {3'd0, AL, 3'b010, 1'd1, 1'd0, 1'd0, 1'd0, i_instruction[11],
+        o_instruction[34:0] = {3'd0, AL, 3'b010, 1'd1, 1'd0, 1'd0, 1'd0, i_instruction[11],
                         base, srcdest, imm};
 end
 endfunction
@@ -279,20 +272,20 @@ begin: dcdLdrhStrh
         if ( X == 0 )
         begin
           case({H,S})
-          2'd0: o_instruction = {3'd0, AL, 3'b011, 1'd1, 1'd0, 1'd0, 1'd0, 1'd0, base, srcdest, offset};// STR
-          2'd1: o_instruction = {3'd0, AL, 3'b011, 1'd1, 1'd0, 1'd1, 1'd0, 1'd0, base, srcdest, offset};// STRB
-          2'd2: o_instruction = {3'd0, AL, 3'b011, 1'd1, 1'd0, 1'd0, 1'd0, 1'd1, base, srcdest, offset};// LDR
-          2'd3: o_instruction = {3'd0, AL, 3'b011, 1'd1, 1'd0, 1'd1, 1'd0, 1'd1, base, srcdest, offset};// LDRB
+          2'd0: o_instruction[34:0] = {3'd0, AL, 3'b011, 1'd1, 1'd0, 1'd0, 1'd0, 1'd0, base, srcdest, offset};// STR
+          2'd1: o_instruction[34:0] = {3'd0, AL, 3'b011, 1'd1, 1'd0, 1'd1, 1'd0, 1'd0, base, srcdest, offset};// STRB
+          2'd2: o_instruction[34:0] = {3'd0, AL, 3'b011, 1'd1, 1'd0, 1'd0, 1'd0, 1'd1, base, srcdest, offset};// LDR
+          2'd3: o_instruction[34:0] = {3'd0, AL, 3'b011, 1'd1, 1'd0, 1'd1, 1'd0, 1'd1, base, srcdest, offset};// LDRB
           endcase
         end
         else
         begin
           case({S,H})
                 //                                  P      U     I     W                                                   SH
-          2'd0: o_instruction = {3'd0, AL, 3'b000, 1'd1, 1'd1, 1'd0, 1'd0, 1'd0, base, srcdest, 4'd0, 1'd1, 2'b01, 1'd1, offset[3:0]};// STRH
-          2'd1: o_instruction = {3'd0, AL, 3'b000, 1'd1, 1'd1, 1'd0, 1'd0, 1'd1, base, srcdest, 4'd0, 1'd1, 2'b01, 1'd1, offset[3:0]};// LDRH
-          2'd2: o_instruction = {3'd0, AL, 3'b000, 1'd1, 1'd1, 1'd0, 1'd0, 1'd1, base, srcdest, 4'd0, 1'd1, 2'b10, 1'd1, offset[3:0]};// LDSB
-          2'd3: o_instruction = {3'd0, AL, 3'b000, 1'd1, 1'd1, 1'd0, 1'd0, 1'd1, base, srcdest, 4'd0, 1'd1, 2'b11, 1'd1, offset[3:0]};// LDSH
+          2'd0: o_instruction[34:0] = {3'd0, AL, 3'b000, 1'd1, 1'd1, 1'd0, 1'd0, 1'd0, base, srcdest, 4'd0, 1'd1, 2'b01, 1'd1, offset[3:0]};// STRH
+          2'd1: o_instruction[34:0] = {3'd0, AL, 3'b000, 1'd1, 1'd1, 1'd0, 1'd0, 1'd1, base, srcdest, 4'd0, 1'd1, 2'b01, 1'd1, offset[3:0]};// LDRH
+          2'd2: o_instruction[34:0] = {3'd0, AL, 3'b000, 1'd1, 1'd1, 1'd0, 1'd0, 1'd1, base, srcdest, 4'd0, 1'd1, 2'b10, 1'd1, offset[3:0]};// LDSB
+          2'd3: o_instruction[34:0] = {3'd0, AL, 3'b000, 1'd1, 1'd1, 1'd0, 1'd0, 1'd1, base, srcdest, 4'd0, 1'd1, 2'b11, 1'd1, offset[3:0]};// LDSH
           endcase
         end
 end
@@ -307,14 +300,14 @@ begin: dcdLdrhStrh5BitOff
         logic [3:0] rd;
         logic [7:0] imm;
 
-        o_instruction = 0;
+        o_instruction[34:0] = 0;
 
         rn = {1'd0, i_instruction[5:3]};
         rd = {1'd0, i_instruction[2:0]};
         imm[7:0] = {2'd0, i_instruction[10:6], 1'd0};
 
         // Unsigned halfword transfer
-        o_instruction = {3'd0,
+        o_instruction[34:0]  = {3'd0,
                                 AL,                     // 31:28
                                 3'b000,                 // 27:25
                                 4'b1110,                // 24:21 (P=1,U=1,I=1,W=0)
@@ -337,7 +330,7 @@ begin: dcLdrStr5BitOff
         logic [3:0] rd;
         logic [11:0] imm;
 
-        o_instruction = 0;
+        o_instruction[34:0] = 0;
 
         rn = {1'd0, i_instruction[5:3]};
         rd = {1'd0, i_instruction[2:0]};
@@ -348,7 +341,7 @@ begin: dcLdrStr5BitOff
                 imm[11:0] = {7'd0, i_instruction[10:6]};
 
                            //  CC                 U          B             0
-        o_instruction = {3'd0, AL, 3'b010, 1'd1, 1'd1, i_instruction[12], 1'd0,
+        o_instruction[34:0] = {3'd0, AL, 3'b010, 1'd1, 1'd1, i_instruction[12], 1'd0,
                                                i_instruction[11], rn, rd, imm};
 end
 endfunction
@@ -365,7 +358,7 @@ begin: dcPcRelLoad
 
         o_force32_align = 1'd1;
                               // CC                 U       B     0
-        o_instruction   = {3'd0, AL, 3'b010, 1'd1, 1'd1,  1'd0, 1'd0,
+        o_instruction[34:0]   = {3'd0, AL, 3'b010, 1'd1, 1'd1,  1'd0, 1'd0,
                                              1'd1, 4'b1111, rd, imm};
 end
 endfunction
@@ -379,7 +372,7 @@ begin:dcAluHi
         logic [3:0] rd;
         logic [3:0] rs;
 
-        o_instruction = 35'd0;
+        o_instruction[34:0] = 35'd0;
 
         op = i_instruction[9:8];
         rd = {i_instruction[7], i_instruction[2:0]};
@@ -408,7 +401,7 @@ begin: tskDecAluLo
         rs = {1'd0, i_instruction[5:3]};
         rd = {1'd0, i_instruction[2:0]};
 
-        o_instruction = 35'd0;
+        o_instruction[34:0] = 35'd0;
 
         case(op)
         0:      o_instruction[31:0] = {AL, 2'b00, 1'b0, AND, 1'd1, rd, rd, 8'd0, rs};                   // ANDS Rd, Rd, Rs
@@ -439,7 +432,7 @@ begin: tskDecodeMcasImm
         logic [3:0]  rd;
         logic [11:0] imm;
 
-        o_instruction = 0;
+        o_instruction[34:0] = 0;
 
         op = i_instruction[12:11];
         rd = {1'd0, i_instruction[10:8]};
@@ -513,8 +506,8 @@ endfunction
 
 function void decode_conditional_branch();
 begin
-        // An MSB of 1 indicates a left shift of 1.
-        o_instruction           = {1'd1, 2'b0, i_instruction[11:8], 3'b101, 1'b0, 24'd0};
+        // An MSB of 1 indicates a left shift of 1 in the down stages.
+        o_instruction[34:0]     = {1'd1, 2'b0, i_instruction[11:8], 3'b101, 1'b0, 24'd0};
         o_instruction[23:0]     = $signed({{16{i_instruction[7]}}, i_instruction[7:0]});
 end
 endfunction
@@ -524,7 +517,7 @@ endfunction
 function void decode_unconditional_branch();
 begin
         // An MSB of 1 indicates a left shift of 1.
-        o_instruction           = {1'd1, 2'b0, AL, 3'b101, 1'b0, 24'd0};
+        o_instruction[34:0]     = {1'd1, 2'b0, AL, 3'b101, 1'b0, 24'd0};
         o_instruction[23:0]     = $signed({{13{i_instruction[10]}},i_instruction[10:0]});
 end
 endfunction
@@ -533,12 +526,12 @@ endfunction
 
 function void decode_blx1();
 begin
-        o_instruction = 35'd0; // Default value.
+        o_instruction[34:0] = 35'd0; // Default value.
 
         // Generate a BLX1.
         o_instruction[31:25] =  7'b1111_101;    // BLX1 identifier.
         o_instruction[24]    =  1'd0;           // H - bit.
-        o_instruction[23:0]  =  ($signed({offset_w, 12'd0})) | {12'd0, i_instruction[10:0], 1'd0};
+        o_instruction[23:0]  =  $signed({offset_w[10], offset_w[10], offset_w[10:0], i_instruction[10:0]});
         // Corrected.
         o_irq                = 1'd0;
         o_fiq                = 1'd0;
@@ -549,7 +542,7 @@ endfunction
 
 function void decode_blx2();
 begin
-        o_instruction = {3'd0, 4'b1110,4'b0001,4'b0010,4'b1111,4'b1111,4'b1111,4'b0011, i_instruction[6:3]};
+        o_instruction[34:0] = {3'd0, 4'b1110,4'b0001,4'b0010,4'b1111,4'b1111,4'b1111,4'b0011, i_instruction[6:3]};
         o_irq         = 1'd0;
         o_fiq         = 1'd0;
 end
@@ -575,8 +568,8 @@ begin
                 1'd1:
                 begin
                         // Generate a full jump.
-                        o_instruction = {1'd1, 2'b0, AL, 3'b101, 1'b1, 24'd0};
-                        o_instruction[23:0] = ($signed({offset_w, 12'd0})) | {12'd0, i_instruction[10:0], 1'd0};
+                        o_instruction[34:0] = {1'd1, 2'b0, AL, 3'b101, 1'b1, 24'd0};
+                        o_instruction[23:0] = $signed({offset_w[10], offset_w[10], offset_w[10:0], i_instruction[10:0]});
                         // Corrected.
 
                         o_irq           = 1'd0;
@@ -591,7 +584,7 @@ endfunction
 function void decode_bx();
 begin
         // Generate a BX Rm.
-        o_instruction = {3'd0, 32'b0000_0001_0010_1111_1111_1111_0001_0000};
+        o_instruction[34:0] = {3'd0, 32'b0000_0001_0010_1111_1111_1111_0001_0000};
         o_instruction[31:28] = AL;
         o_instruction[3:0]   = i_instruction[6:3];
 end
@@ -602,7 +595,7 @@ endfunction
 function void decode_swi();
 begin
         // Generate a SWI.
-        o_instruction = {3'd0, 32'b0000_1111_0000_0000_0000_0000_0000_0000};
+        o_instruction[34:0] = {3'd0, 32'b0000_1111_0000_0000_0000_0000_0000_0000};
         o_instruction[31:28] = AL;
         o_instruction[7:0]   = i_instruction[7:0];
 end
@@ -613,7 +606,7 @@ endfunction
 function void decode_shift();
 begin
         // Compressed shift instructions. Decompress to ARM with instruction specified shift.
-        o_instruction           = 35'd0;                // Extension -> 0.
+        o_instruction[34:0]     = 35'd0;                // Extension -> 0.
         o_instruction[31:28]    = AL;                   // Always execute.
         o_instruction[27:26]    = 2'b00;                // Data processing.
         o_instruction[25]       = 1'd0;                 // Immediate is ZERO.
