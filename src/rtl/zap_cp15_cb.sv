@@ -24,8 +24,9 @@
 //
 
 module zap_cp15_cb #(
-        parameter bit BE_32_ENABLE         = 1'd0,
-        parameter bit ONLY_CORE            = 1'd0,
+        parameter bit CP15_L4_DEFAULT          = 1'd0,
+        parameter bit BE_32_ENABLE             = 1'd0,
+        parameter bit ONLY_CORE                = 1'd0,
 
         parameter bit [31:0] PHY_REGS          = 32'd64,
         parameter bit [31:0] CODE_CACHE_LINE   = 32'd64,
@@ -256,7 +257,7 @@ begin
                 o_icache_en <= 1'd0;
                 o_mmu_en    <= 1'd0;
                 o_pid       <= 8'd0;
-                o_l4_enable <= 1'd0;
+                o_l4_enable <= CP15_L4_DEFAULT;
         end
         else
         begin
@@ -294,7 +295,10 @@ begin
                 o_reg_wr_index <= 0;
                 o_reg_rd_index <= 0;
                 r[0]           <= 32'h0;
+
                 r[1]           <= 32'd0;
+                r[1][14]       <= CP15_L4_DEFAULT;
+
                 r[2]           <= 32'd0;
                 r[3]           <= 32'd0;
                 r[4]           <= 32'd0;
@@ -303,8 +307,8 @@ begin
                 r[13]          <= 32'd0; //FCSE
 
                 // Overrides.
-                generate_r0;
-                generate_r1;
+                generate_r0_constants;
+                generate_r1_constants;
         end
         else
         begin
@@ -561,9 +565,9 @@ begin
                 end
                 endcase
 
-                // Default values. These bits are unchangeable.
-                generate_r0;
-                generate_r1;
+                // Constants.
+                generate_r0_constants;
+                generate_r1_constants;
         end
 end
 
@@ -592,8 +596,8 @@ task automatic load_to_cpu_reg;
                 r[ i_cp_word[19:16] ];
 endtask
 
-// CPU info register.
-task automatic generate_r0;
+// CPU info register constants.
+task automatic generate_r0_constants;
 begin
         r[0][3:0]   <= 4'd0;    // Revision 0.
         r[0][15:4]  <= 12'hAAA; // Primary part number.
@@ -603,8 +607,8 @@ begin
 end
 endtask
 
-// CP15 R1 register.
-task automatic generate_r1;
+// CP15 R1 register constants.
+task automatic generate_r1_constants;
         r[1][1]         <= 1'd0;    // Alignment fault check disabled.
         r[1][3]         <= 1'd0;    // Write buffer always disabled.
 

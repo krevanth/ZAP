@@ -106,7 +106,7 @@ zap_thumb_decoder u_zap_thumb_decoder (
         .i_instruction_valid(i_instruction_valid),
         .i_irq(i_irq),
         .i_fiq(i_fiq),
-        .i_offset(o_instruction[11:0]),
+        .i_offset(o_instruction[10:0]),
         .i_cpsr_ff_t(i_cpsr_ff_t),
         .o_instruction(instruction_nxt),
         .o_instruction_valid(instruction_valid_nxt),

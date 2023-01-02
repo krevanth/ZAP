@@ -26,57 +26,63 @@
 module zap_top #(
 
 // -----------------------------------
+// CP15 L4 bit default.
+// -----------------------------------
+
+parameter bit [0:0] CP15_L4_DEFAULT            = 1'd0,
+
+// -----------------------------------
 // Only core. When 1, cache and MMU
 // are not present.
 // -----------------------------------
 
-parameter    [0:0]      ONLY_CORE          = 1'd0,
+parameter bit [0:0]      ONLY_CORE          = 1'd0,
 
 // -----------------------------------
 // Set reset vector here
 // -----------------------------------
 
-parameter   [31:0]       RESET_VECTOR      = 32'd0,
+parameter bit [31:0]       RESET_VECTOR      = 32'd0,
 
 // -----------------------------------
 // Set initial value of CPSR here.
 // -----------------------------------
 
-parameter [31:0]        CPSR_INIT          = {24'd0, 1'd1,1'd1,1'd0,5'b10011},
+parameter bit [31:0]       CPSR_INIT          = {24'd0, 1'd1,1'd1,1'd0,5'b10011},
 
 // -----------------------------------
 // Enable BE-32
 // -----------------------------------
 
-parameter   [0:0]       BE_32_ENABLE       = 1'd0,
+parameter bit  [0:0]       BE_32_ENABLE       = 1'd0,
 
 // -----------------------------------
 // BP entries, FIFO depths
 // -----------------------------------
 
-parameter  [31:0]       BP_ENTRIES         = 32'd1024, // Predictor depth.
-parameter  [31:0]       FIFO_DEPTH         = 32'd16,   // FIFO depth.
-parameter  [31:0]       RAS_DEPTH          = 32'd4,    // Depth of RAS.
+parameter bit  [31:0]       BP_ENTRIES         = 32'd1024, // Predictor depth.
+parameter bit  [31:0]       FIFO_DEPTH         = 32'd16,   // FIFO depth.
+parameter bit  [31:0]       RAS_DEPTH          = 32'd4,    // Depth of RAS.
 
 // ----------------------------------
 // Data MMU/Cache configuration.
 // ----------------------------------
-parameter [31:0] DATA_SECTION_TLB_ENTRIES =  32'd128,  // Section TLB entries.
-parameter [31:0] DATA_LPAGE_TLB_ENTRIES   =  32'd128,  // Large page TLB entries.
-parameter [31:0] DATA_SPAGE_TLB_ENTRIES   =  32'd128,  // Small page TLB entries.
-parameter [31:0] DATA_FPAGE_TLB_ENTRIES   =  32'd128,  // Tiny page TLB entries.
-parameter [31:0] DATA_CACHE_SIZE          =  32'd16384,// Cache size in bytes.
-parameter [31:0] DATA_CACHE_LINE          =  32'd64,   // Cache line size in bytes.
+parameter bit [31:0] DATA_SECTION_TLB_ENTRIES =  32'd128,  // Section TLB entries.
+parameter bit [31:0] DATA_LPAGE_TLB_ENTRIES   =  32'd128,  // Large page TLB entries.
+parameter bit [31:0] DATA_SPAGE_TLB_ENTRIES   =  32'd128,  // Small page TLB entries.
+parameter bit [31:0] DATA_FPAGE_TLB_ENTRIES   =  32'd128,  // Tiny page TLB entries.
+parameter bit [31:0] DATA_CACHE_SIZE          =  32'd16384,// Cache size in bytes.
+parameter bit [31:0] DATA_CACHE_LINE          =  32'd64,   // Cache line size in bytes.
 
 // ----------------------------------
 // Code MMU/Cache configuration.
 // ----------------------------------
-parameter [31:0] CODE_SECTION_TLB_ENTRIES =  32'd128,  // Section TLB entries.
-parameter [31:0] CODE_LPAGE_TLB_ENTRIES   =  32'd128,  // Large page TLB entries.
-parameter [31:0] CODE_SPAGE_TLB_ENTRIES   =  32'd128,  // Small page TLB entries.
-parameter [31:0] CODE_FPAGE_TLB_ENTRIES   =  32'd128,  // Fine page TLB entries.
-parameter [31:0] CODE_CACHE_SIZE          =  32'd16384,// Cache size in bytes.
-parameter [31:0] CODE_CACHE_LINE          =  32'd64    // Ccahe line size in bytes.
+parameter bit [31:0] CODE_SECTION_TLB_ENTRIES =  32'd128,  // Section TLB entries.
+parameter bit [31:0] CODE_LPAGE_TLB_ENTRIES   =  32'd128,  // Large page TLB entries.
+parameter bit [31:0] CODE_SPAGE_TLB_ENTRIES   =  32'd128,  // Small page TLB entries.
+parameter bit [31:0] CODE_FPAGE_TLB_ENTRIES   =  32'd128,  // Fine page TLB entries.
+parameter bit [31:0] CODE_CACHE_SIZE          =  32'd16384,// Cache size in bytes.
+parameter bit [31:0] CODE_CACHE_LINE          =  32'd64    // Ccahe line size in bytes.
 
 )(
         `ifdef DEBUG_EN
@@ -204,6 +210,7 @@ wire                o_trace_uop_last;
 `endif
 
 zap_core #(
+        .CP15_L4_DEFAULT(CP15_L4_DEFAULT),
         .BP_ENTRIES(BP_ENTRIES),
         .FIFO_DEPTH(FIFO_DEPTH),
         .RAS_DEPTH(RAS_DEPTH),
