@@ -702,7 +702,7 @@ Thanks to [Bharath Mulagondla](https://github.com/bharathmulagondla) and [Akhil 
 
 The testbench UART core in `src/testbench/uart.v` is based on the [UART-16550 core](https://github.com/freecores/uart16550) project.
 
-Testbench assembly code in `src/ts/mode32_test*/` is based on Jonathan Masur's and Xavier Jimenez's work that can be found [here](https://github.com/freecores)
+Testbench assembly code in `src/ts/mode32_test*/` is based on Jonathan Masur's and Xavier Jimenez's work that can be found [here](https://opencores.org/users/Bregalad/profile)
 
 Testbench assembly code in `src/ts/mode16_test*/` is based on Julian Smolka's work [here](https://github.com/jsmolka/gba-tests`
 
