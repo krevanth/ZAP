@@ -27,7 +27,6 @@
 // VIC0   address space FFFFFFA0 to FFFFFFBF
 // UART1  address space FFFFFF80 to FFFFFF9F
 // Timer1 address space FFFFFF60 to FFFFFF7F
-// RAM    address space 0        to <RAM_SIZE>
 // 
 
 module zap_test (
@@ -62,7 +61,6 @@ begin
         $dumpvars;
 end
 
-parameter RAM_SIZE                      = 32768;
 parameter DATA_SECTION_TLB_ENTRIES      = 4;
 parameter DATA_LPAGE_TLB_ENTRIES        = 8;
 parameter DATA_SPAGE_TLB_ENTRIES        = 16;

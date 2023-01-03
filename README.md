@@ -488,7 +488,7 @@ Note that all parameters should be 2^n. Cache size should be multiple of line si
 
 | Parameter                   | Default                            | Description                                                                               |
 | --------------------------- | ---------------------------------- | ----------------------------------------------------------------------------------------- |
-| CP15_L4_DEFAULT             | 0                                  | When 1, the thumb ISA is compliant with V4T, right out of reset.                          |
+| CP15_L4_DEFAULT             | 0                                  | When 1, the 16bit ISA is compliant with V4T, right out of reset.                          |
 | ONLY\_CORE                  | 0                                  | When 1, the core is stripped of the cache/MMU. When 0, the core comes with cache and MMU. |
 | RESET_VECTOR                | 0                                  | Initial PC out of reset. Often, it is OK to leave it with the default value.              |
 | CPSR_INIT                   | {24'd0, 1'd1, 1'd, 1'd0, 5'b10011} | Initial CPSR out of reset. Often, it is OK to leave it with the default value.            |
