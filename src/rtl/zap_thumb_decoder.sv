@@ -281,16 +281,17 @@ begin: dcdLdrhStrh
         if ( X == 0 )
         begin
           case({H,S})
-          2'd0: o_instruction[34:0] = {3'd0, AL, 3'b011, 1'd1, 1'd0, 1'd0, 1'd0, 1'd0, base, srcdest, offset};// STR
-          2'd1: o_instruction[34:0] = {3'd0, AL, 3'b011, 1'd1, 1'd0, 1'd1, 1'd0, 1'd0, base, srcdest, offset};// STRB
-          2'd2: o_instruction[34:0] = {3'd0, AL, 3'b011, 1'd1, 1'd0, 1'd0, 1'd0, 1'd1, base, srcdest, offset};// LDR
-          2'd3: o_instruction[34:0] = {3'd0, AL, 3'b011, 1'd1, 1'd0, 1'd1, 1'd0, 1'd1, base, srcdest, offset};// LDRB
+                //                                        P     U      B     W    L
+          2'd0: o_instruction[34:0] = {3'd0, AL, 3'b011, 1'd1, 1'd1, 1'd0, 1'd0, 1'd0, base, srcdest, offset};// STR
+          2'd1: o_instruction[34:0] = {3'd0, AL, 3'b011, 1'd1, 1'd1, 1'd1, 1'd0, 1'd0, base, srcdest, offset};// STRB
+          2'd2: o_instruction[34:0] = {3'd0, AL, 3'b011, 1'd1, 1'd1, 1'd0, 1'd0, 1'd1, base, srcdest, offset};// LDR
+          2'd3: o_instruction[34:0] = {3'd0, AL, 3'b011, 1'd1, 1'd1, 1'd1, 1'd0, 1'd1, base, srcdest, offset};// LDRB
           endcase
         end
         else
         begin
           case({S,H})
-                //                                  P      U     I     W                                                   SH
+                //                                         P     U     I     W                                      SH
           2'd0: o_instruction[34:0] = {3'd0, AL, 3'b000, 1'd1, 1'd1, 1'd0, 1'd0, 1'd0, base, srcdest, 4'd0, 1'd1, 2'b01, 1'd1, offset[3:0]};// STRH
           2'd1: o_instruction[34:0] = {3'd0, AL, 3'b000, 1'd1, 1'd1, 1'd0, 1'd0, 1'd1, base, srcdest, 4'd0, 1'd1, 2'b01, 1'd1, offset[3:0]};// LDRH
           2'd2: o_instruction[34:0] = {3'd0, AL, 3'b000, 1'd1, 1'd1, 1'd0, 1'd0, 1'd1, base, srcdest, 4'd0, 1'd1, 2'b10, 1'd1, offset[3:0]};// LDSB

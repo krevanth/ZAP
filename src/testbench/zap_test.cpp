@@ -33,7 +33,7 @@
 #define RESET_CYCLES    10
 
 
-char mem [65536]; // 64KB buffer.
+char mem [0x03FFFFFF]; // 64MB buffer.
 FILE *ptr;
 
 unsigned int seq;
@@ -161,20 +161,20 @@ int main(int argc, char** argv, char** env) {
                                     zap_test->i_wb_ack = 1;      
                                     zap_test->i_wb_dat = 0;
 
-                                    zap_test->i_wb_dat |= ((mem[((zap_test->o_wb_adr >> 2)*4 + 0) & 0xFFFF]) & 0xFF) << (8 * 0);
-                                    zap_test->i_wb_dat |= ((mem[((zap_test->o_wb_adr >> 2)*4 + 1) & 0xFFFF]) & 0xFF) << (8 * 1);
-                                    zap_test->i_wb_dat |= ((mem[((zap_test->o_wb_adr >> 2)*4 + 2) & 0xFFFF]) & 0xFF) << (8 * 2);
-                                    zap_test->i_wb_dat |= ((mem[((zap_test->o_wb_adr >> 2)*4 + 3) & 0xFFFF]) & 0xFF) << (8 * 3);
+                                    zap_test->i_wb_dat |= ((mem[((zap_test->o_wb_adr >> 2)*4 + 0) & 0x3FFFFFF]) & 0xFF) << (8 * 0);
+                                    zap_test->i_wb_dat |= ((mem[((zap_test->o_wb_adr >> 2)*4 + 1) & 0x3FFFFFF]) & 0xFF) << (8 * 1);
+                                    zap_test->i_wb_dat |= ((mem[((zap_test->o_wb_adr >> 2)*4 + 2) & 0x3FFFFFF]) & 0xFF) << (8 * 2);
+                                    zap_test->i_wb_dat |= ((mem[((zap_test->o_wb_adr >> 2)*4 + 3) & 0x3FFFFFF]) & 0xFF) << (8 * 3);
                             }
                             else
                             {
                                     zap_test->i_wb_ack   = 1;
                                     zap_test->i_wb_dat   = rand();
 
-                                    if ( zap_test->o_wb_sel & 1 ) mem [ ((zap_test->o_wb_adr >> 2)*4 + 0) & 0xFFFF ] = (zap_test->o_wb_dat >> (8 * 0)) & 0xFF;
-                                    if ( zap_test->o_wb_sel & 2 ) mem [ ((zap_test->o_wb_adr >> 2)*4 + 1) & 0xFFFF ] = (zap_test->o_wb_dat >> (8 * 1)) & 0xFF;
-                                    if ( zap_test->o_wb_sel & 4 ) mem [ ((zap_test->o_wb_adr >> 2)*4 + 2) & 0xFFFF ] = (zap_test->o_wb_dat >> (8 * 2)) & 0xFF;
-                                    if ( zap_test->o_wb_sel & 8 ) mem [ ((zap_test->o_wb_adr >> 2)*4 + 3) & 0xFFFF ] = (zap_test->o_wb_dat >> (8 * 3)) & 0xFF;
+                                    if ( zap_test->o_wb_sel & 1 ) mem [ ((zap_test->o_wb_adr >> 2)*4 + 0) & 0x3FFFFFF ] = (zap_test->o_wb_dat >> (8 * 0)) & 0xFF;
+                                    if ( zap_test->o_wb_sel & 2 ) mem [ ((zap_test->o_wb_adr >> 2)*4 + 1) & 0x3FFFFFF ] = (zap_test->o_wb_dat >> (8 * 1)) & 0xFF;
+                                    if ( zap_test->o_wb_sel & 4 ) mem [ ((zap_test->o_wb_adr >> 2)*4 + 2) & 0x3FFFFFF ] = (zap_test->o_wb_dat >> (8 * 2)) & 0xFF;
+                                    if ( zap_test->o_wb_sel & 8 ) mem [ ((zap_test->o_wb_adr >> 2)*4 + 3) & 0x3FFFFFF ] = (zap_test->o_wb_dat >> (8 * 3)) & 0xFF;
                             }
 
                             if ( seq && zap_test->i_wb_ack ) 
