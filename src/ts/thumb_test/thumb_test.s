@@ -1061,7 +1061,6 @@ arithmetic_passed:
                 add     r6, #32         // 5E0
                 b       t201            // 5E2
 
-                .align 4        
                 .byte      0xFF         // 5E4
                 .byte      0xFF
                 .byte      0xFF
