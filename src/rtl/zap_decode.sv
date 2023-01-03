@@ -444,7 +444,8 @@ begin: tskDecodeHalfWordLs
         endcase
 
         assert(~(o_mem_load == 0 && instruction[6] == 1)) else
-        $info("Warning: UNPREDICTABLE behavior of halfword LD/ST.");
+               $info("Warning: UNPREDICTABLE behavior of halfword LD/ST instruction=%x",
+                instruction[31:0]);
 end
 endfunction
 

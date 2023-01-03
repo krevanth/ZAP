@@ -408,9 +408,11 @@ begin:bprblk1
         ras_ptr_nxt             = ras_ptr_ff;
         addr                    = {{8{arm_instruction[23]}},arm_instruction[23:0]}; // Offset.
 
-        if ( arm_instruction[34] )      // Indicates a left shift of 1 i.e., X = X * 2.
+        // Indicates a left shift of 1 i.e., X = X * 2.
+        if ( arm_instruction[34] )
                 addr_final = addr << 1;
-        else                            // Indicates a left shift of 2 i.e., X = X * 4.
+        // Indicates a left shift of 2 i.e., X = X * 4.
+        else
                 addr_final = addr << 2;
 
         //
@@ -460,26 +462,31 @@ begin:bprblk1
                 end
         end
         else if (
-                  // BX LR is recognized as a fnction return.
+                  // BX LR is recognized as a function return.
                   (
                    arm_instruction[31:0] ==? BX_INST &&
                    arm_instruction[3:0]   ==   4'd14 &&
-                   arm_instruction_valid)
-                  ||
-                   // As is MOV PC, LR
-                  (
-                   ( arm_instruction[34:0] ==?  { 3'd0, 4'b????, 2'b00, 1'd0, MOV, 1'd0,
-                                                4'd0, ARCH_PC, 8'd0, 4'd15 } )
-                   &&
                    arm_instruction_valid
-                  ) ||
+                  )
+                  ||
+                  // As is MOV PC, LR
+                  (
+                    (
+                        arm_instruction[34:0] ==?  { 3'd0, 4'b????, 2'b00, 1'd0, MOV, 1'd0,
+                                                     4'd0, ARCH_PC, 8'd0, 4'd15 }
+                    )
+                    &&
+                    arm_instruction_valid
+                  )
+                  ||
                   // As is load multiple with PC in register list.
                   (
                    arm_instruction[27:25] == 3'b100 && // LDM
                    arm_instruction[20]              && // Load
                    arm_instruction_valid            &&
                    arm_instruction[15]                 // PC in reglist.
-                  ) ||
+                  )
+                  ||
                   // As is load to PC from SP index.
                   (
                         (arm_instruction[31:0] ==? LS_INSTRUCTION_SPECIFIED_SHIFT ||

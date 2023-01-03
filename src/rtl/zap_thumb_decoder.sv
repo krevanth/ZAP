@@ -72,6 +72,10 @@ assign  offset_w = i_offset[10:0];
 
 ///////////////////////////////////////////////////////////////////////////////
 
+int debug; // For debug purpose, to determine branch taken.
+
+wire unused = |debug;
+
 always_comb
 begin
         // If you are not in compressed mode, just pass stuff on.
@@ -81,52 +85,57 @@ begin
         o_irq                   = i_irq;
         o_fiq                   = i_fiq;
         o_force32_align         = 1'd0;
+        debug                   = 0;
 
         if ( i_cpsr_ff_t && i_instruction_valid ) // compressed mode enable
         begin
                 if ( i_instruction[15:0] ==? T_SWI ) // Software interrupt.
                 begin
                         decode_swi();
+                        debug = 1;
                 end
                 else if ( i_instruction[15:0] ==? T_ADD_SUB_LO ) // ADD/SUB Lo.
                 begin
                         decode_add_sub_lo();
+                        debug = 2;
                 end
                 else if ( i_instruction[15:0] ==? T_BLX2 ) // T_BLX2
                 begin
                         decode_blx2();
+                        debug = 3;
                 end
                 else if ( i_instruction[15:0] ==? T_BX ) // T_BX
                 begin
                         decode_bx();
+                        debug = 4;
                 end
                 else if ( i_instruction[15:0] ==? T_BKPT ) // T_BKPT
                 begin
                         decode_bkpt();
+                        debug = 5;
                 end
                 else casez ( i_instruction[15:0] )
-                        T_BLX1                  : decode_blx1();
-                        T_BRANCH_COND           : decode_conditional_branch();
-                        T_BRANCH_NOCOND         : decode_unconditional_branch();
-                        T_BL                    : decode_bl();
-                        T_SHIFT                 : decode_shift();
-                        T_MCAS_IMM              : decode_mcas_imm();    // MOV,CMP,ADD,SUB IMM.
-                        T_ALU_LO                : decode_alu_lo();
-                        T_ALU_HI                : decode_alu_hi();
-
-                        T_PC_REL_LOAD           : decode_pc_rel_load(); // LDR Rd, [PC, {#imm8,0,0}]
-                        T_LDR_STR_5BIT_OFF      : decode_ldr_str_5bit_off();
-                        T_LDRH_STRH_5BIT_OFF    : decode_ldrh_strh_5bit_off();
-                        T_LDRH_STRH_REG         : decode_ldrh_strh_reg(); // Complex.
-                        T_SP_REL_LDR_STR        : decode_sp_rel_ldr_str();
-                        T_LDMIA_STMIA           : decode_ldmia_stmia();
-                        T_POP_PUSH              : decode_pop_push();
-
-                        T_GET_ADDR              : decode_get_addr();
-                        T_MOD_SP                : decode_mod_sp();
+                        T_BLX1                  : begin debug = 6  ; decode_blx1(); end
+                        T_BRANCH_COND           : begin debug = 7  ; decode_conditional_branch(); end
+                        T_BRANCH_NOCOND         : begin debug = 8  ; decode_unconditional_branch(); end
+                        T_BL                    : begin debug = 9  ; decode_bl(); end
+                        T_SHIFT                 : begin debug = 10 ; decode_shift(); end
+                        T_MCAS_IMM              : begin debug = 11 ; decode_mcas_imm(); end   // MOV,CMP,ADD,SUB IMM.
+                        T_ALU_LO                : begin debug = 12 ; decode_alu_lo(); end
+                        T_ALU_HI                : begin debug = 13 ; decode_alu_hi(); end
+                        T_PC_REL_LOAD           : begin debug = 14 ; decode_pc_rel_load(); end // LDR Rd, [PC, {#imm8,0,0}]
+                        T_LDR_STR_5BIT_OFF      : begin debug = 15 ; decode_ldr_str_5bit_off(); end
+                        T_LDRH_STRH_5BIT_OFF    : begin debug = 16 ; decode_ldrh_strh_5bit_off(); end
+                        T_LDRH_STRH_REG         : begin debug = 17 ; decode_ldrh_strh_reg(); end // Complex.
+                        T_SP_REL_LDR_STR        : begin debug = 18 ; decode_sp_rel_ldr_str(); end
+                        T_LDMIA_STMIA           : begin debug = 19 ; decode_ldmia_stmia(); end
+                        T_POP_PUSH              : begin debug = 20 ; decode_pop_push(); end
+                        T_GET_ADDR              : begin debug = 21 ; decode_get_addr(); end
+                        T_MOD_SP                : begin debug = 22 ; decode_mod_sp(); end
                         default:
                         begin
                                 o_und = 1; // Will take UND trap.
+                                debug = 23;
                         end
                 endcase
         end
@@ -528,13 +537,14 @@ function void decode_blx1();
 begin
         o_instruction[34:0] = 35'd0; // Default value.
 
-        // Generate a BLX1.
+        // Generate a BLX1. Subtract 1 to indicate relative to previous one.
         o_instruction[31:25] =  7'b1111_101;    // BLX1 identifier.
         o_instruction[24]    =  1'd0;           // H - bit.
-        o_instruction[23:0]  =  $signed({offset_w[10], offset_w[10], offset_w[10:0], i_instruction[10:0]});
-        // Corrected.
-        o_irq                = 1'd0;
-        o_fiq                = 1'd0;
+        o_instruction[23:0]  =  ($signed({offset_w[10], offset_w[10], offset_w[10:0], i_instruction[10:0]}));
+        o_instruction[23:0]--;
+        o_instruction[34]    =  1'd1;
+        o_irq                =  1'd0;
+        o_fiq                =  1'd0;
 end
 endfunction
 
@@ -555,9 +565,11 @@ begin
         case ( i_instruction[11] )
                 1'd0:
                 begin
+                        //
                         // Send out a dummy instruction. Preserve lower
                         // 12-bits though to serve as offset. Set condition
                         // code to NV.
+                        //
                         o_instruction[11:0]  = i_instruction[11:0];
                         o_instruction[27:12] = 16'd0;
                         o_instruction[31:28] = 4'b1111;
@@ -567,13 +579,15 @@ begin
                 end
                 1'd1:
                 begin
-                        // Generate a full jump.
+                        //
+                        // Generate a full jump. Subtract 1 to keep relative to
+                        // previous one.
+                        //
                         o_instruction[34:0] = {1'd1, 2'b0, AL, 3'b101, 1'b1, 24'd0};
-                        o_instruction[23:0] = $signed({offset_w[10], offset_w[10], offset_w[10:0], i_instruction[10:0]});
-                        // Corrected.
-
-                        o_irq           = 1'd0;
-                        o_fiq           = 1'd0;
+                        o_instruction[23:0] = ($signed({offset_w[10], offset_w[10], offset_w[10:0], i_instruction[10:0]}));
+                        o_instruction[23:0]--;
+                        o_irq               = 1'd0;
+                        o_fiq               = 1'd0;
                 end
         endcase
 end
