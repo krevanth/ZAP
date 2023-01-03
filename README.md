@@ -699,7 +699,7 @@ Thanks to [Bharath Mulagondla](https://github.com/bharathmulagondla) and [Akhil 
 
 The testbench UART core in `src/testbench/uart.v` is taken from the [UART-16550](https://github.com/freecores/uart16550) project.
 
-The testbench assembly code in `src/ts/mode32_test*/mode32_test*.s` is based on [this](shorturl.at/jnwL4) external assembly file.
+The testbench assembly code in `src/ts/mode32_test*/mode32_test*.s` is based on [this](https://shorturl.at/jnwL4) external assembly file.
 
 ## 6. License
 
