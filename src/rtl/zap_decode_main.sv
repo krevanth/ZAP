@@ -1,30 +1,24 @@
-// -----------------------------------------------------------------------------
-// --                                                                         --
-// --    (C) 2016-2022 Revanth Kamaraj (krevanth)                             --
-// --                                                                         --
-// -- --------------------------------------------------------------------------
-// --                                                                         --
-// -- This program is free software; you can redistribute it and/or           --
-// -- modify it under the terms of the GNU General Public License             --
-// -- as published by the Free Software Foundation; either version 2          --
-// -- of the License, or (at your option) any later version.                  --
-// --                                                                         --
-// -- This program is distributed in the hope that it will be useful,         --
-// -- but WITHOUT ANY WARRANTY; without even the implied warranty of          --
-// -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           --
-// -- GNU General Public License for more details.                            --
-// --                                                                         --
-// -- You should have received a copy of the GNU General Public License       --
-// -- along with this program; if not, write to the Free Software             --
-// -- Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA           --
-// -- 02110-1301, USA.                                                        --
-// --                                                                         --
-// -----------------------------------------------------------------------------
-// --                                                                         --
-// -- This module decodes 32-bit ARM instructions into an internal wide       --
-// -- instruction format that is understood by downstream logic.              --
-// --                                                                         --
-// -----------------------------------------------------------------------------
+//
+// (C) 2016-2022 Revanth Kamaraj (krevanth)
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+// 02110-1301, USA.
+//
+// This module decodes 32-bit mode32 instructions into an internal wide
+// instruction format that is understood by downstream logic.
+//
 
 
 
@@ -58,8 +52,8 @@ module zap_decode_main #(
         input   logic     [1:0]                  i_taken,
         input   logic     [31:0]                 i_ppc_ff,
 
-        // Thumb undefined.
-        input   logic                            i_thumb_und,
+        // mode16 undefined.
+        input   logic                            i_mode16_und,
 
         // Force 32-bit
         input   logic                            i_force32align,
@@ -302,7 +296,7 @@ begin
                 o_fiq_ff                                <= o_fiq_nxt;
                 o_swi_ff                                <= o_swi_nxt;
                 o_abt_ff                                <= o_abt_nxt;
-                o_und_ff                                <= o_und_nxt | i_thumb_und;
+                o_und_ff                                <= o_und_nxt | i_mode16_und;
                 o_condition_code_ff                     <= o_condition_code_nxt;
                 o_destination_index_ff                  <= o_destination_index_nxt;
                 o_alu_source_ff                         <= o_alu_source_nxt;

@@ -41,7 +41,7 @@ module zap_predecode_coproc #(
         input logic [34:0]       i_instruction,
         input logic              i_valid,
 
-        // CPSR Thumb Bit.
+        // CPSR T Bit.
         input logic              i_cpsr_ff_t,
         input logic [4:0]        i_cpsr_ff_mode,
 
@@ -134,7 +134,7 @@ begin
 
         case ( state_ff )
         IDLE:
-                // Activate only if no thumb, not in USER mode and CP15 access is requested.
+                // Activate only if no 16-bit, not in USER mode and CP15 access is requested.
                 casez ( (!i_cpsr_ff_t && (i_instruction[34:32] == 3'd0) && i_valid) ? i_instruction[31:0] : 32'd0 )
                 MRC, MCR, LDC, STC, CDP, MRC2, MCR2, LDC2, STC2:
                 begin

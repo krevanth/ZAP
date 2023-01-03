@@ -1,9 +1,9 @@
-// Based on the Thumb instruction tests by jsmolka. See github.com/jsmolka 
+// Based on the 16bit instruction tests by jsmolka. See github.com/jsmolka 
 
 .text
 
 _Reset:
-    b disable_cache
+    b enable_cache        
 
 .word 4100
 .word 16380
@@ -67,14 +67,14 @@ enable_cache:
 
    mov sp, #4000
 
-   ldr r0, =myThumbFunction+1
+   ldr r0, =myThFunction+1
    mov lr, pc
-   bx r0 // Jump to Thumb code
+   bx r0 // Jump to 16-bit code
 
    mvn r0, #0
   
-   ldr r0,= myThumbFunction+1
-   blx r0 // Jump to Thumb code
+   ldr r0,= myThFunction+1
+   blx r0 // Jump to 16-bit code
 
    mvn r0, #0
    mov r1, r0
@@ -89,15 +89,15 @@ enable_cache:
    
 .macro m_exit test 
         mov     r7, #\test
-        bl      myThumbFunctionEnd
+        bl      myThFunctionEnd
 .endm
 
 ///////////////////////////////////////////////////////////////////////////////
-// Thumb Function
+// 16-bit Function
 ///////////////////////////////////////////////////////////////////////////////
 
 .thumb_func
-myThumbFunction:
+myThFunction:
         // Reset test register
         mov     r7, #0
 
@@ -137,7 +137,7 @@ myThumbFunction:
                 m_exit  2
         
         t003:
-                // THUMB 3: mov rd, imm8
+                // 16_BIT_ISA 3: mov rd, imm8
                 mov     r0, #32
                 cmp     r0, #32
                 bne     f003
@@ -148,7 +148,7 @@ myThumbFunction:
                 m_exit  3
         
         t004:
-                // THUMB 2: mov rd, rs
+                // 16_BIT_ISA 2: mov rd, rs
                 mov     r0, #32
                 mov     r1, r0
                 cmp     r1, r0
@@ -160,7 +160,7 @@ myThumbFunction:
                 m_exit  4
         
         t005:
-                // THUMB 5: mov rd, rs (high registers)
+                // 16_BIT_ISA 5: mov rd, rs (high registers)
                 mov     r0, #32
                 mov     r8, r0
                 mov     r9, r8
@@ -174,7 +174,7 @@ myThumbFunction:
                 m_exit  5
         
         t006:
-                // THUMB 4: mvn rd, rs
+                // 16_BIT_ISA 4: mvn rd, rs
                 mov     r0, #0
                 mvn     r0, r0
                 add     r0, #1
@@ -186,7 +186,7 @@ myThumbFunction:
                 m_exit  6
         
         t007:
-                // THUMB 4: and rd, rs
+                // 16_BIT_ISA 4: and rd, rs
                 mov     r0, #0xFF
                 mov     r1, #0x0F
                 and     r0, r1
@@ -199,7 +199,7 @@ myThumbFunction:
                 m_exit  7
         
         t008:
-                // THUMB 4: tst rd, rs
+                // 16_BIT_ISA 4: tst rd, rs
                 mov     r0, #0xF0
                 mov     r1, #0x0F
                 tst     r0, r1
@@ -211,7 +211,7 @@ myThumbFunction:
                 m_exit  8
         
         t009:
-                // THUMB 4: bic rd, rs
+                // 16_BIT_ISA 4: bic rd, rs
                 mov     r0, #0xFF
                 mov     r1, #0xF0
                 bic     r0, r1
@@ -224,7 +224,7 @@ myThumbFunction:
                 m_exit  9
         
         t010:
-                // THUMB 4: orr rd, rs
+                // 16_BIT_ISA 4: orr rd, rs
                 mov     r0, #0xF0
                 mov     r1, #0x0F
                 orr     r0, r1
@@ -237,7 +237,7 @@ myThumbFunction:
                 m_exit  10
         
         t011:
-                // THUMB 4: eor rd, rs
+                // 16_BIT_ISA 4: eor rd, rs
                 mov     r0, #0xFF
                 mov     r1, #0x0F
                 eor     r0, r1
@@ -250,7 +250,7 @@ myThumbFunction:
                 m_exit  11
         
         t012:
-                // THUMB 5: Write to PC
+                // 16_BIT_ISA 5: Write to PC
                 adr     r0, t013
                 mov     pc, r0
         
@@ -259,7 +259,7 @@ myThumbFunction:
         
         .align 4
         t013:
-                // THUMB 5: PC Alignment
+                // 16_BIT_ISA 5: PC Alignment
                 adr     r0, logical_passed
                 add     r0, #1
                 mov     pc, r0
@@ -278,7 +278,7 @@ myThumbFunction:
                 // Tests for shift operations
         
         t050:
-                // THUMB 1: lsl rd, rs, imm5
+                // 16_BIT_ISA 1: lsl rd, rs, imm5
                 mov     r0, #1
                 lsl     r0, #6
                 cmp     r0, #64
@@ -290,7 +290,7 @@ myThumbFunction:
                 m_exit  50
         
         t051:
-                // THUMB 4: lsl rd, rs
+                // 16_BIT_ISA 4: lsl rd, rs
                 mov     r0, #1
                 mov     r1, #6
                 lsl     r0, r1
@@ -318,7 +318,7 @@ myThumbFunction:
                 m_exit  52
         
         t053:
-                // THUMB 4: Logical shift left by 32
+                // 16_BIT_ISA 4: Logical shift left by 32
                 mov     r0, #1
                 mov     r1, #32
                 lsl     r0, r1
@@ -331,7 +331,7 @@ myThumbFunction:
                 m_exit  53
         
         t054:
-                // THUMB 4: Logical shift left by greater 32
+                // 16_BIT_ISA 4: Logical shift left by greater 32
                 mov     r0, #1
                 mov     r1, #33
                 lsl     r0, r1
@@ -344,7 +344,7 @@ myThumbFunction:
                 m_exit  54
         
         t055:
-                // THUMB 1: lsr rd, rs, imm5
+                // 16_BIT_ISA 1: lsr rd, rs, imm5
                 mov     r0, #64
                 lsr     r0, #6
                 cmp     r0, #1
@@ -356,7 +356,7 @@ myThumbFunction:
                 m_exit  55
         
         t056:
-                // THUMB 4: lsr rd, rs
+                // 16_BIT_ISA 4: lsr rd, rs
                 mov     r0, #64
                 mov     r1, #6
                 lsr     r0, r1
@@ -384,7 +384,7 @@ myThumbFunction:
                 m_exit  57
         
         t058:
-                // THUMB 1: Logical shift right special
+                // 16_BIT_ISA 1: Logical shift right special
                 mov     r0, #1
                 lsr     r0, #32
                 bne     f058
@@ -402,7 +402,7 @@ myThumbFunction:
                 m_exit  58
         
         t059:
-                // THUMB 4: Logical shift right by greater 32
+                // 16_BIT_ISA 4: Logical shift right by greater 32
                 mov     r0, #1
                 lsl     r0, #31
                 mov     r1, #33
@@ -416,7 +416,7 @@ myThumbFunction:
                 m_exit  59
         
         t060:
-                // THUMB 1: asr rd, rs, imm5
+                // 16_BIT_ISA 1: asr rd, rs, imm5
                 mov     r0, #64
                 asr     r0, #6
                 cmp     r0, #1
@@ -436,7 +436,7 @@ myThumbFunction:
                 m_exit  60
         
         t061:
-                // THUMB 4: asr rd, rs
+                // 16_BIT_ISA 4: asr rd, rs
                 mov     r0, #64
                 mov     r1, #6
                 asr     r0, r1
@@ -473,7 +473,7 @@ myThumbFunction:
                 m_exit  62
         
         t063:
-                // THUMB 1: Arithmetic shift right special
+                // 16_BIT_ISA 1: Arithmetic shift right special
                 mov     r0, #1
                 asr     r0, #32
                 bne     f063
@@ -494,7 +494,7 @@ myThumbFunction:
                 m_exit  63
         
         t064:
-                // THUMB 4: ror rd, rs
+                // 16_BIT_ISA 4: ror rd, rs
                 mov     r0, #1
                 mov     r1, #1
                 ror     r0, r1
@@ -525,7 +525,7 @@ myThumbFunction:
                 m_exit  65
         
         t066:
-                // THUMB 4: Rotate right by 32
+                // 16_BIT_ISA 4: Rotate right by 32
                 mov     r0, #1
                 lsl     r0, #31
                 mov     r1, r0
@@ -541,7 +541,7 @@ myThumbFunction:
                 m_exit  66
         
         t067:
-                // THUMB 4: Rotate right by greater 32
+                // 16_BIT_ISA 4: Rotate right by greater 32
                 mov     r0, #2
                 mov     r1, #33
                 ror     r0, r1
@@ -554,7 +554,7 @@ myThumbFunction:
                 m_exit  67
         
         t068:
-                // THUMB 4: Shifts by 0
+                // 16_BIT_ISA 4: Shifts by 0
                 mov     r0, #1
                 mov     r1, #0
                 cmp     r0, r0
@@ -662,7 +662,7 @@ shifts_passed:
                 m_exit  103
         
         t104:
-                // THUMB 2: add rd, rs, imm3
+                // 16_BIT_ISA 2: add rd, rs, imm3
                 mov     r0, #0
                 add     r0, #4
                 cmp     r0, #4
@@ -674,7 +674,7 @@ shifts_passed:
                 m_exit  104
         
         t105:
-                // THUMB 3: add rd, imm8
+                // 16_BIT_ISA 3: add rd, imm8
                 mov     r0, #32
                 add     r0, #32
                 cmp     r0, #64
@@ -686,7 +686,7 @@ shifts_passed:
                 m_exit  105
         
         t106:
-                // THUMB 5: add rd, rs (high registers)
+                // 16_BIT_ISA 5: add rd, rs (high registers)
                 mov     r0, #32
                 mov     r1, #0
                 mov     r8, r1
@@ -703,7 +703,7 @@ shifts_passed:
                 m_exit  106
         
         t107:
-                // THUMB 12: add rd, sp, imm8 << 2
+                // 16_BIT_ISA 12: add rd, sp, imm8 << 2
                 add     r0, sp, #32
                 mov     r1, sp
                 add     r1, #32
@@ -716,7 +716,7 @@ shifts_passed:
                 m_exit  107
         
         t108:
-                // THUMB 12: add rd, pc, imm8 << 2
+                // 16_BIT_ISA 12: add rd, pc, imm8 << 2
                 mov     r0, r0
                 add     r0, pc, #32
                 mov     r1, pc
@@ -730,7 +730,7 @@ shifts_passed:
                 m_exit  108
         
         t109:
-                // THUMB 13: add sp, imm7 << 2
+                // 16_BIT_ISA 13: add sp, imm7 << 2
                 mov     r0, sp
                 add     sp, #32
                 add     sp, #-32
@@ -743,7 +743,7 @@ shifts_passed:
                 m_exit  109
         
         t110:
-                // THUMB 4: adc rd, rs
+                // 16_BIT_ISA 4: adc rd, rs
                 mov     r0, #16
                 cmn     r0, r0
                 adc     r0, r0
@@ -762,7 +762,7 @@ shifts_passed:
                 m_exit  110
         
         t111:
-                // THUMB 2: sub rd, rs, imm3
+                // 16_BIT_ISA 2: sub rd, rs, imm3
                 mov     r0, #8
                 sub     r0, #4
                 cmp     r0, #4
@@ -774,7 +774,7 @@ shifts_passed:
                 m_exit  111
         
         t112:
-                // THUMB 3: sub rd, imm8
+                // 16_BIT_ISA 3: sub rd, imm8
                 mov     r0, #64
                 sub     r0, #32
                 cmp     r0, #32
@@ -786,7 +786,7 @@ shifts_passed:
                 m_exit  112
         
         t113:
-                // THUMB 2: sub rd, rs, rn
+                // 16_BIT_ISA 2: sub rd, rs, rn
                 mov     r0, #64
                 mov     r1, #32
                 sub     r0, r1
@@ -799,7 +799,7 @@ shifts_passed:
                 m_exit  113
         
         t114:
-                // THUMB 4: sbc rd, rs
+                // 16_BIT_ISA 4: sbc rd, rs
                 mov     r0, #32
                 mov     r1, #16
                 cmn     r0, r0
@@ -820,7 +820,7 @@ shifts_passed:
                 m_exit  114
         
         t115:
-                // THUMB 4: neg rd, rs
+                // 16_BIT_ISA 4: neg rd, rs
                 mov     r0, #32
                 mov     r1, #0
                 sub     r1, r0
@@ -834,7 +834,7 @@ shifts_passed:
                 m_exit  115
         
         t116:
-                // THUMB 3: cmp rd, imm8
+                // 16_BIT_ISA 3: cmp rd, imm8
                 mov     r0, #32
                 cmp     r0, #32
                 bne     f116
@@ -845,7 +845,7 @@ shifts_passed:
                 m_exit  116
         
         t117:
-                // THUMB 4: cmp rd, rs
+                // 16_BIT_ISA 4: cmp rd, rs
                 mov     r0, #32
                 cmp     r0, r0
                 bne     f117
@@ -856,7 +856,7 @@ shifts_passed:
                 m_exit  117
         
         t118:
-                // THUMB 5: cmp rd, rs (high registers)
+                // 16_BIT_ISA 5: cmp rd, rs (high registers)
                 mov     r0, #32
                 mov     r8, r0
                 cmp     r8, r8
@@ -868,7 +868,7 @@ shifts_passed:
                 m_exit  118
         
         t119:
-                // THUMB 4: cmn rd, rs
+                // 16_BIT_ISA 4: cmn rd, rs
                 mov     r0, #0
                 mvn     r0, r0
                 mov     r1, #1
@@ -881,7 +881,7 @@ shifts_passed:
                 m_exit  119
         
         t120:
-                // THUMB 4: mul rd, rs
+                // 16_BIT_ISA 4: mul rd, rs
                 mov     r0, #32
                 mov     r1, #2
                 mul     r0, r1
@@ -894,7 +894,7 @@ shifts_passed:
                 m_exit  120
         
         t121:
-                // THUMB 5: Add to PC Alignment and flush
+                // 16_BIT_ISA 5: Add to PC Alignment and flush
                 mov     r0, #3
                 add     pc, r0
                 b       f121
@@ -916,7 +916,7 @@ arithmetic_passed:
                 // Tests for branches
         
         t150:
-                // THUMB 18: b label
+                // 16_BIT_ISA 18: b label
                 mov     r7, #150
                 b       t151
         
@@ -929,7 +929,7 @@ arithmetic_passed:
                 b       t152
         
         t153:
-                // THUMB 19: bl label
+                // 16_BIT_ISA 19: bl label
                 mov     r7, #153
                 bl      t154
         
@@ -942,7 +942,7 @@ arithmetic_passed:
                 bl      t155
         
         t156:
-                // THUMB 16: b<cond> label
+                // 16_BIT_ISA 16: b<cond> label
                 mov     r7, #156
                 bne     t157
         
@@ -1019,7 +1019,7 @@ arithmetic_passed:
                 m_exit  166
         
         t167:
-                // THUMB 5: bx label
+                // 16_BIT_ISA 5: bx label
                 mov     r7, #167
                 adr     r0, t168
                 bx      r0
@@ -1053,7 +1053,7 @@ arithmetic_passed:
                 lsl     r6, #24
         
         t200:
-                // THUMB 6: ldr rd, [pc, imm8 << 2]
+                // 16_BIT_ISA 6: ldr rd, [pc, imm8 << 2]
                 mov     r0, #0
                 mvn     r0, r0
                 ldr     r1, [pc, #8]    // 5DA
@@ -1072,7 +1072,7 @@ arithmetic_passed:
                 m_exit  200
         
         t201:
-                // THUMB 7: <ldr|str> rd, [rb, ro]
+                // 16_BIT_ISA 7: <ldr|str> rd, [rb, ro]
                 mov     r0, #0
                 mvn     r0, r0
                 mov     r1, #4
@@ -1088,7 +1088,7 @@ arithmetic_passed:
                 m_exit  201
         
         t202:
-                // THUMB 7: strb rd, [rb, ro]
+                // 16_BIT_ISA 7: strb rd, [rb, ro]
                 mov     r0, #0
                 mvn     r0, r0
                 mov     r1, #4
@@ -1104,7 +1104,7 @@ arithmetic_passed:
                 m_exit  202
         
         t203:
-                // THUMB 7: ldrb rd, [rb, ro]
+                // 16_BIT_ISA 7: ldrb rd, [rb, ro]
                 mov     r0, #0
                 mvn     r0, r0
                 mov     r1, #4
@@ -1120,7 +1120,7 @@ arithmetic_passed:
                 m_exit  203
         
         t204:
-                // THUMB 7: MisAligned load (rotated)
+                // 16_BIT_ISA 7: MisAligned load (rotated)
                 mov     r0, #0
                 mov     r1, #0xFF
                 str     r1, [r6, r0]
@@ -1138,7 +1138,7 @@ arithmetic_passed:
                 m_exit  204
         
         t205:
-                // THUMB 8: strh rd, [rb, ro]
+                // 16_BIT_ISA 8: strh rd, [rb, ro]
                 mov     r0, #0
                 mvn     r0, r0
                 lsr     r1, r0, #16
@@ -1155,7 +1155,7 @@ arithmetic_passed:
                 m_exit  205
         
         t206:
-                // THUMB 8: ldrh rd, [rb, ro]
+                // 16_BIT_ISA 8: ldrh rd, [rb, ro]
                 mov     r0, #0
                 mvn     r0, r0
                 lsr     r1, r0, #16
@@ -1172,7 +1172,7 @@ arithmetic_passed:
                 m_exit  206
         
         t207:
-                // THUMB 8: ldrsb rd, [rb, ro]
+                // 16_BIT_ISA 8: ldrsb rd, [rb, ro]
                 mov     r0, #0x7F
                 mov     r1, #4
                 str     r0, [r6, r1]
@@ -1203,7 +1203,7 @@ arithmetic_passed:
                 m_exit  208
         
         t209:
-                // THUMB 8: ldrsh rd, [rb, ro]
+                // 16_BIT_ISA 8: ldrsh rd, [rb, ro]
                 mov     r0, #0xFF
                 lsl     r0, #4
                 mov     r1, #4
@@ -1237,7 +1237,7 @@ arithmetic_passed:
                 m_exit  210
         
         t211:
-                // THUMB 8: MisAligned load half (rotated)
+                // 16_BIT_ISA 8: MisAligned load half (rotated)
                 mov     r0, #0
                 mov     r1, #0xFF
                 strh    r1, [r6, r0]
@@ -1255,7 +1255,7 @@ arithmetic_passed:
                 m_exit  211
         
         t212:
-                // THUMB 8: MisAligned load half signed (signed byte)
+                // 16_BIT_ISA 8: MisAligned load half signed (signed byte)
                 mov     r0, #0
                 mov     r1, #0xFF
                 lsl     r1, #8
@@ -1273,7 +1273,7 @@ arithmetic_passed:
                 m_exit  212
         
         t213:
-                // THUMB 9: <ldr|str> rd, [rb, imm5 << 2]
+                // 16_BIT_ISA 9: <ldr|str> rd, [rb, imm5 << 2]
                 mov     r0, #0
                 mvn     r0, r0
                 str     r0, [r6, #4]
@@ -1288,7 +1288,7 @@ arithmetic_passed:
                 m_exit  213
         
         t214:
-                // THUMB 9: strb rd, [rb, imm5]
+                // 16_BIT_ISA 9: strb rd, [rb, imm5]
                 mov     r0, #0
                 mvn     r0, r0
                 strb    r0, [r6, #4]
@@ -1303,7 +1303,7 @@ arithmetic_passed:
                 m_exit  214
         
         t215:
-                // THUMB 9: ldrb rd, [rb, imm5]
+                // 16_BIT_ISA 9: ldrb rd, [rb, imm5]
                 mov     r0, #0
                 mvn     r0, r0
                 str     r0, [r6, #4]
@@ -1318,7 +1318,7 @@ arithmetic_passed:
                 m_exit  215
         
         t216:
-                // THUMB 9: MisAligned load (rotated)
+                // 16_BIT_ISA 9: MisAligned load (rotated)
                 mov     r0, #0xFF
                 str     r0, [r6]
                 mov     r1, #8
@@ -1336,7 +1336,7 @@ arithmetic_passed:
                 m_exit  216
         
         t217:
-                // THUMB 10: strh rd, [rb, imm5 << 1]
+                // 16_BIT_ISA 10: strh rd, [rb, imm5 << 1]
                 mov     r0, #0
                 mvn     r0, r0
                 lsr     r1, r0, #16
@@ -1352,7 +1352,7 @@ arithmetic_passed:
                 m_exit  217
         
         t218:
-                // THUMB 10: ldrh rd, [rb, imm5 << 1]
+                // 16_BIT_ISA 10: ldrh rd, [rb, imm5 << 1]
                 mov     r0, #0
                 mvn     r0, r0
                 lsr     r1, r0, #16
@@ -1368,7 +1368,7 @@ arithmetic_passed:
                 m_exit  218
         
         t219:
-                // THUMB 10: MisAligned load half (rotated)
+                // 16_BIT_ISA 10: MisAligned load half (rotated)
                 mov     r0, #0xFF
                 strh    r0, [r6]
                 mov     r1, #8
@@ -1386,7 +1386,7 @@ arithmetic_passed:
                 m_exit  219
         
         t220:
-                // THUMB 11: <ldr|str> rd, [sp, imm8 << 2]
+                // 16_BIT_ISA 11: <ldr|str> rd, [sp, imm8 << 2]
                 mov     r0, #0
                 mvn     r0, r0
                 str     r0, [sp, #4]
@@ -1401,7 +1401,7 @@ arithmetic_passed:
                 m_exit  220
         
         t221:
-                // THUMB 11: MisAligned load (rotated)
+                // 16_BIT_ISA 11: MisAligned load (rotated)
                 mov     r0, #0xFF
                 str     r0, [sp, #4]
                 mov     r2, #8
@@ -1422,7 +1422,7 @@ arithmetic_passed:
                 m_exit  221
         
         t222:
-                // THUMB 14: <push|pop> {rlist}
+                // 16_BIT_ISA 14: <push|pop> {rlist}
                 mov     r0, #32
                 mov     r1, #64
                 push    {r0, r1}
@@ -1439,7 +1439,7 @@ arithmetic_passed:
                 m_exit  222
         
         t223:
-                // THUMB 14: Store LR / load PC
+                // 16_BIT_ISA 14: Store LR / load PC
                 adr     r0, t224
                 mov     r0, r0
                 mov     lr, r0
@@ -1451,7 +1451,7 @@ arithmetic_passed:
         
         .align 4
         t224:
-                // THUMB 14: PC Alignment
+                // 16_BIT_ISA 14: PC Alignment
                 adr     r0, t225
                 add     r0, #1
                 mov     lr, r0
@@ -1463,7 +1463,7 @@ arithmetic_passed:
         
         .align 4
         t225:
-                // THUMB 14: Push / pop do not Align base
+                // 16_BIT_ISA 14: Push / pop do not Align base
                 mov     r0, sp
                 mov     r1, sp
                 add     r1, #1
@@ -1483,7 +1483,7 @@ arithmetic_passed:
                 m_exit  225
         
         t226:
-                // THUMB 15: <ldmia|stmia> rd!, {rlist}
+                // 16_BIT_ISA 15: <ldmia|stmia> rd!, {rlist}
                 mov     r0, #1
                 mov     r1, #2
                 mov     r3, r6
@@ -1507,7 +1507,7 @@ arithmetic_passed:
                 m_exit  226
         
         t227:
-                // THUMB 15: Load empty rlist
+                // 16_BIT_ISA 15: Load empty rlist
                 adr     r0, t228
                 mov     r0, r0
                 str     r0, [r6]
@@ -1531,7 +1531,7 @@ arithmetic_passed:
                 m_exit  228
         
         t229:
-                // THUMB 15: Store empty rlist
+                // 16_BIT_ISA 15: Store empty rlist
                 mov     r0, r6
 
                 .hword 0xC000
@@ -1552,7 +1552,7 @@ arithmetic_passed:
                 m_exit  229
         
         t230:
-                // THUMB 15: Base in rlist
+                // 16_BIT_ISA 15: Base in rlist
                 mov     r1, r6
                 stm r1!, {r0-r3}
                 sub     r1, #0x10
@@ -1567,7 +1567,7 @@ arithmetic_passed:
                 m_exit  230
         
         t231:
-                // THUMB 15: Base in rlist
+                // 16_BIT_ISA 15: Base in rlist
                 mov     r2, r6
                 stm r2!, {r0, r1, r2,r3}
                 sub     r1, #0x10
@@ -1582,7 +1582,7 @@ arithmetic_passed:
                 m_exit  231
         
         t232:
-                // THUMB 15: Base first in rlist
+                // 16_BIT_ISA 15: Base first in rlist
                 mov     r1, r6
                 stm r1!, {r1-r4}
                 sub     r1, #0x10
@@ -1597,7 +1597,7 @@ arithmetic_passed:
                 m_exit  232
         
         t233:
-                // THUMB 15: Load / store do not Align base
+                // 16_BIT_ISA 15: Load / store do not Align base
                 mov     r0, r6
                 add     r0, #1
                 stm     r0!, {r1, r2}
@@ -1617,6 +1617,6 @@ arithmetic_passed:
 
 ///////////////////////////////////////////////////////////////////////////////
 
-myThumbFunctionEnd:
+myThFunctionEnd:
         bx      lr
 

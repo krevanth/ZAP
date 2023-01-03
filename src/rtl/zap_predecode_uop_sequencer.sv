@@ -1,42 +1,34 @@
-// -----------------------------------------------------------------------------
-// --                                                                         --
-// --    (C) 2016-2022 Revanth Kamaraj (krevanth)                             --
-// --                                                                         --
-// -- --------------------------------------------------------------------------
-// --                                                                         --
-// -- This program is free software; you can redistribute it and/or           --
-// -- modify it under the terms of the GNU General Public License             --
-// -- as published by the Free Software Foundation; either version 2          --
-// -- of the License, or (at your option) any later version.                  --
-// --                                                                         --
-// -- This program is distributed in the hope that it will be useful,         --
-// -- but WITHOUT ANY WARRANTY; without even the implied warranty of          --
-// -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           --
-// -- GNU General Public License for more details.                            --
-// --                                                                         --
-// -- You should have received a copy of the GNU General Public License       --
-// -- along with this program; if not, write to the Free Software             --
-// -- Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA           --
-// -- 02110-1301, USA.                                                        --
-// --                                                                         --
-// -----------------------------------------------------------------------------
-// --                                                                         --
-// --   This module sequences ARM LDM/STM CISC instructions into simpler RISC --
-// --   instructions. Basically LDM -> LDRs and STM -> STRs. Supports a base  --
-// --   restored abort model. Start instruction carries interrupt information --
-// --   so this cannot  block interrupts if there is a sequence of these.     --
-// --                                                                         --
-// --  Also handles SWAP instruction but without atomicity preserving.        --
-// --  The SWAP implementation is meant for SW compatibility and not for MP   --
-// --                                                                         --
-// --  SWAP steps:                                                            --
-// --  - Read data from [Rn] into DUMMY. - LDR DUMMY0, [Rn]                   --
-// --  - Write data in Rm to [Rn]        - STR Rm, [Rn]                       --
-// --  - Copy data from DUMMY to Rd.     - MOV Rd, DUMMY0                     --
-// --                                                                         --
-// -----------------------------------------------------------------------------
-
-
+//
+// C) 2016-2022 Revanth Kamaraj (krevanth)
+//
+// his program is free software; you can redistribute it and/or
+// odify it under the terms of the GNU General Public License
+// s published by the Free Software Foundation; either version 2
+// f the License, or (at your option) any later version.
+//
+// his program is distributed in the hope that it will be useful,
+// ut WITHOUT ANY WARRANTY; without even the implied warranty of
+// ERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// NU General Public License for more details.
+//
+// ou should have received a copy of the GNU General Public License
+// long with this program; if not, write to the Free Software
+// oundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+// 2110-1301, USA.
+//
+//  This module sequences LDM/STM CISC instructions into simpler RISC
+//  instructions. Basically LDM -> LDRs and STM -> STRs. Supports a base
+//  restored abort model. Start instruction carries interrupt information
+//  so this cannot  block interrupts if there is a sequence of these.
+//
+// Also handles SWAP instruction but without atomicity preserving.
+// The SWAP implementation is meant for SW compatibility and not for MP
+//
+// SWAP steps:
+// - Read data from [Rn] into DUMMY. - LDR DUMMY0, [Rn]
+// - Write data in Rm to [Rn]        - STR Rm, [Rn]
+// - Copy data from DUMMY to Rd.     - MOV Rd, DUMMY0
+//
 
 module zap_predecode_uop_sequencer
 (
@@ -121,13 +113,13 @@ localparam SWAP2        = 4;
 localparam LMULT_BUSY   = 5;
 localparam BL_S1        = 6;
 localparam SWAP3        = 7;
-localparam BLX1_ARM_S0  = 8;
-localparam BLX1_ARM_S1  = 9;
-localparam BLX1_ARM_S2  = 10;
-localparam BLX1_ARM_S3  = 11;
-localparam BLX1_ARM_S4  = 12;
-localparam BLX1_ARM_S5  = 13;
-localparam BLX2_ARM_S0  = 14;
+localparam BLX1_STATE_S0  = 8;
+localparam BLX1_STATE_S1  = 9;
+localparam BLX1_STATE_S2  = 10;
+localparam BLX1_STATE_S3  = 11;
+localparam BLX1_STATE_S4  = 12;
+localparam BLX1_STATE_S5  = 13;
+localparam BLX2_STATE_S0  = 14;
 localparam LDRD_STRD_S0 = 16;
 localparam LDRD_STRD_S1 = 17;
 localparam LDR_TO_PC_S0 = 18;
@@ -179,7 +171,7 @@ begin:blk_a
                         state_nxt = IDLE;
                 end
 
-                BLX1_ARM_S0: // SCONST = ($signed(constant) << 2) + ( H << 1 ))
+                BLX1_STATE_S0: // SCONST = ($signed(constant) << 2) + ( H << 1 ))
                 begin
                         o_stall_from_decode = 1'd1;
 
@@ -190,13 +182,13 @@ begin:blk_a
                         o_instruction[31:0] = {AL, 2'b00, 1'b1, MOV, 1'd0, 4'd0, 4'd0, 4'd0, const_nxt[7:0]};
                         {o_instruction[`ZAP_DP_RD_EXTEND], o_instruction[`ZAP_DP_RD]} = ARCH_DUMMY_REG0;
 
-                        state_nxt = BLX1_ARM_S1;
+                        state_nxt = BLX1_STATE_S1;
                 end
 
                 // The 3 states here try to build up a constant in the internal register using immediate+rotates.
                 // ROR x, y = x >> y | x << (32 - y)
 
-                BLX1_ARM_S1:
+                BLX1_STATE_S1:
                 begin
                         o_stall_from_decode = 1'd1;
 
@@ -205,10 +197,10 @@ begin:blk_a
                         {o_instruction[`ZAP_DP_RD_EXTEND], o_instruction[`ZAP_DP_RD]} = ARCH_DUMMY_REG0;
                         {o_instruction[`ZAP_DP_RA_EXTEND], o_instruction[`ZAP_DP_RA]} = ARCH_DUMMY_REG0;
 
-                        state_nxt = BLX1_ARM_S2;
+                        state_nxt = BLX1_STATE_S2;
                 end
 
-                BLX1_ARM_S2:
+                BLX1_STATE_S2:
                 begin
                         o_stall_from_decode = 1'd1;
 
@@ -217,10 +209,10 @@ begin:blk_a
                         {o_instruction[`ZAP_DP_RD_EXTEND], o_instruction[`ZAP_DP_RD]} = ARCH_DUMMY_REG0;
                         {o_instruction[`ZAP_DP_RA_EXTEND], o_instruction[`ZAP_DP_RA]} = ARCH_DUMMY_REG0;
 
-                        state_nxt = BLX1_ARM_S3;
+                        state_nxt = BLX1_STATE_S3;
                 end
 
-                BLX1_ARM_S3:
+                BLX1_STATE_S3:
                 begin
                         o_stall_from_decode = 1'd1;
 
@@ -229,23 +221,23 @@ begin:blk_a
                         {o_instruction[`ZAP_DP_RD_EXTEND], o_instruction[`ZAP_DP_RD]} = ARCH_DUMMY_REG0;
                         {o_instruction[`ZAP_DP_RA_EXTEND], o_instruction[`ZAP_DP_RA]} = ARCH_DUMMY_REG0;
 
-                        state_nxt = BLX1_ARM_S4;
+                        state_nxt = BLX1_STATE_S4;
                 end
 
-                BLX1_ARM_S4:
+                BLX1_STATE_S4:
                 begin
                         o_stall_from_decode = 1'd1;
 
                         // ORR DUMMY0, DUMMY0, 1 - Needed to indicate a switch
-                        // to Thumb if needed.
+                        // to mode16 if needed.
                          o_instruction[31:0] = {AL, 2'b00, 1'b1, ORR, 1'd0, 4'd0, 4'd0, 4'd0, !i_cpsr_t ? 8'd1 : 8'd0};
                         {o_instruction[`ZAP_DP_RD_EXTEND], o_instruction[`ZAP_DP_RD]} = ARCH_DUMMY_REG0;
                         {o_instruction[`ZAP_DP_RA_EXTEND], o_instruction[`ZAP_DP_RA]} = ARCH_DUMMY_REG0;
 
-                        state_nxt = BLX1_ARM_S5;
+                        state_nxt = BLX1_STATE_S5;
                 end
 
-                BLX1_ARM_S5:
+                BLX1_STATE_S5:
                 begin
                         // Remove stall.
                         o_stall_from_decode = 1'd0;
@@ -257,7 +249,7 @@ begin:blk_a
                         state_nxt = IDLE;
                 end
 
-                BLX2_ARM_S0:
+                BLX2_STATE_S0:
                 begin
                         // Remove stall.
                         o_stall_from_decode     = 1'd0;
@@ -422,7 +414,7 @@ begin:blk_a
 
                                 o_stall_from_decode = 1'd1;
 
-                                o_instruction[27:26] = 2'b01;  // Make it an ARM classic load-store.
+                                o_instruction[27:26] = 2'b01;  // Make it an classic load-store.
 
                                 // Specify addressing mode.
                                 if ( i_instruction[22] ) // Immediate.
@@ -466,17 +458,17 @@ begin:blk_a
                                 // We must generate a SUBAL LR,PC,4 ROR 0
                                 // This makes LR have the value
                                 // PC+8-4=PC+4 which is the address of
-                                // the next instruction. This is in ARM mode.
+                                // the next instruction. This is in 32bit mode.
                                 o_instruction[31:0]           = {AL, 2'b00, 1'b1, SUB, 1'd0, 4'd15, 4'd14, 12'd4};
 
-                                // In Thumb mode, we must generate PC+4-2. Modify it.
+                                // In mode16 mode, we must generate PC+4-2. Modify it.
                                 if ( i_cpsr_t )
                                 begin
                                         o_instruction[11:0] = 12'd2; // Modify the instruction.
                                 end
 
                                 o_stall_from_decode     = 1'd1; // Stall the core.
-                                state_nxt               = BLX1_ARM_S0;
+                                state_nxt               = BLX1_STATE_S0;
 
                                 o_irq = i_irq;
                                 o_fiq = i_fiq;
@@ -486,15 +478,15 @@ begin:blk_a
                         begin
                                 // Write address of next instruction to LR. Now this
                                 // depends on the mode we're in. Mode in the sense
-                                // ARM/Thumb. We need to look at i_cpsr_t.
+                                // 16/32bit. We need to look at i_cpsr_t.
 
                                 // We need to generate a SUBcc LR,PC,4 ROR 0
                                 // to store the next instruction address in
-                                // LR. This is in ARM mode.
+                                // LR. This is in 32bit mode.
                                 o_instruction[31:0]     =
                                 {i_instruction[31:28], 2'b00, 1'b1, SUB, 1'd0, 4'd15, 4'd14, 12'd4};
 
-                                // In Thumb mode, we need to remove 2 from PC
+                                // In mode16 mode, we need to remove 2 from PC
                                 // instead of 4. Modify it.
                                 if ( i_cpsr_t )
                                 begin
@@ -502,7 +494,7 @@ begin:blk_a
                                 end
 
                                 o_stall_from_decode     = 1'd1; // Stall the core.
-                                state_nxt               = BLX2_ARM_S0;
+                                state_nxt               = BLX2_STATE_S0;
 
                                 o_irq = i_irq;
                                 o_fiq = i_fiq;
@@ -597,7 +589,7 @@ begin:blk_a
                                 // presenting new data.
                                 o_stall_from_decode = 1'd1;
 
-                                if ( i_cpsr_t == 1'd0 ) // ARM
+                                if ( i_cpsr_t == 1'd0 ) // 32bit mode
                                 begin
                                         // PC is 8 bytes ahead.
                                         // Craft a SUB LR, PC, 4.

@@ -85,7 +85,7 @@ endfunction
 // Translate function.
 //
 //
-// Used to implement ARM modes. The register file is basically a flat array
+// Used to implement CPU modes. The register file is basically a flat array
 // of registers. Based on mode, we select some of those to implement banking.
 //
 

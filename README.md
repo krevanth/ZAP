@@ -1,4 +1,4 @@
-# The ZAP Processor (ARMV5TE Compatible)
+# The ZAP Processor (V5TE Compatible, 170MHz on Artix-7 FPGA)
 
 **By**[ **Revanth Kamaraj** ](https://github.com/krevanth)**<**[**revanth91kamaraj@gmail.com**](mailto:revanth91kamaraj@gmail.com)**>**
 
@@ -689,13 +689,9 @@ Timing report will be available in `obj/syn/syn_timing.rpt`
 
 ## 4. References
 
-\[1] [DDI 0100E](ddi0100e-arm-arm.fodg.gz)
+\[1] [DDI 0100E](ddi0100e.fodg.xz)
 
-## 5. Mentions
-
-The ZAP project was mentioned in a survey conducted [here](https://researchgate.net/publication/347558929\_Free\_ARM\_Compatible\_Softcores\_on\_FPGA).
-
-## 6. Acknowledgements
+## 5. Acknowledgements
 
 Thanks to [Erez Binyamin](https://github.com/ErezBinyamin) for adding Docker infrastructure support.
 
@@ -703,9 +699,9 @@ Thanks to [Bharath Mulagondla](https://github.com/bharathmulagondla) and [Akhil 
 
 The testbench UART core in `src/testbench/uart.v` is taken from the [UART-16550](https://github.com/freecores/uart16550) project.
 
-The testbench assembly code in `src/ts/arm_test*/arm_test*.s` is based on [this](https://github.com/freecores/arm4u/blob/master/test\_program/arm\_test.s) external assembly file.
+The testbench assembly code in `src/ts/mode32_test*/mode32_test*.s` is based on [this](shorturl.at/jnwL4) external assembly file.
 
-## 7. License
+## 6. License
 
 Copyright (C) 2016-2022 Revanth Kamaraj
 

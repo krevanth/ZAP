@@ -118,12 +118,12 @@ logic [39:0]                        o_instruction_nxt;
 logic                               o_instruction_valid_nxt;
 logic                               o_uop_last_nxt;
 logic                               mem_fetch_stall;
-logic                               arm_irq;
-logic                               arm_fiq;
+logic                               mode32_irq;
+logic                               mode32_fiq;
 logic                               irq_mask;
 logic                               fiq_mask;
-logic [34:0]                        arm_instruction;
-logic                               arm_instruction_valid;
+logic [34:0]                        mode32_instruction;
+logic                               mode32_instruction_valid;
 logic                               cp_stall;
 logic [34:0]                        cp_instruction;
 logic                               cp_instruction_valid;
@@ -389,10 +389,10 @@ u_zap_decode_coproc
         .o_copro_word_nxt(copro_word_nxt)
 );
 
-assign arm_instruction          = cp_instruction;
-assign arm_instruction_valid    = cp_instruction_valid;
-assign arm_irq                  = cp_irq;
-assign arm_fiq                  = cp_fiq;
+assign mode32_instruction          = cp_instruction;
+assign mode32_instruction_valid    = cp_instruction_valid;
+assign mode32_irq                  = cp_irq;
+assign mode32_fiq                  = cp_fiq;
 
 always_comb
 begin:bprblk1
@@ -406,10 +406,10 @@ begin:bprblk1
         ppc_nxt                 = o_ppc_ff;
         ras_nxt                 = ras_ff;
         ras_ptr_nxt             = ras_ptr_ff;
-        addr                    = {{8{arm_instruction[23]}},arm_instruction[23:0]}; // Offset.
+        addr                    = {{8{mode32_instruction[23]}},mode32_instruction[23:0]}; // Offset.
 
         // Indicates a left shift of 1 i.e., X = X * 2.
-        if ( arm_instruction[34] )
+        if ( mode32_instruction[34] )
                 addr_final = addr << 1;
         // Indicates a left shift of 2 i.e., X = X * 4.
         else
@@ -424,9 +424,9 @@ begin:bprblk1
         //
 
         // Bcc[L] <offset>. Function call.
-        if ( arm_instruction[27:25] == 3'b101 && arm_instruction_valid )
+        if ( mode32_instruction[27:25] == 3'b101 && mode32_instruction_valid )
         begin
-                if ( skid_taken == ST || skid_taken == WT || arm_instruction[31:28] == AL )
+                if ( skid_taken == ST || skid_taken == WT || mode32_instruction[31:28] == AL )
                 // Predicted as Taken or Predicted as Strongly Taken or Always taken.
                 begin
                         // Predict new PC.
@@ -441,13 +441,13 @@ begin:bprblk1
                                 w_clear_from_decode = 1'd0;
 
                         // Force taken status to ST.
-                        if ( arm_instruction[31:28] == AL )
+                        if ( mode32_instruction[31:28] == AL )
                         begin
                                 taken_nxt = ST;
                         end
 
                         // If Link=1, push next address onto RAS.
-                        if ( arm_instruction[24] )
+                        if ( mode32_instruction[24] )
                         begin
                                ras_nxt[ras_ptr_ff] = skid_pc_ff +
                                                      (i_cpu_mode_t ? 32'd2 : 32'd4);
@@ -464,43 +464,43 @@ begin:bprblk1
         else if (
                   // BX LR is recognized as a function return.
                   (
-                   arm_instruction[31:0] ==? BX_INST &&
-                   arm_instruction[3:0]   ==   4'd14 &&
-                   arm_instruction_valid
+                   mode32_instruction[31:0] ==? BX_INST &&
+                   mode32_instruction[3:0]   ==   4'd14 &&
+                   mode32_instruction_valid
                   )
                   ||
                   // As is MOV PC, LR
                   (
                     (
-                        arm_instruction[34:0] ==?  { 3'd0, 4'b????, 2'b00, 1'd0, MOV, 1'd0,
+                        mode32_instruction[34:0] ==?  { 3'd0, 4'b????, 2'b00, 1'd0, MOV, 1'd0,
                                                      4'd0, ARCH_PC, 8'd0, 4'd15 }
                     )
                     &&
-                    arm_instruction_valid
+                    mode32_instruction_valid
                   )
                   ||
                   // As is load multiple with PC in register list.
                   (
-                   arm_instruction[27:25] == 3'b100 && // LDM
-                   arm_instruction[20]              && // Load
-                   arm_instruction_valid            &&
-                   arm_instruction[15]                 // PC in reglist.
+                   mode32_instruction[27:25] == 3'b100 && // LDM
+                   mode32_instruction[20]              && // Load
+                   mode32_instruction_valid            &&
+                   mode32_instruction[15]                 // PC in reglist.
                   )
                   ||
                   // As is load to PC from SP index.
                   (
-                        (arm_instruction[31:0] ==? LS_INSTRUCTION_SPECIFIED_SHIFT ||
-                         arm_instruction[31:0] ==? LS_IMMEDIATE)                  &&
-                         arm_instruction[15:12] == ARCH_PC                        &&
-                         arm_instruction[20]                                      &&
-                         arm_instruction_valid                                    &&
-                         arm_instruction[19:16] == ARCH_SP
+                        (mode32_instruction[31:0] ==? LS_INSTRUCTION_SPECIFIED_SHIFT ||
+                         mode32_instruction[31:0] ==? LS_IMMEDIATE)                  &&
+                         mode32_instruction[15:12] == ARCH_PC                        &&
+                         mode32_instruction[20]                                      &&
+                         mode32_instruction_valid                                    &&
+                         mode32_instruction[19:16] == ARCH_SP
                   )
                 )
         begin
 
                 // Predicted as taken.
-                if ( skid_taken == WT || skid_taken == ST || arm_instruction[31:28] == AL )
+                if ( skid_taken == WT || skid_taken == ST || mode32_instruction[31:28] == AL )
                 begin
                         ras_ptr_nxt--;
                         w_pc_from_decode    = ras_ff[ras_ptr_nxt];
@@ -512,7 +512,7 @@ begin:bprblk1
                         else
                                 w_clear_from_decode = 1'd0;
 
-                        if ( arm_instruction[31:28] == AL )
+                        if ( mode32_instruction[31:28] == AL )
                                 taken_nxt = ST;
 
                         // Helps ALU verify that the RAS is correct.
@@ -526,11 +526,11 @@ begin:bprblk1
                 end
         end
         else if (
-                         arm_instruction_valid                                    &&
-                        (arm_instruction[31:0] ==? LS_INSTRUCTION_SPECIFIED_SHIFT ||
-                         arm_instruction[31:0] ==? LS_IMMEDIATE)                  &&
-                         arm_instruction[15:12] == ARCH_PC                        &&
-                         arm_instruction[20]
+                         mode32_instruction_valid                                    &&
+                        (mode32_instruction[31:0] ==? LS_INSTRUCTION_SPECIFIED_SHIFT ||
+                         mode32_instruction[31:0] ==? LS_IMMEDIATE)                  &&
+                         mode32_instruction[15:12] == ARCH_PC                        &&
+                         mode32_instruction[20]
                 )
         begin
                 // Jump table. Do what the BTB says. Dont correct it.
@@ -538,17 +538,17 @@ begin:bprblk1
         else if (
                         // Data processing instructions for MOV/ADD with
                         // PC as destination. CPU predicts that with a jump.
-                        arm_instruction_valid                                               &&
-                        arm_instruction[27:26] == 2'b00                                     &&
-                        arm_instruction[15:12] == ARCH_PC                                   &&
-                        (arm_instruction[25] || !arm_instruction[4] || !arm_instruction[7]) &&
-                        ( (arm_instruction[24:21] == ADD) || (arm_instruction[24:21] == MOV) )
-                        // arm_instruction inside {ADD, MOV}
+                        mode32_instruction_valid                                               &&
+                        mode32_instruction[27:26] == 2'b00                                     &&
+                        mode32_instruction[15:12] == ARCH_PC                                   &&
+                        (mode32_instruction[25] || !mode32_instruction[4] || !mode32_instruction[7]) &&
+                        ( (mode32_instruction[24:21] == ADD) || (mode32_instruction[24:21] == MOV) )
+                        // mode32_instruction inside {ADD, MOV}
                 )
         begin
                 // Jump table. Do what the BTB says. Dont correct it.
         end
-        else if (arm_instruction_valid)
+        else if (mode32_instruction_valid)
         // Predict non supported instructions as strongly not taken.
         begin
                 taken_nxt = SNT;
@@ -574,10 +574,10 @@ zap_predecode_uop_sequencer u_zap_uop_sequencer (
         .i_reset(i_reset),
         .i_cpsr_t(i_cpu_mode_t),
 
-        .i_instruction(arm_instruction),                // Skid version
-        .i_instruction_valid(arm_instruction_valid),    // Skid version
-        .i_fiq(arm_fiq),                                // Skid version
-        .i_irq(arm_irq),                                // Skid version
+        .i_instruction(mode32_instruction),                // Skid version
+        .i_instruction_valid(mode32_instruction_valid),    // Skid version
+        .i_fiq(mode32_fiq),                                // Skid version
+        .i_irq(mode32_irq),                                // Skid version
 
         .i_clear_from_writeback(i_clear_from_writeback),
         .i_data_stall(i_data_stall),
