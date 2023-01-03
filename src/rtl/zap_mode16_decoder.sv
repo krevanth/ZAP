@@ -27,7 +27,7 @@
 // --                                                                         --
 // -----------------------------------------------------------------------------
 
-module zap_thumb_decoder (
+module zap_mode16_decoder (
         // Input from I-cache.
         // Instruction and valid qualifier.
         input logic [31:0]       i_instruction,
@@ -44,7 +44,7 @@ module zap_thumb_decoder (
         input logic              i_cpsr_ff_t,
 
         //
-        // Outputs to the ARM decoder.
+        // Outputs to the mode32 decoder.
         //
 
         // Instruction, valid, undefined by this decoder and force 32-bit
@@ -620,7 +620,7 @@ endfunction
 
 function void decode_shift();
 begin
-        // Compressed shift instructions. Decompress to ARM with instruction specified shift.
+        // Compressed shift instructions. Decompress to 32-bit with instruction specified shift.
         o_instruction[34:0]     = 35'd0;                // Extension -> 0.
         o_instruction[31:28]    = AL;                   // Always execute.
         o_instruction[27:26]    = 2'b00;                // Data processing.

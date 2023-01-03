@@ -125,7 +125,7 @@ module zap_shifter_main
         input logic                         i_force32align_ff,
         output logic                        o_force32align_ff,
 
-        // ARM <-> Compressed switch indicator.
+        // mode32 <-> Compressed switch indicator.
         input logic                         i_switch_ff,
         output logic                        o_switch_ff,
 

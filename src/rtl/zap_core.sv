@@ -210,16 +210,16 @@ logic [1:0]                      fifo_bp_state;
 logic [32:0]                     fifo_pred;
 
 // Compressed decoder.
-logic                            thumb_irq;
-logic                            thumb_fiq;
-logic                            thumb_iabort;
-logic [34:0]                     thumb_instruction;
-logic                            thumb_valid;
-logic                            thumb_und;
-logic                            thumb_force32;
-logic [1:0]                      thumb_bp_state;
-logic [31:0]                     thumb_pc_plus_8_ff;
-logic [32:0]                     thumb_pred;
+logic                            mode16_irq;
+logic                            mode16_fiq;
+logic                            mode16_iabort;
+logic [34:0]                     mode16_instruction;
+logic                            mode16_valid;
+logic                            mode16_und;
+logic                            mode16_force32;
+logic [1:0]                      mode16_bp_state;
+logic [31:0]                     mode16_pc_plus_8_ff;
+logic [32:0]                     mode16_pred;
 
 // Predecode
 logic [31:0]                     predecode_pc_plus_8;
@@ -608,10 +608,10 @@ zap_fifo #( .WDT(67 + 33), .DEPTH(FIFO_DEPTH) ) U_ZAP_FIFO (
         .i_clear_from_writeback         (clear_from_writeback),
         .i_write_inhibit                (code_stall),
         .i_clear_from_alu               (clear_from_alu),
-        .i_data_stall                   (data_stall         && thumb_valid && fifo_valid ),
-        .i_stall_from_shifter           (stall_from_shifter && thumb_valid && fifo_valid ),
-        .i_stall_from_issue             (stall_from_issue   && thumb_valid && fifo_valid ),
-        .i_stall_from_decode            (stall_from_decode  && thumb_valid && fifo_valid ),
+        .i_data_stall                   (data_stall         && mode16_valid && fifo_valid ),
+        .i_stall_from_shifter           (stall_from_shifter && mode16_valid && fifo_valid ),
+        .i_stall_from_issue             (stall_from_issue   && mode16_valid && fifo_valid ),
+        .i_stall_from_decode            (stall_from_decode  && mode16_valid && fifo_valid ),
         .i_clear_from_decode            (clear_from_decode),
         .i_instr                        ({fetch_pc_plus_8_ff, fetch_instr_abort, fetch_instruction, fetch_bp_state, fetch_pred}),
         .i_valid                        (fetch_valid),
@@ -625,16 +625,16 @@ zap_fifo #( .WDT(67 + 33), .DEPTH(FIFO_DEPTH) ) U_ZAP_FIFO (
 //
 // Compresssed instruction inflater.
 //
-zap_thumb_decoder_main u_zap_thumb_decoder (
+zap_mode16_decoder_main u_zap_mode16_decoder (
 .i_clk                                  (i_clk),
 .i_reset                                (i_reset),
 .i_clear_from_writeback                 (clear_from_writeback),
 .i_clear_from_alu                       (clear_from_alu),
 
-.i_data_stall                           (data_stall         && thumb_valid  ),
-.i_stall_from_shifter                   (stall_from_shifter && thumb_valid  ),
-.i_stall_from_issue                     (stall_from_issue   && thumb_valid  ),
-.i_stall_from_decode                    (stall_from_decode  && thumb_valid  ),
+.i_data_stall                           (data_stall         && mode16_valid  ),
+.i_stall_from_shifter                   (stall_from_shifter && mode16_valid  ),
+.i_stall_from_issue                     (stall_from_issue   && mode16_valid  ),
+.i_stall_from_decode                    (stall_from_decode  && mode16_valid  ),
 
 .i_clear_from_decode                    (clear_from_decode),
 
@@ -651,27 +651,27 @@ zap_thumb_decoder_main u_zap_thumb_decoder (
 .i_iabort                               (fifo_valid ? fifo_instr_abort : 1'd0),
 // Pass abort only if instruction valid.
 
-.o_iabort                               (thumb_iabort),
+.o_iabort                               (mode16_iabort),
 .i_cpsr_ff_t                            (alu_flags_ff[T]),
 .i_pc_ff                                (alu_flags_ff[T] ? fifo_pc_plus_8 - 32'd4 : fifo_pc_plus_8 - 32'd8),
 .i_pc_plus_8_ff                         (fifo_pc_plus_8),
 
-.o_instruction                          (thumb_instruction),
-.o_instruction_valid                    (thumb_valid),
-.o_und                                  (thumb_und),
-.o_force32_align                        (thumb_force32),
+.o_instruction                          (mode16_instruction),
+.o_instruction_valid                    (mode16_valid),
+.o_und                                  (mode16_und),
+.o_force32_align                        (mode16_force32),
 
 /* verilator lint_off PINCONNECTEMPTY */
 .o_pc_ff                                (),
 /* verilator lint_on PINCONNECTEMPTY */
 
-.o_pc_plus_8_ff                         (thumb_pc_plus_8_ff),
-.o_irq                                  (thumb_irq),
-.o_fiq                                  (thumb_fiq),
-.o_taken_ff                             (thumb_bp_state),
+.o_pc_plus_8_ff                         (mode16_pc_plus_8_ff),
+.o_irq                                  (mode16_irq),
+.o_fiq                                  (mode16_fiq),
+.o_taken_ff                             (mode16_bp_state),
 
 .i_pred                                 (fifo_pred),
-.o_pred                                 (thumb_pred)
+.o_pred                                 (mode16_pred)
 );
 
 //
@@ -689,30 +689,30 @@ u_zap_predecode (
         .i_clear_from_writeback         (clear_from_writeback),
         .i_clear_from_alu               (clear_from_alu),
 
-        .i_pred                         (thumb_pred),
+        .i_pred                         (mode16_pred),
         .o_clear_btb                    (predecode_clear_btb),
 
         .i_data_stall                   (data_stall         ),
         .i_stall_from_shifter           (stall_from_shifter ),
         .i_stall_from_issue             (stall_from_issue   ),
 
-        .i_irq                          (thumb_irq),
-        .i_fiq                          (thumb_fiq),
+        .i_irq                          (mode16_irq),
+        .i_fiq                          (mode16_fiq),
 
-        .i_abt                          (thumb_iabort),
-        .i_pc_plus_8_ff                 (thumb_pc_plus_8_ff),
-        .i_pc_ff                        (alu_flags_ff[T] ? thumb_pc_plus_8_ff - 32'd4 :
-                                         thumb_pc_plus_8_ff - 32'd8),
+        .i_abt                          (mode16_iabort),
+        .i_pc_plus_8_ff                 (mode16_pc_plus_8_ff),
+        .i_pc_ff                        (alu_flags_ff[T] ? mode16_pc_plus_8_ff - 32'd4 :
+                                         mode16_pc_plus_8_ff - 32'd8),
 
         .i_cpu_mode_t                   (alu_flags_ff[T]),
         .i_cpu_mode_mode                (alu_flags_ff[`ZAP_CPSR_MODE]),
 
-        .i_instruction                  (thumb_instruction),
-        .i_instruction_valid            (thumb_valid),
-        .i_taken                        (thumb_bp_state),
+        .i_instruction                  (mode16_instruction),
+        .i_instruction_valid            (mode16_valid),
+        .i_taken                        (mode16_bp_state),
 
-        .i_force32                      (thumb_force32),
-        .i_und                          (thumb_und),
+        .i_force32                      (mode16_force32),
+        .i_und                          (mode16_und),
 
         .i_copro_done                   (copro_done),
         .i_pipeline_dav                 (pipeline_is_not_empty),
@@ -770,7 +770,7 @@ u_zap_decode_main (
         .i_stall_from_shifter           (stall_from_shifter ),
         .i_stall_from_issue             (stall_from_issue   ),
 
-        .i_thumb_und                    (predecode_und),
+        .i_mode16_und                    (predecode_und),
         .i_irq                          (predecode_irq),
         .i_fiq                          (predecode_fiq),
         .i_abt                          (predecode_abt),
@@ -1483,7 +1483,7 @@ u_zap_writeback
         .i_pc_from_alu          (pc_from_alu),
         .i_clear_from_icache    (i_icache_err2),
 
-        .i_thumb                (alu_flags_ff[T]), // To indicate thumb state.
+        .i_mode16               (memory_flags_ff[T]), // To indicate mode16 state.
 
         .i_clear_from_decode    (clear_from_decode),
         .i_pc_from_decode       (pc_from_decode),

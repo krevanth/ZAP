@@ -22,7 +22,7 @@
 // ---------------------------------------------------------------------------
 // --                                                                       --
 // -- When running in simulation mode, this module will decompile binary    --
-// -- ARM instructions to assembler instructions for debug purposes.        --
+// -- mode32 instrs to assembler instructions for debug purposes.           --
 // -- When running in synthesis mode, the output of this module is tied     --
 // -- to a constant since this module really finds use only in debug.       --
 // -- Define DEBUG_EN during simulation to help in debugging.               --

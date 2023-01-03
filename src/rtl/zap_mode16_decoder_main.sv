@@ -29,7 +29,7 @@
 
 
 
-module zap_thumb_decoder_main (
+module zap_mode16_decoder_main (
         // Clock and reset.
         input logic              i_clk,
         input logic              i_reset,
@@ -69,7 +69,7 @@ module zap_thumb_decoder_main (
         input logic      [31:0]  i_pc_plus_8_ff,
 
         //
-        // Outputs to the ARM decoder.
+        // Outputs to the 32=bit decoder.
         //
 
         // Instruction, valid, undefined by this decoder and force 32-bit
@@ -101,7 +101,7 @@ logic force32_nxt;
 logic irq_nxt;
 logic fiq_nxt;
 
-zap_thumb_decoder u_zap_thumb_decoder (
+zap_mode16_decoder u_zap_mode16_decoder (
         .i_instruction(i_instruction),
         .i_instruction_valid(i_instruction_valid),
         .i_irq(i_irq),
@@ -204,10 +204,7 @@ zap_decompile u_zap_decompile (
         /* verilator lint_on PINCONNECTEMPTY */
 );
 
-
-endmodule // zap_thumb_decoder_main
-
-
+endmodule
 
 // ----------------------------------------------------------------------------
 // EOF

@@ -36,10 +36,10 @@
 `define ZAP_DP_RD                   15:12   // Destination source.
 
 `define ZAP_DP_RB_EXTEND            32      // Shift source extend.
-`define ZAP_DP_RB                   3:0     // Shift source. ARM refers to this as rm.
+`define ZAP_DP_RB                   3:0     // Shift source. DDI0100E refers to this as rm.
 
-`define ZAP_DP_RA                   19:16   // ALU source. ARM rn.
-`define ZAP_DP_RA_EXTEND            34      // ALU source extend. ARM rn.
+`define ZAP_DP_RA                   19:16   // ALU source. DDI0100E rn.
+`define ZAP_DP_RA_EXTEND            34      // ALU source extend. DDI0100E rn.
 
 `define ZAP_OPCODE_EXTEND           35      // To differentiate lower and higher for multiplication ->
                                         // 1 means higher, 0 lower.

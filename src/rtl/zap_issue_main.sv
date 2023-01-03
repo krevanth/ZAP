@@ -32,7 +32,7 @@ module zap_issue_main
         // Number of physical registers.
         parameter PHY_REGS = 46,
 
-        // Although ARM mentions only 16 ALU operations, the processor
+        // Although DDI0100E mentions only 16 ALU operations, the processor
         // internally performs many more operations.
         parameter ALU_OPS   = 32,
 
@@ -178,7 +178,7 @@ module zap_issue_main
         // END OF FEEDBACK NETWORK
         // -----------------------------------
 
-        // ARM to compressed switch.
+        // mode32 to compressed switch.
         output logic                             o_switch_ff,
 
         // Outputs to register file.
@@ -213,7 +213,7 @@ module zap_issue_main
 
         // Register values are given here.
 
-        // ALU source value would be the value of non-shifted operand in ARM.
+        // ALU source value would be the value of non-shifted operand in mode32.
         output logic      [31:0]                  o_alu_source_value_ff,
 
         // Shifter source value would be the value of the operand to be shifted.

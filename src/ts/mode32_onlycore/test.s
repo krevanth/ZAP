@@ -1,37 +1,31 @@
-@
-@
-@ This file is taken from the ARM4U CPU project.
-@ 
-@ This is a creation of the Laboratory of Processor Architecture
-@ of Ecole Polytechnique Fédérale de Lausanne ( http://lap.epfl.ch )
-@
-@ asm_test.s ---  Test program which uses all the instruction set
-@                 to be assembled with GCC assembler
-@
-@ Written By -  Jonathan Masur and Xavier Jimenez (2013)
-@
-@ This program is free software; you can redistribute it and/or modify it
-@ under the terms of the GNU General Public License as published by the
-@ Free Software Foundation; either version 2, or (at your option) any
-@ later version.
-@
-@ This program is distributed in the hope that it will be useful,
-@ but WITHOUT ANY WARRANTY; without even the implied warranty of
-@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-@ GNU General Public License for more details.
-@
-@ In other words, you are welcome to use, share and improve this program.
-@ You are forbidden to forbid anyone else to use, share and improve
-@ what you give them.   Help stamp out software-hoarding!
-@
-@ MODIFICATION --
-@ Modified by Revanth Kamaraj for the ZAP ARM processor. 
-@
+// 
+//  This is a creation of the Laboratory of Processor Architecture
+//  of Ecole Polytechnique Fédérale de Lausanne ( http://lap.epfl.ch )
+// 
+//  Test program which uses all the instruction set to be assembled with GCC assembler
+// 
+//  Written By -  Jonathan Masur and Xavier Jimenez (2013)
+//                Revanth Kamaraj                   (2016-2022)
+// 
+//  This program is free software; you can redistribute it and/or modify it
+//  under the terms of the GNU General Public License as published by the
+//  Free Software Foundation; either version 2, or (at your option) any
+//  later version.
+// 
+//  This program is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//  GNU General Public License for more details.
+// 
+//  In other words, you are welcome to use, share and improve this program.
+//  You are forbidden to forbid anyone else to use, share and improve
+//  what you give them.   Help stamp out software-hoarding!
+// 
 
-        .text
-        .global test_cond, test_fwd, test_bshift, test_logic, test_adder, test_bshift_reg, test_load
-        .global test_store, test_byte, test_cpsr, test_mul, test_ldmstm, test_r15jumps, test_rti
-        .global test_clz, test_sat
+.text
+.global test_cond, test_fwd, test_bshift, test_logic, test_adder, test_bshift_reg, test_load
+.global test_store, test_byte, test_cpsr, test_mul, test_ldmstm, test_r15jumps, test_rti
+.global test_clz, test_sat
 
 _Reset:
    b disable_cache
@@ -1066,14 +1060,7 @@ test_byte:
         bx lr
 
 .ref_words:
-        @ Table for ARMs who access bytes in a little-endian order
         .word 0x05060708, 0x01020304
-
-        @ Table for ARMs who access bytes in a big-endian order
-@       .word 0x08070605, 0x04030201
-
-        @ Good source for flags info :
-        @ http://blogs.arm.com/software-enablement/206-condition-codes-1-condition-flags-and-codes/
 
 test_cpsr:
         mov r0, #1
@@ -1293,7 +1280,7 @@ test_mul:
         bne fail
         bmi fail
 
-        mul r3, r3, r4          @ no joke, verified to fail on a real ARM !
+        mul r3, r3, r4         
         cmp r3, #36
         bne fail
 

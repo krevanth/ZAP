@@ -77,7 +77,7 @@ module zap_writeback #(
         input   logic [$clog2(PHY_REGS)-1:0] i_wr_index,
         input   logic [31:0]                 i_wr_data,
         input   logic [FLAG_WDT-1:0]         i_flags,
-        input   logic                        i_thumb,
+        input   logic                        i_mode16,
         input   logic [$clog2(PHY_REGS)-1:0] i_wr_index_1,
         input   logic [31:0]                 i_wr_data_1,
         input   logic [PHY_REGS-1:0]         i_wr_index_2,
@@ -157,11 +157,11 @@ logic [32:0]                      pc_del_ff, pc_del_nxt;
 logic [32:0]                      pc_del2_ff, pc_del2_nxt;
 logic [32:0]                      pc_del3_ff, pc_del3_nxt;
 
-logic                             arm_mode;
+logic                             mode32;
 logic                             clear_from_btb;
 logic [31:0]                      pc_from_btb;
 
-assign  arm_mode     = (cpsr_ff[T] == 1'd0) ? 1'd1 : 1'd0;
+assign  mode32     = (cpsr_ff[T] == 1'd0) ? 1'd1 : 1'd0;
 assign  o_shelve     = shelve_ff;
 assign  o_pc         = pc_del3_ff[31:0];
 assign  o_pc_check   = pc_del2_ff[31:0];
@@ -220,7 +220,7 @@ begin: pc_control_tree
         if ( i_data_abt[1] )
         begin
                 // Return do the same instruction.
-                pc_shelve ( arm_mode ? i_pc_plus_8_buf_ff - 8 :
+                pc_shelve ( mode32 ? i_pc_plus_8_buf_ff - 8 :
                                        i_pc_plus_8_buf_ff - 4 );
         end
         else if ( i_data_abt[0] )
@@ -291,7 +291,7 @@ begin: pc_control_tree
         end
         else
         begin
-                pc_nxt[31:0] = pc_ff[31:0] + (i_thumb ? 32'd2 : 32'd4);
+                pc_nxt[31:0] = pc_ff[31:0] + (i_mode16 ? 32'd2 : 32'd4);
                 pc_del_nxt   = pc_ff;
                 pc_del2_nxt  = pc_del_ff;
                 pc_del3_nxt  = pc_del2_ff;
@@ -325,7 +325,7 @@ begin: register_file_write
         else if ( i_data_abt[0] )
         begin
                 wen                     = 1;
-                wdata1                  = arm_mode ?
+                wdata1                  = mode32 ?
                                           i_pc_plus_8_buf_ff :
                                           i_pc_plus_8_buf_ff + 4;
                 wa1                     = PHY_ABT_R14;
@@ -342,7 +342,7 @@ begin: register_file_write
         else if ( i_fiq )
         begin
                 wen                     = 1;
-                wdata1                  = arm_mode ? i_wr_data : i_pc_plus_8_buf_ff ;
+                wdata1                  = mode32 ? i_wr_data : i_pc_plus_8_buf_ff ;
                 wa1                     = PHY_FIQ_R14;
                 wa2                     = PHY_FIQ_SPSR;
                 wdata2                  = cpsr_ff;
@@ -354,7 +354,7 @@ begin: register_file_write
         else if ( i_irq )
         begin
                 wen                     = 1;
-                wdata1                  = arm_mode ? i_wr_data : i_pc_plus_8_buf_ff ;
+                wdata1                  = mode32 ? i_wr_data : i_pc_plus_8_buf_ff ;
                 wa1                     = PHY_IRQ_R14;
                 wa2                     = PHY_IRQ_SPSR;
                 wdata2                  = cpsr_ff;
@@ -365,7 +365,7 @@ begin: register_file_write
         else if ( i_instr_abt )
         begin
                 wen    = 1;
-                wdata1 = arm_mode ? i_wr_data : i_pc_plus_8_buf_ff ;
+                wdata1 = mode32 ? i_wr_data : i_pc_plus_8_buf_ff ;
                 wa1    = PHY_ABT_R14;
                 wa2    = PHY_ABT_SPSR;
                 wdata2 = cpsr_ff;
@@ -376,7 +376,7 @@ begin: register_file_write
         else if ( i_swi )
         begin
                 wen                     = 1;
-                wdata1                  = arm_mode ? i_wr_data : i_pc_plus_8_buf_ff - 32'd4;
+                wdata1                  = mode32 ? i_wr_data : i_pc_plus_8_buf_ff - 32'd4;
                 wa1                     = PHY_SVC_R14;
                 wa2                     = PHY_SVC_SPSR;
                 wdata2                  = cpsr_ff;
@@ -387,7 +387,7 @@ begin: register_file_write
         else if ( i_und )
         begin
                 wen                     = 1;
-                wdata1                  = arm_mode ? i_wr_data : i_pc_plus_8_buf_ff - 32'd4;
+                wdata1                  = mode32 ? i_wr_data : i_pc_plus_8_buf_ff - 32'd4;
                 wa1                     = PHY_UND_R14;
                 wa2                     = PHY_UND_SPSR;
                 wdata2                  = cpsr_ff;
@@ -522,7 +522,7 @@ function void chmod;
 begin
         o_clear_from_writeback  = 1'd1;
         cpsr_nxt[I]             = 1'd1; // Mask IRQ interrupt.
-        cpsr_nxt[T]             = 1'd0; // Go to ARM mode.
+        cpsr_nxt[T]             = 1'd0; // Go to mode32 mode.
 end
 endfunction
 

@@ -16,7 +16,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 // 02110-1301, USA.
 //
-// This module performs core ARM instruction decoding by translating ARM
+// This module performs core mode32 instruction decoding by translating mode32
 // instructions into an internal long format that can be processed by core
 // logic. Note that the predecode stage must change the 32-bit instr. to
 // 36-bit before feeding it into this unit.
@@ -57,7 +57,7 @@ o_mem_unsigned_halfword_enable, // Access treated as uint16_t.
 o_mem_translate,                // Force user view of memory.
 
 o_und,   // Declare as undecodable.
-o_switch // Switch between ARM and Thumb may be needed if this is 1.
+o_switch // Switch between mode32 and mode16 may be needed if this is 1.
 
 );
 
@@ -283,21 +283,21 @@ begin: tskLDecodeMult
         o_condition_code        =       instruction[31:28];
         o_flag_update           =       instruction[20];
 
-        // ARM rd.
+        // mode32 rd.
         o_destination_index     =       {instruction[`ZAP_DP_RD_EXTEND],
                                          instruction[19:16]};
 
         // For MUL, Rd and Rn are interchanged.
         // For 64bit, this is normally high register.
 
-        o_alu_source            =       {29'd0, instruction[11:8]}; // ARM rs
+        o_alu_source            =       {29'd0, instruction[11:8]}; // mode32 rs
         o_alu_source[32]        =       INDEX_EN;
 
         o_shift_source          =       {28'd0, instruction[`ZAP_DP_RB_EXTEND],
                                          instruction[`ZAP_DP_RB]};
-        o_shift_source[32]      =       INDEX_EN;            // ARM rm
+        o_shift_source[32]      =       INDEX_EN;            // mode32 rm
 
-        // ARM rn
+        // mode32 rn
         o_shift_length          =       {28'd0, instruction[`ZAP_DP_RA_EXTEND],
                                          instruction[`ZAP_DP_RD]};
 
@@ -465,14 +465,14 @@ begin: tskDecodeMult
                                          instruction[19:16]};
 
         // For MUL, Rd and Rn are interchanged.
-        o_alu_source            =       {29'd0, instruction[11:8]}; // ARM rs
+        o_alu_source            =       {29'd0, instruction[11:8]}; // mode32 rs
         o_alu_source[32]        =       INDEX_EN;
 
         o_shift_source          =       {28'd0, instruction[`ZAP_DP_RB_EXTEND],
                                          instruction[`ZAP_DP_RB]};
-        o_shift_source[32]      =       INDEX_EN;            // ARM rm
+        o_shift_source[32]      =       INDEX_EN;            // mode32 rm
 
-        // ARM rn - Set for accumulate.
+        // mode32 rn - Set for accumulate.
         o_shift_length          =       instruction[21] ?
                                         {28'd0, instruction[`ZAP_DP_RA_EXTEND],
                                          instruction[`ZAP_DP_RD]} : 33'd0;
@@ -502,18 +502,18 @@ begin
                            instruction[6:5] == 2'b10 ? OP_SMUL10 :
                            instruction[6:5] == 2'b11 ? OP_SMUL11 : OP_SMUL11) ;
 
-        // ARM rd
+        // mode32 rd
         o_destination_index = {instruction[`ZAP_DP_RD_EXTEND], instruction[19:16]};
 
-        // ARM Rs.
+        // mode32 Rs.
         o_alu_source = {29'd0, instruction[11:8]};
         o_alu_source[32] = INDEX_EN;
 
-        // ARM rm
+        // mode32 rm
         o_shift_source = {28'd0, instruction[`ZAP_DP_RB_EXTEND], instruction[`ZAP_DP_RB]};
         o_shift_source[32] = INDEX_EN;
 
-        // ARM rm=0
+        // mode32 rm=0
         o_shift_length     = 33'd0;
         o_shift_length[32] = INDEX_EN;
 
@@ -534,21 +534,21 @@ begin: tskLDecodeMultDsp
         o_condition_code        =       instruction[31:28];
         o_flag_update           =       1'd1;
 
-        // ARM rd.
+        // mode32 rd.
         o_destination_index     =       {instruction[`ZAP_DP_RD_EXTEND],
                                          instruction[19:16]};
 
         // For MUL, Rd and Rn are interchanged.
         // For 64bit, this is normally high register.
 
-        o_alu_source            =       {29'd0, instruction[11:8]}; // ARM rs
+        o_alu_source            =       {29'd0, instruction[11:8]}; // mode32 rs
         o_alu_source[32]        =       INDEX_EN;
 
         o_shift_source          =       {28'd0, instruction[`ZAP_DP_RB_EXTEND],
                                          instruction[`ZAP_DP_RB]};
-        o_shift_source[32]      =       INDEX_EN;            // ARM rm
+        o_shift_source[32]      =       INDEX_EN;            // mode32 rm
 
-        o_shift_length          =       // ARM rn.
+        o_shift_length          =       // mode32 rn.
                                         {28'd0, instruction[`ZAP_DP_RA_EXTEND],
                                          instruction[`ZAP_DP_RD]};
 
@@ -761,7 +761,7 @@ begin
         o_shift_source[31:0]    = ($signed({{8{instruction[23]}},instruction[23:0]}));
         o_shift_source[32]      = IMMED_EN;
         o_shift_operation       = {1'd0, LSL};
-        o_shift_length          = instruction[34] ? 1 : 2; // Thumb branches sometimes need only a shift of 1.
+        o_shift_length          = instruction[34] ? 1 : 2; // mode16 branches sometimes need only a shift of 1.
         o_shift_length[32]      = IMMED_EN;
 end
 endfunction

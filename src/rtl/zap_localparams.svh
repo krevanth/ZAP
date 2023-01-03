@@ -209,7 +209,7 @@ localparam SYS = 5'b11_111;
 localparam UND = 5'b11_011;
 
 // Instruction definitions.
-/* ARM */
+/* MODE32 */
 
 // DSP multiplication accumulate (DSP)
 
@@ -293,7 +293,7 @@ localparam      [31:0] BLX2                                             =       
 // BKPT
 localparam      [31:0] BKPT                                             =                                       32'b1110_00010010_????_????_????_0111_????;
 
-/* Thumb ISA */
+/* 16-bit ISA */
 
 //B
 localparam      [15:0]  T_BRANCH_COND                                   =                                       16'b1101_????_????????; // Overlaps with SWI.
