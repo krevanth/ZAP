@@ -297,6 +297,7 @@ begin: pc_control_tree
                 pc_del3_nxt  = pc_del2_ff;
         end
 
+        // FCSE
         if ( pc_nxt[31:25] == 0 ) begin
                 pc_nxt[31:25] = i_cpu_pid;
         end

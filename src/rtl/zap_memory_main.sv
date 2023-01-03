@@ -274,6 +274,9 @@ begin: transform_function
                 endcase
 
                 transform = {{16{transform[15]}}, transform[15:0]}; // 16 + 16 = 32
+
+                assert ( address[0] == 1'd0 ) else
+                $info("Warning: Address bit 0 is 1, leads to halfword load as UNPREDICTABLE.");
         end
         // Unsigned half word. Take only lower 16-bit.
         else if ( uhalf == 1'd1 )
@@ -282,6 +285,9 @@ begin: transform_function
                 0: transform = (d >>  0) & 32'h0000ffff;
                 1: transform = (d >> 16) & 32'h0000ffff;
                 endcase
+
+                assert ( address[0] == 1'd0 ) else
+                $info("Warning: Address bit 0 is 1, leads to halfword load as UNPREDICTABLE.");
         end
         else // Default. Typically, a word.
         begin
