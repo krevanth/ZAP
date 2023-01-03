@@ -103,9 +103,9 @@ output  logic                             o_switch;
 `include "zap_localparams.svh"
 
 // Related to memory operations.
-localparam [1:0] SIGNED_BYTE            = 2'd0;
+localparam [1:0] SIGNED_BYTE            = 2'd2;
 localparam [1:0] UNSIGNED_HALF_WORD     = 2'd1;
-localparam [1:0] SIGNED_HALF_WORD       = 2'd2;
+localparam [1:0] SIGNED_HALF_WORD       = 2'd3;
 
 // Global variables.
 logic [35:0] instruction;
