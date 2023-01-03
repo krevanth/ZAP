@@ -690,17 +690,21 @@ Timing report will be available in `obj/syn/syn_timing.rpt`
 
 ## 4. References
 
-\[1] [DDI 0100E](ddi0100e.fodg.xz)
+\[1] DDI 0100E Specification
 
 ## 5. Acknowledgements
 
 Thanks to [Erez Binyamin](https://github.com/ErezBinyamin) for adding Docker infrastructure support.
 
+Thanks to [ElectronAsh](https://github.com/electronash/sim_3do) for working on a 3DO video game project based around the ZAP core.
+
 Thanks to [Bharath Mulagondla](https://github.com/bharathmulagondla) and [Akhil Raj Baranwal](https://github.com/arbaranwal) for pointing out bugs in the design.
 
-The testbench UART core in `src/testbench/uart.v` is taken from the [UART-16550](https://github.com/freecores/uart16550) project.
+The testbench UART core in `src/testbench/uart.v` is based on the [UART-16550 core](https://github.com/freecores/uart16550) project.
 
-The testbench assembly code in `src/ts/mode32_test*/mode32_test*.s` is based on [this](https://shorturl.at/jnwL4) external assembly file.
+Testbench assembly code in `src/ts/mode32_test*/` is based on Jonathan Masur's and Xavier Jimenez's work that can be found [here](https://github.com/freecores)
+
+Testbench assembly code in `src/ts/mode16_test*/` is based on Julian Smolka's work [here](https://github.com/jsmolka/gba-tests`
 
 ## 6. License
 
