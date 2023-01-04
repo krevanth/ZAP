@@ -52,6 +52,9 @@ module zap_decode_main #(
         input   logic     [1:0]                  i_taken,
         input   logic     [31:0]                 i_ppc_ff,
 
+        // Switch
+        input   logic                            i_switch,
+
         // mode16 undefined.
         input   logic                            i_mode16_und,
 
@@ -316,7 +319,7 @@ begin
                 o_mem_translate_ff                      <= o_mem_translate_nxt;
                 o_pc_plus_8_ff                          <= i_pc_plus_8_ff;
                 o_pc_ff                                 <= i_pc_ff;
-                o_switch_ff                             <= o_switch_nxt;
+                o_switch_ff                             <= o_switch_nxt | i_switch;
                 o_force32align_ff                       <= i_force32align;
                 o_taken_ff                              <= i_taken;
                 o_ppc_ff                                <= i_ppc_ff;

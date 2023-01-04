@@ -35,6 +35,9 @@ module zap_predecode_main #( parameter PHY_REGS = 46, parameter RAS_DEPTH = 8 )
         // UOP
         output logic                             o_uop_last,
 
+        // L4
+        input   logic                            i_l4_enable,
+
         // Predict. MSB is valid bit.
         input logic   [32:0]                     i_pred,
         output logic                             o_clear_btb,
@@ -80,6 +83,9 @@ module zap_predecode_main #( parameter PHY_REGS = 46, parameter RAS_DEPTH = 8 )
 
         // Stall of PC and fetch.
         output  logic                             o_stall_from_decode,
+
+        // Switch.
+        output  logic                             o_switch_ff,
 
         // PC output.
         output  logic  [31:0]                     o_pc_plus_8_ff,
@@ -146,6 +152,7 @@ logic [31:0]                        skid_pc_plus_8_ff;
 logic [RAS_DEPTH-1:0][31:0]         ras_ff, ras_nxt;
 logic [$clog2(RAS_DEPTH)-1:0]       ras_ptr_ff, ras_ptr_nxt;
 logic                               align_nxt;
+logic                               switch_nxt;
 
 // Flop the outputs to break the pipeline at this point.
 always_ff @ (posedge i_clk)
@@ -194,6 +201,7 @@ begin
                 o_pc_plus_8_ff         <= skid_pc_plus_8_ff;
                 o_pc_ff                <= skid_pc_ff;
                 o_force32align_ff      <= skid_force32 | align_nxt;
+                o_switch_ff            <= switch_nxt;
                 o_taken_ff             <= taken_nxt;
                 o_instruction_ff       <= o_instruction_nxt;
                 o_instruction_valid_ff <= o_instruction_valid_nxt;
@@ -244,6 +252,7 @@ begin
                 o_uop_last                              <= 0;
                 o_clear_from_decode                     <= 0;
                 o_force32align_ff                       <= 0;
+                o_switch_ff                             <= 0;
 end
 endtask
 
@@ -580,6 +589,7 @@ zap_predecode_uop_sequencer u_zap_uop_sequencer (
         .i_instruction_valid(mode32_instruction_valid),    // Skid version
         .i_fiq(mode32_fiq),                                // Skid version
         .i_irq(mode32_irq),                                // Skid version
+        .i_l4_enable(i_l4_enable),
 
         .i_clear_from_writeback(i_clear_from_writeback),
         .i_data_stall(i_data_stall),
@@ -594,6 +604,7 @@ zap_predecode_uop_sequencer u_zap_uop_sequencer (
         .o_instruction(o_instruction_nxt), // 40-bit, upper 4 bits RESERVED.
         .o_instruction_valid(o_instruction_valid_nxt),
         .o_align(align_nxt),
+        .o_switch(switch_nxt), // Provided when load to PC in LDM.
         .o_uop_last(o_uop_last_nxt),
         .o_stall_from_decode(mem_fetch_stall)
 );

@@ -3,79 +3,14 @@
 .text
 
 _Reset:
-    b disable_cache
-
-.word 4100
-.word 16380
-.word 0xFFF00002
-.word 4101 
-.word 0x7fffffff
-.word 0xffffffff
-
-enable_cache:
-   // Enable cache (Uses a single bit to enable both caches).
-   .set ENABLE_CP_WORD, 4100
-   mov r0, #4
-   ldr r1, [r0]
-   mcr p15, 0, r1, c1, c1, 0
-   
-   // Write out identitiy section mapping. Write 16KB to register 2.
-   mov r1, #1
-   mov r1, r1, lsl #14
-   mcr p15, 0, r1, c2, c0, 1
-   
-   // Set domain access control to all 1s.
-   mvn r1, #0
-   mcr p15, 0, r1, c3, c0, 0
-   
-   // Set up a section desctiptor for identity mapping that is Cachaeable.
-   mov r1, #1
-   mov r1, r1, lsl #14     // 16KB
-   mov r2, #14             // Cacheable identity descriptor.
-   str r2, [r1]            // Write identity section desctiptor to 16KB location.
-   ldr r6, [r1]            // R6 holds the descriptor.
-   mov r7, r1              // R7 holds the address.
-   
-   // Set up a section descriptor for upper 1MB of virtual address space.
-   // This is identity mapping. Uncacheable.
-   mov r1, #1
-   mov r1, r1, lsl #14     // 16KB. This is descriptor 0.
-   
-   // Go to descriptor 4095. This is the address BASE + (#DESC * 4).
-   .set DESCRIPTOR_IO_SECTION_OFFSET, 16380 // 4095 x 4
-   mov r0, #8
-   ldr r2,[r0]
-   add r1, r1, r2
-   
-   // Prepare a descriptor. Descriptor = 0xFFF00002 (Uncacheable section descriptor).
-   .set DESCRIPTOR_IO_SECTION, 0xFFF00002
-   mov r0, #0xC
-   ldr r2 ,[r0]
-   str r2, [r1]
-   ldr r6, [r1]
-   mov r7, r1
-   
-   // ENABLE MMU
-   .set ENABLE_MMU_CP_WORD, 4101
-   mov r0, #0x10
-   ldr r1, [r0]
-   mcr p15, 0, r1, c1, c1, 0
-
-   ////////////////////////////////////////////////////////////////////////////
-
-   disable_cache:
-
    mov sp, #4000
+   mov r7, #0
 
    ldr r0, =myThFunction+1
-   mov lr, pc
-   bx r0 // Jump to 16-bit code
+   mov lr, pc    
+   bx r0 
 
-   mvn r0, #0
-  
-   ldr r0,= myThFunction+1
-   blx r0 // Jump to 16-bit code
-
+   .arm
    mvn r0, #0
    mov r1, r0
    mov r2, r0
@@ -83,27 +18,20 @@ enable_cache:
    mov r4, r0
    mov r5, r0
    mov r6, r0
-   mov r7, r0
- 
+
    here: b here
    
 .macro m_exit test 
         mov     r7, #\test
-        bl      myThFunctionEnd
+        bl myThFunctionEnd
 .endm
-
-///////////////////////////////////////////////////////////////////////////////
-// 16-bit Function
-///////////////////////////////////////////////////////////////////////////////
 
 .thumb_func
 myThFunction:
-        // Reset test register
-        mov     r7, #0
+        // Push LR to stack.
+        push {lr}
 
         // Tests start at 1
-
-        ///////////////////////////////////////////////////////////////////////
 
         logical:
                 // Tests for logical operations
@@ -1618,5 +1546,6 @@ arithmetic_passed:
 ///////////////////////////////////////////////////////////////////////////////
 
 myThFunctionEnd:
-        bx lr
+        pop {r1}
+        bx r1
 

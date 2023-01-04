@@ -194,9 +194,9 @@ endfunction
 function void decode_pop_push ();
 begin: decodePopPush
         //
-        // Uses an FD stack. Thus it is DA type i.e., post index down by 4.
+        // Uses an FD stack. Thus it is DB type i.e., pre index down by 4.
         // Writeback is implicit so make W = 0.
-        // Will be IB for POP.
+        // Will be IA for POP.
         //
 
         logic [3:0] base;
@@ -216,12 +216,13 @@ begin: decodePopPush
                 reglist[14] = 1'd1;
         end
 
-        o_instruction[34:0] = {3'd0, AL, 3'b100, 1'd0, 1'd0, 1'd0, 1'd1, i_instruction[11],
-                                                        base, reglist};
+                        //                        P      U
+        o_instruction[34:0] = {3'd0, AL, 3'b100, 1'd1, 1'd0, 1'd0, 1'd1,
+                               i_instruction[11], base, reglist};
 
-        if ( reglist[14] == 1'd1 )
+        if ( i_instruction[11] ) // Pop.
         begin
-                o_instruction[24:23] = 2'b11; // Pre-index and UP i.e., IB.
+                o_instruction[24:23] = 2'b01; // Post-index and UP i.e., IA.
         end
 end
 endfunction

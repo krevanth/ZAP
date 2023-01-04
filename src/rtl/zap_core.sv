@@ -235,6 +235,7 @@ logic [1:0]                      predecode_taken;
 logic [31:0]                     predecode_ppc_ff;
 logic                            predecode_clear_btb;
 logic                            predecode_uop_last;
+logic                            predecode_switch;
 
 // Decode
 logic [3:0]                      decode_condition_code;
@@ -377,6 +378,7 @@ logic [31:0]                     alu_data_wb_dat;
 logic [3:0]                      alu_data_wb_sel;
 logic                            alu_decompile_valid;
 logic                            alu_uop_last;
+logic                            alu_force32align_ff;
 
 // Post ALU 0
 logic [31:0]                     postalu0_alu_result_ff;
@@ -692,6 +694,9 @@ u_zap_predecode (
         .i_pred                         (mode16_pred),
         .o_clear_btb                    (predecode_clear_btb),
 
+        .i_l4_enable                    (l4_enable),
+        .o_switch_ff                    (predecode_switch),
+
         .i_data_stall                   (data_stall         ),
         .i_stall_from_shifter           (stall_from_shifter ),
         .i_stall_from_issue             (stall_from_issue   ),
@@ -770,7 +775,8 @@ u_zap_decode_main (
         .i_stall_from_shifter           (stall_from_shifter ),
         .i_stall_from_issue             (stall_from_issue   ),
 
-        .i_mode16_und                    (predecode_und),
+        .i_switch                       (predecode_switch),
+        .i_mode16_und                   (predecode_und),
         .i_irq                          (predecode_irq),
         .i_fiq                          (predecode_fiq),
         .i_abt                          (predecode_abt),
@@ -1127,6 +1133,7 @@ u_zap_alu_main
          .i_alu_operation_ff               (shifter_alu_operation_ff),
          .i_data_mem_fault                 (i_data_wb_err | i_dcache_err2),
 
+         .o_force32align_ff                (alu_force32align_ff),
          .o_uop_last                       (alu_uop_last),
          .o_alu_result_nxt                 (alu_alu_result_nxt),
          .o_pc_from_alu                    (pc_from_alu),
@@ -1192,7 +1199,9 @@ zap_postalu_main #(
          .i_swi_ff                         (alu_swi_ff),
          .i_dav_ff                         (alu_dav_ff),
          .i_pc_plus_8_ff                   (alu_pc_plus_8_ff),
-         .i_mem_address_ff                 (alu_address_ff),
+         .i_mem_address_ff                 (alu_force32align_ff ?
+                                             (alu_address_ff & 32'hffff_fffc)
+                                            : alu_address_ff),
          .i_destination_index_ff           (alu_destination_index_ff),
          .i_flags_ff                       (alu_flags_ff),
          .i_mem_srcdest_index_ff           (alu_mem_srcdest_index_ff),

@@ -470,7 +470,9 @@ begin
                 resolve_conflict = value_from_issue[31:0];
         end
 
-        if ( align32 )
+        // If not load or store, align to 4 bytes. All i_ signals
+        // for this.
+        if ( align32 && !i_mem_load_ff && !i_mem_store_ff )
                 resolve_conflict[1:0] = 2'b00;
 end
 endfunction

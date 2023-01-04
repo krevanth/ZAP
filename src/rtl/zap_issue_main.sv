@@ -1101,7 +1101,11 @@ begin
                 endcase
         end
 
-        get_register_value = force32_align_ff ? (get & 32'hffff_fffc) : get;
+        // If it's not a store or load, then align this to 4 bytes. Use
+        // *skid* versions.
+        get_register_value = !skid_mem_load_ff  &&
+                             !skid_mem_store_ff &&
+                             force32_align_ff   ? (get & 32'hffff_fffc) : get;
 end
 endfunction
 
