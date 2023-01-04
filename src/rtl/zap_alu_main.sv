@@ -748,7 +748,8 @@ begin: alu_result
         //
         else if ( opcode == {1'd0, FMOV} || opcode == {1'd0, MMOV} )
         begin: fmov_mmov
-                exp_mask = {{8{rn[3]}},{8{rn[2]}},{8{rn[1]}},{8{rn[0]}}};
+                exp_mask  =  {{8{rn[3]}},{8{rn[2]}},{8{rn[1]}},{8{rn[0]}}};
+                tmp_sum   =  {32{1'dx}};
 
                 for(int i=0;i<32;i++)
                 begin
