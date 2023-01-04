@@ -145,6 +145,7 @@ logic [31:0]                        skid_pc_ff;
 logic [31:0]                        skid_pc_plus_8_ff;
 logic [RAS_DEPTH-1:0][31:0]         ras_ff, ras_nxt;
 logic [$clog2(RAS_DEPTH)-1:0]       ras_ptr_ff, ras_ptr_nxt;
+logic                               align_nxt;
 
 // Flop the outputs to break the pipeline at this point.
 always_ff @ (posedge i_clk)
@@ -192,7 +193,7 @@ begin
                 o_und_ff               <= skid_und && skid_instruction_valid;
                 o_pc_plus_8_ff         <= skid_pc_plus_8_ff;
                 o_pc_ff                <= skid_pc_ff;
-                o_force32align_ff      <= skid_force32;
+                o_force32align_ff      <= skid_force32 | align_nxt;
                 o_taken_ff             <= taken_nxt;
                 o_instruction_ff       <= o_instruction_nxt;
                 o_instruction_valid_ff <= o_instruction_valid_nxt;
@@ -242,6 +243,7 @@ begin
                 o_instruction_valid_ff                  <= 0;
                 o_uop_last                              <= 0;
                 o_clear_from_decode                     <= 0;
+                o_force32align_ff                       <= 0;
 end
 endtask
 
@@ -591,6 +593,7 @@ zap_predecode_uop_sequencer u_zap_uop_sequencer (
 
         .o_instruction(o_instruction_nxt), // 40-bit, upper 4 bits RESERVED.
         .o_instruction_valid(o_instruction_valid_nxt),
+        .o_align(align_nxt),
         .o_uop_last(o_uop_last_nxt),
         .o_stall_from_decode(mem_fetch_stall)
 );

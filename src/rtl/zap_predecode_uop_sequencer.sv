@@ -58,6 +58,7 @@ module zap_predecode_uop_sequencer
         // Instruction output.
         output logic [39:0]       o_instruction,
         output logic              o_instruction_valid,
+        output logic              o_align,
 
         // We generate a stall.
         output logic              o_stall_from_decode,
@@ -146,6 +147,9 @@ begin:blk_a
         // Block interrupts by default.
         o_irq = 0;
         o_fiq = 0;
+
+        // Align zero.
+        o_align = 0;
 
         // Avoid latch inference.
         state_nxt               = state_ff;
@@ -729,6 +733,9 @@ begin:blk_a
                         // instruction if reglist = 0.
                         o_instruction[33:0] = map ( i_instruction[31:0], pri_enc_out, reglist_ff );
                         o_instruction_valid = 1'd1;
+
+                        if ( o_instruction[27:26] == 2'b01 )
+                                o_align = 1;
 
                         if ( reglist_ff == 0 )
                         begin

@@ -1483,7 +1483,7 @@ u_zap_writeback
         .i_pc_from_alu          (pc_from_alu),
         .i_clear_from_icache    (i_icache_err2),
 
-        .i_mode16               (memory_flags_ff[T]), // To indicate mode16 state.
+        .i_mode16               (alu_flags_ff[T]),    // To indicate mode16 state.
 
         .i_clear_from_decode    (clear_from_decode),
         .i_pc_from_decode       (pc_from_decode),
