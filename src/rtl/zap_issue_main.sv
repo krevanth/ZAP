@@ -1037,7 +1037,7 @@ function [31:0] get_register_value (
         input [31:0]                    pc_plus_8_ff,
 
         // PC access control.
-        input                           force32_align_ff,
+        input                           force32_align_ff
 );
 
 logic [31:0] get;
