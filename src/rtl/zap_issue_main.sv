@@ -512,7 +512,7 @@ begin
                                 i_rd_data_3,
                                 i_cpu_mode,
                                 skid_pc_plus_8_ff,
-                                skid_force32align_ff
+                                1'd0
         );
 
         o_shift_length_value_nxt=
@@ -546,7 +546,7 @@ begin
                                 i_rd_data_3,
                                 i_cpu_mode,
                                 skid_pc_plus_8_ff,
-                                skid_force32align_ff
+                                1'd0
         );
 
         // Value of a register index, never an immediate.
@@ -581,7 +581,7 @@ begin
                                 i_rd_data_3,
                                 i_cpu_mode,
                                 skid_pc_plus_8_ff,
-                                skid_force32align_ff
+                                1'd0
         );
 end
 
@@ -1055,10 +1055,7 @@ begin
         else if   ( index[5:0] == {2'd0, ARCH_PC[3:0]} )
         // Catch PC here. ARCH index = PHY index so no problem.
         begin
-                if ( force32_align_ff )
-                        get = pc_plus_8_ff & 32'hffff_fffc;
-                else
-                        get = pc_plus_8_ff;
+                get = pc_plus_8_ff;
         end
         else if ( index[5:0] == PHY_CPSR[5:0] )   // Catch CPSR here.
         begin
@@ -1104,7 +1101,11 @@ begin
                 endcase
         end
 
-        get_register_value = get;
+        // If it's not a store or load, then align this to 4 bytes. Use
+        // *skid* versions.
+        get_register_value = !skid_mem_load_ff  &&
+                             !skid_mem_store_ff &&
+                             force32_align_ff   ? (get & 32'hffff_fffc) : get;
 end
 endfunction
 

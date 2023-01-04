@@ -355,7 +355,7 @@ always_comb
 begin
  rn = resolve_conflict ( i_alu_source_ff, i_alu_source_value_ff,
                          o_destination_index_ff, i_alu_value_nxt, i_alu_dav_nxt,
-                         i_force32align_ff );
+                         i_force32align_ff ); // Needed to pass force32align.
 end
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -418,7 +418,7 @@ begin
                   o_destination_index_ff,
                   i_alu_value_nxt,
                   i_alu_dav_nxt,
-                  i_force32align_ff
+                  1'd0
                 );
 
                 // Do not touch the carry. Get from _nxt for back2back execution.
@@ -435,7 +435,7 @@ always_comb
 begin
         mem_srcdest_value = resolve_conflict ( {27'd0, i_mem_srcdest_index_ff}, i_mem_srcdest_value_ff,
                                                o_destination_index_ff, i_alu_value_nxt, i_alu_dav_nxt,
-                                               i_force32align_ff );
+                                               1'd0 );
 end
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -459,10 +459,7 @@ begin
         end
         else if ( index_from_issue == PHY_PC )
         begin
-                if ( align32 )
-                        resolve_conflict = i_pc_plus_8_ff & 32'hffff_fffc;
-                else
-                        resolve_conflict = i_pc_plus_8_ff;
+                resolve_conflict = i_pc_plus_8_ff;
         end
         else if ( index_from_this_stage == index_from_issue[$clog2(PHY_REGS)-1:0] && result_from_alu_valid )
         begin
@@ -472,6 +469,11 @@ begin
         begin
                 resolve_conflict = value_from_issue[31:0];
         end
+
+        // If not load or store, align to 4 bytes. All i_ signals
+        // for this.
+        if ( align32 && !i_mem_load_ff && !i_mem_store_ff )
+                resolve_conflict[1:0] = 2'b00;
 end
 endfunction
 

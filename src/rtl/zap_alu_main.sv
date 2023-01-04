@@ -217,6 +217,9 @@ module zap_alu_main #(
         // comes on the alternate port, partially.
         //
 
+        // Force align.
+        output logic                              o_force32align_ff,
+
         // ALU next value to allow back-to-back execution.
         output logic [31:0]                       o_alu_result_nxt,
 
@@ -544,6 +547,7 @@ begin
         begin
                 // Clock out all flops normally.
 
+                o_force32align_ff                <= i_force32align_ff;
                 o_alu_result_ff                  <= o_alu_result_nxt;
 
                 // Alternate result.
@@ -668,19 +672,6 @@ end
 // ----------------------------------------------------------------------------
 // Used to generate access address.
 // ----------------------------------------------------------------------------
-
-// Assertion
-always @ ( posedge i_clk )
-begin
-        if ( !i_reset )
-        begin
-                assert ( !(i_force32align_ff              &&
-                          (mem_address_nxt[1:0] != 2'b00) &&
-                           o_data_wb_cyc_nxt) )
-                else
-                        $fatal(2, "Error: Final access address is not aligned.");
-        end
-end
 
 always_comb
 begin:pre_post_index_address_generator
@@ -1073,6 +1064,7 @@ begin
                 o_und_ff                         <= 0;
                 sleep_ff                         <= 0;
                 o_mem_load_ff                    <= 0;
+                o_force32align_ff                <= 0;
 end
 endtask
 

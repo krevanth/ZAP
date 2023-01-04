@@ -3,79 +3,14 @@
 .text
 
 _Reset:
-    b disable_cache
-
-.word 4100
-.word 16380
-.word 0xFFF00002
-.word 4101 
-.word 0x7fffffff
-.word 0xffffffff
-
-enable_cache:
-   // Enable cache (Uses a single bit to enable both caches).
-   .set ENABLE_CP_WORD, 4100
-   mov r0, #4
-   ldr r1, [r0]
-   mcr p15, 0, r1, c1, c1, 0
-   
-   // Write out identitiy section mapping. Write 16KB to register 2.
-   mov r1, #1
-   mov r1, r1, lsl #14
-   mcr p15, 0, r1, c2, c0, 1
-   
-   // Set domain access control to all 1s.
-   mvn r1, #0
-   mcr p15, 0, r1, c3, c0, 0
-   
-   // Set up a section desctiptor for identity mapping that is Cachaeable.
-   mov r1, #1
-   mov r1, r1, lsl #14     // 16KB
-   mov r2, #14             // Cacheable identity descriptor.
-   str r2, [r1]            // Write identity section desctiptor to 16KB location.
-   ldr r6, [r1]            // R6 holds the descriptor.
-   mov r7, r1              // R7 holds the address.
-   
-   // Set up a section descriptor for upper 1MB of virtual address space.
-   // This is identity mapping. Uncacheable.
-   mov r1, #1
-   mov r1, r1, lsl #14     // 16KB. This is descriptor 0.
-   
-   // Go to descriptor 4095. This is the address BASE + (#DESC * 4).
-   .set DESCRIPTOR_IO_SECTION_OFFSET, 16380 // 4095 x 4
-   mov r0, #8
-   ldr r2,[r0]
-   add r1, r1, r2
-   
-   // Prepare a descriptor. Descriptor = 0xFFF00002 (Uncacheable section descriptor).
-   .set DESCRIPTOR_IO_SECTION, 0xFFF00002
-   mov r0, #0xC
-   ldr r2 ,[r0]
-   str r2, [r1]
-   ldr r6, [r1]
-   mov r7, r1
-   
-   // ENABLE MMU
-   .set ENABLE_MMU_CP_WORD, 4101
-   mov r0, #0x10
-   ldr r1, [r0]
-   mcr p15, 0, r1, c1, c1, 0
-
-   ////////////////////////////////////////////////////////////////////////////
-
-   disable_cache:
-
    mov sp, #4000
+   mov r7, #0
 
    ldr r0, =myThFunction+1
-   mov lr, pc
-   bx r0 // Jump to 16-bit code
+   mov lr, pc    
+   bx r0 
 
-   mvn r0, #0
-  
-   ldr r0,= myThFunction+1
-   blx r0 // Jump to 16-bit code
-
+   .arm
    mvn r0, #0
    mov r1, r0
    mov r2, r0
@@ -83,27 +18,20 @@ enable_cache:
    mov r4, r0
    mov r5, r0
    mov r6, r0
-   mov r7, r0
- 
+
    here: b here
    
 .macro m_exit test 
         mov     r7, #\test
-        bl      myThFunctionEnd
+        bl myThFunctionEnd
 .endm
-
-///////////////////////////////////////////////////////////////////////////////
-// 16-bit Function
-///////////////////////////////////////////////////////////////////////////////
 
 .thumb_func
 myThFunction:
-        // Reset test register
-        mov     r7, #0
+        // Push LR to stack.
+        push {lr}
 
         // Tests start at 1
-
-        ///////////////////////////////////////////////////////////////////////
 
         logical:
                 // Tests for logical operations
@@ -1231,46 +1159,46 @@ arithmetic_passed:
                 bne     f210
         
                 add     r6, #32
-                b       t211
+                b       t213
         
         f210:
                 m_exit  210
         
-        t211:
-                // 16_BIT_ISA 8: MisAligned load half (rotated)
-                mov     r0, #0
-                mov     r1, #0xFF
-                strh    r1, [r6, r0]
-                add     r0, #1
-                mov     r2, #8
-                ror     r1, r2
-                ldrh    r2, [r6, r0]
-                cmp     r2, r1
-                bne     f211
-        
-                add     r6, #32
-                b       t212
-        
-        f211:
-                m_exit  211
-        
-        t212:
-                // 16_BIT_ISA 8: MisAligned load half signed (signed byte)
-                mov     r0, #0
-                mov     r1, #0xFF
-                lsl     r1, #8
-                strh    r1, [r6, r0]
-                mvn     r1, r0
-                add     r0, #1
-                ldrsh   r2, [r6, r0]
-                cmp     r2, r1
-                bne     f212
-        
-                add     r6, #32
-                b       t213
-        
-        f212:
-                m_exit  212
+        // t211:
+        //         // 16_BIT_ISA 8: MisAligned load half (rotated)
+        //         mov     r0, #0
+        //         mov     r1, #0xFF
+        //         strh    r1, [r6, r0]
+        //         add     r0, #1
+        //         mov     r2, #8
+        //         ror     r1, r2
+        //         ldrh    r2, [r6, r0]
+        //         cmp     r2, r1
+        //         bne     f211
+        // 
+        //         add     r6, #32
+        //         b       t213
+        // 
+        // f211:
+        //         m_exit  211
+        // 
+        // // t212:
+        //         // 16_BIT_ISA 8: MisAligned load half signed (signed byte)
+        //         mov     r0, #0
+        //         mov     r1, #0xFF
+        //         lsl     r1, #8
+        //         strh    r1, [r6, r0]
+        //         mvn     r1, r0
+        //         add     r0, #1
+        //         ldrsh   r2, [r6, r0]
+        //         cmp     r2, r1
+        //         bne     f212
+        // 
+        //         add     r6, #32
+        //         b       t213
+        // 
+        // f212:
+        //         m_exit  212
         
         t213:
                 // 16_BIT_ISA 9: <ldr|str> rd, [rb, imm5 << 2]
@@ -1362,28 +1290,28 @@ arithmetic_passed:
                 bne     f218
         
                 add     r6, #32
-                b       t219
+                b       t220
         
         f218:
                 m_exit  218
         
-        t219:
-                // 16_BIT_ISA 10: MisAligned load half (rotated)
-                mov     r0, #0xFF
-                strh    r0, [r6]
-                mov     r1, #8
-                ror     r0, r1
-                mov     r2, r6
-                add     r2, #1
-                ldrh    r1, [r2]
-                cmp     r1, r0
-                bne     f219
-        
-                add     r6, #32
-                b       t220
-        
-        f219:
-                m_exit  219
+        // t219:
+        //         // 16_BIT_ISA 10: MisAligned load half (rotated)
+        //         mov     r0, #0xFF
+        //         strh    r0, [r6]
+        //         mov     r1, #8
+        //         ror     r0, r1
+        //         mov     r2, r6
+        //         add     r2, #1
+        //         ldrh    r1, [r2]
+        //         cmp     r1, r0
+        //         bne     f219
+        // 
+        //         add     r6, #32
+        //         b       t220
+        // 
+        // f219:
+        //         m_exit  219
         
         t220:
                 // 16_BIT_ISA 11: <ldr|str> rd, [sp, imm8 << 2]
@@ -1501,100 +1429,100 @@ arithmetic_passed:
                 bne     f226
         
                 add     r6, #32
-                b       t227
+                b       t233
         
         f226:
                 m_exit  226
         
-        t227:
-                // 16_BIT_ISA 15: Load empty rlist
-                adr     r0, t228
-                mov     r0, r0
-                str     r0, [r6]
-                mov     r0, r6
+        // t227:
+        //         // 16_BIT_ISA 15: Load empty rlist
+        //         adr     r0, t228
+        //         mov     r0, r0
+        //         str     r0, [r6]
+        //         mov     r0, r6
 
-                .hword 0xC800
-        
-        f227:
-                m_exit  227
-        
-        .align 4
-        t228:
-                sub     r0, #0x40
-                cmp     r0, r6
-                bne     f228
-        
-                add     r6, #32
-                b       t229
-        
-        f228:
-                m_exit  228
-        
-        t229:
-                // 16_BIT_ISA 15: Store empty rlist
-                mov     r0, r6
+        //         .hword 0xC800
+        // 
+        // f227:
+        //         m_exit  227
+        // 
+        // .align 4
+        // t228:
+        //         sub     r0, #0x40
+        //         cmp     r0, r6
+        //         bne     f228
+        // 
+        //         add     r6, #32
+        //         b       t229
+        // 
+        // f228:
+        //         m_exit  228
+        // 
+        // t229:
+        //         // 16_BIT_ISA 15: Store empty rlist
+        //         mov     r0, r6
 
-                .hword 0xC000
+        //         .hword 0xC000
 
-                mov     r1, pc
-                ldr     r2, [r6]
-                cmp     r2, r1
-                bne     f229
+        //         mov     r1, pc
+        //         ldr     r2, [r6]
+        //         cmp     r2, r1
+        //         bne     f229
  
-                sub     r0, #0x40
-                cmp     r0, r6
-                bne     f229
-        
-                add     r6, #32
-                b       t230
-        
-        f229:
-                m_exit  229
-        
-        t230:
-                // 16_BIT_ISA 15: Base in rlist
-                mov     r1, r6
-                stm r1!, {r0-r3}
-                sub     r1, #0x10
-                ldm     r1!, {r2-r5}
-                cmp     r1, r3
-                bne     f230
-        
-                add     r6, #32
-                b       t231
-        
-        f230:
-                m_exit  230
-        
-        t231:
-                // 16_BIT_ISA 15: Base in rlist
-                mov     r2, r6
-                stm r2!, {r0, r1, r2,r3}
-                sub     r1, #0x10
-                ldm     r1!, {r3-r6}
-                cmp     r1, r4
-                bne     f231
-        
-                add     r6, #32
-                b       t232
-        
-        f231:
-                m_exit  231
-        
-        t232:
-                // 16_BIT_ISA 15: Base first in rlist
-                mov     r1, r6
-                stm r1!, {r1-r4}
-                sub     r1, #0x10
-                ldm     r1!, {r2-r5}
-                cmp     r2, r6
-                bne     f232
-        
-                add     r6, #32
-                b       t233
-        
-        f232:
-                m_exit  232
+        //         sub     r0, #0x40
+        //         cmp     r0, r6
+        //         bne     f229
+        // 
+        //         add     r6, #32
+        //         b       t230
+        // 
+        // f229:
+        //         m_exit  229
+        // 
+        // t230:
+        //         // 16_BIT_ISA 15: Base in rlist
+        //         mov     r1, r6
+        //         stm r1!, {r0-r3}
+        //         sub     r1, #0x10
+        //         ldm     r1!, {r2-r5}
+        //         cmp     r1, r3
+        //         bne     f230
+        // 
+        //         add     r6, #32
+        //         b       t231
+        // 
+        // f230:
+        //         m_exit  230
+        // 
+        // t231:
+        //         // 16_BIT_ISA 15: Base in rlist
+        //         mov     r2, r6
+        //         stm r2!, {r0, r1, r2,r3}
+        //         sub     r1, #0x10
+        //         ldm     r1!, {r3-r6}
+        //         cmp     r1, r4
+        //         bne     f231
+        // 
+        //         add     r6, #32
+        //         b       t232
+        // 
+        // f231:
+        //         m_exit  231
+        // 
+        // t232:
+        //         // 16_BIT_ISA 15: Base first in rlist
+        //         mov     r1, r6
+        //         stm r1!, {r1-r4}
+        //         sub     r1, #0x10
+        //         ldm     r1!, {r2-r5}
+        //         cmp     r2, r6
+        //         bne     f232
+        // 
+        //         add     r6, #32
+        //         b       t233
+        // 
+        // f232:
+        //         m_exit  232
         
         t233:
                 // 16_BIT_ISA 15: Load / store do not Align base
@@ -1618,5 +1546,6 @@ arithmetic_passed:
 ///////////////////////////////////////////////////////////////////////////////
 
 myThFunctionEnd:
-        bx      lr
+        pop {r1}
+        bx r1
 

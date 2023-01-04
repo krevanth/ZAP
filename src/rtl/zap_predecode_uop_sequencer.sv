@@ -47,6 +47,9 @@ module zap_predecode_uop_sequencer
         // CPSR
         input logic              i_cpsr_t,
 
+        // L4 behavior.
+        input   logic            i_l4_enable,
+
         // Pipeline control signals.
         input logic              i_clear_from_writeback,
         input logic              i_data_stall,
@@ -58,6 +61,8 @@ module zap_predecode_uop_sequencer
         // Instruction output.
         output logic [39:0]       o_instruction,
         output logic              o_instruction_valid,
+        output logic              o_align,
+        output logic              o_switch,
 
         // We generate a stall.
         output logic              o_stall_from_decode,
@@ -147,12 +152,16 @@ begin:blk_a
         o_irq = 0;
         o_fiq = 0;
 
+        // Align zero.
+        o_align = 0;
+
         // Avoid latch inference.
         state_nxt               = state_ff;
         o_instruction           = {5'd0, i_instruction};
         o_instruction_valid     = i_instruction_valid;
         reglist_nxt             = reglist_ff;
         o_stall_from_decode     = 1'd0;
+        o_switch                = 0;
 
         case ( state_ff )
                 LDR_TO_PC_S0:
@@ -397,7 +406,7 @@ begin:blk_a
                         end
                         // LDRD and STRD. First reg should be EVEN.
                         else if
-                            ( i_instruction[27:25] == 3'b000                                 &&
+                            ( i_instruction[27:25] == 3'b000                                &&
                              i_instruction[20]    == 1'd0                                   &&
                              ( i_instruction[6:5] == 2'b10 || i_instruction[6:5] == 2'b11 ) &&
                              i_instruction[12]    == 1'd0                                   &&
@@ -730,6 +739,9 @@ begin:blk_a
                         o_instruction[33:0] = map ( i_instruction[31:0], pri_enc_out, reglist_ff );
                         o_instruction_valid = 1'd1;
 
+                        if ( o_instruction[27:26] == 2'b01 )
+                                o_align = 1;
+
                         if ( reglist_ff == 0 )
                         begin
                                 if ( i_instruction[{2'd0, ARCH_PC}] && load )
@@ -757,6 +769,9 @@ begin:blk_a
                         // MOV(S) PC, ARCH_DUMMY_REG1
                         state_nxt = IDLE;
                         o_stall_from_decode = 1'd0;
+
+                        if ( i_l4_enable == 1'd0 )
+                                o_switch = 1;
 
                         o_instruction[31:0] =
                         { cc, 2'b00, 1'd0, MOV, s_bit, 4'd0, ARCH_PC,

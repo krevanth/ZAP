@@ -1,31 +1,25 @@
-// -----------------------------------------------------------------------------
-// --                                                                         --
-// --    (C) 2016-2022 Revanth Kamaraj (krevanth)                             --
-// --                                                                         --
-// -- --------------------------------------------------------------------------
-// --                                                                         --
-// -- This program is free software; you can redistribute it and/or           --
-// -- modify it under the terms of the GNU General Public License             --
-// -- as published by the Free Software Foundation; either version 2          --
-// -- of the License, or (at your option) any later version.                  --
-// --                                                                         --
-// -- This program is distributed in the hope that it will be useful,         --
-// -- but WITHOUT ANY WARRANTY; without even the implied warranty of          --
-// -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           --
-// -- GNU General Public License for more details.                            --
-// --                                                                         --
-// -- You should have received a copy of the GNU General Public License       --
-// -- along with this program; if not, write to the Free Software             --
-// -- Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA           --
-// -- 02110-1301, USA.                                                        --
-// --                                                                         --
-// -----------------------------------------------------------------------------
-// --                                                                         --
-// --  Implements a 16-bit instruction decoder. The 16-bit instruction set is --
-// --  not logically organized so as to save on encoding and thus the functs  --
-// --  seem a bit complex.                                                    --
-// --                                                                         --
-// -----------------------------------------------------------------------------
+//
+// (C) 2016-2022 Revanth Kamaraj (krevanth)
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+// 02110-1301, USA.
+//
+// Implements a 16-bit instruction decoder. The 16-bit instruction set is
+// not logically organized so as to save on encoding and thus the functs
+// seem a bit complex.
+//
 
 module zap_mode16_decoder (
         // Input from I-cache.
@@ -200,8 +194,9 @@ endfunction
 function void decode_pop_push ();
 begin: decodePopPush
         //
-        // Uses an FD stack. Thus it is DA type i.e., post index down by 4.
+        // Uses an FD stack. Thus it is DB type i.e., pre index down by 4.
         // Writeback is implicit so make W = 0.
+        // Will be IA for POP.
         //
 
         logic [3:0] base;
@@ -221,8 +216,14 @@ begin: decodePopPush
                 reglist[14] = 1'd1;
         end
 
-        o_instruction[34:0] = {3'd0, AL, 3'b100, 1'd0, 1'd0, 1'd0, 1'd1, i_instruction[11],
-                                                        base, reglist};
+                        //                        P      U
+        o_instruction[34:0] = {3'd0, AL, 3'b100, 1'd1, 1'd0, 1'd0, 1'd1,
+                               i_instruction[11], base, reglist};
+
+        if ( i_instruction[11] ) // Pop.
+        begin
+                o_instruction[24:23] = 2'b01; // Post-index and UP i.e., IA.
+        end
 end
 endfunction
 
@@ -496,7 +497,7 @@ begin: tskDecodeAddSubLo
         1:
         begin
                 // Adds Rd, Rs, #Offset3 - Immediate.
-                o_instruction[31:0] = {AL, 2'b00, 1'b1, ADD, 1'd1, rn, rd, imm};
+                o_instruction[31:0] = {AL, 2'b00, 1'b1, ADD, 1'd1, rs, rd, imm};
         end
         2:
         begin
@@ -506,7 +507,7 @@ begin: tskDecodeAddSubLo
         3:
         begin
                 // SUBS Rd, Rs, #Offset3 - Immediate.
-                o_instruction[31:0] = {AL, 2'b00, 1'b1, SUB, 1'd1, rn, rd, imm};
+                o_instruction[31:0] = {AL, 2'b00, 1'b1, SUB, 1'd1, rs, rd, imm};
         end
         endcase
 end

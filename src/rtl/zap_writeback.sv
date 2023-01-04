@@ -77,11 +77,13 @@ module zap_writeback #(
         input   logic [$clog2(PHY_REGS)-1:0] i_wr_index,
         input   logic [31:0]                 i_wr_data,
         input   logic [FLAG_WDT-1:0]         i_flags,
-        input   logic                        i_mode16,
         input   logic [$clog2(PHY_REGS)-1:0] i_wr_index_1,
         input   logic [31:0]                 i_wr_data_1,
         input   logic [PHY_REGS-1:0]         i_wr_index_2,
         input   logic [31:0]                 i_wr_data_2,
+
+        // From active CPSR.
+        input   logic                        i_mode16,
 
         // Interrupt indicators.
         input   logic                         i_irq,
