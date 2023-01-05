@@ -85,7 +85,9 @@ logic         unused;
 
 always_comb unused = |{PHY_REGS};
 
-always_comb higher = i_alu_operation_ff[0]          ||
+// Set 1 to take upper 32-bit. See this instead of TAKE_UPPER.
+always_comb higher =
+                         i_alu_operation_ff[0] ||
                 i_alu_operation_ff == SMLAL00H ||
                 i_alu_operation_ff == SMLAL01H ||
                 i_alu_operation_ff == SMLAL10H ||
@@ -102,8 +104,13 @@ logic signed [63:0] x_ff, x_nxt;
 logic signed [33:0] xprod_ab, xprod_bc, xprod_ad, xprod_cd;
 logic signed [63:0] prod_ab, prod_bc, prod_ad, prod_cd;
 
-// Indicates to take upper product.
-logic               take_upper;
+//
+// Indicates to take upper product. Discard lower 16-bits. NOT what it looks
+// like. The one you're looking for is "higher".
+//
+logic               take_upper; // NOT WHAT IT LOOKS LIKE. NOT TO TAKE UPPER
+                                // PRODUCT. THIS IS FOR DSP TO DISCARD LOWER
+                                // 16 BIT OF 48-BIT PRODUCT.
 
 // State
 logic [$clog2(NUMBER_OF_STATES)-1:0] state_ff, state_nxt;
@@ -190,7 +197,8 @@ begin
                 b = $signed({17{i_rs[16]}});        // y = 1 for Rs
                 d = $signed({1'd0, i_rs[31:16]});
 
-                if ( i_alu_operation_ff == OP_SMLAL01L || i_alu_operation_ff == OP_SMLAL01H )   take_upper = 1'd1;
+                if ( i_alu_operation_ff == OP_SMLAL01L || i_alu_operation_ff == OP_SMLAL01H )
+                        take_upper = 1'd1;
         end
         else if ( i_alu_operation_ff == OP_SMUL10   || i_alu_operation_ff == OP_SMLA10 ||
                   i_alu_operation_ff == OP_SMLAL10L || i_alu_operation_ff == OP_SMLAL10H )
@@ -203,7 +211,8 @@ begin
                 b = $signed({17{i_rs[15]}});           // y = 0 for Rs
                 d = $signed({1'd0, i_rs[15:0]});
 
-                if ( i_alu_operation_ff == OP_SMLAL10L || i_alu_operation_ff == OP_SMLAL10H )   take_upper = 1'd1;
+                if ( i_alu_operation_ff == OP_SMLAL10L || i_alu_operation_ff == OP_SMLAL10H )
+                        take_upper = 1'd1;
         end
         else if ( i_alu_operation_ff == OP_SMUL11   || i_alu_operation_ff == OP_SMLA11 ||
                   i_alu_operation_ff == OP_SMLAL11L || i_alu_operation_ff == OP_SMLAL11H)

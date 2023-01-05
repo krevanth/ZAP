@@ -986,6 +986,9 @@ begin
         begin
                 assert ( reglist_nxt != 'd0 ) else
                 $info("Warning: Empty reglist leads to UNPREDICTABLE behavior.");
+
+                assert ( base != 'd15 ) else
+                $info("Warning: Using R15 as a base in STM leads to IMPLEMENTATION DEFINED behavior.");
         end
 end
 

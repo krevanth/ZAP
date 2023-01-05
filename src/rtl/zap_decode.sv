@@ -111,7 +111,8 @@ localparam [1:0] SIGNED_HALF_WORD       = 2'd3;
 logic [35:0] instruction;
 
 always_comb
-begin: mainBlk1
+begin
+
         instruction                     = i_instruction;
 
         // If an unrecognized instruction enters this, the output
@@ -203,6 +204,15 @@ begin: mainBlk1
                         decode_und;
                 end
                 endcase
+
+                // Always ~(ROR #0)
+                assert ( !(o_shift_operation      == RORI &&
+                           o_shift_length[31:0]   == 0    &&
+                           o_shift_length[32]     == IMMED_EN) )
+                else
+                begin
+                        $fatal(2, "Error: RORI #0 propagating out of decode.");
+                end
         end
 end
 
@@ -311,6 +321,8 @@ begin: tskLDecodeMult
                 // Unsigned MULT64
                 o_alu_operation = {1'd0, UMLALH};
                 o_mem_srcdest_index = RAZ_REGISTER; // rh.
+                o_shift_length      = '0;
+                o_shift_length[32]  = IMMED_EN; // rn
         end
         2'b01:
         begin
@@ -322,7 +334,9 @@ begin: tskLDecodeMult
         begin
                 // Signed MULT64
                 o_alu_operation = {1'd0, SMLALH};
-                o_mem_srcdest_index = RAZ_REGISTER;
+                o_mem_srcdest_index = RAZ_REGISTER; // rh
+                o_shift_length = '0;
+                o_shift_length[32] = IMMED_EN; // rn
         end
         2'b11:
         begin
@@ -332,10 +346,11 @@ begin: tskLDecodeMult
         end
         endcase
 
-        if ( instruction[`ZAP_OPCODE_EXTEND] == 1'd0 ) // Low request - change destination index.
+        if ( instruction[`ZAP_OPCODE_EXTEND] == 1'd0 )
+        // Low request - change destination index.
         begin
                         o_destination_index = {1'd0, instruction[15:12]}; // Low register.
-                        o_alu_operation[0]  = 1'd0;                 // Request low operation.
+                        o_alu_operation[0]  = 1'd0;                       // Request low operation.
         end
 end
 endfunction
@@ -674,6 +689,9 @@ begin: tskDecodeLs
         o_mem_store         = !o_mem_load;
         o_mem_pre_index     = instruction[24];
 
+        assert(o_mem_store && o_alu_source[31:0] != 'd15) else
+        $info("Warning: Use of PC as a pointer for STR is IMPLEMENTATION DEFINED.");
+
         // If post-index is used or pre-index is used with writeback,
         // take is as a request to update the base register.
         o_destination_index = (instruction[21] || !o_mem_pre_index) ?
@@ -810,11 +828,25 @@ endfunction
 //
 function void process_immediate( input [11:0] xinstruction );
 begin
-        o_shift_length          = {28'd0, xinstruction[11:8], 1'd0};
+        o_shift_length[31:0]    = {27'd0, xinstruction[11:8], 1'd0};
         o_shift_length[32]      = IMMED_EN;
-        o_shift_source          = {25'd0, xinstruction[7:0]};
+
+        o_shift_source[31:0]    = {24'd0, xinstruction[7:0]};
         o_shift_source[32]      = IMMED_EN;
+
         o_shift_operation       = RORI;
+
+        // If using direct constant without rotation, make it LSL #0.
+        if ( o_shift_length[31:0] == 0 && o_shift_length[32] == IMMED_EN )
+        begin
+                o_shift_operation    = {1'd0, LSL};
+
+                o_shift_length[31:0] = '0;
+                o_shift_length[32]   = IMMED_EN;
+
+                o_shift_source[31:0] = {24'd0, xinstruction[7:0]};
+                o_shift_source[32]   = IMMED_EN;
+        end
 end
 endfunction
 
@@ -872,7 +904,10 @@ begin
         o_shift_operation       = {1'd0, xinstruction[6:5]};
 
         assert(o_shift_length != 'd15) else
-        $info("Warning: Using PC here as a source is UNPREDICTABLE.");
+        $info("Warning: Using PC here as a source to specify shift length is UNPREDICTABLE.");
+
+        assert(o_shift_source != 'd15) else
+        $info("Warning: Using PC here as a source to specify shift source is UNPREDICTABLE.");
 end
 endfunction
 
