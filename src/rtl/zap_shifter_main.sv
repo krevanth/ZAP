@@ -363,8 +363,6 @@ end
 // Resolve conflict for shifter source value.
 always_comb
 begin
-        shift_sat_nxt = 1'd0;
-
         // If we issue a multiply.
         if ( i_alu_operation_ff == {1'd0, UMLALL} ||
              i_alu_operation_ff == {1'd0, UMLALH} ||
@@ -394,20 +392,11 @@ begin
         begin
                 // Get result from multiplier.
                 rm              = mult_out;
-
-                // Preserve carry.
-                shift_carry_nxt = i_cpsr_nxt_29;
         end
         else if( shifter_enabled ) // Shifter enabled if valid shift is asked for.
         begin
                 // Get result from shifter.
                 rm              = shout;
-
-                // Get carry from shifter
-                shift_carry_nxt = shcarry;
-
-                // Get saturation from shifter.
-                shift_sat_nxt = shsat;
         end
         else
         begin
@@ -420,23 +409,25 @@ begin
                   i_alu_dav_nxt,
                   1'd0
                 );
-
-                // Do not touch the carry. Get from _nxt for back2back execution.
-                shift_carry_nxt = i_cpsr_nxt_29;
         end
 end
+
+assign shift_carry_nxt = shifter_enabled ? shcarry : i_cpsr_nxt_29;
+assign shift_sat_nxt   = shifter_enabled ? shsat   : 1'd0;
 
 ///////////////////////////////////////////////////////////////////////////////
 
 //
 // Mem srcdest index. Used for stores. Resolve conflict.
 //
-always_comb
-begin
-        mem_srcdest_value = resolve_conflict ( {27'd0, i_mem_srcdest_index_ff}, i_mem_srcdest_value_ff,
-                                               o_destination_index_ff, i_alu_value_nxt, i_alu_dav_nxt,
-                                               1'd0 );
-end
+assign  mem_srcdest_value = resolve_conflict (
+                {27'd0, i_mem_srcdest_index_ff},
+                i_mem_srcdest_value_ff,
+                o_destination_index_ff,
+                i_alu_value_nxt,
+                i_alu_dav_nxt,
+                1'd0
+                );
 
 ///////////////////////////////////////////////////////////////////////////////
 

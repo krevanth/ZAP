@@ -1,0 +1,1 @@
+../mode32_gba_onlycore/test.s

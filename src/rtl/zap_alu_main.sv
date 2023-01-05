@@ -881,7 +881,7 @@ begin
                   i_condition_code_ff != NV && !i_reset && i_flag_update_ff )
         begin
                 assert (~(flags_ff[`ZAP_CPSR_MODE] == USR || flags_ff[`ZAP_CPSR_MODE] == SYS))
-                else $info("Warning: Cannot context restore in USR/SYS mode.");
+                else $info("Warning: Attempting to read SPSR in USR/SYS mode for context restore.");
         end
 end
 
