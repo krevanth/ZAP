@@ -1,33 +1,26 @@
-// ------------------------------------------------------------------------------
-// --                                                                          --
-// --    (C) 2016-2022 Revanth Kamaraj (krevanth)                              --
-// --                                                                          --
-// -- ---------------------------------------------------------------------------
-// --                                                                          --
-// -- This program is free software; you can redistribute it and/or            --
-// -- modify it under the terms of the GNU General Public License              --
-// -- as published by the Free Software Foundation; either version 2           --
-// -- of the License, or (at your option) any later version.                   --
-// --                                                                          --
-// -- This program is distributed in the hope that it will be useful,          --
-// -- but WITHOUT ANY WARRANTY; without even the implied warranty of           --
-// -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the            --
-// -- GNU General Public License for more details.                             --
-// --                                                                          --
-// -- You should have received a copy of the GNU General Public License        --
-// -- along with this program; if not, write to the Free Software              --
-// -- Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA            --
-// -- 02110-1301, USA.                                                         --
-// --                                                                          --
-// ------------------------------------------------------------------------------
-// --                                                                          --
-// --  This stage merely acts as a buffer in between the ALU stage and the reg.--
-// --  file (i.e., writeback stage). 32-bit data received from the cache is    --
-// --  is rotated appropriately here in case of byte reads or halfword reads.  --
-// --  Otherwise, this stage is simply a buffer.                               --
-// --                                                                          --
-// ------------------------------------------------------------------------------
-
+//
+// (C) 2016-2022 Revanth Kamaraj (krevanth)
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+// 02110-1301, USA.
+//
+// This stage merely acts as a buffer in between the ALU stage and the reg.
+// file (i.e., writeback stage). 32-bit data received from the cache is
+// is rotated appropriately here in case of byte reads or halfword reads.
+// Otherwise, this stage is simply a buffer.
+//
 
 module zap_memory_main
 #(
@@ -63,7 +56,7 @@ module zap_memory_main
 
         // Memory fault transfer. i_mem_fault comes from the cache unit.
         input   logic  [1:0]                 i_mem_fault,      // Fault in.
-        output  logic   [1:0]                 o_mem_fault,      // Fault out.
+        output  logic   [1:0]                 o_mem_fault,     // Fault out.
 
         // Data valid and buffered PC.
         input logic                          i_dav_ff,
@@ -89,66 +82,72 @@ module zap_memory_main
 
         // Memory size and type.
         input logic                          i_sbyte_ff,
-                                            i_ubyte_ff,
-                                            i_shalf_ff,
-                                            i_uhalf_ff,
+                                             i_ubyte_ff,
+                                             i_shalf_ff,
+                                             i_uhalf_ff,
 
         // Undefined instr.
-        input logic                         i_und_ff,
-        output logic                        o_und_ff,
+        input logic                          i_und_ff,
+        output logic                         o_und_ff,
 
         // ALU result and flags.
-        output logic  [31:0]                   o_alu_result_ff,
-        output logic  [FLAG_WDT-1:0]           o_flags_ff,
+        output logic  [31:0]                 o_alu_result_ff,
+        output logic  [FLAG_WDT-1:0]         o_flags_ff,
 
         // Where to write ALU and memory read target register.
-        output logic [$clog2(PHY_REGS)-1:0]    o_destination_index_ff,
+        output logic [$clog2(PHY_REGS)-1:0]  o_destination_index_ff,
 
         // Set to point to the RAZ register if invalid.
-        output logic [$clog2(PHY_REGS)-1:0]    o_mem_srcdest_index_ff,
+        output logic [$clog2(PHY_REGS)-1:0]  o_mem_srcdest_index_ff,
 
         // Outputs valid and PC buffer.
-        output logic                           o_dav_ff,
-        output logic [31:0]                    o_pc_plus_8_ff,
+        output logic                         o_dav_ff,
+        output logic [31:0]                  o_pc_plus_8_ff,
 
         // The whole interrupt signaling scheme.
-        output logic                           o_irq_ff,
-        output logic                           o_fiq_ff,
-        output logic                           o_swi_ff,
-        output logic                           o_instr_abort_ff,
+        output logic                         o_irq_ff,
+        output logic                         o_fiq_ff,
+        output logic                         o_swi_ff,
+        output logic                         o_instr_abort_ff,
 
         // Memory load information is passed down.
-        output logic                           o_mem_load_ff,
-        output logic  [31:0]                   o_mem_rd_data
+        output logic                         o_mem_load_ff,
+        output logic  [31:0]                 o_mem_rd_data
 );
 
 `include "zap_defines.svh"
 `include "zap_localparams.svh"
 
-logic                             i_mem_load_ff2          ;
-logic [31:0]                      i_mem_srcdest_value_ff2 ;
-logic [1:0]                       i_mem_address_ff2       ;
-logic                             i_sbyte_ff2             ;
-logic                             i_ubyte_ff2             ;
-logic                             i_shalf_ff2             ;
-logic                             i_uhalf_ff2             ;
-logic [31:0]                      mem_rd_data             ;
+logic                             mem_load_ff2          ;
+logic [31:0]                      mem_srcdest_value_ff2 ;
+logic [1:0]                       mem_address_ff2       ;
+logic                             sbyte_ff2             ;
+logic                             ubyte_ff2             ;
+logic                             shalf_ff2             ;
+logic                             uhalf_ff2             ;
+logic [31:0]                      mem_rd_data           ;
 
 // Invalidates the outptus of this stage.
 task automatic clear;
 begin
-        // Invalidate stage.
         o_dav_ff                  <= 0;
         o_decompile_valid         <= 0;
         o_uop_last                <= 0;
-
-        // Clear interrupts.
         o_irq_ff                  <= 0;
         o_fiq_ff                  <= 0;
         o_swi_ff                  <= 0;
         o_instr_abort_ff          <= 0;
         o_und_ff                  <= 0;
         o_mem_fault               <= 0;
+        o_alu_result_ff           <= 0;
+        o_flags_ff                <= 0;
+        o_mem_srcdest_index_ff    <= 0;
+        o_destination_index_ff    <= 0;
+        o_pc_plus_8_ff            <= 0;
+        o_instr_abort_ff          <= 0;
+        o_mem_load_ff             <= 0;
+        mem_rd_data               <= 0;
+        o_decompile               <= 0;
 end
 endtask
 
@@ -201,26 +200,37 @@ always_ff @ (posedge i_clk)
 begin
         if ( !i_data_stall )
         begin
-                i_mem_load_ff2          <= i_mem_load_ff;
-                i_mem_srcdest_value_ff2 <= i_mem_srcdest_value_ff;
-                i_mem_address_ff2       <= i_mem_address_ff[1:0];
-                i_sbyte_ff2             <= i_sbyte_ff;
-                i_ubyte_ff2             <= i_ubyte_ff;
-                i_shalf_ff2             <= i_shalf_ff;
-                i_uhalf_ff2             <= i_uhalf_ff;
+                mem_load_ff2          <= i_mem_load_ff;
+                mem_srcdest_value_ff2 <= i_mem_srcdest_value_ff;
+                mem_address_ff2       <= i_mem_address_ff[1:0];
+                sbyte_ff2             <= i_sbyte_ff;
+                ubyte_ff2             <= i_ubyte_ff;
+                shalf_ff2             <= i_shalf_ff;
+                uhalf_ff2             <= i_uhalf_ff;
         end
 end
 
 always_comb
-        o_mem_rd_data         = transform((i_mem_load_ff2 ? mem_rd_data :
-                                i_mem_srcdest_value_ff2), i_mem_address_ff2[1:0],
-                                i_sbyte_ff2, i_ubyte_ff2, i_shalf_ff2, i_uhalf_ff2,
-                                i_mem_load_ff2);
+        o_mem_rd_data         = transform
+                                (
+                                        (
+                                                mem_load_ff2 ?
+                                                mem_rd_data    :
+                                                mem_srcdest_value_ff2
+                                        ),
+
+                                        mem_address_ff2[1:0],
+                                        sbyte_ff2,
+                                        ubyte_ff2,
+                                        shalf_ff2,
+                                        uhalf_ff2,
+                                        mem_load_ff2
+                                );
 
 // Memory always loads 32-bit to processor.
 // We will rotate that here as we wish.
 
-function [31:0] transform (
+function automatic [31:0] transform (
 
         // Data and address.
         input [31:0]    data,
@@ -275,8 +285,11 @@ begin: transform_function
 
                 transform = {{16{transform[15]}}, transform[15:0]}; // 16 + 16 = 32
 
-                assert ( address[0] == 1'd0 ) else
-                $info("Warning: Address bit 0 is 1, leads to halfword load as UNPREDICTABLE.");
+                if ( o_dav_ff && mem_load_ff2 )
+                begin
+                        assert ( address[0] == 1'd0 ) else
+                        $info("Warning: Address bit 0 is 1, leads to halfword load as UNPREDICTABLE.");
+                end
         end
         // Unsigned half word. Take only lower 16-bit.
         else if ( uhalf == 1'd1 )
@@ -286,8 +299,11 @@ begin: transform_function
                 1: transform = (d >> 16) & 32'h0000ffff;
                 endcase
 
-                assert ( address[0] == 1'd0 ) else
-                $info("Warning: Address bit 0 is 1, leads to halfword load as UNPREDICTABLE.");
+                if ( o_dav_ff && mem_load_ff2 )
+                begin
+                        assert ( address[0] == 1'd0 ) else
+                        $info("Warning: Address bit 0 is 1, leads to halfword load as UNPREDICTABLE.");
+                end
         end
         else // Default. Typically, a word.
         begin

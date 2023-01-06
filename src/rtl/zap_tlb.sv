@@ -108,7 +108,7 @@ logic                            unused;
 
 // ----------------------------------------------------------------------------
 
-function [31:0] max ( input [31:0] a, b, c, d );
+function automatic [31:0] max ( input [31:0] a, b, c, d );
              if ( a >= b && a >= c && a >= d )                max = a;
         else if ( b >= a && b >= c && b >= d )                max = b;
         else if ( c >= a && c >= b && c >= d )                max = c;

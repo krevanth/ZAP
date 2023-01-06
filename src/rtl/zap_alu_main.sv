@@ -986,7 +986,7 @@ end
 // ----------------------------------------------------------------------------
 
 // Process logical instructions.
-function [35:0] process_logical_instructions
+function automatic [35:0] process_logical_instructions
 (
                 input [31:0]                    RN,
                 input [31:0]                    RM,
@@ -1081,7 +1081,8 @@ endtask
 // For halfword access - duplicate the lower 16-bit of the register twice.
 //
 
-function [31:0] duplicate (     input ub, // Unsigned byte.
+function automatic [31:0] duplicate (
+                                input ub, // Unsigned byte.
                                 input sb, // Signed byte.
                                 input uh, // Unsigned halfword.
                                 input sh, // Signed halfword.
@@ -1120,7 +1121,8 @@ endfunction
 // make byte enable as (1100) which is basically the 32-bit
 // address + 2 (and 3) which will be written.
 //
-function [3:0] generate_ben (   input ub, // Unsigned byte.
+function automatic [3:0] generate_ben (
+                                input ub, // Unsigned byte.
                                 input sb, // Signed byte.
                                 input uh, // Unsigned halfword.
                                 input sh, // Signed halfword.

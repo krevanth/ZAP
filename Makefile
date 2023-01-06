@@ -30,7 +30,7 @@ ARCH         := armv5te
 C_FILES      := $(wildcard src/ts/$(TC)/*.c)
 S_FILES      := $(wildcard src/ts/$(TC)/*.s)
 H_FILES      := $(wildcard src/ts/$(TC)/*.h)
-LD_FILE      := $(wildcard src/ts/$(TC)/*.ld)
+LD_FILE      := $(wildcard src/ts/*.ld)
 CFLAGS       := -c -msoft-float -mfloat-abi=soft -march=$(ARCH) -g 
 SFLAGS       := -march=$(ARCH) -g
 LFLAGS       := -T

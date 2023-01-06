@@ -208,7 +208,7 @@ end
 //
 // Function for branch prediction.
 //
-function [1:0] compute ( input [1:0] pred, input nok );
+function automatic [1:0] compute ( input [1:0] pred, input nok );
 begin
                 // Branch was predicted incorrectly. Go to opposite state.
                 if ( nok )

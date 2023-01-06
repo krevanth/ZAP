@@ -881,7 +881,7 @@ assign shift_lock =
 ////////////////////////////////////
 
 // Shifter lock check.
-function shifter_lock_check (
+function automatic shifter_lock_check (
         input [32:0]                 index,
         input [$clog2(PHY_REGS)-1:0] destination_index_ff,
         input [3:0]                  condition_code_ff
@@ -902,7 +902,7 @@ endfunction
 
 // Load lock. Activated when a read from a register follows a load to that
 // register.
-function determine_load_lock (
+function automatic determine_load_lock (
 input [32:0]                    index,
 input [$clog2(PHY_REGS)-1:0]    mem_srcdest_index_ff,
 input [3:0]                     condition_code_ff,
@@ -985,7 +985,7 @@ endfunction
 // Straightforward read feedback function. Looks at all stages of the pipeline
 // to extract the latest value of the register.
 //
-function [31:0] get_register_value (
+function automatic [31:0] get_register_value (
 
         // The register inex to search for. This might be a constant too.
         input [32:0]                    index,
