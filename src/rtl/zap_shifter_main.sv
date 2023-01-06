@@ -435,7 +435,7 @@ assign  mem_srcdest_value = resolve_conflict (
 // This will resolve conflicts for back to back instruction execution.
 // The function entirely depends only on the inputs to the function.
 //
-function [31:0] resolve_conflict (
+function automatic [31:0] resolve_conflict (
         input    [32:0]                  index_from_issue,       // Index from issue stage. Could have immed too.
         input    [31:0]                  value_from_issue,       // Issue speculatively read value.
         input    [$clog2(PHY_REGS)-1:0]  index_from_this_stage,  // From shift (This) stage output flops.

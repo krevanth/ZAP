@@ -392,7 +392,7 @@ end
 
 // ----------------------------------------------------------------------------
 
-function void tsk_hold_wb_access ();
+function automatic void tsk_hold_wb_access ();
 begin
         wb_stb_nxt = wb_stb_ff;
         wb_cyc_nxt = wb_cyc_ff;
@@ -401,7 +401,7 @@ begin
 end
 endfunction
 
-function void tsk_prpr_wb_rd ( input [31:0] adr );
+function automatic void tsk_prpr_wb_rd ( input [31:0] adr );
 begin
         wb_stb_nxt      = 1'd1;
         wb_cyc_nxt      = 1'd1;

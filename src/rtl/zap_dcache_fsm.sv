@@ -697,7 +697,7 @@ end
 // Tasks and functions.
 // ----------------------------------------------------------------------------
 
-function [31:0] adapt_cache_data (
+function automatic [31:0] adapt_cache_data (
         input [$clog2(CACHE_LINE) - 3:0] shift,
         input [CACHE_LINE*8-1:0]         data
 );
@@ -711,7 +711,7 @@ begin
 end
 endfunction
 
-function [CACHE_LINE-1:0] ben_comp (
+function automatic [CACHE_LINE-1:0] ben_comp (
         input [$clog2(CACHE_LINE) - 3:0] shift,
         input [3:0]                      bv
 );
@@ -723,7 +723,7 @@ begin
 end
 endfunction
 
-function [31:0] clean_single_d (
+function automatic [31:0] clean_single_d (
         input [CACHE_LINE*8-1:0]        cl,
         input [$clog2(CACHE_LINE/4):0]  sh
 );
@@ -737,7 +737,7 @@ end
 endfunction
 
 /* Task to generate Wishbone read signals. */
-function void wb_prpr_read (
+function automatic void wb_prpr_read (
         input [31:0] Address,
         input [2:0]  cti
 );
@@ -753,7 +753,7 @@ end
 endfunction
 
 /* Function to generate Wishbone write signals */
-function void wb_prpr_write (
+function automatic void wb_prpr_write (
         input   [31:0]  data,
         input   [31:0]  Address,
         input   [2:0]   cti,
@@ -771,7 +771,7 @@ end
 endfunction
 
 /* Disables Wishbone */
-function void kill_access ();
+function automatic void kill_access ();
 begin
         o_wb_cyc_nxt = 0;
         o_wb_stb_nxt = 0;
@@ -784,7 +784,7 @@ end
 endfunction
 
 /* Allow hit under miss. */
-function void hit_under_miss ();
+function automatic void hit_under_miss ();
 begin
         rhit = 1'd0;
         whit = 1'd0;

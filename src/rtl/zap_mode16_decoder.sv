@@ -137,7 +137,7 @@ end
 
 ///////////////////////////////////////////////////////////////////////////////
 
-function void decode_bkpt();
+function automatic void decode_bkpt();
 begin: decodeBkPt
         o_instruction[31:0] = 32'b1110_00010010_0000_0000_0000_0111_0000;
 end
@@ -145,7 +145,7 @@ endfunction
 
 ///////////////////////////////////////////////////////////////////////////////
 
-function void decode_get_addr ();
+function automatic void decode_get_addr ();
 begin: dcdGetAddr
         logic [11:0] imm;
         logic [3:0] rd;
@@ -170,7 +170,7 @@ endfunction
 
 ///////////////////////////////////////////////////////////////////////////////
 
-function void decode_mod_sp ();
+function automatic void decode_mod_sp ();
 begin: dcdModSp
         logic [11:0] imm;
 
@@ -191,7 +191,7 @@ endfunction
 
 ///////////////////////////////////////////////////////////////////////////////
 
-function void decode_pop_push ();
+function automatic void decode_pop_push ();
 begin: decodePopPush
         //
         // Uses an FD stack. Thus it is DB type i.e., pre index down by 4.
@@ -229,7 +229,7 @@ endfunction
 
 ///////////////////////////////////////////////////////////////////////////////
 
-function void decode_ldmia_stmia ();
+function automatic void decode_ldmia_stmia ();
 begin: dcdLdmiaStmia
         // Implicit IA type i.e., post index up by 4. Make WB = 1.
 
@@ -246,7 +246,7 @@ endfunction
 
 ///////////////////////////////////////////////////////////////////////////////
 
-function void decode_sp_rel_ldr_str ();
+function automatic void decode_sp_rel_ldr_str ();
 begin: dcdLdrRelStr
         logic [3:0] srcdest;
         logic [3:0] base;
@@ -263,7 +263,7 @@ endfunction
 
 ///////////////////////////////////////////////////////////////////////////////
 
-function void decode_ldrh_strh_reg ();
+function automatic void decode_ldrh_strh_reg ();
 begin: dcdLdrhStrh
         // Use different load store format, instead of 3'b010, use 3'b011
 
@@ -304,7 +304,7 @@ endfunction
 
 ///////////////////////////////////////////////////////////////////////////////
 
-function void decode_ldrh_strh_5bit_off();
+function automatic void decode_ldrh_strh_5bit_off();
 begin: dcdLdrhStrh5BitOff
 
         logic [3:0] rn;
@@ -335,7 +335,7 @@ endfunction
 
 ///////////////////////////////////////////////////////////////////////////////
 
-function void decode_ldr_str_5bit_off();
+function automatic void decode_ldr_str_5bit_off();
 begin: dcLdrStr5BitOff
         logic [3:0] rn;
         logic [3:0] rd;
@@ -359,7 +359,7 @@ endfunction
 
 ///////////////////////////////////////////////////////////////////////////////
 
-function void decode_pc_rel_load();
+function automatic void decode_pc_rel_load();
 begin: dcPcRelLoad
         logic [3:0] rd;
         logic [11:0] imm;
@@ -376,7 +376,7 @@ endfunction
 
 ///////////////////////////////////////////////////////////////////////////////
 
-function void decode_alu_hi();
+function automatic void decode_alu_hi();
 begin:dcAluHi
         // Performs operations on HI registers (atleast some of them).
         logic [1:0] op;
@@ -403,7 +403,7 @@ endfunction
 
 ///////////////////////////////////////////////////////////////////////////////
 
-function void decode_alu_lo();
+function automatic void decode_alu_lo();
 begin: tskDecAluLo
         logic [3:0] op;
         logic [3:0] rs, rd;
@@ -437,7 +437,7 @@ endfunction
 
 ///////////////////////////////////////////////////////////////////////////////
 
-function void decode_mcas_imm();
+function automatic void decode_mcas_imm();
 begin: tskDecodeMcasImm
         logic [1:0]  op;
         logic [3:0]  rd;
@@ -476,7 +476,7 @@ endfunction
 
 ///////////////////////////////////////////////////////////////////////////////
 
-function void decode_add_sub_lo();
+function automatic void decode_add_sub_lo();
 begin: tskDecodeAddSubLo
         logic [3:0] rn, rd, rs;
         logic [11:0] imm;
@@ -515,7 +515,7 @@ endfunction
 
 ///////////////////////////////////////////////////////////////////////////////
 
-function void decode_conditional_branch();
+function automatic void decode_conditional_branch();
 begin
         // An MSB of 1 indicates a left shift of 1 in the down stages.
         o_instruction[34:0]     = {1'd1, 2'b0, i_instruction[11:8], 3'b101, 1'b0, 24'd0};
@@ -525,7 +525,7 @@ endfunction
 
 ///////////////////////////////////////////////////////////////////////////////
 
-function void decode_unconditional_branch();
+function automatic void decode_unconditional_branch();
 begin
         // An MSB of 1 indicates a left shift of 1.
         o_instruction[34:0]     = {1'd1, 2'b0, AL, 3'b101, 1'b0, 24'd0};
@@ -535,7 +535,7 @@ endfunction
 
 ///////////////////////////////////////////////////////////////////////////////
 
-function void decode_blx1();
+function automatic void decode_blx1();
 begin
         o_instruction[34:0] = 35'd0; // Default value.
 
@@ -552,7 +552,7 @@ endfunction
 
 ////////////////////////////////////////////////////////////////////////////////
 
-function void decode_blx2();
+function automatic void decode_blx2();
 begin
         o_instruction[34:0] = {3'd0, 4'b1110,4'b0001,4'b0010,4'b1111,4'b1111,4'b1111,4'b0011, i_instruction[6:3]};
         o_irq         = 1'd0;
@@ -562,7 +562,7 @@ endfunction
 
 ///////////////////////////////////////////////////////////////////////////////
 
-function void decode_bl();
+function automatic void decode_bl();
 begin
         case ( i_instruction[11] )
                 1'd0:
@@ -597,7 +597,7 @@ endfunction
 
 ///////////////////////////////////////////////////////////////////////////////
 
-function void decode_bx();
+function automatic void decode_bx();
 begin
         // Generate a BX Rm.
         o_instruction[34:0] = {3'd0, 32'b0000_0001_0010_1111_1111_1111_0001_0000};
@@ -608,7 +608,7 @@ endfunction
 
 ///////////////////////////////////////////////////////////////////////////////
 
-function void decode_swi();
+function automatic void decode_swi();
 begin
         // Generate a SWI.
         o_instruction[34:0] = {3'd0, 32'b0000_1111_0000_0000_0000_0000_0000_0000};
@@ -619,7 +619,7 @@ endfunction
 
 ///////////////////////////////////////////////////////////////////////////////
 
-function void decode_shift();
+function automatic void decode_shift();
 begin
         // Compressed shift instructions. Decompress to 32-bit with instruction specified shift.
         o_instruction[34:0]     = 35'd0;                // Extension -> 0.

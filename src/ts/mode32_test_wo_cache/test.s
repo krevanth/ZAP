@@ -1,0 +1,1 @@
+../mode32_test_onlycore/test.s

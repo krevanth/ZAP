@@ -496,7 +496,7 @@ zap_btb #(.BP_ENTRIES(BP_ENTRIES)) u_zap_btb (
 // Tasks
 // ----------------------------------------------------------------------------
 
-function void pc_shelve (input [31:0] new_pc);
+function automatic void pc_shelve (input [31:0] new_pc);
 begin
         if (!i_code_stall )
         begin
@@ -520,7 +520,7 @@ begin
 end
 endfunction
 
-function void chmod;
+function automatic void chmod;
 begin
         o_clear_from_writeback  = 1'd1;
         cpsr_nxt[I]             = 1'd1; // Mask IRQ interrupt.

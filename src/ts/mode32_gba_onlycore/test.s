@@ -2004,10 +2004,11 @@ _Reset:
         
         t510:
                 @ ARM 10: Store PC + 4
-                stmfd   r11!, {r0, pc}
-                mov     r0, pc
-                ldmfd   r11!, {r1, r2}
-                cmp     r0, r2
+                stmfd   r11!, {r0, pc}   // x. Store x + 8.
+                mov     r0, pc           // r0 = x + 12
+                ldmfd   r11!, {r1, r2}   // r2 = x + 8
+                add     r2, #4
+                cmp     r0, r2            
                 bne     f510
         
                 add     r11, #32
@@ -2050,21 +2051,10 @@ _Reset:
                 bne     f512
         
                 add     r11, #32
-                b       t514
+                b       t518
         
         f512:
                 m_exit  512
-        
-        t514:
-                sub     r0, #0x40
-                cmp     r0, r11
-                bne     f514
-        
-                add     r11, #32
-                b       t518
-        
-        f514:
-                m_exit  514
         
         t518:
                 @ ARM 10: STMFD base first in rlist
@@ -2122,6 +2112,132 @@ _Reset:
                 m_exit  521
         
         block_transfer_passed:
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+        vmult:
+
+        f522:
+                @ ARM 11: Signed multiply accumualte SMLATB
+                ldr r1,=0xFFFF0000
+                ldr r2,=0x0000FFFF
+                ldr r3,=0xFFFF0000
+                ldr r4,=0xFFFF0001
+
+                // r1(T)*r2(B) + r3
+                smlatb r5, r1, r2, r3
+
+                cmp r4, r5
+                bne f523
+                b f524
+
+        f523:
+                m_exit 523
+
+        f524:
+                @ ARM 11: Don't change CPSR flags.
+                mrs r4, cpsr
+                smlatb r0, r1, r2, r3
+                mrs r5, cpsr
+                cmp r4, r5
+                bne f525       
+                b f526
+        f525:
+                m_exit 525 
+
+        ///////////////////////////////////////////////////////////////////////
+
+        f526:
+                @ ARM 11: Signed multiply accumualte SMLABT
+                ldr r1,=0x0000FFFF
+                ldr r2,=0xFFFF0000
+                ldr r3,=0xFFFFFFFF
+                ldr r4,=0x0
+
+                // r1(B)*r2(T) + r3
+                smlabt r5, r1, r2, r3
+
+                cmp r4, r5
+                bne f527
+                b f528
+
+        f527:
+                m_exit 527
+
+        f528:
+                @ ARM 11: Don't change CPSR flags.
+                mrs r4, cpsr
+                smlabt r0, r1, r2, r3
+                mrs r5, cpsr
+                cmp r4, r5
+                bne f529
+                b f530
+        f529:
+                m_exit 529
+
+        ///////////////////////////////////////////////////////////////////////
+
+        f530:
+                @ ARM 12: Signed multiply accumualte SMLATT
+                ldr r1,=0xFFFF0000
+                ldr r2,=0xFFFF0000
+                ldr r3,=0xFFFFFFFE
+                ldr r4,=0xFFFFFFFF
+
+                // r1(T)*r2(T) + r3
+                smlatt r5, r1, r2, r3
+
+                cmp r4, r5
+                bne f531
+                b f532
+
+        f531:
+                m_exit 531
+
+        f532:
+                @ ARM 11: Don't change CPSR flags.
+                mrs r4, cpsr
+                smlatt r0, r1, r2, r3
+                mrs r5, cpsr
+                cmp r4, r5
+                bne f533
+                b f534
+        f533:
+                m_exit 533
+
+        ///////////////////////////////////////////////////////////////////////
+
+        f534:
+                @ ARM 12: Signed multiply accumualte SMLABB
+                ldr r1,=0x3000FFFF
+                ldr r2,=0x2000FFFF
+                ldr r3,=0xFFFFFFFE
+                ldr r4,=0xFFFFFFFF
+
+                // r1(B)*r2(B) + r3
+                smlabb r5, r1, r2, r3
+
+                cmp r4, r5
+                bne f535
+                b f536
+
+        f535:
+                m_exit 535
+
+        f536:
+                @ ARM 11: Don't change CPSR flags.
+                mrs r4, cpsr
+                smlabb r0, r1, r2, r3
+                mrs r5, cpsr
+                cmp r4, r5
+                bne f537
+                b f538
+        f537:
+                m_exit 537
+
+        f538:
+        vmult_passed:
 
    here: b here
 

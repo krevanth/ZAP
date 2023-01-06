@@ -18,7 +18,7 @@
 //
 
 // Swap data based on SEL. Use on wishbone input.
-function [31:0] be_32 (input [31:0] dat, input [3:0] sel);
+function automatic [31:0] be_32 (input [31:0] dat, input [3:0] sel);
         case(sel)
         4'b1000: return {24'd0, dat[31:24]};
         4'b0100: return {16'd0, dat[23:16], 8'd0};
@@ -31,7 +31,7 @@ function [31:0] be_32 (input [31:0] dat, input [3:0] sel);
 endfunction
 
 // Swap sel based on value
-function [3:0] be_sel_32 (input [3:0] sel);
+function automatic [3:0] be_sel_32 (input [3:0] sel);
         case(sel)
         4'b0001: return 4'b1000;
         4'b0010: return 4'b0100;
@@ -49,7 +49,7 @@ endfunction
 // execution. Returns 1 if satisfied, 0 if not.
 //
 
-function  is_cc_satisfied
+function automatic is_cc_satisfied
 (
         input [3:0] cc,         // 31:28 of the instruction.
         input [3:0] fl          // CPSR flags.
@@ -89,7 +89,7 @@ endfunction
 // of registers. Based on mode, we select some of those to implement banking.
 //
 
-function  [5:0] translate (
+function automatic  [5:0] translate (
 
         input [5:0] index,      // Requested instruction index.
         input [4:0] cpu_mode    // Current CPU mode.

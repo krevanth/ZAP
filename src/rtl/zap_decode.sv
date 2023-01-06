@@ -221,7 +221,7 @@ end
 // =============================
 // Decode QADD/QSUB/QDADD/QDSUB
 // =============================
-function void decode_sat_addsub ();
+function automatic void decode_sat_addsub ();
 begin
         o_condition_code        = instruction[31:28];
         o_flag_update           = 1'd1;
@@ -256,7 +256,7 @@ endfunction
 // =============================
 // Decode CLZ
 // =============================
-function void decode_clz ();
+function automatic void decode_clz ();
 begin: tskDecodeClz
         o_condition_code        =       instruction[31:28];
         o_flag_update           =       1'd0; // Instruction does not update any flags.
@@ -287,7 +287,7 @@ endfunction
 // =============================
 // Decode long multiplication.
 // =============================
-function void decode_lmult (); // Uses bit 35. rm.rs + {rh, rn}
+function automatic void decode_lmult (); // Uses bit 35. rm.rs + {rh, rn}
 begin: tskLDecodeMult
 
         o_condition_code        =       instruction[31:28];
@@ -360,7 +360,7 @@ endfunction
 // ===============================
 // Decode undefined instructions.
 // ===============================
-function void decode_und ();
+function automatic void decode_und ();
 begin
         // Say instruction is undefined.
         o_und = 1'd1;
@@ -384,7 +384,7 @@ endfunction
 // ===========================================
 // Decode software interrupt instructions.
 // ===========================================
-function void decode_swi ();
+function automatic void decode_swi ();
 begin: tskDecodeSWI
 
         // Generate LR = PC - 4
@@ -406,7 +406,7 @@ endfunction
 // ============================
 // Decode halfword LOAD/STORE.
 // ============================
-function void decode_halfword_ls ();
+function automatic void decode_halfword_ls ();
 begin: tskDecodeHalfWordLs
         logic [11:0] temp, temp1;
 
@@ -469,7 +469,7 @@ endfunction
 // ==============================
 // Decode short multiplication.
 // ==============================
-function void decode_mult ();
+function automatic void decode_mult ();
 begin: tskDecodeMult
 
 
@@ -505,7 +505,7 @@ endfunction
 // Decode 16-bit DSP multiplication
 // ====================================
 
-function void decode_smul_dsp ();
+function automatic void decode_smul_dsp ();
 begin
         o_condition_code    = instruction[31:28];
         o_flag_update       = 1'd1;
@@ -543,7 +543,7 @@ endfunction
 // Decode 16-bit long DSP (48-bit)
 // =============================
 
-function void decode_lmul_dsp (); // (rm.rs) + {rh, rn} = {rh, rn}
+function automatic void decode_lmul_dsp (); // (rm.rs) + {rh, rn} = {rh, rn}
 begin: tskLDecodeMultDsp
 
         o_condition_code        =       instruction[31:28];
@@ -625,7 +625,7 @@ endfunction
 // =============================
 // Converted into a MOV to PC. The ALU will set the T bit in the CPSR
 
-function void decode_bx ();
+function automatic void decode_bx ();
 begin: tskDecodeBx
         logic [32:0] temp;
 
@@ -658,7 +658,7 @@ endfunction
 // =============================================
 // Task for decoding load-store instructions.
 // =============================================
-function void decode_ls ();
+function automatic void decode_ls ();
 begin: tskDecodeLs
 
 
@@ -689,8 +689,9 @@ begin: tskDecodeLs
         o_mem_store         = !o_mem_load;
         o_mem_pre_index     = instruction[24];
 
-        assert(o_mem_store && o_alu_source[31:0] != 'd15) else
-        $info("Warning: Use of PC as a pointer for STR is IMPLEMENTATION DEFINED.");
+        assert(~(o_mem_store && o_alu_source[31:0] == 'd15 && o_alu_source[32] == INDEX_EN &&
+                 i_instruction_valid)) else
+        $info("Warning: Use of PC as a pointer for STR is IMPLEMENTATION DEFINED (PC + 8). Instruction=%x", instruction);
 
         // If post-index is used or pre-index is used with writeback,
         // take is as a request to update the base register.
@@ -717,7 +718,7 @@ endfunction
 
 // ----------------------------------------------------------------------------
 
-function void decode_mrs ();
+function automatic void decode_mrs ();
 begin
 
         process_immediate ( {instruction[11:0]} );
@@ -732,7 +733,7 @@ endfunction
 
 // ----------------------------------------------------------------------------
 
-function void decode_msr ();
+function automatic void decode_msr ();
 begin
 
         if ( instruction[25] ) // Immediate present.
@@ -768,7 +769,7 @@ endfunction
 // ========================
 // Decode B
 // ========================
-function void decode_branch ();
+function automatic void decode_branch ();
 begin
         // A branch is decayed into PC = PC + $signed(immed)
         o_condition_code        = instruction[31:28];
@@ -790,7 +791,7 @@ endfunction
 // Common data processing handles the common section of all 3 data processing
 // formats.
 //
-function void decode_data_processing ();
+function automatic void decode_data_processing ();
 begin
         o_condition_code        = instruction[31:28];
         o_alu_operation         = {2'd0, instruction[24:21]};
@@ -826,7 +827,7 @@ endfunction
 // If an immediate value is to be rotated right by an
 // immediate value, this mode is used.
 //
-function void process_immediate( input [11:0] xinstruction );
+function automatic void process_immediate( input [11:0] xinstruction );
 begin
         o_shift_length[31:0]    = {27'd0, xinstruction[11:8], 1'd0};
         o_shift_length[32]      = IMMED_EN;
@@ -856,7 +857,7 @@ endfunction
 // The shifter source is a register but the
 // amount to shift is in the instruction itself.
 //
-function void process_instruction_specified_shift( input [32:0] xinstruction );
+function automatic void process_instruction_specified_shift( input [32:0] xinstruction );
 logic unused;
 begin
          unused                  = |{xinstruction[31:12],xinstruction[4]};
@@ -893,7 +894,7 @@ endfunction
 // ----------------------------------------------------------------------------
 
 // The source register and the amount of shift are both in registers.
-function void process_register_specified_shift( input [32:0] xinstruction );
+function automatic void process_register_specified_shift( input [32:0] xinstruction );
 logic unused;
 begin
         unused                  = |{xinstruction[31:12],xinstruction[7],xinstruction[4]};

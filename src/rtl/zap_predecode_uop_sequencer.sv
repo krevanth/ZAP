@@ -102,36 +102,37 @@ logic  [31:0]  const_ff, const_nxt;        // For BLX - const reg.
 
 ////////////////////////////////////////////////////////////////////////////////
 
-always_comb {cc, id, pre_index, up, s_bit, writeback, load, base, reglist} = i_instruction[31:0];
-always_comb store = ~load;
-always_comb unused = |{pre_index};
-always_comb oc_offset = ones_counter(i_instruction[15:0]);
+assign {cc, id, pre_index, up, s_bit, writeback, load, base, reglist} = i_instruction[31:0];
+assign store = ~load;
+assign oc_offset = ones_counter(i_instruction[15:0]);
 
 ///////////////////////////////////////////////////////////////////////////////
 
 // States.
-localparam IDLE         = 0;
-localparam MEMOP        = 1;
-localparam WRITE_PC     = 2;
-localparam SWAP1        = 3;
-localparam SWAP2        = 4;
-localparam LMULT_BUSY   = 5;
-localparam BL_S1        = 6;
-localparam SWAP3        = 7;
-localparam BLX1_STATE_S0  = 8;
-localparam BLX1_STATE_S1  = 9;
-localparam BLX1_STATE_S2  = 10;
-localparam BLX1_STATE_S3  = 11;
-localparam BLX1_STATE_S4  = 12;
-localparam BLX1_STATE_S5  = 13;
-localparam BLX2_STATE_S0  = 14;
-localparam LDRD_STRD_S0 = 16;
-localparam LDRD_STRD_S1 = 17;
-localparam LDR_TO_PC_S0 = 18;
-localparam DEP_WAIT     = 19;
-localparam DEP_WAIT_1   = 20;
-localparam DEP_WAIT_2   = 21;
-localparam DEP_WAIT_3   = 22;
+localparam bit [4:0] IDLE           = 5'd0;
+localparam bit [4:0] MEMOP          = 5'd1;
+localparam bit [4:0] WRITE_PC       = 5'd2;
+localparam bit [4:0] SWAP1          = 5'd3;
+localparam bit [4:0] SWAP2          = 5'd4;
+localparam bit [4:0] LMULT_BUSY     = 5'd5;
+localparam bit [4:0] BL_S1          = 5'd6;
+localparam bit [4:0] SWAP3          = 5'd7;
+localparam bit [4:0] BLX1_STATE_S0  = 5'd8;
+localparam bit [4:0] BLX1_STATE_S1  = 5'd9;
+localparam bit [4:0] BLX1_STATE_S2  = 5'd10;
+localparam bit [4:0] BLX1_STATE_S3  = 5'd11;
+localparam bit [4:0] BLX1_STATE_S4  = 5'd12;
+localparam bit [4:0] BLX1_STATE_S5  = 5'd13;
+localparam bit [4:0] BLX2_STATE_S0  = 5'd14;
+localparam bit [4:0] LDRD_STRD_S0   = 5'd16;
+localparam bit [4:0] LDRD_STRD_S1   = 5'd17;
+localparam bit [4:0] LDR_TO_PC_S0   = 5'd18;
+localparam bit [4:0] DEP_WAIT       = 5'd19;
+localparam bit [4:0] DEP_WAIT_1     = 5'd20;
+localparam bit [4:0] DEP_WAIT_2     = 5'd21;
+localparam bit [4:0] DEP_WAIT_3     = 5'd22;
+
+assign unused = |{pre_index, SWAP3};
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -681,24 +682,20 @@ begin:blk_a
                         state_nxt               = IDLE;
                 end
 
-                SWAP1, SWAP3:
+                SWAP1:
                 begin
                         // STR Rm, [Rn, #0]
-
                         o_irq = 0;
                         o_fiq = 0;
 
-                        // If in SWAP3, end the sequence so get next operation
-                        // in when we move to IDLE.
-                        o_stall_from_decode = state_ff == SWAP3 ? 1'd0 : 1'd1;
-
+                        o_stall_from_decode = 1'd1;
                         o_instruction_valid = 1;
                         o_instruction[31:0] = {cc, 3'b010, 1'd1, 1'd0,
                                         i_instruction[22], 1'd0, 1'd0,
                                         i_instruction[19:16],
                                         i_instruction[3:0], 12'd0}; // BUG FIX
 
-                        state_nxt = state_ff == SWAP3 ? IDLE : SWAP2;
+                        state_nxt = SWAP2;
                 end
 
                 SWAP2:
@@ -706,9 +703,7 @@ begin:blk_a
                         // MOV Rd, DUMMY0
                         rd = i_instruction[15:12];
 
-                        // Keep waiting. Next we initiate a read to ensure
-                        // write buffer gets flushed.
-                        o_stall_from_decode = 1'd1;
+                        o_stall_from_decode = 1'd0;
                         o_instruction_valid = 1'd1;
 
                         o_irq = 0;
@@ -720,7 +715,7 @@ begin:blk_a
                         {o_instruction[`ZAP_DP_RB_EXTEND], o_instruction[`ZAP_DP_RB]}
                                         = ARCH_DUMMY_REG0;
 
-                        state_nxt = SWAP3;
+                        state_nxt = IDLE;
                 end
 
                 MEMOP:
@@ -784,6 +779,22 @@ begin:blk_a
                         o_irq = 0;
                         o_fiq = 0;
                 end
+
+                default:
+                begin
+                        {state_nxt
+                        ,o_stall_from_decode
+                        ,o_irq
+                        ,o_fiq
+                        ,o_instruction
+                        ,o_instruction_valid
+                        ,reglist_nxt
+                        ,o_switch
+                        ,o_align
+                        ,pri_enc_out
+                        ,H
+                        ,rd} = {76{1'dx}};
+                end
         endcase
 end
 
@@ -794,7 +805,7 @@ assign o_uop_last = (((state_ff == IDLE) && (state_nxt == IDLE)) ||
 
 ///////////////////////////////////////////////////////////////////////////////
 
-function [33:0] map ( input [31:0] instr, input [3:0] enc, input [15:0] list );
+function automatic [33:0] map ( input [31:0] instr, input [3:0] enc, input [15:0] list );
 begin
         map = {2'd0, instr};
         map = map & ~(1<<22); // No byte access.
@@ -932,7 +943,7 @@ endtask
 
 // Counts the number of ones and multiplies that by 4 to get final
 // address offset.
-function  [11:0] ones_counter (
+function automatic [11:0] ones_counter (
         input [15:0]    i_word    // Register list.
 );
 logic [6:0] offset;
@@ -956,7 +967,7 @@ endfunction
 //
 
 // Priority encoder.
-function  [3:0] pri_enc ( input [15:0] in );
+function automatic  [3:0] pri_enc ( input [15:0] in );
 begin: priEncFn
                 casez ( in )
                 16'b????_????_????_???1: pri_enc = 4'd0;
@@ -988,7 +999,23 @@ begin
                 $info("Warning: Empty reglist leads to UNPREDICTABLE behavior.");
 
                 assert ( base != 'd15 ) else
-                $info("Warning: Using R15 as a base in STM leads to IMPLEMENTATION DEFINED behavior.");
+                $info("Warning: Using R15 as a base in LDM/STM leads to UNPREDICTABLE behavior.");
+
+                assert ( ~(!i_instruction[20] && reglist_nxt[15] ) ) else
+                $info("Warning: Using R15 in the reglist of STM leads to IMPLEMENTATION DEFINED (PC + 8) value stored.");
+
+                for(int i=0;i<16;i++)
+                begin
+                        // Get first register accessed.
+                        if( reglist_nxt[i] )
+                        begin
+                                // Never: HAVE BASE AS REGLIST && BASE NOT AS FIRST REGISTER.
+                                assert ( ~(reglist_nxt[base] && base != i[3:0]) ) else
+                                        $info("Warning: Specifying base in non-trailing bit is UNPREDICTABLE.");
+
+                                break;
+                        end
+                end
         end
 end
 

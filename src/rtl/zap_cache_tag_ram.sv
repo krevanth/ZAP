@@ -415,7 +415,7 @@ end
 // -----------------------------------------------------------------------------
 
 // Priority encoder.
-function  [4:0] pri_enc_1 ( input [15:0] in );
+function automatic  [4:0] pri_enc_1 ( input [15:0] in );
 begin: priEncFn
                 pri_enc_1 = 5'b11111;
 
@@ -430,7 +430,7 @@ endfunction
 
 // -----------------------------------------------------------------------------
 
-function [$clog2(CACHE_SIZE/CACHE_LINE)-1:0] get_tag_ram_rd_addr (
+function automatic [$clog2(CACHE_SIZE/CACHE_LINE)-1:0] get_tag_ram_rd_addr (
 input [$clog2(NUMBER_OF_DIRTY_BLOCKS):0]   blk_ctr,
 input [CACHE_SIZE/CACHE_LINE-1:0]          Dirty
 );
@@ -453,7 +453,7 @@ endfunction
 // ----------------------------------------------------------------------------
 
 /* Function to generate Wishbone read signals. */
-function void wb_prpr_read (
+function automatic void wb_prpr_read (
         input [31:0] address,
         input [2:0]  cti
 );
@@ -471,7 +471,7 @@ endfunction
 // ----------------------------------------------------------------------------
 
 /* Function to generate Wishbone write signals */
-function void wb_prpr_write (
+function automatic void wb_prpr_write (
         input   [31:0]  data,
         input   [31:0]  address,
         input   [2:0]   cti,
@@ -491,7 +491,7 @@ endfunction
 // ----------------------------------------------------------------------------
 
 /* Disables Wishbone */
-function void  kill_access ();
+function automatic void  kill_access ();
 begin
         o_wb_cyc_nxt = 0;
         o_wb_stb_nxt = 0;
@@ -505,7 +505,7 @@ endfunction
 
 // ----------------------------------------------------------------------------
 
-function [4:0] baggage (
+function automatic [4:0] baggage (
         input [CACHE_SIZE/CACHE_LINE-1:0]               Dirty,
         input [$clog2(NUMBER_OF_DIRTY_BLOCKS):0]        blk_ctr
 );

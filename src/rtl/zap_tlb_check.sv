@@ -241,7 +241,7 @@ end
 
 // ----------------------------------------------------------------------------
 
-function  [7:0] get_fsr (                              // Return 0 means OK to access else is a valid FSR.
+function automatic [7:0] get_fsr (                     // Return 0 means OK to access else is a valid FSR.
 input                   section, spage, lpage, fpage,  // Select one.
 input   [1:0]           ap_sel,                        // AP sel bits. dont care for sections or fine pages.
 input                   user, rd, wr,                  // Access properties.
@@ -344,7 +344,7 @@ endfunction
 // Checks AP and SR bits.
 //
 
-function  is_apsr_ok ( input user, input rd, input wr, input [3:0] apsr);
+function automatic is_apsr_ok ( input user, input rd, input wr, input [3:0] apsr);
 logic x;
 begin
         x = APSR_BAD; // Assume fail.
