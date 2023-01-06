@@ -1,5 +1,5 @@
 //
-//    (C) 2016-2022 Revanth Kamaraj (krevanth)
+// (C) 2016-2022 Revanth Kamaraj (krevanth)
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -32,9 +32,7 @@ i_abt,  // Code abort flagged from previous stage.
 i_instruction,
 i_instruction_valid,
 
-//
 // Bits related to decoded instruction...
-//
 
 o_condition_code,       // 4-bit CC.
 o_destination_index,    // Destination register.
