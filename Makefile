@@ -1,25 +1,21 @@
-# // -----------------------------------------------------------------------------
-# // --                                                                         --
-# // --             (C) 2016-2022 Revanth Kamaraj (krevanth)                    --
-# // --                                                                         -- 
-# // -- --------------------------------------------------------------------------
-# // --                                                                         --
-# // -- This program is free software; you can redistribute it and/or           --
-# // -- modify it under the terms of the GNU General Public License             --
-# // -- as published by the Free Software Foundation; either version 2          --
-# // -- of the License, or (at your option) any later version.                  --
-# // --                                                                         --
-# // -- This program is distributed in the hope that it will be useful,         --
-# // -- but WITHOUT ANY WARRANTY; without even the implied warranty of          --
-# // -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           --
-# // -- GNU General Public License for more details.                            --
-# // --                                                                         --
-# // -- You should have received a copy of the GNU General Public License       --
-# // -- along with this program; if not, write to the Free Software             --
-# // -- Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA           --
-# // -- 02110-1301, USA.                                                        --
-# // --                                                                         --
-# // -----------------------------------------------------------------------------
+#                                                                         
+#  (C) 2016-2022 Revanth Kamaraj (krevanth)                    
+#                                                                         
+# This program is free software; you can redistribute it and/or           
+# modify it under the terms of the GNU General Public License             
+# as published by the Free Software Foundation; either version 2          
+# of the License, or (at your option) any later version.                  
+#                                                                         
+# This program is distributed in the hope that it will be useful,         
+# but WITHOUT ANY WARRANTY; without even the implied warranty of          
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           
+# GNU General Public License for more details.                            
+#                                                                         
+# You should have received a copy of the GNU General Public License       
+# along with this program; if not, write to the Free Software             
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA           
+# 02110-1301, USA.                                                        
+#                                                                         
 
 .PHONY: test clean reset lint runlint c2asm dirs runsim syn
 
@@ -56,6 +52,7 @@ DLOAD        := "FROM archlinux:latest\nRUN  pacman -Syyu --noconfirm arm-none-e
 
 ifndef DOCKER
 
+# Run all tests. Default goal.
 test:
 ifdef TC
 	$(MAKE) runsim TC=$(TC) HT=1 || exit 10
@@ -63,9 +60,11 @@ else
 	for var in $(TEST); do $(MAKE) test TC=$$var HT=1 || exit 10 ; done;
 endif
 
+# Remove runsim objects
 clean:
 	rm -rf obj/
 
+# Run lint.
 lint:
 	$(MAKE) runlint || exit 10
 
@@ -74,7 +73,6 @@ else
 # Run all tests. Default goal.
 test:
 	docker info
-	$(MAKE) lint
 	mkdir -p obj/syn
 	docker image ls | grep $(TAG) || echo -e $(DLOAD) | docker build --no-cache --rm --tag $(TAG) -
 ifndef TC
@@ -135,7 +133,11 @@ obj/ts/$(TC)/Vzap_test: $(CPU_FILES) $(TB_FILES) $(SCRIPT_FILES) src/ts/$(TC)/Co
 	$(info ********************************)
 	$(info BUILDING SIMULATION ENV         )
 	$(info ********************************)
+ifdef SEED
+	perl src/ts/verwrap.pl $(TC) $(HT) $(SEED)
+else
 	perl src/ts/verwrap.pl $(TC) $(HT)
+endif
 
 # Rule to lint.
 runlint:
@@ -154,8 +156,12 @@ runsim: dirs obj/ts/$(TC)/Vzap_test
 ifdef TC
 	$(info ******************************)
 	$(info RUNNING SIMULATION            )
-	$(info ******************************)        
+	$(info ******************************)       
+ifdef SEED 
+	cd obj/ts/$(TC) && ./Vzap_test $(TC).bin $(TC) $(SEED)
+else
 	cd obj/ts/$(TC) && ./Vzap_test $(TC).bin $(TC)
+endif
 	echo "Generated waveform file 'obj/ts/$(TC)/zap.vcd'"
 else
 	echo "TC value not provided in make command."
