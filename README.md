@@ -1,4 +1,5 @@
-# The ZAP Processor 
+# The ZAP Processor
+
 ## V5TE Compatible, 170MHz on Artix-7 FPGA
 
 **By**[ **Revanth Kamaraj** ](https://github.com/krevanth)**<**[**revanth91kamaraj@gmail.com**](mailto:revanth91kamaraj@gmail.com)**>**
@@ -101,7 +102,7 @@ Most of the time, the pipeline is able to process 1 instruction per clock cycle.
   * An instruction that uses a register that is/are destination(s) for multiply/MAC adds +1 to the multiply/MAC operation's latency.
 * `B` is executed as it adds a 3 cycle bubble due to branch prediction. Takes +1 cycle if link bit is set.
 * `MOV`/`ADD` instructions with `pc/r15` as destination are executed. They will insert a 3 cycle bubble in the pipeline.
-* `MSR` when writing to CPSR. This will insert a 12 cycle bubble into the pipeline.
+* `MSR` when writing to CPSR, and changing lower three bytes. This will insert a 12 cycle bubble into the pipeline.
 * `LDx` with `pc/r15` in the register list/data register is executed. This will insert a 9 cycle bubble in the pipeline.
 * `MCR`/`MRC` / `SWI` are executed. These will insert an 18 cycle bubble into the pipeline.
 * `CLZ` and saturating arithmetic(`QADD`/`QSUB`/`QDADD`/`QDSUB`) operations take 4 clock cycles per instruction.
@@ -589,13 +590,13 @@ Note that all parameters should be 2^n. Cache size should be multiple of line si
 
 The recommended project environment requires Docker to be installed at your site. Click [here](https://docs.docker.com/engine/install/) for instructions on how to install Docker. The steps here assume that the user is a part of the `docker` group.
 
-If your site has the latest EDA tools required (Verilator, GTKWave, GCC Cross Compiler) installed, and if you do not wish to use Docker, then you should not pass the `DOCKER=1` argument when invoking `make`, hence the argument is shown as optional in the examples below.  
+If your site has the latest EDA tools required (Verilator, GTKWave, GCC Cross Compiler) installed, and if you do not wish to use Docker, then you should not pass the `DOCKER=1` argument when invoking `make`, hence the argument is shown as optional in the examples below.  The `SEED` arguments allows passing of specific seed and enabling waveform logging. When switching from passing no seed to passing a seed, please run the `clean` make target first. 
 
 ### 3.1. Running TCs
 
 To run all/a specific TC, do:
 
-> `make [DOCKER=1] [TC=test_name]`
+> `make [DOCKER=1] [SEED=<Seed>] [TC=test_name]`
 
 See `src/ts` for a list of test names. Not providing a testname will run all tests.
 
@@ -637,10 +638,7 @@ To remove existing object/simulation/synthesis files, do:
                BP_DEPTH                    => 1024,    
                INSTR_FIFO_DEPTH            => 4,       
 
-               # Debug helpers. 
-               DEBUG_EN                    => 1,       
-                                              # Enables debug print messages. 
-                                              # Set DEBUG_EN=0 for synthesis.        
+
 
                # Testbench configuration.
                MAX_CLOCK_CYCLES            => 100000,  

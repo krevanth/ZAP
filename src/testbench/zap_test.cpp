@@ -1,25 +1,21 @@
-// -----------------------------------------------------------------------------
-// --                                                                         --
-// --                   (C) 2016-2022 Revanth Kamaraj (krevanth)              --
-// --                                                                         -- 
-// -- --------------------------------------------------------------------------
-// --                                                                         --
-// -- This program is free software; you can redistribute it and/or           --
-// -- modify it under the terms of the GNU General Public License             --
-// -- as published by the Free Software Foundation; either version 2          --
-// -- of the License, or (at your option) any later version.                  --
-// --                                                                         --
-// -- This program is distributed in the hope that it will be useful,         --
-// -- but WITHOUT ANY WARRANTY; without even the implied warranty of          --
-// -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           --
-// -- GNU General Public License for more details.                            --
-// --                                                                         --
-// -- You should have received a copy of the GNU General Public License       --
-// -- along with this program; if not, write to the Free Software             --
-// -- Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA           --
-// -- 02110-1301, USA.                                                        --
-// --                                                                         --
-// -----------------------------------------------------------------------------
+//
+// (C) 2016-2022 Revanth Kamaraj (krevanth)
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+// 02110-1301, USA.
+//
 
 #include <memory>
 #include <verilated.h>
@@ -42,7 +38,7 @@ unsigned int saved_adr;
 unsigned int end_nxt;
 
 // Data to be expected on UART if the TC is named "uart"
-char word0[] = "HELLO WORLD"; 
+char word0[] = "HELLO WORLD";
 char word1[] = "";
 
 int uart0_ctr = 0;
@@ -52,15 +48,22 @@ unsigned int seed;
 int delay = -1;
 
 int main(int argc, char** argv, char** env) {
-    
-    seed = (unsigned int)time(0);
+
+    if ( argc == 4 )
+    {
+        seed = atoi(argv[3]);
+    }
+    else
+    {
+        seed = (unsigned int)time(0);
+    }
 
     printf("\n############# Simulator seed is 'd%d ###############\n", seed);
 
     srand(seed);
 
     seq      = 0;
-    end_nxt  = 0; 
+    end_nxt  = 0;
 
     const std::unique_ptr<VerilatedContext> contextp{new VerilatedContext};
 
@@ -70,7 +73,7 @@ int main(int argc, char** argv, char** env) {
 
     const std::unique_ptr<Vzap_test> zap_test{new Vzap_test{contextp.get(), "ZAP_TEST"}};
 
-    if ( argc > 1 ) 
+    if ( argc > 1 )
     {
         ptr=fopen(argv[1], "rb");
     }
@@ -80,65 +83,65 @@ int main(int argc, char** argv, char** env) {
         return 1;
     }
 
-    if ( ptr == NULL ) 
+    if ( ptr == NULL )
     {
         printf("Failed to open file %s", argv[0]);
         return 2;
     }
 
-    fread(mem, 1, sizeof(mem), ptr);    
+    fread(mem, 1, sizeof(mem), ptr);
 
     zap_test->i_reset  = 1;
     zap_test->i_clk    = 0;
     zap_test->i_wb_dat = rand();
     zap_test->i_wb_ack = rand() & 0x1;
 
-    while (!contextp->gotFinish()) 
+    while (!contextp->gotFinish())
     {
-        contextp->timeInc(1);  
+        contextp->timeInc(1);
         zap_test->i_clk = !zap_test->i_clk;
 
         zap_test->eval();
 
         if(!zap_test->i_clk)
         {
-                // End simulation on falling edge of clock.                
+                // End simulation on falling edge of clock.
 
-                if ( end_nxt ) 
+                if ( end_nxt )
                 {
                         printf("%s\nError: Ending simulation due to error. Waves are here : obj/ts/%s/zap.vcd\n%s", KRED, argv[2], KNRM);
                         zap_test->final();
                         return end_nxt;
                 }
         }
-        else if (zap_test->i_clk) 
+        else if (zap_test->i_clk)
         {
             // Operate everything on rising edge of clock.
 
-            if ( contextp->time() < RESET_CYCLES ) 
+            if ( contextp->time() < RESET_CYCLES )
             {
-                zap_test->i_reset = 1; 
+                zap_test->i_reset = 1;
                 zap_test->i_int_sel = (rand() & 0x1); // Select IRQ or FIQ port.
-            } 
-            else 
+            }
+            else
             {
-                zap_test->i_reset = 0;  
+                zap_test->i_reset = 0;
             }
 
-            if ( seq && (!zap_test->o_wb_cyc || !zap_test->o_wb_stb) ) 
+            if ( seq && (!zap_test->o_wb_cyc || !zap_test->o_wb_stb) )
             {
                 printf("Error: WB_CYC/STB going low in the middle of a burst.\n");
                 end_nxt = 3;
             }
 
             // Simulate a Wishbone RAM.
-            if ( zap_test->o_wb_cyc && zap_test->o_wb_stb && !zap_test -> i_reset ) 
+            if ( zap_test->o_wb_cyc && zap_test->o_wb_stb && !zap_test -> i_reset )
             {
                     // Randomly give delay between 0 and 50 cycles per
                     // transfer, when seed is even. When seed is odd,
                     // give response immediately.
 
-                    if ( (seed % 2 == 0) && delay == -1 && (rand() % 2) ) 
+                    if ( (seed % 2 == 0) && delay == -1 && (rand() % 2) )
                     {
                         delay = (rand() % 50) + 1;
                         zap_test->i_wb_ack = 0;
@@ -158,7 +161,7 @@ int main(int argc, char** argv, char** env) {
                             // Give bus response.
                             if( !zap_test->o_wb_we )
                             {
-                                    zap_test->i_wb_ack = 1;      
+                                    zap_test->i_wb_ack = 1;
                                     zap_test->i_wb_dat = 0;
 
                                     zap_test->i_wb_dat |= ((mem[((zap_test->o_wb_adr >> 2)*4 + 0) & 0x3FFFFFF]) & 0xFF) << (8 * 0);
@@ -177,9 +180,9 @@ int main(int argc, char** argv, char** env) {
                                     if ( zap_test->o_wb_sel & 8 ) mem [ ((zap_test->o_wb_adr >> 2)*4 + 3) & 0x3FFFFFF ] = (zap_test->o_wb_dat >> (8 * 3)) & 0xFF;
                             }
 
-                            if ( seq && zap_test->i_wb_ack ) 
+                            if ( seq && zap_test->i_wb_ack )
                             {
-                                if ( zap_test->o_wb_adr != saved_adr + 4 ) 
+                                if ( zap_test->o_wb_adr != saved_adr + 4 )
                                 {
                                         printf("Error: Burst addresses not sequential. Rec=%x Exp=%x\n", zap_test->o_wb_adr, saved_adr + 4);
                                         end_nxt = 4;
@@ -193,7 +196,7 @@ int main(int argc, char** argv, char** env) {
                             }
                     }
 
-                    if ( zap_test->o_wb_cti == 2 && zap_test->i_wb_ack ) 
+                    if ( zap_test->o_wb_cti == 2 && zap_test->i_wb_ack )
                     {
                         seq       = 1;
                         saved_adr = zap_test->o_wb_adr;
@@ -216,7 +219,7 @@ int main(int argc, char** argv, char** env) {
             {
                 printf("%c", zap_test->UART_SR_0);
 
-                if ( (zap_test->UART_SR_0 != word0[uart0_ctr]) || (uart0_ctr >= strlen(word0)) ) 
+                if ( (zap_test->UART_SR_0 != word0[uart0_ctr]) || (uart0_ctr >= strlen(word0)) )
                 {
                         printf("Error : UART character mismatch or Overflow. Rcvd=%c Exp=%c\n", zap_test->UART_SR_0, word0[uart0_ctr]);
                         end_nxt = 7;
@@ -236,7 +239,7 @@ int main(int argc, char** argv, char** env) {
                 }
 
                 uart1_ctr++;
-           }        
+           }
 
             // Run memory checks and register checks.
 
@@ -245,14 +248,14 @@ int main(int argc, char** argv, char** env) {
                     zap_test->i_mem[j] = mem[j];
             }
 
-            if ( zap_test->o_sim_err && !zap_test->i_reset ) 
+            if ( zap_test->o_sim_err && !zap_test->i_reset )
             {
                     printf("Error : Register/memory mismatch.\n");
                     end_nxt = 6;
-            } 
+            }
             else if ( zap_test->o_sim_ok && !zap_test->i_reset )
             {
-                        if ( strcmp(argv[2], "uart") != 0 ) 
+                        if ( strcmp(argv[2], "uart") != 0 )
                         {
                                 printf("%sOK : Simulation passed!\n%s", KGRN, KNRM);
                                 zap_test->final();
@@ -270,7 +273,7 @@ int main(int argc, char** argv, char** env) {
                                 {
                                         printf("Error : word[x] not printed correctly on UARTx.");
                                         end_nxt = 9;
-                                } 
+                                }
                         }
             }
         } // rising edge of clock
