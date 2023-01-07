@@ -75,7 +75,8 @@ localparam IDLE             = 0;
 localparam S1               = 1;
 localparam S2               = 2;
 localparam S3               = 3;
-localparam NUMBER_OF_STATES = 4;
+localparam S4               = 4;
+localparam NUMBER_OF_STATES = 5;
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -242,6 +243,8 @@ end
 
 always_comb
 begin
+        logic tmp_sat;
+
         old_nozero_nxt = old_nozero_ff;
         o_nozero       = 1'd0;
         o_busy         = 1'd1;
@@ -249,6 +252,7 @@ begin
         state_nxt      = state_ff;
         x_nxt          = x_ff;
         o_sat          = 1'd0;
+        tmp_sat        = 1'd0;
 
         case ( state_ff )
                 IDLE:
@@ -299,31 +303,7 @@ begin
                 S2:
                 begin
                         // 3 input adder.
-                        state_nxt = S3;
                         x_nxt     = (x_ff[63:0]) + (prod_ab << 32'd32) + {i_rh, i_rn};
-                end
-
-                S3:
-                begin
-                        state_nxt  = IDLE;
-
-                        // If take_upper=1, discard lower 16-bit.
-                        x_nxt = take_upper ? x_ff >>> 32'd16 : x_ff;
-
-                        // Is this the first or second portion of the long multiply.
-                        o_rd  = higher ? x_nxt[63:32] : x_nxt[31:0];
-
-                        // Record if older was not zero.
-                        if ( !higher )
-                                old_nozero_nxt = |x_nxt[31:0]; // 0x1 - Older was not zero. 0x0 - Older was zero.
-
-                        o_busy     = 1'd0;
-
-                        // During higher operation, override setting of zero flag IF lower value was non-zero.
-                        if ( higher && old_nozero_ff )
-                        begin
-                                o_nozero = 1'd1;
-                        end
 
                         // 64-bit MAC with saturation. For long DSP MAC.
                         if ( i_alu_operation_ff == OP_SMLAL00L   ||
@@ -335,11 +315,46 @@ begin
                              i_alu_operation_ff == OP_SMLAL10H   ||
                              i_alu_operation_ff == OP_SMLAL11H  )
                         begin
-                                o_sat = ( x_nxt[63] != x_ff[63] && x_ff[63] != i_rh[31] ) ? 1'd1 : 1'd0;
+                                tmp_sat = ( x_nxt[63] != x_ff[63] && x_ff[63] != i_rh[31] ) ? 1'd1 : 1'd0;
                         end
                         else
-                        begin   // Add sat. Short DSP MAC.
-                                o_sat = ( x_nxt[31] != x_ff[31] && x_ff[31] == i_rn[31] ) ? 1'd1 : 1'd0;
+                        begin
+                                // Add sat. Short DSP MAC.
+                                tmp_sat = ( x_nxt[31] != x_ff[31] && x_ff[31] == i_rn[31] ) ? 1'd1 : 1'd0;
+                        end
+
+                        if ( tmp_sat )
+                                state_nxt = S4;
+                        else
+                                state_nxt = S3;
+                end
+
+                S3, S4:
+                begin
+                        o_sat = state_nxt == S4 ? 1'd1 : 1'd0;
+
+                        state_nxt  = IDLE;
+
+                        // If take_upper=1, discard lower 16-bit.
+                        x_nxt = take_upper ? x_ff >>> 32'd16 : x_ff;
+
+                        // Is this the first or second portion of the long multiply.
+                        o_rd  = higher ? x_nxt[63:32] : x_nxt[31:0];
+
+                        // Record if older was not zero.
+                        if ( !higher )
+                                old_nozero_nxt = |x_nxt[31:0]; // 0x1 - Older was not zero.
+                                                               // 0x0 - Older was zero.
+
+                        o_busy     = 1'd0;
+
+                        //
+                        // During higher operation, override setting of
+                        // zero flag IF lower value was non-zero.
+                        //
+                        if ( higher && old_nozero_ff )
+                        begin
+                                o_nozero = 1'd1;
                         end
                 end
         endcase
