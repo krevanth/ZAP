@@ -141,6 +141,9 @@ localparam [5:0] SMLAL10H = 59;
 localparam [5:0] SMLAL11L = 60;
 localparam [5:0] SMLAL11H = 61;
 
+// FADD - Directly access flags.
+localparam [5:0] FADD     = 62;
+
 // Alias
 localparam [5:0] OP_SMULW0   = 30;
 localparam [5:0] OP_SMULW1   = 32;

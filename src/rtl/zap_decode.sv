@@ -725,7 +725,7 @@ begin
         o_destination_index = {instruction[`ZAP_DP_RD_EXTEND], instruction[`ZAP_DP_RD]};
         o_alu_source        = instruction[22] ? ARCH_CURR_SPSR : ARCH_CPSR;
         o_alu_source[32]    = INDEX_EN;
-        o_alu_operation     = {2'd0, ADD};
+        o_alu_operation     = instruction[22] ? {2'd0, ADD} : FADD;
 end
 endfunction
 

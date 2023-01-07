@@ -7,6 +7,7 @@
 .set FLAG_V,         0x10000000
 .set FLAG_NorFLAG_V, 0x90000000
 .set FLAG_CorFLAG_V, 0x30000000
+.set FLAG_Q,         0x08000000
 
 @ CPSR mode masks
 .set MODE_USR, 0x10
@@ -2236,7 +2237,46 @@ _Reset:
         f537:
                 m_exit 537
 
+        ///////////////////////////////////////////////////////////////////////
+
         f538:
+                ldr r1,=0xFFFFFFFF
+                ldr r2,=0xFFFFFFFF
+                ldr r3,=0x7FFFFFFF
+
+                @ Set overflow for all these.
+                smlabb r0, r1, r2, r3
+
+                mrs r4, cpsr
+                tst r4, #0x08000000
+                beq f539
+                msr cpsr_f, #0x000000
+
+                smlatt r0, r1, r2, r3
+
+                mrs r4, cpsr
+                tst r4, #0x08000000
+                beq f539
+                msr cpsr_f, #0x000000
+
+                smlatb r0, r1, r2, r3
+
+                mrs r4, cpsr
+                tst r4, #0x08000000
+                beq f539
+                msr cpsr_f, #0x000000
+
+                smlabt r0, r1, r2, r3
+
+                mrs r4, cpsr
+                tst r4, #0x08000000
+                beq f539
+                msr cpsr_f, #0x000000
+                b f540
+        f539:
+                m_exit 539              
+
+        f540:
         vmult_passed:
 
    here: b here

@@ -701,24 +701,25 @@ begin: alu_result
         logic n,z,c,v;
         logic [31:0] exp_mask;
 
+        // Default values.
         op        = 0;
         {n,z,c,v} = 0;
         exp_mask  = 0;
-
-        // Default value.
         tmp_flags = flags_ff;
 
         // If it is a logical instruction.
-        if (            opcode == {2'd0, AND}     ||
-                        opcode == {2'd0, EOR}     ||
-                        opcode == {2'd0, MOV}     ||
-                        opcode == {  SAT_MOV}     ||
-                        opcode == {2'd0, MVN}     ||
-                        opcode == {2'd0, BIC}     ||
-                        opcode == {2'd0, ORR}     ||
-                        opcode == {2'd0, TST}     ||
-                        opcode == {2'd0, TEQ}
-                )
+        if
+        (
+                opcode == {2'd0, AND}     ||
+                opcode == {2'd0, EOR}     ||
+                opcode == {2'd0, MOV}     ||
+                opcode == {  SAT_MOV}     ||
+                opcode == {2'd0, MVN}     ||
+                opcode == {2'd0, BIC}     ||
+                opcode == {2'd0, ORR}     ||
+                opcode == {2'd0, TST}     ||
+                opcode == {2'd0, TEQ}
+        )
         begin
                 // Call the logical processing function.
                 {tmp_flags[31:28], tmp_sum} = process_logical_instructions (
@@ -747,7 +748,7 @@ begin: alu_result
         // MMOV moves to SPSR and does not flush the pipeline. (MSR to SPSR)
         //
         else if ( opcode == {1'd0, FMOV} || opcode == {1'd0, MMOV} )
-        begin: fmov_mmov
+        begin
                 exp_mask  =  {{8{rn[3]}},{8{rn[2]}},{8{rn[1]}},{8{rn[0]}}};
                 tmp_sum   =  {32{1'dx}};
 
@@ -756,12 +757,16 @@ begin: alu_result
                         case ( opcode )
                         {1'd0, FMOV}: tmp_flags[i] = exp_mask[i] ? rm[i] : flags_ff[i];
                         {1'd0, MMOV}: tmp_sum[i]   = exp_mask[i] ? rm[i] : i_mem_srcdest_value_ff[i];
-                        default     : {tmp_flags, tmp_sum} = {64{1'dx}};
+                        default     : {tmp_flags, tmp_sum} = {64{1'dx}}; // Never happens !
                         endcase
                 end
         end
+        else if ( opcode == FADD )
+        begin
+                tmp_sum = flags_ff;
+        end
         else
-        begin: blk3
+        begin
                 op         = opcode;
 
                 // Assign output of adder to flags after some minimal logic.
