@@ -536,7 +536,12 @@ assign o_data_wb_adr_check =  {postalu1_address_ff[31:2], 2'd0};
 assign o_data_wb_we_check  =   postalu1_data_wb_we && postalu1_data_wb_cyc;
 assign o_data_wb_re_check  =  !postalu1_data_wb_we && postalu1_data_wb_cyc;
 assign o_code_stall        =   code_stall;
-assign o_dc_reg_idx        =   64'd1 << {58'd0, postalu_mem_srcdest_index_ff};
+
+always_comb
+begin
+        o_dc_reg_idx                               = 64'd0;
+        o_dc_reg_idx[postalu_mem_srcdest_index_ff] = 1'd1;
+end
 
 localparam [31:0] MIN_SAT = {1'd1, {31{1'd0}}}; // Smallest -ve value.
 localparam [31:0] MAX_SAT = {1'd0, {31{1'd1}}}; // Largest +ve value.

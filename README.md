@@ -22,10 +22,10 @@ The default processor specification is as follows (The table below is based on d
 | Address Width             | 32                                                                                                                                                                                                                         |
 | Virtual Address Width     | 32                                                                                                                                                                                                                         |
 | Instruction Set Versions  | V5TE (1999)<br/>V5 32-bit instruction set.<br/>V5T 16-bit instruction set. Can be switched to V4T by setting bit 14 of CP15 register 1<br/>V5E DSP extensions.                                                             |
-| L1 I-Cache                | 16KB Direct Mapped VIVT Cache.<br/>64 Byte Cache Line                                                                                                                                                                      |
-| L1 D-Cache                | 16KB Direct Mapped VIVT Cache<br>64 Byte Cache Line                                                                                                                                                                        |
-| I-TLB Structure           | 4 x Direct mapped 128 entries, one direct mapped TLB per page size.                                                                                                                                                        |
-| D-TLB Structure           | 4 x Direct mapped 128 entries, one direct mapped TLB per page size.                                                                                                                                                        |
+| L1 I-Cache                | 8KB Direct Mapped VIVT Cache.<br/>64 Byte Cache Line                                                                                                                                                                       |
+| L1 D-Cache                | 8KB Direct Mapped VIVT Cache<br>64 Byte Cache Line                                                                                                                                                                         |
+| I-TLB Structure           | 4 x Direct mapped, one direct mapped TLB per page size. 4 entries for 1MB pages, 8 entries for 64KB pages, 16 entries for 4KB pages and 32 entries for 1KB pages. Each page size has a unique hardware buffer.             |
+| D-TLB Structure           | 4 x Direct mapped, one direct mapped TLB per page size. 4 entries for 1MB pages, 8 entries for 64KB pages, 16 entries for 4KB pages and 32 entries for 1KB pages. Each page size has a unique hardware buffer.             |
 | Branch Prediction         | Direct Mapped Bimodal Predictor. <br/>Direct Mapped BTB.<br>1K entries in T state (16-bit instructions).<br>512 entries in 32-bit instruction state.                                                                       |
 | RAS Depth                 | 4 deep return address stack.                                                                                                                                                                                               |
 | Branch latency            | 12 cycles (wrong prediction or unrecognized branch)<br>3 cycles (taken, correctly predicted)<br>1 cycle (not-taken, correctly predicted)<br>12 cycles (32-bit/16-bit switch)<br>18 cycles (Exception/Interrupt Entry/Exit) |
@@ -495,18 +495,18 @@ Note that all parameters should be 2^n. Cache size should be multiple of line si
 | RESET_VECTOR                | 0                                  | Initial PC out of reset. Often, it is OK to leave it with the default value.              |
 | CPSR_INIT                   | {24'd0, 1'd1, 1'd, 1'd0, 5'b10011} | Initial CPSR out of reset. Often, it is OK to leave it with the default value.            |
 | BE\_32\_ENABLE              | 0                                  | Enable BE-32 Big Endian Mode. Active high. Applies to I and D fetches.                    |
-| BP\_ENTRIES                 | 1024                               | Predictor RAM depth. Each RAM row also contains the branch target address.                |
+| BP\_ENTRIES                 | 512                                | Predictor RAM depth. Each RAM row also contains the branch target address.                |
 | FIFO\_DEPTH                 | 16                                 | Command FIFO depth.                                                                       |
-| DATA\_SECTION\_TLB\_ENTRIES | 128                                | Section TLB entries (Data).                                                               |
-| DATA\_LPAGE\_TLB\_ENTRIES   | 128                                | Large page TLB entries (Data).                                                            |
-| DATA\_SPAGE\_TLB\_ENTRIES   | 128                                | Small page TLB entries (Data).                                                            |
-| DATA\_FPAGE\_TLB\_ENTRIES   | 128                                | Tiny page TLB entries (Data).                                                             |
-| DATA\_CACHE\_SIZE           | 16384                              | Cache size in bytes. Should be at least 16 x line size. Cannot exceed 64KB.               |
-| CODE\_SECTION\_TLB\_ENTRIES | 128                                | Section TLB entries.                                                                      |
-| CODE\_LPAGE\_TLB\_ENTRIES   | 128                                | Large page TLB entries.                                                                   |
-| CODE\_SPAGE\_TLB\_ENTRIES   | 128                                | Small page TLB entries.                                                                   |
-| CODE\_FPAGE\_TLB\_ENTRIES   | 128                                | Tiny page TLB entries.                                                                    |
-| CODE\_CACHE\_SIZE           | 16384                              | Cache size in bytes. Should be at least 16 x line size. Cannot exceed 64KB.               |
+| DATA\_SECTION\_TLB\_ENTRIES | 4                                  | Section TLB entries (Data).                                                               |
+| DATA\_LPAGE\_TLB\_ENTRIES   | 8                                  | Large page TLB entries (Data).                                                            |
+| DATA\_SPAGE\_TLB\_ENTRIES   | 16                                 | Small page TLB entries (Data).                                                            |
+| DATA\_FPAGE\_TLB\_ENTRIES   | 32                                 | Tiny page TLB entries (Data).                                                             |
+| DATA\_CACHE\_SIZE           | 8192                               | Cache size in bytes. Should be at least 16 x line size. Cannot exceed 64KB.               |
+| CODE\_SECTION\_TLB\_ENTRIES | 4                                  | Section TLB entries.                                                                      |
+| CODE\_LPAGE\_TLB\_ENTRIES   | 8                                  | Large page TLB entries.                                                                   |
+| CODE\_SPAGE\_TLB\_ENTRIES   | 16                                 | Small page TLB entries.                                                                   |
+| CODE\_FPAGE\_TLB\_ENTRIES   | 32                                 | Tiny page TLB entries.                                                                    |
+| CODE\_CACHE\_SIZE           | 8192                               | Cache size in bytes. Should be at least 16 x line size. Cannot exceed 64KB.               |
 | DATA\_CACHE\_LINE           | 64                                 | Cache Line for Data (Byte). Keep > 8                                                      |
 | CODE\_CACHE\_LINE           | 64                                 | Cache Line for Code (Byte). Keep > 8                                                      |
 | RAS\_DEPTH                  | 4                                  | Depth of Return Address Stack                                                             |
