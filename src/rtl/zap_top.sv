@@ -60,28 +60,28 @@ parameter bit  [0:0]       BE_32_ENABLE       = 1'd0,
 // BP entries, FIFO depths
 // -----------------------------------
 
-parameter bit  [31:0]       BP_ENTRIES         = 32'd1024, // Predictor depth.
+parameter bit  [31:0]       BP_ENTRIES         = 32'd512,  // Predictor depth.
 parameter bit  [31:0]       FIFO_DEPTH         = 32'd16,   // FIFO depth.
 parameter bit  [31:0]       RAS_DEPTH          = 32'd4,    // Depth of RAS.
 
 // ----------------------------------
 // Data MMU/Cache configuration.
 // ----------------------------------
-parameter bit [31:0] DATA_SECTION_TLB_ENTRIES =  32'd128,  // Section TLB entries.
-parameter bit [31:0] DATA_LPAGE_TLB_ENTRIES   =  32'd128,  // Large page TLB entries.
-parameter bit [31:0] DATA_SPAGE_TLB_ENTRIES   =  32'd128,  // Small page TLB entries.
-parameter bit [31:0] DATA_FPAGE_TLB_ENTRIES   =  32'd128,  // Tiny page TLB entries.
-parameter bit [31:0] DATA_CACHE_SIZE          =  32'd16384,// Cache size in bytes.
+parameter bit [31:0] DATA_SECTION_TLB_ENTRIES =  32'd4,    // Section TLB entries.
+parameter bit [31:0] DATA_LPAGE_TLB_ENTRIES   =  32'd8,    // Large page TLB entries.
+parameter bit [31:0] DATA_SPAGE_TLB_ENTRIES   =  32'd16,   // Small page TLB entries.
+parameter bit [31:0] DATA_FPAGE_TLB_ENTRIES   =  32'd32,   // Tiny page TLB entries.
+parameter bit [31:0] DATA_CACHE_SIZE          =  32'd8192, // Cache size in bytes.
 parameter bit [31:0] DATA_CACHE_LINE          =  32'd64,   // Cache line size in bytes.
 
 // ----------------------------------
 // Code MMU/Cache configuration.
 // ----------------------------------
-parameter bit [31:0] CODE_SECTION_TLB_ENTRIES =  32'd128,  // Section TLB entries.
-parameter bit [31:0] CODE_LPAGE_TLB_ENTRIES   =  32'd128,  // Large page TLB entries.
-parameter bit [31:0] CODE_SPAGE_TLB_ENTRIES   =  32'd128,  // Small page TLB entries.
-parameter bit [31:0] CODE_FPAGE_TLB_ENTRIES   =  32'd128,  // Fine page TLB entries.
-parameter bit [31:0] CODE_CACHE_SIZE          =  32'd16384,// Cache size in bytes.
+parameter bit [31:0] CODE_SECTION_TLB_ENTRIES =  32'd4,    // Section TLB entries.
+parameter bit [31:0] CODE_LPAGE_TLB_ENTRIES   =  32'd8,    // Large page TLB entries.
+parameter bit [31:0] CODE_SPAGE_TLB_ENTRIES   =  32'd16,   // Small page TLB entries.
+parameter bit [31:0] CODE_FPAGE_TLB_ENTRIES   =  32'd32,   // Fine page TLB entries.
+parameter bit [31:0] CODE_CACHE_SIZE          =  32'd8192, // Cache size in bytes.
 parameter bit [31:0] CODE_CACHE_LINE          =  32'd64    // Ccahe line size in bytes.
 
 )(

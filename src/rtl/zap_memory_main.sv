@@ -166,9 +166,14 @@ begin
         else if ( i_data_stall )
         begin
                 // Invalidate when data stall.
-                o_dav_ff          <= 1'd0;
                 o_decompile_valid <= 1'd0;
                 o_uop_last        <= 1'd0;
+                o_und_ff          <= 1'd0;
+                o_irq_ff          <= 1'd0;
+                o_fiq_ff          <= 1'd0;
+                o_swi_ff          <= 1'd0;
+                o_instr_abort_ff  <= 1'd0;
+                o_dav_ff          <= 1'd0;
         end
         else
         begin
@@ -176,15 +181,27 @@ begin
                 o_alu_result_ff       <= i_alu_result_ff;
                 o_flags_ff            <= i_flags_ff;
                 o_mem_srcdest_index_ff<= i_mem_srcdest_index_ff;
-                o_dav_ff              <= i_dav_ff;
                 o_destination_index_ff<= i_destination_index_ff;
                 o_pc_plus_8_ff        <= i_pc_plus_8_ff;
-                o_irq_ff              <= i_irq_ff;
-                o_fiq_ff              <= i_fiq_ff;
-                o_swi_ff              <= i_swi_ff;
-                o_instr_abort_ff      <= i_instr_abort_ff;
+
+                casez    ({i_und_ff, i_fiq_ff, i_irq_ff, i_swi_ff, i_instr_abort_ff})
+                5'b1????: {o_und_ff, o_fiq_ff, o_irq_ff, o_swi_ff, o_instr_abort_ff} <= 5'b10000;
+                5'b01???: {o_und_ff, o_fiq_ff, o_irq_ff, o_swi_ff, o_instr_abort_ff} <= 5'b01000;
+                5'b001??: {o_und_ff, o_fiq_ff, o_irq_ff, o_swi_ff, o_instr_abort_ff} <= 5'b00100;
+                5'b0001?: {o_und_ff, o_fiq_ff, o_irq_ff, o_swi_ff, o_instr_abort_ff} <= 5'b00010;
+                5'b00001: {o_und_ff, o_fiq_ff, o_irq_ff, o_swi_ff, o_instr_abort_ff} <= 5'b00001;
+                5'b00000: {o_und_ff, o_fiq_ff, o_irq_ff, o_swi_ff, o_instr_abort_ff} <= 5'b00000;
+                default : {o_und_ff, o_fiq_ff, o_irq_ff, o_swi_ff, o_instr_abort_ff} <= {5{1'bx}};
+                endcase
+
+                o_dav_ff              <= i_und_ff         ? 1'd0 :
+                                         i_fiq_ff         ? 1'd0 :
+                                         i_irq_ff         ? 1'd0 :
+                                         i_swi_ff         ? 1'd0 :
+                                         i_instr_abort_ff ? 1'd0 :
+                                         i_dav_ff;
+
                 o_mem_load_ff         <= i_mem_load_ff;
-                o_und_ff              <= i_und_ff;
                 o_mem_fault           <= i_mem_fault;
                 mem_rd_data           <= i_mem_rd_data;
 
@@ -227,9 +244,10 @@ always_comb
                                         mem_load_ff2
                                 );
 
+//
 // Memory always loads 32-bit to processor.
 // We will rotate that here as we wish.
-
+//
 function automatic [31:0] transform (
 
         // Data and address.
@@ -251,39 +269,39 @@ begin: transform_function
         transform = 32'd0;
         d         = data;
 
+        // If it's a store, don't bother with the output of this.
+        if ( mem_load_ff == 1'd0 )
+        begin
+                transform = data;
+        end
         // Unsigned byte. Take only lower byte.
-        if ( ubyte == 1'd1 )
+        else if ( ubyte == 1'd1 )
         begin
                 case ( address[1:0] )
-                0: transform = (d >> 0)  & 32'h000000ff;
-                1: transform = (d >> 8)  & 32'h000000ff;
-                2: transform = (d >> 16) & 32'h000000ff;
-                3: transform = (d >> 24) & 32'h000000ff;
+                2'd0: transform = {24'd0, d[7:0]};
+                2'd1: transform = {24'd0, d[15:8]};
+                2'd2: transform = {24'd0, d[23:16]};
+                2'd3: transform = {24'd0, d[31: 24]};
                 endcase
         end
         // Signed byte. Sign extend lower byte.
         else if ( sbyte == 1'd1 )
         begin
-                // Take lower byte.
+                // Take lower byte and sign extend it.
                 case ( address[1:0] )
-                0: transform = (d >> 0)  & 32'h000000ff;
-                1: transform = (d >> 8)  & 32'h000000ff;
-                2: transform = (d >> 16) & 32'h000000ff;
-                3: transform = (d >> 24) & 32'h000000ff;
+                0: transform = {{24{d[7] }},d[7:0]};
+                1: transform = {{24{d[15]}},d[15:8]};
+                2: transform = {{24{d[23]}},d[23:16]};
+                3: transform = {{24{d[31]}},d[31:24]};
                 endcase
-
-                // Sign extend.
-                transform = {{24{transform[7]}},transform[7:0]}; // 24 + 8 = 32
         end
         // Signed half word. Sign extend lower 16-bit.
         else if ( shalf == 1'd1 )
         begin
                 case ( address[1] )
-                0: transform = (d >>  0) & 32'h0000ffff;
-                1: transform = (d >> 16) & 32'h0000ffff;
+                1'd0: transform = {{16{d[15]}},d[15:0]};
+                1'd1: transform = {{16{d[31]}},d[31:16]};
                 endcase
-
-                transform = {{16{transform[15]}}, transform[15:0]}; // 16 + 16 = 32
 
                 if ( o_dav_ff && mem_load_ff2 )
                 begin
@@ -295,8 +313,8 @@ begin: transform_function
         else if ( uhalf == 1'd1 )
         begin
                 case ( address[1] )
-                0: transform = (d >>  0) & 32'h0000ffff;
-                1: transform = (d >> 16) & 32'h0000ffff;
+                1'd0: transform = {16'd0, d[15:0]};
+                1'd1: transform = {16'd0, d[31:16]};
                 endcase
 
                 if ( o_dav_ff && mem_load_ff2 )
@@ -305,21 +323,16 @@ begin: transform_function
                         $info("Warning: Address bit 0 is 1, leads to halfword load as UNPREDICTABLE.");
                 end
         end
-        else // Default. Typically, a word.
+        // Default. Typically, a word.
+        else
         begin
                 // Rotate data based on byte targetted.
                 case ( address[1:0] )
-                2'b00: transform = data;
-                2'b01: transform = data >> 8  | data << 24;
-                2'b10: transform = data >> 16 | data << 16;
-                2'b11: transform = data >> 24 | data << 8;
+                2'b00: transform = {             data [31:0]};
+                2'b01: transform = {data  [7:0], data [31:8]};
+                2'b10: transform = {data [15:0], data[31:16]};
+                2'b11: transform = {data [23:0], data[31:24]};
                 endcase
-        end
-
-        // Override above computation if not a memory load.
-        if ( !mem_load_ff )
-        begin
-                transform = data; // No memory load means pass data on.
         end
 end
 endfunction

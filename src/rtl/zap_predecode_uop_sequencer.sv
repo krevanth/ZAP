@@ -96,7 +96,6 @@ logic        store               ;
 
 logic          unused;
 logic  [11:0]  oc_offset;                  // Ones counter offset.
-logic  [4:0]   state_ff, state_nxt;        // State.
 logic  [15:0]  reglist_ff, reglist_nxt;    // Register list.
 logic  [31:0]  const_ff, const_nxt;        // For BLX - const reg.
 
@@ -108,29 +107,31 @@ assign oc_offset = ones_counter(i_instruction[15:0]);
 
 ///////////////////////////////////////////////////////////////////////////////
 
-// States.
-localparam bit [4:0] IDLE           = 5'd0;
-localparam bit [4:0] MEMOP          = 5'd1;
-localparam bit [4:0] WRITE_PC       = 5'd2;
-localparam bit [4:0] SWAP1          = 5'd3;
-localparam bit [4:0] SWAP2          = 5'd4;
-localparam bit [4:0] LMULT_BUSY     = 5'd5;
-localparam bit [4:0] BL_S1          = 5'd6;
-localparam bit [4:0] SWAP3          = 5'd7;
-localparam bit [4:0] BLX1_STATE_S0  = 5'd8;
-localparam bit [4:0] BLX1_STATE_S1  = 5'd9;
-localparam bit [4:0] BLX1_STATE_S2  = 5'd10;
-localparam bit [4:0] BLX1_STATE_S3  = 5'd11;
-localparam bit [4:0] BLX1_STATE_S4  = 5'd12;
-localparam bit [4:0] BLX1_STATE_S5  = 5'd13;
-localparam bit [4:0] BLX2_STATE_S0  = 5'd14;
-localparam bit [4:0] LDRD_STRD_S0   = 5'd16;
-localparam bit [4:0] LDRD_STRD_S1   = 5'd17;
-localparam bit [4:0] LDR_TO_PC_S0   = 5'd18;
-localparam bit [4:0] DEP_WAIT       = 5'd19;
-localparam bit [4:0] DEP_WAIT_1     = 5'd20;
-localparam bit [4:0] DEP_WAIT_2     = 5'd21;
-localparam bit [4:0] DEP_WAIT_3     = 5'd22;
+// States (One Hot).
+enum logic [21:0] {
+        IDLE           = 22'b0000000000000000000001,
+        MEMOP          = 22'b0000000000000000000010,
+        WRITE_PC       = 22'b0000000000000000000100,
+        SWAP1          = 22'b0000000000000000001000,
+        SWAP2          = 22'b0000000000000000010000,
+        LMULT_BUSY     = 22'b0000000000000000100000,
+        BL_S1          = 22'b0000000000000001000000,
+        SWAP3          = 22'b0000000000000010000000,
+        BLX1_STATE_S0  = 22'b0000000000000100000000,
+        BLX1_STATE_S1  = 22'b0000000000001000000000,
+        BLX1_STATE_S2  = 22'b0000000000010000000000,
+        BLX1_STATE_S3  = 22'b0000000000100000000000,
+        BLX1_STATE_S4  = 22'b0000000001000000000000,
+        BLX1_STATE_S5  = 22'b0000000010000000000000,
+        BLX2_STATE_S0  = 22'b0000000100000000000000,
+        LDRD_STRD_S0   = 22'b0000001000000000000000,
+        LDRD_STRD_S1   = 22'b0000010000000000000000,
+        LDR_TO_PC_S0   = 22'b0000100000000000000000,
+        DEP_WAIT       = 22'b0001000000000000000000,
+        DEP_WAIT_1     = 22'b0010000000000000000000,
+        DEP_WAIT_2     = 22'b0100000000000000000000,
+        DEP_WAIT_3     = 22'b1000000000000000000000
+} state_ff, state_nxt;
 
 assign unused = |{pre_index, SWAP3};
 
@@ -782,7 +783,8 @@ begin:blk_a
 
                 default:
                 begin
-                        {state_nxt
+                        {const_nxt,
+                         state_nxt
                         ,o_stall_from_decode
                         ,o_irq
                         ,o_fiq
@@ -793,7 +795,7 @@ begin:blk_a
                         ,o_align
                         ,pri_enc_out
                         ,H
-                        ,rd} = {76{1'dx}};
+                        ,rd} = 'x;
                 end
         endcase
 end

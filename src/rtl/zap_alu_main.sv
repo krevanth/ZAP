@@ -1137,17 +1137,17 @@ begin
         if ( ub || sb ) // Byte oriented.
         begin
                 case ( addr[1:0] ) // Based on address lower 2-bits.
-                0: x = 1;
-                1: x = 1 << 1;
-                2: x = 1 << 2;
-                3: x = 1 << 3;
+                2'd0: x = 4'b0001;
+                2'd1: x = 4'b0010;
+                2'd2: x = 4'b0100;
+                2'd3: x = 4'b1000;
                 endcase
         end
         else if ( uh || sh ) // Halfword. A word = 2 half words.
         begin
                 case ( addr[1] )
-                0: x = 4'b0011;
-                1: x = 4'b1100;
+                1'd0: x = 4'b0011;
+                1'd1: x = 4'b1100;
                 endcase
         end
         else
