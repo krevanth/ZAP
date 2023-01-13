@@ -272,28 +272,12 @@ begin
                 reset;
                 clear;
         end
-        else if ( i_clear_from_writeback )
+        else if ( i_clear_from_writeback || (i_clear_from_alu && !i_data_stall ) )
         begin
                 clear;
-        end
-        else if ( i_data_stall )
-        begin
-                // Preserve state.
-        end
-        else if ( i_clear_from_alu )
-        begin
-                clear;
-        end
-        else if ( i_stall_from_shifter )
-        begin
-                // Preserve state.
-        end
-        else if ( i_stall_from_issue )
-        begin
-                // Preserve state.
         end
         // If no stall, only then update...
-        else
+        else if ( !i_data_stall && !i_stall_from_issue && !i_stall_from_shifter )
         begin
                 o_irq_ff                                <= o_irq_nxt;
                 o_fiq_ff                                <= o_fiq_nxt;

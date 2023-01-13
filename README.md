@@ -1,6 +1,6 @@
 # The ZAP Processor
 
-## V5TE Compatible, 170MHz on Artix-7 FPGA
+## ARMV5TE(1999) Compatible, 170MHz on Artix-7 FPGA
 
 **By**[ **Revanth Kamaraj** ](https://github.com/krevanth)**<**[**revanth91kamaraj@gmail.com**](mailto:revanth91kamaraj@gmail.com)**>**
 

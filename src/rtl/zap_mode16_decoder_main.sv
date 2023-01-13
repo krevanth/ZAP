@@ -116,6 +116,11 @@ zap_mode16_decoder u_zap_mode16_decoder (
         .o_fiq(fiq_nxt)
 );
 
+wire stall =   i_stall_from_shifter ||
+               i_stall_from_issue   ||
+               i_stall_from_decode  ||
+               i_data_stall;
+
 always_ff @ (posedge i_clk)
 begin
         if ( i_reset )
@@ -139,7 +144,7 @@ begin
         begin
                 // Save state
         end
-        else if ( i_clear_from_alu )
+        else if ( i_clear_from_alu && !i_data_stall )
         begin
                 o_instruction_valid <= 1'd0;
                 o_irq <= 0;
@@ -147,13 +152,7 @@ begin
                 o_und <= 0;
                 o_iabort <= 0;
         end
-        else if ( i_stall_from_shifter ||
-                  i_stall_from_issue   ||
-                  i_stall_from_decode  )
-        begin
-                // Save state
-        end
-        else if ( i_clear_from_decode )
+        else if ( i_clear_from_decode && !stall )
         begin
                 o_instruction_valid <= 1'd0;
                 o_irq <= 0;
@@ -161,7 +160,7 @@ begin
                 o_und <= 0;
                 o_iabort <= 0;
         end
-        else // BUG FIX.
+        else if ( !stall )
         begin
                 o_iabort                <= i_iabort;
                 o_instruction_valid     <= instruction_valid_nxt;

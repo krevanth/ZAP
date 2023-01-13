@@ -63,6 +63,10 @@ my $IVL_OPTIONS  = " -Isrc/rtl ";
    $IVL_OPTIONS .= " +define+REG_HIER=$REG_HIER ";
    $IVL_OPTIONS .= " --trace "    if ( @ARGV == 3  );
 
+if ( @ARGV==3 ) {
+        print "Enabling trace...\n";
+}
+
 open(HH, ">obj/ts/$TEST/zap_check.vh") or die "Could not write to obj/ts/$TEST/zap_check.vh";
 
 my $RAM_HIER = "zap_test.mem";

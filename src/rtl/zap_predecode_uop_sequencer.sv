@@ -904,27 +904,16 @@ begin
         begin
                 clear;
         end
-        else if ( i_data_stall )
-        begin
-                // Save state
-        end
-        else if ( i_clear_from_alu )
+        else if ( i_clear_from_alu && !i_data_stall )
         begin
                 clear;
         end
-        else if ( i_stall_from_shifter )
-        begin
-                // Save state
-        end
-        else if ( i_issue_stall )
-        begin
-                // Save state
-        end
-        else if ( i_clear_from_decode )
+        else if ( i_clear_from_decode &&
+                 !i_stall_from_shifter && !i_issue_stall && !i_data_stall )
         begin
                 clear;
         end
-        else
+        else if ( !i_stall_from_shifter && !i_issue_stall && !i_data_stall )
         begin
                 state_ff   <= state_nxt;
                 reglist_ff <= reglist_nxt;
