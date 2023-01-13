@@ -236,27 +236,16 @@ begin
         begin
                 clear;
         end
-        else if ( i_data_stall )
-        begin
-                // Preserve values.
-        end
-        else if ( i_clear_from_alu )
+        else if ( i_clear_from_alu && !i_data_stall )
         begin
                 clear;
         end
-        else if ( i_stall_from_shifter )
-        begin
-                // Preserve values.
-        end
-        else if ( i_stall_from_issue )
-        begin
-                // Preserve values.
-        end
-        else if ( i_clear_from_decode )
+        else if ( i_clear_from_decode && !i_data_stall && !i_stall_from_shifter
+                  && !i_stall_from_issue )
         begin
                 clear;
         end
-        else
+        else if ( !i_data_stall && !i_stall_from_shifter && !i_stall_from_issue )
         begin
                 state_ff   <= state_nxt;
                 cp_word_ff <= cp_word_nxt;

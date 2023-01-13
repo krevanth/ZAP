@@ -116,12 +116,8 @@ begin
         begin
                 clear_unit;
         end
-        else if ( i_code_stall )
-        begin
-                // Save state
-        end
         // If unit is sleeping.
-        else if ( sleep_ff )
+        else if ( sleep_ff && !i_code_stall )
         begin
                 // Nothing valid to be sent.
                 o_valid         <= 1'd0;
@@ -134,7 +130,7 @@ begin
         end
         // Data from memory is valid. This could also be used to signal
         // an instruction access abort.
-        else if ( i_valid )
+        else if ( i_valid && !i_code_stall )
         begin
                 // Instruction aborts occur with i_valid as 1. See NOTE.
                 o_valid         <= 1'd1;
@@ -175,7 +171,7 @@ begin
                 // Prediction state and address.
                 o_pred <= i_pred;
         end
-        else
+        else if ( !i_code_stall )
         begin
                 // Invalidate the output.
                 o_valid        <= 1'd0;

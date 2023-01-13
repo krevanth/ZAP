@@ -1,31 +1,23 @@
-// -----------------------------------------------------------------------------
-// --                                                                         --
-// --    (C) 2016-2022 Revanth Kamaraj (krevanth)                             --
-// --                                                                         --
-// -- --------------------------------------------------------------------------
-// --                                                                         --
-// -- This program is free software; you can redistribute it and/or           --
-// -- modify it under the terms of the GNU General Public License             --
-// -- as published by the Free Software Foundation; either version 2          --
-// -- of the License, or (at your option) any later version.                  --
-// --                                                                         --
-// -- This program is distributed in the hope that it will be useful,         --
-// -- but WITHOUT ANY WARRANTY; without even the implied warranty of          --
-// -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           --
-// -- GNU General Public License for more details.                            --
-// --                                                                         --
-// -- You should have received a copy of the GNU General Public License       --
-// -- along with this program; if not, write to the Free Software             --
-// -- Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA           --
-// -- 02110-1301, USA.                                                        --
-// --                                                                         --
-// -----------------------------------------------------------------------------
-// --                                                                         --
-// --  Examines TLB entries to authorize access.                              --
-// --                                                                         --
-// -----------------------------------------------------------------------------
-
-
+//
+// (C) 2016-2022 Revanth Kamaraj (krevanth)
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+// 02110-1301, USA.
+//
+// Examines TLB entries to authorize access.
+//
 
 module zap_tlb_check (   // ZAP TLB Processing Logic.
 
@@ -60,16 +52,16 @@ o_phy_addr              // Physical address.
 );
 
 // Pass this from top.
-parameter LPAGE_TLB_ENTRIES   = 8;
-parameter SPAGE_TLB_ENTRIES   = 8;
-parameter SECTION_TLB_ENTRIES = 8;
-parameter FPAGE_TLB_ENTRIES   = 8;
+parameter bit [31:0] LPAGE_TLB_ENTRIES   = 32'd8;
+parameter bit [31:0] SPAGE_TLB_ENTRIES   = 32'd8;
+parameter bit [31:0] SECTION_TLB_ENTRIES = 32'd8;
+parameter bit [31:0] FPAGE_TLB_ENTRIES   = 32'd8;
 
 `include "zap_localparams.svh"
 `include "zap_defines.svh"
 
-localparam APSR_BAD = 1'd0;
-localparam APSR_OK  = 1'd1;
+localparam bit APSR_BAD = 1'd0;
+localparam bit APSR_OK  = 1'd1;
 
 input logic                              i_clk;          // Clock signal.
 input logic                              i_clkena;       // Clock enable.

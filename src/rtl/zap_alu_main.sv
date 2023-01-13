@@ -525,11 +525,7 @@ begin
                 // Clear but take CPSR from writeback.
                 clear ( i_cpsr_nxt );
         end
-        else if ( i_data_stall )
-        begin
-                // Preserve values.
-        end
-        else if ( i_data_mem_fault || sleep_ff )
+        else if ( (i_data_mem_fault || sleep_ff) && !i_data_stall )
         begin
                 // Clear and preserve flags. Keep sleeping.
                 clear ( flags_ff );
@@ -539,11 +535,11 @@ begin
                 o_decompile_valid                <= 1'd0;
                 o_uop_last                       <= 1'd0;
         end
-        else if ( o_clear_from_alu )
+        else if ( o_clear_from_alu && !i_data_stall )
         begin
                 clear ( flags_ff );
         end
-        else
+        else if ( !i_data_stall )
         begin
                 // Clock out all flops normally.
 

@@ -1,40 +1,34 @@
-// -----------------------------------------------------------------------------
-// --                                                                         --
-// --    (C) 2016-2022 Revanth Kamaraj (krevanth)                             --
-// --                                                                         --
-// -- --------------------------------------------------------------------------
-// --                                                                         --
-// -- This program is free software; you can redistribute it and/or           --
-// -- modify it under the terms of the GNU General Public License             --
-// -- as published by the Free Software Foundation; either version 2          --
-// -- of the License, or (at your option) any later version.                  --
-// --                                                                         --
-// -- This program is distributed in the hope that it will be useful,         --
-// -- but WITHOUT ANY WARRANTY; without even the implied warranty of          --
-// -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           --
-// -- GNU General Public License for more details.                            --
-// --                                                                         --
-// -- You should have received a copy of the GNU General Public License       --
-// -- along with this program; if not, write to the Free Software             --
-// -- Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA           --
-// -- 02110-1301, USA.                                                        --
-// --                                                                         --
-// -----------------------------------------------------------------------------
-// --                                                                         --
-// --  The ZAP shift unit. Apart from shift, it does value restoration and    --
-// --  multiplication. Value restoration is needed since the ALU (Shift+Op)   --
-// --  is pipelined and we want back to back instructions to execute correctly--
-// --  without losing throughput. Note that there are 3 execution pathways    --
-// --  in this unit but a given time, only one pathway may be active. The 3   --
-// -- execution pathways are: shifter, multiplier, value feedback network.    --
-// --                                                                         --
-// -----------------------------------------------------------------------------
+//
+// (C) 2016-2022 Revanth Kamaraj (krevanth)
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+// 02110-1301, USA.
+//
+//  The ZAP shift unit. Apart from shift, it does value restoration and
+//  multiplication. Value restoration is needed since the ALU (Shift+Op)
+//  is pipelined and we want back to back instructions to execute correctly
+//  without losing throughput. Note that there are 3 execution pathways
+//  in this unit but a given time, only one pathway may be active. The 3
+//  execution pathways are: shifter, multiplier, value feedback network.
+//
 
 module zap_shifter_main
 #(
-        parameter PHY_REGS  = 46,
-        parameter ALU_OPS   = 32,
-        parameter SHIFT_OPS = 5
+        parameter bit [31:0] PHY_REGS  = 32'd46,
+        parameter bit [31:0] ALU_OPS   = 32'd32,
+        parameter bit [31:0] SHIFT_OPS = 32'd5
 )
 (
         // For debug
@@ -254,15 +248,11 @@ begin
         begin
                 clear;
         end
-        else if ( i_data_stall )
-        begin
-                // Preserve values.
-        end
-        else if ( i_clear_from_alu )
+        else if ( i_clear_from_alu && !i_data_stall )
         begin
                 clear;
         end
-        else
+        else if ( !i_data_stall )
         begin
            o_condition_code_ff               <= o_stall_from_shifter ? NV : i_condition_code_ff;
            o_destination_index_ff            <= i_destination_index_ff;
