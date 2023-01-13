@@ -182,7 +182,7 @@ end
 //
 // If the read data should be overriden in st2, then do that. Is fast to do
 // as the encoding is 1-hot. Default case is assigned X for synthesis to
-// optimize.
+// OPTIMIZE. This is OK for FPGA synthesis.
 //
 always_comb
 begin
@@ -190,7 +190,8 @@ begin
         3'b100  : o_rd_data_pre = buffer_st2;
         3'b010  : o_rd_data_pre = buffer_st2_x;
         3'b001  : o_rd_data_pre = mem_data_st2;
-        default : o_rd_data_pre = {WIDTH{1'dx}}; // Synthesis will optimize.
+        default : o_rd_data_pre = {WIDTH{1'dx}}; // Synthesis will OPTIMIZE.
+                                                 // OK for FPGA synthesis.
         endcase
 end
 

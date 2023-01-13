@@ -171,7 +171,9 @@ begin
                 3'b100 : o_rd_data_pre[i*8 +: 8] = buffer_st2   [i*8 +: 8];
                 3'b010 : o_rd_data_pre[i*8 +: 8] = buffer_st2_x [i*8 +: 8];
                 3'b001 : o_rd_data_pre[i*8 +: 8] = mem_data_st2 [i*8 +: 8];
-                default: o_rd_data_pre[i*8 +: 8] = {8{1'dx}}; // Synth will OPT.
+
+                // Synth will OPTIMIZE. OK to do for FPGA synthesis.
+                default: o_rd_data_pre[i*8 +: 8] = {8{1'dx}};
                 endcase
         end
 end

@@ -813,7 +813,9 @@ begin
         3'b001: process_register_specified_shift ( instruction[32:0] );
         default:
         begin
-                // error.
+                // Cannot happen. Synthesis will OPTIMIZE. OK to do for FPGA synth.
+                {o_condition_code,o_alu_operation,o_flag_update,
+                 o_destination_index,o_alu_source, o_mem_srcdest_index} = 'x;
         end
         endcase
 end

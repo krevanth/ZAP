@@ -178,7 +178,11 @@ begin
                                 o_fiq                   = i_fiq;
                                 cp_dav_nxt              = 0;
                                 o_stall_from_decode     = 0;
-                                cp_word_nxt             = {32{1'dx}}; // Don't care. This is perfectly OK - synth will optimize.
+
+
+                                // Don't care. This is perfectly OK - synth will OPTIMIZE.
+                                // OK to do for FPGA synthesis.
+                                cp_word_nxt             = {32{1'dx}};
                         end
                 end
                 default:
@@ -191,7 +195,10 @@ begin
                         o_fiq                   = i_fiq;
                         cp_dav_nxt              = 0;
                         o_stall_from_decode     = 0;
-                        cp_word_nxt             = {32{1'dx}}; // Don't care. This is perfectly OK - synth will optimize.
+
+                        // Don't care. This is perfectly OK - synth will OPTIMIZE.
+                        // OK to do for FPGA synthesis.
+                        cp_word_nxt             = {32{1'dx}};
                 end
                 endcase
 

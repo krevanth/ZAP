@@ -594,7 +594,8 @@ begin
         case ( r_clear_from_alu )
         BRANCH_TARGET     : o_pc_from_alu = w_pc_from_alu_btarget;
         NEXT_INSTR_RESYNC : o_pc_from_alu = w_pc_from_alu_resync;
-        default:            o_pc_from_alu = 'dx; // Synthesis will optimize.
+        default:            o_pc_from_alu = 'dx; // Synthesis will OPTIMIZE.
+                                                 // OK to do for FPGA synthesis.
         endcase
 end
 

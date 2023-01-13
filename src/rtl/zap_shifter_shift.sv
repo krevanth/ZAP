@@ -113,9 +113,16 @@ begin
                         end
                 end
 
-                default: // For lint.
+                default:
                 begin
-                        // Default values are assigned at the top.
+                        // Should never happen
+                        // Synthesis will OPTIMIZE. OK to do for FPGA synthesis.
+
+                       {asr_res,
+                        asr_res_fin,
+                        o_result,
+                        o_carry,
+                        o_sat} = 'x;
                 end
         endcase
 end

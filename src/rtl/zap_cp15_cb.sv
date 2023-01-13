@@ -203,6 +203,8 @@ begin
         65536: xCACHE_TYPE_WORD[0][8:6] = 3'd7;
         default:
         begin
+                // Cannot happen - assign X to OPTIMIZE. OK to do for FPGA synth.
+                xCACHE_TYPE_WORD[0][8:6] = {3{1'dx}};
                 assert(ONLY_CORE) else $fatal(2, "Code cache size not in range.");
         end
         endcase
@@ -230,6 +232,8 @@ begin
         65536: xCACHE_TYPE_WORD[1][8:6] = 3'd7;
         default:
         begin
+                // Cannot happen - assign X to OPTIMIZE. OK to do for FPGA synth.
+                xCACHE_TYPE_WORD[1][8:6] = {3{1'dx}};
                 assert(ONLY_CORE) else $fatal(2, "Data cache size not in range.");
         end
         endcase

@@ -191,6 +191,7 @@ begin
                 5'b0001?: {o_und_ff, o_fiq_ff, o_irq_ff, o_swi_ff, o_instr_abort_ff} <= 5'b00010;
                 5'b00001: {o_und_ff, o_fiq_ff, o_irq_ff, o_swi_ff, o_instr_abort_ff} <= 5'b00001;
                 5'b00000: {o_und_ff, o_fiq_ff, o_irq_ff, o_swi_ff, o_instr_abort_ff} <= 5'b00000;
+                // Synthesis will OPTIMIZE. OK to do for FPGA synthesis.
                 default : {o_und_ff, o_fiq_ff, o_irq_ff, o_swi_ff, o_instr_abort_ff} <= {5{1'bx}};
                 endcase
 
