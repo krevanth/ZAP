@@ -26,12 +26,24 @@ The default processor specification is as follows (The table below is based on d
 | L1 D-Cache                | 8KB Direct Mapped VIVT Cache<br>64 Byte Cache Line                                                                                                                                                                         |
 | I-TLB Structure           | 4 x Direct mapped, one direct mapped TLB per page size. 4 entries for 1MB pages, 8 entries for 64KB pages, 16 entries for 4KB pages and 32 entries for 1KB pages. Each page size has a unique hardware buffer.             |
 | D-TLB Structure           | 4 x Direct mapped, one direct mapped TLB per page size. 4 entries for 1MB pages, 8 entries for 64KB pages, 16 entries for 4KB pages and 32 entries for 1KB pages. Each page size has a unique hardware buffer.             |
-| Branch Prediction         | Direct Mapped Bimodal Predictor. <br/>Direct Mapped BTB.<br>1K entries in T state (16-bit instructions).<br>512 entries in 32-bit instruction state.                                                                       |
+| Branch Prediction         | Direct Mapped Bimodal Predictor. <br/>Direct Mapped BTB.<br>512 entries in T state (16-bit instructions).<br>256 entries in 32-bit instruction state.                                                                      |
 | RAS Depth                 | 4 deep return address stack.                                                                                                                                                                                               |
 | Branch latency            | 12 cycles (wrong prediction or unrecognized branch)<br>3 cycles (taken, correctly predicted)<br>1 cycle (not-taken, correctly predicted)<br>12 cycles (32-bit/16-bit switch)<br>18 cycles (Exception/Interrupt Entry/Exit) |
 | Fetch Buffer              | FIFO, 16 x 32-bit.                                                                                                                                                                                                         |
 | Bus Interface             | Unified 32-Bit Wishbone B3 bus with CTI and BTE signals.<br/>BTE and CTI signals are used only when cache is enabled.                                                                                                      |
-| FPGA Resource Utilization | 23K LUTs<br>116 LUTRAMs<br>15.3K FFs<br>29 BRAMs<br>4 DSP Blocks                                                                                                                                                           |
+
+##### FPGA Utilization Report for the Core + Cache + MMU:
+
+> Note that the MMU is present inside the cache.
+
+| Name                                 | Slice  LUTs | Slice  Registers | F7  Muxes | F8  Muxes | Block  RAM  Tile | DSPs |
+| ------------------------------------ | ----------- | ---------------- | --------- | --------- | ---------------- | ---- |
+| zap_top                              | 21662       | 14289            | 991       | 320       | 22.5             | 4    |
+| genblk1.u_code_cache  (zap_cache)    | 4629        | 4270             | 204       | 5         | 10               | 0    |
+| genblk1.u_data_cache  (zap_dcache)   | 7414        | 4617             | 165       | 25        | 10               | 0    |
+| u_sync  (zap_dual_rank_synchronizer) | 0           | 4                | 0         | 0         | 0                | 0    |
+| u_zap_core  (zap_core)               | 9614        | 5325             | 622       | 290       | 2.5              | 4    |
+| u_zap_wb_merger  (zap_wb_merger)     | 5           | 73               | 0         | 0         | 0                | 0    |
 
 A simplified block diagram of the ZAP pipeline is shown below. Note that ZAP is mostly a single issue scalar processor.
 
@@ -235,7 +247,7 @@ They are described below.
 
 #### 1.2.1. CPU with Cache and MMU (ONLY_CORE=0x0)
 
-##### 1.2.1.1. Cache Maintenance Operations
+##### 1.2.1.1. *Cache Maintenance Operations*
 
 > The recommended way to transfer data to MMIO peripherals is through DMA. The cache can be cleaned by loading an address that maps to the same block. Then, a DMA transfer can be setup from the newly written back memory to the peripheral.
 
@@ -259,15 +271,17 @@ They are described below.
 
 ![Write Burst Access](./mem_write_burst.png)
 
-##### 1.2.2. Uncacheable Operations
+##### 1.2.1.2. *Uncacheable Operations*
 
-- When **ONLY_CORE = 0x0**, the following types of accesses can result in mostly Wishbone **CLASSIC** cycles. Note that few transfers may still be issued as **BLOCK** transfers occasionally.
-  
-  - Access to uncacheable regions.
-  
-  - Cache is turned OFF.
-  
-  - MMU page table walk.
+Software must try to minimize the occurrence of uncacheable operations in performance critical code (See MMIO note in section 1.2.1.1).
+
+When **ONLY_CORE = 0x0**, the following types of accesses can result in mostly Wishbone **CLASSIC** cycles. Note that few transfers may still be issued as **BLOCK** transfers occasionally.
+
+- Access to uncacheable regions.
+
+- Cache is turned OFF.
+
+- MMU page table walk.
 
 ![Peripheral Access](./peripheral_access.png)
 
@@ -371,7 +385,7 @@ Provide a 16KB aligned translation base address here.
 
 - The arch spec allows for a subset of the functions to be implemented for register 7. 
 - These below are valid value supported in ZAP for register 7. Using other operations will result in UNDEFINED operation.
-- A more efficient way to clean the cache is to load another block into it. Since ZAP offers direct mapped caches, this can easily be done. In fact, triggering loading a new block into cache (using an LDR) is the recommended way to clean the cache.
+- A more efficient way to clean the cache is to load another block into it. Since ZAP offers direct mapped caches, this can easily be done. In fact, triggering loading a new block into cache (using an `LDR`) is the recommended way to clean the cache.
 
 | Cache Operation                                      | Opcode2 | CRM    |
 | ---------------------------------------------------- | ------- | ------ |
@@ -467,20 +481,43 @@ ZAP allows the cache and MMU to have these combinations:
 
 ZAP internally implements an internal CP15 coprocessor using its internal bus mechanism. The coprocessor interface is internal to the ZAP processor and is not exposed. Thus, ZAP only has access to its internal coprocessor 15. External coprocessors cannot be attached to the processor.
 
-### 1.5. Performance
+### 1.5. Implementation Specific Behaviors
 
-For single and block transfers, BUS_LATENCY refers to the average number of cycles the bus takes to generate an ACK=1 after seeing a STB=1. 
+The V5TE specification leaves several behaviors of the ISA to be UNPREDICTABLE. Listed below are the implementation specific behaviors of ZAP:
 
-For burst transfers, BUS_LATENCY refers to the initial bus delay (average) before serving the burst, plus the number of cycles for which ACK=0 during the burst (average). 
+Using `r15/pc` as a pointer register for `STR/STM` will result in it reading as 8 bytes ahead. 
 
-The table below assumes a BUS_LATENCY= 20 cycles and a 64 byte cache line. An average bus latency of 20 cycles is a reasonable estimate.
+Any use of `r15/pc` in the instruction as an operand will result in it reading 8 bytes ahead.
 
-| Access Type                                     | Supply Rate                | Type                                                            |
-| ----------------------------------------------- | -------------------------- | --------------------------------------------------------------- |
-| Cacheable Region, CACHE HIT, **ONLY_CORE=0x0**  | 1 cycle/DWORD (Fixed)      | Internal cache hit.                                             |
-| Cacheable Region, CACHE MISS, **ONLY_CORE=0x0** | 3.2 cycles/DWORD (Average) | Wishbone Burst, Registered Feedback Cycles.                     |
-| IO Region (MMIO), **ONLY_CORE=0x0**             | 22 cycles/DWORD (Average)  | Wishbone Single (Occasional Block), Registered Feedback Cycles. |
-| Any, **ONLY_CORE=0x1**                          | 21 cycles/DWORD (Average)  | Wishbone Block, Registered Feedback Cycles.                     |
+Specifying an empty register list for multi-register load and store operations will result in no registers being actually transferred.
+
+Attempting to context restore from `USR/SYS` mode will result in the critical bits (Mode, I, F, T) of the `cpsr` being unchanged, ensuring security.
+
+Specifying the base register to overlap with the transfer list in multi-register load/store operations will behave as expected, with the older value of the register getting transferred.
+
+Encoding `STRH` with bit 6 set as 1 will result in an `STR` being performed. 
+
+Encoding `LDRH/STRH/LDRSB/STRSB` with bits 6:5 set to 0x0 will result in a normal `LDR/STR` from occurring. 
+
+Accessing unaligned `LDRH/STRH` will cause the processor to ignore bit 0 for the memory access. Data will not be rotated. 
+
+Accessing unaligned `LDR` will cause the 32-bit data read at the aligned address to be rotated right. For `STR`, the lower 2-bits of the address are treated as 0x0 for the memory access.
+
+## 1.6. Known Issues
+
+`SWAP` and `SWAPB` do not lock the bus during their individual memory accesses. 
+
+### 1.7. Performance
+
+The bus latency is assumed to be 2 cycles. The assumption for the numbers below is that the bus suffers 2 cycles of latency if the next address is not known beforehand (block/classic). If the address is known beforehand (linear burst), the bus can sustain 1 transfer per cycle. 
+
+| Access Type                                    | ONLY_CORE | Cycles |
+| ---------------------------------------------- | --------- | ------ |
+| Cache Access Hit (16 words)                    | 0x0       | 1      |
+| Cacheline Fetch/Cacheline Writeback (16 words) | 0x0       | 18     |
+| Cacheline Writeback and Fetch (16 words)       | 0x0       | 36     |
+| Access MMIO peripheral (16 words)              | 0x0       | 112    |
+| Access memory/peripheral (16 words)            | 0x1       | 32     |
 
 ## System Integration
 
@@ -515,25 +552,25 @@ Note that all parameters should be 2^n. Cache size should be multiple of line si
 
 **NOTE: The CPU does not support EXTERNAL aborts.**
 
-| Port             | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| i\_clk           | Clock. All logic is clocked on the rising edge of this signal. The CPU is a fully synchronous device.                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| i\_reset         | Active high global reset signal. Fully synchronous.  The assertion and deassertion of this reset must be synchronous to the clock's rising edge. <br/>**RECOMMENDATION**: This should be directly driven from a flip-flop, placed close to the processor.                                                                                                                                                                                                                                                                                               |
-| i\_irq           | Interrupt. Level Sensitive. Signal is internally synced by a dual rank synchronizer. The output of the synchronizer is considered as the single source of truth of the IRQ.                                                                                                                                                                                                                                                                                                                                                                             |
-| i\_fiq           | Fast Interrupt. Level Sensitive. Signal is internally synced by a dual rank synchronizer. The output of the synchronizer is considered as the single source of truth of the FIQ.                                                                                                                                                                                                                                                                                                                                                                        |
-| o\_wb\_cyc       | Wishbone CYC signal. The processor always drives CYC and STB together.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| o\_wb\_stb       | Wishbone STB signal. The processor always drives CYC and STB together.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| o\_wb\_adr[31:0] | Wishbone address signal. The lower 2-bits are always driven to 0x0.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| o\_wb\_we        | Wishbone write enable signal.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| o\_wb\_dat[31:0] | Wishbone data output signal.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| o\_wb\_sel[3:0]  | Wishbone byte select signal.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| o\_wb\_cti[2:0]  | Wishbone CTI (Incrementing Burst and EOB are supported)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| o\_wb\_bte[1:0]  | Wishbone BTE (Always reads "linear" i.e., 0x0)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| i\_wb\_ack       | Wishbone acknowledge signal. <br/>**RECOMMENDATION**: This should come from a flip-flop placed close to the processor.                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| i\_wb\_dat[31:0] | Wishbone data input signal. <br/>**RECOMMENDATION**: This should come from a register placed close to the processor.                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| o_trace[1023:0]  | Generates trace information over a 1024-bit bus. This signal is only intended for DV and is meant to be used only in simulation.<br/>The format of the trace string is as follows:<br/>PC_ADDRESS:\<INSTRUCTION\> WA1\@WDATA2 WA2\@WDATA2 CPSR<br/>(or)<br/>PC_ADDRESS:\<INSTRUCTION\>\* for an instruction whose condition code failed.<br/>If an exception is taken, the words, DABT, FIQ, IRQ, IABT, SWI and UND are display inplace of the above formats. Out of reset, RESET is shown.<br/>When DEBUG_EN is not defined, this port is not defined. |
-| o_trace_valid    | Sample trace information when this signal is 1. This signal is only intended for DV and is meant to be used only in simulation. The signal is not available when DEBUG_EN is not defined.                                                                                                                                                                                                                                                                                                                                                               |
-| o_trace_uop_last | Used to identify a uop end boundary. This signal is intended only for DV and is meant to be used only in simulation. This signal is not available when DEBUG_EN is not defined.                                                                                                                                                                                                                                                                                                                                                                         |
+| Port             | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| i\_clk           | Clock. All logic is clocked on the rising edge of this signal. The CPU is a fully synchronous device.                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| i\_reset         | Active high global reset signal. Fully synchronous.  The assertion and deassertion of this reset must be synchronous to the clock's rising edge. <br/>**RECOMMENDATION**: This should be directly driven from a flip-flop, placed close to the processor.                                                                                                                                                                                                                                                                                                |
+| i\_irq           | Interrupt. Level Sensitive. Signal is internally synced by a dual rank synchronizer. The output of the synchronizer is considered as the single source of truth of the IRQ.                                                                                                                                                                                                                                                                                                                                                                              |
+| i\_fiq           | Fast Interrupt. Level Sensitive. Signal is internally synced by a dual rank synchronizer. The output of the synchronizer is considered as the single source of truth of the FIQ.                                                                                                                                                                                                                                                                                                                                                                         |
+| o\_wb\_cyc       | Wishbone CYC signal. The processor always drives CYC and STB together.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| o\_wb\_stb       | Wishbone STB signal. The processor always drives CYC and STB together.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| o\_wb\_adr[31:0] | Wishbone address signal. The lower 2-bits are always driven to 0x0.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| o\_wb\_we        | Wishbone write enable signal.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| o\_wb\_dat[31:0] | Wishbone data output signal.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| o\_wb\_sel[3:0]  | Wishbone byte select signal.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| o\_wb\_cti[2:0]  | Wishbone CTI (Incrementing Burst and EOB are supported)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| o\_wb\_bte[1:0]  | Wishbone BTE (Always reads "linear" i.e., 0x0)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| i\_wb\_ack       | Wishbone acknowledge signal. <br/>**RECOMMENDATION**: This should come from a flip-flop placed close to the processor.                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| i\_wb\_dat[31:0] | Wishbone data input signal. <br/>**RECOMMENDATION**: This should come from a register placed close to the processor.                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| o_trace[1023:0]  | Generates trace information over a 1024-bit bus. This signal is only intended for DV and is meant to be used only in simulation.<br/>The format of the trace string is as follows:<br/>PC_ADDRESS:\<INSTRUCTION\> WA1\@WDATA2 WA2\@WDATA2 CPSR<br/>(or)<br/>PC_ADDRESS:\<INSTRUCTION\>\* for an instruction whose condition code failed.<br/>If an exception is taken, the words, DABT, FIQ, IRQ, IABT, SWI and UND are display in place of the above formats. Out of reset, RESET is shown.<br/>When DEBUG_EN is not defined, this port is not defined. |
+| o_trace_valid    | Sample trace information when this signal is 1. This signal is only intended for DV and is meant to be used only in simulation. The signal is not available when DEBUG_EN is not defined.                                                                                                                                                                                                                                                                                                                                                                |
+| o_trace_uop_last | Used to identify a uop end boundary. This signal is intended only for DV and is meant to be used only in simulation. This signal is not available when DEBUG_EN is not defined.                                                                                                                                                                                                                                                                                                                                                                          |
 
 ### 2.3. Integration
 
