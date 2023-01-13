@@ -185,14 +185,15 @@ localparam AL =  4'hE;
 localparam NV =  4'hF; // NeVer execute!
 
 // CPSR flags.
-localparam N = 31;
-localparam Z = 30;
-localparam C = 29;
-localparam V = 28;
-localparam Q = 27;
-localparam I = 7;
-localparam F = 6;
-localparam T = 5;
+localparam N             = 31;
+localparam Z             = 30;
+localparam C             = 29;
+localparam V             = 28;
+localparam Q             = 27;
+localparam I             = 7;
+localparam F             = 6;
+localparam T             = 5;
+localparam ZAP_CPSR_MODE = 4;
 
 // For transferring indices/immediates across stages.
 localparam INDEX_EN = 1'd0;

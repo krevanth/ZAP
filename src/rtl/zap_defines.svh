@@ -20,8 +20,6 @@
 `ifndef _ZAP_DEFINES_VH_
 `define _ZAP_DEFINES_VH_
 
-`define ZAP_CPSR_MODE               4:0     // CPSR bits.
-
 `define ZAP_BASE_EXTEND             33      // Base address register for MEMOPS.
 `define ZAP_BASE                    19:16   // Base address extend.
 
@@ -38,7 +36,7 @@
 `define ZAP_DP_RA_EXTEND            34      // ALU source extend. DDI0100E rn.
 
 `define ZAP_OPCODE_EXTEND           35      // To differentiate lower and higher for multiplication ->
-                                        // 1 means higher, 0 lower.
+                                            // 1 means higher, 0 lower.
 
 // Instruction fields in CP15 instruction.
 `define ZAP_OPCODE_2                7:5

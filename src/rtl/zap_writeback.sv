@@ -333,7 +333,7 @@ begin: register_file_write
                 wa1                     = PHY_ABT_R14;
                 wa2                     = PHY_ABT_SPSR;
                 wdata2                  = cpsr_ff;
-                cpsr_nxt[`ZAP_CPSR_MODE] = ABT;
+                cpsr_nxt[ZAP_CPSR_MODE:0] = ABT;
 
                 //
                 // Disable IRQ interrupts when entering exception.
@@ -348,7 +348,7 @@ begin: register_file_write
                 wa1                     = PHY_FIQ_R14;
                 wa2                     = PHY_FIQ_SPSR;
                 wdata2                  = cpsr_ff;
-                cpsr_nxt[`ZAP_CPSR_MODE] = FIQ;
+                cpsr_nxt[ZAP_CPSR_MODE:0] = FIQ;
                 cpsr_nxt[F]             = 1'd1; // Mask FIQ interrupts.
 
                 chmod ();
@@ -360,7 +360,7 @@ begin: register_file_write
                 wa1                     = PHY_IRQ_R14;
                 wa2                     = PHY_IRQ_SPSR;
                 wdata2                  = cpsr_ff;
-                cpsr_nxt[`ZAP_CPSR_MODE] = IRQ;
+                cpsr_nxt[ZAP_CPSR_MODE:0] = IRQ;
 
                 chmod ();
         end
@@ -371,7 +371,7 @@ begin: register_file_write
                 wa1    = PHY_ABT_R14;
                 wa2    = PHY_ABT_SPSR;
                 wdata2 = cpsr_ff;
-                cpsr_nxt[`ZAP_CPSR_MODE]  = ABT;
+                cpsr_nxt[ZAP_CPSR_MODE:0]  = ABT;
 
                 chmod ();
         end
@@ -382,7 +382,7 @@ begin: register_file_write
                 wa1                     = PHY_SVC_R14;
                 wa2                     = PHY_SVC_SPSR;
                 wdata2                  = cpsr_ff;
-                cpsr_nxt[`ZAP_CPSR_MODE] = SVC;
+                cpsr_nxt[ZAP_CPSR_MODE:0] = SVC;
 
                 chmod ();
         end
@@ -393,7 +393,7 @@ begin: register_file_write
                 wa1                     = PHY_UND_R14;
                 wa2                     = PHY_UND_SPSR;
                 wdata2                  = cpsr_ff;
-                cpsr_nxt[`ZAP_CPSR_MODE] = UND;
+                cpsr_nxt[ZAP_CPSR_MODE:0] = UND;
 
                 chmod ();
         end

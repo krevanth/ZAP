@@ -146,7 +146,7 @@ logic [31:0]     wb_adr;
 logic [2:0]      wb_cti;
 logic            wb_ack;
 logic            cpu_mmu_en;
-logic [`ZAP_CPSR_MODE] cpu_cpsr;
+logic [ZAP_CPSR_MODE:0] cpu_cpsr;
 logic            cpu_mem_translate;
 logic [31:0]     cpu_daddr, cpu_daddr_nxt, cpu_daddr_check;
 logic [31:0]     cpu_iaddr, cpu_iaddr_nxt, cpu_iaddr_check;
@@ -290,7 +290,7 @@ zap_core #(
 .o_instr_wb_adr_nxt     (cpu_iaddr_nxt),
 // PC addr nxt. Drives read address of code tag RAM.
 .o_instr_wb_adr_check   (cpu_iaddr_check),
-.o_cpsr                 (cpu_cpsr[`ZAP_CPSR_MODE]),
+.o_cpsr                 (cpu_cpsr[ZAP_CPSR_MODE:0]),
 .o_dc_reg_idx           (dc_rreg_idx),
 
 .i_dc_reg_idx           (!ONLY_CORE ? dc_wreg_idx : '0),
@@ -541,7 +541,7 @@ u_data_cache (
 .i_cache_en             (cpu_dc_en),
 .i_cache_inv_req        (cpu_dc_inv),
 .i_cache_clean_req      (cpu_dc_clean),
-.i_cpsr                 (cpu_mem_translate ? USR : cpu_cpsr[`ZAP_CPSR_MODE]),
+.i_cpsr                 (cpu_mem_translate ? USR : cpu_cpsr[ZAP_CPSR_MODE:0]),
 .i_sr                   (cpu_sr),
 .i_baddr                (cpu_baddr),
 .i_dac_reg              (cpu_dac_reg),
@@ -610,7 +610,7 @@ u_code_cache (
 .i_cache_clean_req (cpu_ic_clean),
 .o_cache_inv_done  (ic_inv_done),
 .o_cache_clean_done(ic_clean_done),
-.i_cpsr            (cpu_mem_translate ? USR : cpu_cpsr[`ZAP_CPSR_MODE]),
+.i_cpsr            (cpu_mem_translate ? USR : cpu_cpsr[ZAP_CPSR_MODE:0]),
 .i_sr              (cpu_sr),
 .i_baddr           (cpu_baddr),
 .i_dac_reg         (cpu_dac_reg),

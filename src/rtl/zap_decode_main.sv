@@ -78,7 +78,7 @@ module zap_decode_main #(
         input logic  [31:0]                      i_pc_plus_8_ff,
 
         // CPU mode. Taken from CPSR.
-        input   logic    [`ZAP_CPSR_MODE]        i_cpsr_ff_mode, // Mode.
+        input   logic    [ZAP_CPSR_MODE:0]        i_cpsr_ff_mode, // Mode.
 
         // Instruction input.
         input     logic  [35:0]                  i_instruction,

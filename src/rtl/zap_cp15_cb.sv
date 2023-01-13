@@ -338,7 +338,7 @@ begin
                         // Coprocessor instruction.
                         if ( i_cp_dav && i_cp_word[`ZAP_CP_ID] == 15 )
                         begin
-                                if ( i_cpsr[`ZAP_CPSR_MODE] != USR )
+                                if ( i_cpsr[ZAP_CPSR_MODE:0] != USR )
                                 begin
                                         // ACTIVATE this block.
                                         state     <= ACTIVE;
@@ -576,7 +576,7 @@ task automatic load_to_cp_reg;
         // Generate CPU register read command. CP write.
         o_reg_en        <= 1'd1;
         o_reg_rd_index  <= translate({2'd0, i_cp_word[15:12]},
-                                     i_cpsr[`ZAP_CPSR_MODE]);
+                                     i_cpsr[ZAP_CPSR_MODE:0]);
         o_reg_wr_index  <= 16;
 endtask
 
@@ -585,7 +585,7 @@ task automatic load_to_cpu_reg;
         // Register write command.
         o_reg_en        <= 1'd1;
         o_reg_wr_index  <= translate( {2'd0, i_cp_word[15:12]},
-                                       i_cpsr[`ZAP_CPSR_MODE] );
+                                       i_cpsr[ZAP_CPSR_MODE:0] );
         //
         // The condition checks for CP WORD = 0 and OPCODE2 = 1 to access the
         // hidden cache type register.

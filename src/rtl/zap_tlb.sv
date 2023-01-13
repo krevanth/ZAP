@@ -45,7 +45,7 @@ input   logic    [31:0]  i_address_nxt,
 input   logic            i_hold,
 
 // CPSR, SR, DAC register.
-input   logic    [`ZAP_CPSR_MODE] i_cpsr,
+input   logic    [ZAP_CPSR_MODE:0] i_cpsr,
 input   logic    [1:0]   i_sr,
 input   logic    [31:0]  i_dac_reg,
 input   logic    [31:0]  i_baddr,

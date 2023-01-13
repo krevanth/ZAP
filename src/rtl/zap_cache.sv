@@ -70,7 +70,7 @@ input   logic            i_cache_clean_req,
 output logic             o_cache_inv_done,
 output  logic            o_cache_clean_done,
 
-input   logic [`ZAP_CPSR_MODE] i_cpsr,
+input   logic [ZAP_CPSR_MODE:0] i_cpsr,
 input   logic [1:0]            i_sr,
 input   logic [31:0]           i_baddr,
 input   logic [31:0]           i_dac_reg,
