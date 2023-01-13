@@ -186,7 +186,9 @@ begin
                         endcase
                 end
 
-                default: // To avoid lint warnings.
+                default:
+                // To workaround verilator lint that fails to detect
+                // all cases have been covered.
                 begin
                 end
         endcase
