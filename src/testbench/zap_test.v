@@ -1,25 +1,21 @@
-// -----------------------------------------------------------------------------
-// --                                                                         --
-// --                   (C) 2016-2022 Revanth Kamaraj (krevanth)              --
-// --                                                                         -- 
-// -- --------------------------------------------------------------------------
-// --                                                                         --
-// -- This program is free software; you can redistribute it and/or           --
-// -- modify it under the terms of the GNU General Public License             --
-// -- as published by the Free Software Foundation; either version 2          --
-// -- of the License, or (at your option) any later version.                  --
-// --                                                                         --
-// -- This program is distributed in the hope that it will be useful,         --
-// -- but WITHOUT ANY WARRANTY; without even the implied warranty of          --
-// -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           --
-// -- GNU General Public License for more details.                            --
-// --                                                                         --
-// -- You should have received a copy of the GNU General Public License       --
-// -- along with this program; if not, write to the Free Software             --
-// -- Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA           --
-// -- 02110-1301, USA.                                                        --
-// --                                                                         --
-// -----------------------------------------------------------------------------
+//
+// (C) 2016-2022 Revanth Kamaraj (krevanth)
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 3
+// of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+// 02110-1301, USA.
+//
 
 //
 // UART0  address space FFFFFFE0 to FFFFFFFF
@@ -27,17 +23,17 @@
 // VIC0   address space FFFFFFA0 to FFFFFFBF
 // UART1  address space FFFFFF80 to FFFFFF9F
 // Timer1 address space FFFFFF60 to FFFFFF7F
-// 
+//
 
 module zap_test (
-        input  wire            i_clk, 
+        input  wire            i_clk,
         input  wire            i_reset,
         input  wire            i_int_sel,
 
         output reg             o_sim_ok = 1'd0,
         output reg             o_sim_err = 1'd0,
-        
-        output reg             o_wb_stb, 
+
+        output reg             o_wb_stb,
         output reg             o_wb_cyc,
         output reg     [31:0]  o_wb_adr,
         output reg     [3:0]   o_wb_sel,
@@ -49,9 +45,9 @@ module zap_test (
 
         input  wire    [7:0]   i_mem [65536-1:0],
 
-        output wire            UART_SR_DAV_0, 
-        output wire            UART_SR_DAV_1, 
-        output wire    [7:0]   UART_SR_0, 
+        output wire            UART_SR_DAV_0,
+        output wire            UART_SR_DAV_1,
+        output wire    [7:0]   UART_SR_0,
         output wire    [7:0]   UART_SR_1
 );
 
@@ -143,14 +139,14 @@ end
 // Create memory for easy analysis.
 always @ (*)
 begin
-        for(int i=0;i<65536;i=i+4) 
+        for(int i=0;i<65536;i=i+4)
                 mem[i/4] = {i_mem[i+3], i_mem[i+2], i_mem[i+1], i_mem[i]};
 end
 
 // UART TX related. Data out of core.
-uart_tx_dumper u_uart_tx_dumper_dev0 (  .i_clk(i_clk), .i_line(o_uart[0]), 
+uart_tx_dumper u_uart_tx_dumper_dev0 (  .i_clk(i_clk), .i_line(o_uart[0]),
                                         .UART_SR_DAV(UART_SR_DAV_0), .UART_SR(UART_SR_0) );
-uart_tx_dumper u_uart_tx_dumper_dev1 (  .i_clk(i_clk), .i_line(o_uart[1]), 
+uart_tx_dumper u_uart_tx_dumper_dev1 (  .i_clk(i_clk), .i_line(o_uart[1]),
                                         .UART_SR_DAV(UART_SR_DAV_1), .UART_SR(UART_SR_1) );
 
 // DUT
@@ -196,7 +192,7 @@ always @ ( posedge i_clk )
 begin
         sim_ctr <= sim_ctr + 1;
 
-        if ( sim_ctr == `MAX_CLOCK_CYCLES )        
+        if ( sim_ctr == `MAX_CLOCK_CYCLES )
         begin
                 o_sim_ok <= 1'd1;
 
@@ -205,7 +201,7 @@ begin
 end
 
 // Expose the CPU registers.
-wire [31:0] r0   =  `REG_HIER.mem[0]; 
+wire [31:0] r0   =  `REG_HIER.mem[0];
 wire [31:0] r1   =  `REG_HIER.mem[1];
 wire [31:0] r2   =  `REG_HIER.mem[2];
 wire [31:0] r3   =  `REG_HIER.mem[3];
@@ -267,12 +263,12 @@ parameter BE_32_ENABLE                  = 0,
 parameter ONLY_CORE                     = 0
 
 )(
-        // Clk and rst 
-        input wire          SYS_CLK, 
-        input wire          SYS_RST, 
+        // Clk and rst
+        input wire          SYS_CLK,
+        input wire          SYS_RST,
 
         // UART 0
-        input  wire         UART0_RXD, 
+        input  wire         UART0_RXD,
         output wire         UART0_TXD,
 
         // UART 1
@@ -283,13 +279,13 @@ parameter ONLY_CORE                     = 0
         input wire          int_sel,
 
         // Remaining IRQs to the interrupt controller.
-        input   wire [27:0] I_IRQ,              
+        input   wire [27:0] I_IRQ,
 
         // Single FIQ input directly to ZAP CPU.
         input   wire        I_FIQ,
 
         // External Wishbone Connection (for RAMs etc).
-        output reg          O_WB_STB, 
+        output reg          O_WB_STB,
         output reg          O_WB_CYC,
         output wire [31:0]  O_WB_DAT,
         output wire [31:0]  O_WB_ADR,
@@ -316,16 +312,16 @@ localparam TIMER1_HI                    = 32'hFFFFFF7F;
 wire            i_clk    = SYS_CLK;
 wire            i_reset  = SYS_RST;
 
-wire [1:0]      uart_in; 
+wire [1:0]      uart_in;
 wire [1:0]      uart_out;
 
 assign          {UART1_TXD, UART0_TXD} = uart_out;
 assign          uart_in = {UART1_RXD, UART0_RXD};
 
-wire            data_wb_cyc; 
-wire            data_wb_stb; 
-reg [31:0]      data_wb_din; 
-reg             data_wb_ack; 
+wire            data_wb_cyc;
+wire            data_wb_stb;
+reg [31:0]      data_wb_din;
+reg             data_wb_ack;
 reg             data_wb_cyc_uart [1:0], data_wb_cyc_timer [1:0], data_wb_cyc_vic;
 reg             data_wb_stb_uart [1:0], data_wb_stb_timer [1:0], data_wb_stb_vic;
 wire [31:0]     data_wb_din_uart [1:0], data_wb_din_timer [1:0], data_wb_din_vic;
@@ -370,36 +366,36 @@ begin:blk1
                 data_wb_cyc_uart[0] = data_wb_cyc;
                 data_wb_stb_uart[0] = data_wb_stb;
                 data_wb_ack        = data_wb_ack_uart[0];
-                data_wb_din        = data_wb_din_uart[0]; 
+                data_wb_din        = data_wb_din_uart[0];
         end
         else if ( data_wb_adr >= TIMER0_LO && data_wb_adr <= TIMER0_HI )  // Timer0 access
         begin
                 data_wb_cyc_timer[0] = data_wb_cyc;
                 data_wb_stb_timer[0] = data_wb_stb;
                 data_wb_ack          = data_wb_ack_timer[0];
-                data_wb_din          = data_wb_din_timer[0]; 
+                data_wb_din          = data_wb_din_timer[0];
         end
         else if ( data_wb_adr >= VIC_LO && data_wb_adr <= VIC_HI )        // VIC access.
         begin
                 data_wb_cyc_vic   = data_wb_cyc;
                 data_wb_stb_vic   = data_wb_stb;
                 data_wb_ack       = data_wb_ack_vic;
-                data_wb_din       = data_wb_din_vic;                
+                data_wb_din       = data_wb_din_vic;
         end
         else if ( data_wb_adr >= UART1_LO && data_wb_adr <= UART1_HI )    // UART1 access
         begin
                 data_wb_cyc_uart[1] = data_wb_cyc;
                 data_wb_stb_uart[1] = data_wb_stb;
                 data_wb_ack        = data_wb_ack_uart[1];
-                data_wb_din        = data_wb_din_uart[1]; 
+                data_wb_din        = data_wb_din_uart[1];
         end
         else if ( data_wb_adr >= TIMER1_LO && data_wb_adr <= TIMER1_HI )  // Timer1 access
         begin
                 data_wb_cyc_timer[1] = data_wb_cyc;
                 data_wb_stb_timer[1] = data_wb_stb;
                 data_wb_ack          = data_wb_ack_timer[1];
-                data_wb_din          = data_wb_din_timer[1]; 
-        end       
+                data_wb_din          = data_wb_din_timer[1];
+        end
         else // External WB access.
         begin
                 O_WB_CYC         = data_wb_cyc;
@@ -429,8 +425,8 @@ zap_top #(
         .CODE_SPAGE_TLB_ENTRIES(CODE_SPAGE_TLB_ENTRIES),
         .CODE_FPAGE_TLB_ENTRIES(CODE_FPAGE_TLB_ENTRIES),
         .CODE_CACHE_SIZE(CODE_CACHE_SIZE)
-) 
-u_zap_top 
+)
+u_zap_top
 (
         .i_clk    (i_clk),
         .i_reset  (i_reset),
@@ -455,10 +451,10 @@ u_zap_top
 
 genvar gi;
 generate
-        for(gi=0;gi<=1;gi=gi+1) 
+        for(gi=0;gi<=1;gi=gi+1)
         begin: uart_gen
                 uart_top u_uart_top (
-                
+
                         // WISHBONE interface
                         .wb_clk_i(i_clk),
                         .wb_rst_i(i_reset),
@@ -471,11 +467,11 @@ generate
                         .wb_sel_i(data_wb_sel),
                         .wb_ack_o(data_wb_ack_uart[gi]),
                         .int_o   (uart_irq[gi]), // Interrupt.
-                        
+
                         // UART signals.
                         .srx_pad_i         (uart_in[gi]),
                         .stx_pad_o         (uart_out[gi]),
-                
+
                         // Tied or open.
                         .rts_pad_o(),
                         .cts_pad_i(1'd0),
@@ -498,7 +494,7 @@ generate
                         .o_wb_ack(data_wb_ack_timer[gi]),
                         .o_irq(timer_irq[gi])               // Interrupt
                 );
-        end 
+        end
 endgenerate
 
 // ===============================
@@ -555,10 +551,10 @@ output  reg                 o_irq
 );
 
 // Timer registers.
-reg [31:0] DEVEN;  
-reg [31:0] DEVPR;  
-reg [31:0] DEVAK;  
-reg [31:0] DEVST;  
+reg [31:0] DEVEN;
+reg [31:0] DEVPR;
+reg [31:0] DEVAK;
+reg [31:0] DEVST;
 
 `define DEVEN TIMER_ENABLE_REGISTER
 `define DEVPR TIMER_LIMIT_REGISTER
@@ -617,9 +613,9 @@ begin
                         begin
                                 o_wb_ack <= 1'd0;
 
-                                if ( i_wb_stb && i_wb_cyc ) 
+                                if ( i_wb_stb && i_wb_cyc )
                                 begin
-                                        if ( i_wb_wen ) 
+                                        if ( i_wb_wen )
                                                 wbstate <= WBWRITE;
                                         else
                                                 wbstate <= WBREAD;
@@ -631,35 +627,35 @@ begin
                                 case(i_wb_adr)
                                 `DEVEN: // DEVEN
                                 begin
-                                        if ( i_wb_sel[0] ) DEVEN[7:0]   <= i_wb_dat >> 0; 
-                                        if ( i_wb_sel[1] ) DEVEN[15:8]  <= i_wb_dat >> 8; 
-                                        if ( i_wb_sel[2] ) DEVEN[23:16] <= i_wb_dat >> 16; 
-                                        if ( i_wb_sel[3] ) DEVEN[31:24] <= i_wb_dat >> 24; 
+                                        if ( i_wb_sel[0] ) DEVEN[7:0]   <= i_wb_dat >> 0;
+                                        if ( i_wb_sel[1] ) DEVEN[15:8]  <= i_wb_dat >> 8;
+                                        if ( i_wb_sel[2] ) DEVEN[23:16] <= i_wb_dat >> 16;
+                                        if ( i_wb_sel[3] ) DEVEN[31:24] <= i_wb_dat >> 24;
                                 end
 
                                 `DEVPR: // DEVPR
                                 begin
-                                        if ( i_wb_sel[0] ) DEVPR[7:0]   <= i_wb_dat >> 0; 
-                                        if ( i_wb_sel[1] ) DEVPR[15:8]  <= i_wb_dat >> 8; 
-                                        if ( i_wb_sel[2] ) DEVPR[23:16] <= i_wb_dat >> 16; 
-                                        if ( i_wb_sel[3] ) DEVPR[31:24] <= i_wb_dat >> 24;      
-                                        
-                                end 
+                                        if ( i_wb_sel[0] ) DEVPR[7:0]   <= i_wb_dat >> 0;
+                                        if ( i_wb_sel[1] ) DEVPR[15:8]  <= i_wb_dat >> 8;
+                                        if ( i_wb_sel[2] ) DEVPR[23:16] <= i_wb_dat >> 16;
+                                        if ( i_wb_sel[3] ) DEVPR[31:24] <= i_wb_dat >> 24;
+
+                                end
 
                                 `DEVAK: // DEVAK
                                 begin
-                                        if ( i_wb_sel[0] ) DEVPR[7:0]   <= i_wb_dat >> 0; 
-                                        if ( i_wb_sel[1] ) DEVPR[15:8]  <= i_wb_dat >> 8; 
-                                        if ( i_wb_sel[2] ) DEVPR[23:16] <= i_wb_dat >> 16; 
-                                        if ( i_wb_sel[3] ) DEVPR[31:24] <= i_wb_dat >> 24;   
+                                        if ( i_wb_sel[0] ) DEVPR[7:0]   <= i_wb_dat >> 0;
+                                        if ( i_wb_sel[1] ) DEVPR[15:8]  <= i_wb_dat >> 8;
+                                        if ( i_wb_sel[2] ) DEVPR[23:16] <= i_wb_dat >> 16;
+                                        if ( i_wb_sel[3] ) DEVPR[31:24] <= i_wb_dat >> 24;
                                 end
 
                                 `DEVST: // DEVST
                                 begin
-                                        if ( i_wb_sel[0] ) DEVST[7:0]   <= i_wb_dat >> 0; 
-                                        if ( i_wb_sel[1] ) DEVST[15:8]  <= i_wb_dat >> 8; 
-                                        if ( i_wb_sel[2] ) DEVST[23:16] <= i_wb_dat >> 16; 
-                                        if ( i_wb_sel[3] ) DEVST[31:24] <= i_wb_dat >> 24;    
+                                        if ( i_wb_sel[0] ) DEVST[7:0]   <= i_wb_dat >> 0;
+                                        if ( i_wb_sel[1] ) DEVST[15:8]  <= i_wb_dat >> 8;
+                                        if ( i_wb_sel[2] ) DEVST[23:16] <= i_wb_dat >> 16;
+                                        if ( i_wb_sel[3] ) DEVST[31:24] <= i_wb_dat >> 24;
                                 end
 
                                 default:
@@ -680,7 +676,7 @@ begin
                                 `DEVPR: o_wb_dat <= DEVPR;
                                 `DEVAK: o_wb_dat <= done;
                                 `DEVST: o_wb_dat <= 32'd0;
-                               default: 
+                               default:
                                         begin
                                                 $display($time, " Error : Illegal register read in %m.");
                                                 $finish;
@@ -701,24 +697,24 @@ begin
                                 o_wb_ack  <= 1'd0;
                                 wbstate   <= IDLE;
                         end
-                endcase                
+                endcase
         end
 end
 
 always @ (posedge i_clk)
 begin
-        if ( i_rst || !enable ) 
+        if ( i_rst || !enable )
         begin
                 ctr     <= 0;
                 done    <= 0;
                 state   <= IDLE;
-        end     
+        end
         else // if enabled
         begin
                 case(state)
                 IDLE:
                 begin
-                        if ( start ) 
+                        if ( start )
                         begin
                                 state <= COUNTING;
                         end
@@ -728,23 +724,23 @@ begin
                 begin
                         ctr <= ctr + 1;
 
-                        if ( ctr == finalval ) 
+                        if ( ctr == finalval )
                         begin
                                 state <= DONE;
-                        end                                
+                        end
                 end
 
                 DONE:
                 begin
                         done <= 1;
 
-                        if ( start ) 
+                        if ( start )
                         begin
                                 done  <= 0;
                                 state <= COUNTING;
                                 ctr   <= 0;
                         end
-                        else if ( clr ) // Acknowledge. 
+                        else if ( clr ) // Acknowledge.
                         begin
                                 done  <= 0;
                                 state <= IDLE;
@@ -758,14 +754,14 @@ end
 endmodule
 
 
-//                                                                            
-// A simple interrupt controller.                                             
-//                                                                            
-// Registers:                                                                 
-// 0x0 - INT_STATUS - Interrupt status as reported by peripherals (sticky).   
-// 0x4 - INT_MASK   - Interrupt mask - setting a bit to 1 masks the interrupt 
-// 0x8 - INT_CLEAR  - Write 1 to a particular bit to clear the interrupt      
-//                    status.                                                 
+//
+// A simple interrupt controller.
+//
+// Registers:
+// 0x0 - INT_STATUS - Interrupt status as reported by peripherals (sticky).
+// 0x4 - INT_MASK   - Interrupt mask - setting a bit to 1 masks the interrupt
+// 0x8 - INT_CLEAR  - Write 1 to a particular bit to clear the interrupt
+//                    status.
 
 module vic #(
         parameter [31:0]        SOURCES                    = 32'd4,
@@ -846,9 +842,9 @@ begin
                         begin
                                 o_wb_ack <= 1'd0;
 
-                                if ( i_wb_stb && i_wb_cyc ) 
+                                if ( i_wb_stb && i_wb_cyc )
                                 begin
-                                        if ( i_wb_wen ) 
+                                        if ( i_wb_wen )
                                                 wbstate <= WBWRITE;
                                         else
                                                 wbstate <= WBREAD;
@@ -861,24 +857,24 @@ begin
 
                                 `INT_MASK: // INT_MASK
                                 begin
-                                        if ( i_wb_sel[0] ) INT_MASK[7:0]   <= i_wb_dat >> 0; 
-                                        if ( i_wb_sel[1] ) INT_MASK[15:8]  <= i_wb_dat >> 8; 
-                                        if ( i_wb_sel[2] ) INT_MASK[23:16] <= i_wb_dat >> 16; 
-                                        if ( i_wb_sel[3] ) INT_MASK[31:24] <= i_wb_dat >> 24;      
-                                        
-                                end 
+                                        if ( i_wb_sel[0] ) INT_MASK[7:0]   <= i_wb_dat >> 0;
+                                        if ( i_wb_sel[1] ) INT_MASK[15:8]  <= i_wb_dat >> 8;
+                                        if ( i_wb_sel[2] ) INT_MASK[23:16] <= i_wb_dat >> 16;
+                                        if ( i_wb_sel[3] ) INT_MASK[31:24] <= i_wb_dat >> 24;
+
+                                end
 
                                 `INT_CLEAR: // INT_CLEAR
                                 begin: blk22
                                         integer i;
 
-                                        if ( i_wb_sel[0] ) for(i=0; i <=7;i=i+1) if ( i_wb_dat[i] ) INT_STATUS[i] <= 1'd0; 
-                                        if ( i_wb_sel[1] ) for(i=8; i<=15;i=i+1) if ( i_wb_dat[i] ) INT_STATUS[i] <= 1'd0; 
-                                        if ( i_wb_sel[2] ) for(i=16;i<=23;i=i+1) if ( i_wb_dat[i] ) INT_STATUS[i] <= 1'd0; 
-                                        if ( i_wb_sel[3] ) for(i=24;i<=31;i=i+1) if ( i_wb_dat[i] ) INT_STATUS[i] <= 1'd0; 
+                                        if ( i_wb_sel[0] ) for(i=0; i <=7;i=i+1) if ( i_wb_dat[i] ) INT_STATUS[i] <= 1'd0;
+                                        if ( i_wb_sel[1] ) for(i=8; i<=15;i=i+1) if ( i_wb_dat[i] ) INT_STATUS[i] <= 1'd0;
+                                        if ( i_wb_sel[2] ) for(i=16;i<=23;i=i+1) if ( i_wb_dat[i] ) INT_STATUS[i] <= 1'd0;
+                                        if ( i_wb_sel[3] ) for(i=24;i<=31;i=i+1) if ( i_wb_dat[i] ) INT_STATUS[i] <= 1'd0;
                                 end
 
-                                default: 
+                                default:
                                 begin
                                         $display($time, " Error : Attemting to write to illegal register in %m at address %x", i_wb_adr);
                                         $finish;
@@ -895,7 +891,7 @@ begin
                                 `INT_STATUS:            o_wb_dat <= `INT_STATUS;
                                 `INT_MASK:              o_wb_dat <= `INT_MASK;
 
-                                default:                
+                                default:
                                 begin
                                         $display($time, " Error : Attempting to read from illegal register in %m at adress %x", i_wb_adr);
                                         $finish;
@@ -916,14 +912,14 @@ begin
                                 o_wb_ack   <= 1'd0;
                                 wbstate    <= WBIDLE;
                         end
-                endcase                
+                endcase
         end
 end
 
 endmodule // vic
 
-module uart_tx_dumper ( input wire i_clk, input wire i_line, 
-                        output reg UART_SR_DAV = 1'd0, output reg [7:0] UART_SR = 1'd0 ); 
+module uart_tx_dumper ( input wire i_clk, input wire i_line,
+                        output reg UART_SR_DAV = 1'd0, output reg [7:0] UART_SR = 1'd0 );
 
 localparam UART_WAIT_FOR_START = 0;
 localparam UART_RX             = 1;
@@ -942,43 +938,43 @@ always @ ( posedge i_clk )
 begin
         UART_SR_DAV <= 1'd0;
 
-        case ( uart_state ) 
+        case ( uart_state )
                 UART_WAIT_FOR_START:
                 begin
-                        if ( !uart ) 
+                        if ( !uart )
                         begin
                                 uart_ctr <= uart_ctr + 1;
                         end
 
-                        if ( !uart && (uart_ctr + 1 == 16) ) 
+                        if ( !uart && (uart_ctr + 1 == 16) )
                         begin
                                 uart_state   <= UART_RX;
                                 uart_ctr     <= 0;
                                 uart_bit_ctr <= 0;
-                        end                        
+                        end
                 end
 
                 UART_RX:
                 begin
                         uart_ctr <= uart_ctr + 1;
 
-                        if ( uart_ctr + 1 == 2 ) 
-                                uart_sr <= uart_sr >> 1 | i_line << 7;                                
+                        if ( uart_ctr + 1 == 2 )
+                                uart_sr <= uart_sr >> 1 | i_line << 7;
 
-                        if ( uart_ctr + 1 == 16 ) 
+                        if ( uart_ctr + 1 == 16 )
                         begin
                                 uart_bit_ctr <= uart_bit_ctr + 1;
                                 uart_ctr     <= 0;
 
-                                if ( uart_bit_ctr + 1 == 8 ) 
+                                if ( uart_bit_ctr + 1 == 8 )
                                 begin
-                                        uart_state  <= UART_STOP_BIT;                               
+                                        uart_state  <= UART_STOP_BIT;
                                         UART_SR     <= uart_sr;
                                         UART_SR_DAV <= 1'd1;
                                         uart_ctr    <= 0;
                                         uart_bit_ctr<= 0;
                                 end
-                        end                        
+                        end
                 end
 
                 UART_STOP_BIT:
@@ -987,7 +983,7 @@ begin
 
                         if ( uart && (uart_ctr + 1 == 16) ) // Stop bit.
                         begin
-                                uart_state      <= UART_WAIT_FOR_START;                                
+                                uart_state      <= UART_WAIT_FOR_START;
                                 uart_bit_ctr    <= 0;
                                 uart_ctr        <= 0;
                         end

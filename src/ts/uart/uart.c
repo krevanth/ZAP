@@ -1,12 +1,12 @@
 // -----------------------------------------------------------------------------
 // --                                                                         --
 // --                   (C) 2016-2022 Revanth Kamaraj (krevanth)              --
-// --                                                                         -- 
+// --                                                                         --
 // -- --------------------------------------------------------------------------
 // --                                                                         --
 // -- This program is free software; you can redistribute it and/or           --
 // -- modify it under the terms of the GNU General Public License             --
-// -- as published by the Free Software Foundation; either version 2          --
+// -- as published by the Free Software Foundation; either version 3          --
 // -- of the License, or (at your option) any later version.                  --
 // --                                                                         --
 // -- This program is distributed in the hope that it will be useful,         --
@@ -23,14 +23,14 @@
 
 #include "uart.h"
 
-void irq_handler () 
+void irq_handler ()
 {
        // Wait for space to be available.
        while ( !UARTTransmitEmpty() );
 
        // Write character
        UARTWriteByte ( UARTGetChar() );
-                 
+
        // Clear interrupt pending register in VIC.
        *VIC_INT_CLEAR = 0xffffffff;
 }
@@ -67,7 +67,7 @@ void UARTWrite(char* s)
 
         for(i=0;i<len;i++)        {
                 UARTWriteByte(s[i]);
-        }       
+        }
 }
 
 /* Write a byte to the UART. This is an open loop function. */
@@ -82,7 +82,7 @@ int strlen(char* s)
         int i;
         i = 0;
 
-        while(s[i] != '\0')        
+        while(s[i] != '\0')
                 i++;
 
         return i;
@@ -106,8 +106,8 @@ void UARTEnableRX (void) {
 /* Check if transmit is empty */
 int UARTTransmitEmpty (void) {
         char x = *UART0_LSR;
-        
-        if ( x & (1 << 6) ) 
+
+        if ( x & (1 << 6) )
                 return 1;
         else
                 return 0;

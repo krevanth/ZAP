@@ -3,7 +3,7 @@
 //
 // his program is free software; you can redistribute it and/or
 // odify it under the terms of the GNU General Public License
-// s published by the Free Software Foundation; either version 2
+// s published by the Free Software Foundation; either version 3
 // f the License, or (at your option) any later version.
 //
 // his program is distributed in the hope that it will be useful,

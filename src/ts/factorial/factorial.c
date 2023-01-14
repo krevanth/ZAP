@@ -1,12 +1,12 @@
 // -----------------------------------------------------------------------------
 // --                                                                         --
 // --                   (C) 2016-2022 Revanth Kamaraj (krevanth)              --
-// --                                                                         -- 
+// --                                                                         --
 // -- --------------------------------------------------------------------------
 // --                                                                         --
 // -- This program is free software; you can redistribute it and/or           --
 // -- modify it under the terms of the GNU General Public License             --
-// -- as published by the Free Software Foundation; either version 2          --
+// -- as published by the Free Software Foundation; either version 3          --
 // -- of the License, or (at your option) any later version.                  --
 // --                                                                         --
 // -- This program is distributed in the hope that it will be useful,         --
@@ -28,10 +28,10 @@ void main (void)
         char *x = (char *)2000;
         float *y = (float*) 2004;
         x[0] = 5;
-        x[1] = fact(x[0]);   
+        x[1] = fact(x[0]);
         x[2] = 255;
         x[3] = 255;
-        *y = 3.14;           
+        *y = 3.14;
 }
 
 int fact (int x)
@@ -46,7 +46,7 @@ int fact (int x)
 
 void __undef(void) {
         return;
-} 
+}
 
 void __swi (void) {
         return;
