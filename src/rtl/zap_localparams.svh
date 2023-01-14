@@ -475,6 +475,8 @@ localparam  [1:0]    WNT     =       2'b01; // Weakly Not Taken.
 localparam  [1:0]    WT      =       2'b10; // Weakly Taken.
 localparam  [1:0]    ST      =       2'b11; // Strongly Taken.
 
+///////////////////////////////////////////////////////////////////////////////
+
 
 /* verilator lint_on UNUSED */
 

@@ -23,7 +23,9 @@
 // interface with this block.
 //
 
-module zap_cp15_cb #(
+module zap_cp15_cb
+
+#(
         parameter bit CP15_L4_DEFAULT          = 1'd0,
         parameter bit BE_32_ENABLE             = 1'd0,
         parameter bit ONLY_CORE                = 1'd0,
@@ -32,7 +34,18 @@ module zap_cp15_cb #(
         parameter bit [31:0] CODE_CACHE_LINE   = 32'd64,
         parameter bit [31:0] DATA_CACHE_LINE   = 32'd64,
         parameter bit [31:0] CODE_CACHE_SIZE   = 32'd1024,
-        parameter bit [31:0] DATA_CACHE_SIZE   = 32'd1024
+        parameter bit [31:0] DATA_CACHE_SIZE   = 32'd1024,
+
+        localparam type t_cp_instruction =
+                        struct packed   {
+                        logic [11:0]  cp_rsvd_fld_1;          // 31:20 - 12 (32)
+                        logic [3:0]  ZAP_CRN;                 // 19:16 - 4 (20)
+                        logic [3:0]  cp_srvd_fld_0;           // 15:12 - 4 (16)
+                        logic [3:0]  ZAP_CP_ID;               // 11:8 - 4 (12)
+                        logic [2:0]  ZAP_OPCODE_2;            // 7:5 - 3 (8)
+                        logic [0:0]  cp_rsvd_fld;             // 4   - 1 (5)
+                        logic [3:0]  ZAP_CRM;                 // 3:0 - 4 (4)
+                        }
 )
 (
         // ----------------------------------------------------------------
@@ -46,7 +59,7 @@ module zap_cp15_cb #(
         // Coprocessor instruction and done signal.
         // ----------------------------------------------------------------
 
-        input logic      [31:0]                  i_cp_word,
+        input t_cp_instruction                   i_cp_word,
         input logic                              i_cp_dav,
         output logic                             o_cp_done,
 
@@ -340,7 +353,7 @@ begin
                         end
 
                         // Coprocessor instruction.
-                        if ( i_cp_dav && i_cp_word[`ZAP_CP_ID] == 15 )
+                        if ( i_cp_dav && i_cp_word.ZAP_CP_ID == 15 )
                         begin
                                 if ( i_cpsr[ZAP_CPSR_MODE:0] != USR )
                                 begin
@@ -378,15 +391,15 @@ begin
                 begin
                         state <= DONE;
 
-                        r [ i_cp_word[`ZAP_CRN] ] <= i_reg_rd_data;
+                        r [ i_cp_word.ZAP_CRN ] <= i_reg_rd_data;
 
                         if
                         (
-                                i_cp_word[`ZAP_CRN] == TLB_REG  // TLB control.
+                                i_cp_word.ZAP_CRN == TLB_REG  // TLB control.
                         )
                         begin
-                                casez({i_cp_word[`ZAP_OPCODE_2],
-                                       i_cp_word[`ZAP_CRM]})
+                                casez({i_cp_word.ZAP_OPCODE_2,
+                                       i_cp_word.ZAP_CRM})
 
                                 CASE_FLUSH_ID_TLB:
                                 begin
@@ -412,11 +425,11 @@ begin
 
                                 endcase
                         end
-                        else if ( i_cp_word[`ZAP_CRN] == CACHE_REG )
+                        else if ( i_cp_word.ZAP_CRN == CACHE_REG )
                         // Cache control selected.
                         begin
-                                casez({i_cp_word[`ZAP_OPCODE_2],
-                                       i_cp_word[`ZAP_CRM]})
+                                casez({i_cp_word.ZAP_OPCODE_2,
+                                       i_cp_word.ZAP_CRM})
 
                                 CASE_FLUSH_ID_CACHE:
                                 begin
@@ -595,7 +608,7 @@ task automatic load_to_cpu_reg;
         // hidden cache type register.
         //
         o_reg_wr_data   <=
-                i_cp_word[19:16] == 0 && i_cp_word[`ZAP_OPCODE_2] == 1 ?
+                i_cp_word[19:16] == 0 && i_cp_word.ZAP_OPCODE_2 == 1 ?
                 CACHE_TYPE_WORD                                        :
                 r[ i_cp_word[19:16] ];
 endtask
