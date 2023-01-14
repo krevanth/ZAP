@@ -20,21 +20,11 @@
 `ifndef _ZAP_DEFINES_VH_
 `define _ZAP_DEFINES_VH_
 
-`define ZAP_SRCDEST_EXTEND          32      // Data Src/Dest extend register for MEMOPS.
-`define ZAP_DP_RB_EXTEND            32      // Shift source extend.
-`define ZAP_BASE_EXTEND             33      // Base address register for MEMOPS.
-`define ZAP_DP_RD_EXTEND            33      // Destination source extend.
-`define ZAP_DP_RA_EXTEND            34      // ALU source extend. DDI0100E rn.
-`define ZAP_OPCODE_EXTEND           35      // To differentiate lower and higher for multiplication ->
-
 `define ZAP_BASE                    19:16   // Base address extend.
 `define ZAP_DP_RA                   19:16   // ALU source. DDI0100E rn.
 `define ZAP_SRCDEST                 15:12   // Data src/dest register MEMOPS.
 `define ZAP_DP_RD                   15:12   // Destination source.
 `define ZAP_DP_RB                   3:0     // Shift source. DDI0100E refers to this as rm.
-                                            // 1 means higher, 0 lower.
-
-// ----------------------------------------------------------------------------
 
 // Generic defines.
 `define ZAP_DESC_ID               1:0  // Determine type of descriptor.

@@ -475,8 +475,13 @@ localparam  [1:0]    WNT     =       2'b01; // Weakly Not Taken.
 localparam  [1:0]    WT      =       2'b10; // Weakly Taken.
 localparam  [1:0]    ST      =       2'b11; // Strongly Taken.
 
-///////////////////////////////////////////////////////////////////////////////
-
+// Extension field bits.
+localparam ZAP_SRCDEST_EXTEND =  32 ;     // Data Src/Dest extend register for MEMOPS.
+localparam ZAP_DP_RB_EXTEND   =  32 ;     // Shift source extend.
+localparam ZAP_BASE_EXTEND    =  33 ;     // Base address register for MEMOPS.
+localparam ZAP_DP_RD_EXTEND   =  33 ;     // Destination source extend.
+localparam ZAP_DP_RA_EXTEND   =  34 ;     // ALU source extend. DDI0100E rn.
+localparam ZAP_OPCODE_EXTEND  =  35 ;     // To differentiate lower and higher for multiplication
 
 /* verilator lint_on UNUSED */
 

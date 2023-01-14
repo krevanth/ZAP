@@ -173,7 +173,7 @@ begin:blk_a
 
                         // MOV PC, ARCH_DUMMY_REG0
                         o_instruction[31:0] = { cc, 2'b00, 1'd0, MOV, 1'd0, 4'd0, ARCH_PC, 12'd0 };
-                        {o_instruction[`ZAP_DP_RB_EXTEND], o_instruction[`ZAP_DP_RB]}
+                        {o_instruction[ZAP_DP_RB_EXTEND], o_instruction[`ZAP_DP_RB]}
                                       = ARCH_DUMMY_REG0;
 
                         o_irq = 1'd0;
@@ -191,7 +191,7 @@ begin:blk_a
 
                         // MOV DUMMY0, SCONST[7:0] ror 0
                         o_instruction[31:0] = {AL, 2'b00, 1'b1, MOV, 1'd0, 4'd0, 4'd0, 4'd0, const_nxt[7:0]};
-                        {o_instruction[`ZAP_DP_RD_EXTEND], o_instruction[`ZAP_DP_RD]} = ARCH_DUMMY_REG0;
+                        {o_instruction[ZAP_DP_RD_EXTEND], o_instruction[`ZAP_DP_RD]} = ARCH_DUMMY_REG0;
 
                         state_nxt = BLX1_STATE_S1;
                 end
@@ -205,8 +205,8 @@ begin:blk_a
 
                         // ORR DUMMY0, DUMMY0, SCONST[15:8]  ror 12*2
                         o_instruction[31:0] = {AL, 2'b00, 1'b1, ORR, 1'd0, 4'd0, 4'd0, 4'd12, const_nxt[15:8]};
-                        {o_instruction[`ZAP_DP_RD_EXTEND], o_instruction[`ZAP_DP_RD]} = ARCH_DUMMY_REG0;
-                        {o_instruction[`ZAP_DP_RA_EXTEND], o_instruction[`ZAP_DP_RA]} = ARCH_DUMMY_REG0;
+                        {o_instruction[ZAP_DP_RD_EXTEND], o_instruction[`ZAP_DP_RD]} = ARCH_DUMMY_REG0;
+                        {o_instruction[ZAP_DP_RA_EXTEND], o_instruction[`ZAP_DP_RA]} = ARCH_DUMMY_REG0;
 
                         state_nxt = BLX1_STATE_S2;
                 end
@@ -217,8 +217,8 @@ begin:blk_a
 
                         // ORR DUMMY0, DUMMY0, SCONST[23:16] ror 8*2
                          o_instruction[31:0] = {AL, 2'b00, 1'b1, ORR, 1'd0, 4'd0, 4'd0, 4'd8, const_nxt[23:16]};
-                        {o_instruction[`ZAP_DP_RD_EXTEND], o_instruction[`ZAP_DP_RD]} = ARCH_DUMMY_REG0;
-                        {o_instruction[`ZAP_DP_RA_EXTEND], o_instruction[`ZAP_DP_RA]} = ARCH_DUMMY_REG0;
+                        {o_instruction[ZAP_DP_RD_EXTEND], o_instruction[`ZAP_DP_RD]} = ARCH_DUMMY_REG0;
+                        {o_instruction[ZAP_DP_RA_EXTEND], o_instruction[`ZAP_DP_RA]} = ARCH_DUMMY_REG0;
 
                         state_nxt = BLX1_STATE_S3;
                 end
@@ -229,8 +229,8 @@ begin:blk_a
 
                         // ORR DUMMY0, DUMMY0, SCONST[31:24] ror 4*2
                          o_instruction[31:0] = {AL, 2'b00, 1'b1, ORR, 1'd0, 4'd0, 4'd0, 4'd4, const_nxt[31:24]};
-                        {o_instruction[`ZAP_DP_RD_EXTEND], o_instruction[`ZAP_DP_RD]} = ARCH_DUMMY_REG0;
-                        {o_instruction[`ZAP_DP_RA_EXTEND], o_instruction[`ZAP_DP_RA]} = ARCH_DUMMY_REG0;
+                        {o_instruction[ZAP_DP_RD_EXTEND], o_instruction[`ZAP_DP_RD]} = ARCH_DUMMY_REG0;
+                        {o_instruction[ZAP_DP_RA_EXTEND], o_instruction[`ZAP_DP_RA]} = ARCH_DUMMY_REG0;
 
                         state_nxt = BLX1_STATE_S4;
                 end
@@ -242,8 +242,8 @@ begin:blk_a
                         // ORR DUMMY0, DUMMY0, 1 - Needed to indicate a switch
                         // to mode16 if needed.
                          o_instruction[31:0] = {AL, 2'b00, 1'b1, ORR, 1'd0, 4'd0, 4'd0, 4'd0, !i_cpsr_t ? 8'd1 : 8'd0};
-                        {o_instruction[`ZAP_DP_RD_EXTEND], o_instruction[`ZAP_DP_RD]} = ARCH_DUMMY_REG0;
-                        {o_instruction[`ZAP_DP_RA_EXTEND], o_instruction[`ZAP_DP_RA]} = ARCH_DUMMY_REG0;
+                        {o_instruction[ZAP_DP_RD_EXTEND], o_instruction[`ZAP_DP_RD]} = ARCH_DUMMY_REG0;
+                        {o_instruction[ZAP_DP_RA_EXTEND], o_instruction[`ZAP_DP_RA]} = ARCH_DUMMY_REG0;
 
                         state_nxt = BLX1_STATE_S5;
                 end
@@ -255,7 +255,7 @@ begin:blk_a
 
                         // BX DUMMY0
                         o_instruction = {8'd0, 32'hE12FFF10};
-                        {o_instruction[`ZAP_DP_RB_EXTEND], o_instruction[`ZAP_DP_RB]} = ARCH_DUMMY_REG0;
+                        {o_instruction[ZAP_DP_RB_EXTEND], o_instruction[`ZAP_DP_RB]} = ARCH_DUMMY_REG0;
 
                         state_nxt = IDLE;
                 end
@@ -313,7 +313,7 @@ begin:blk_a
                                         o_instruction[31:0] =
                                         {AL, 2'b00, 1'b1, ADD, 1'd0, 4'd0, i_instruction[19:16], 12'd4};
 
-                                        {o_instruction[`ZAP_DP_RD_EXTEND], o_instruction[`ZAP_DP_RD]}= ARCH_DUMMY_REG0;
+                                        {o_instruction[ZAP_DP_RD_EXTEND], o_instruction[`ZAP_DP_RD]}= ARCH_DUMMY_REG0;
 
                                         state_nxt = LDRD_STRD_S1;
 
@@ -342,7 +342,7 @@ begin:blk_a
                         o_instruction[22]    = 1'd0;
                         o_instruction[21]    = i_instruction[21];
                         o_instruction[15:12] = i_instruction[15:12];
-                        {o_instruction[`ZAP_DP_RA_EXTEND], o_instruction[`ZAP_DP_RA]} = ARCH_DUMMY_REG0;
+                        {o_instruction[ZAP_DP_RA_EXTEND], o_instruction[`ZAP_DP_RA]} = ARCH_DUMMY_REG0;
 
                         if ( i_instruction[6:5] == 2'b11 )
                                 o_instruction[20] = 1'd0;       // Store
@@ -520,7 +520,7 @@ begin:blk_a
                                         o_instruction[31:0] = {cc, 2'b00, 1'b0, MOV,
                                                  1'b0, 4'd0, 4'd0, 8'd0, base};
 
-                                        {o_instruction[`ZAP_DP_RD_EXTEND],
+                                        {o_instruction[ZAP_DP_RD_EXTEND],
                                          o_instruction[`ZAP_DP_RD]}
                                                 = ARCH_DUMMY_REG0;
                                 end
@@ -530,7 +530,7 @@ begin:blk_a
                                         o_instruction[31:0] = {cc, 2'b00, 1'b1, SUB,
                                                   1'd0, base, 4'd0, oc_offset};
 
-                                        {o_instruction[`ZAP_DP_RD_EXTEND],
+                                        {o_instruction[ZAP_DP_RD_EXTEND],
                                          o_instruction[`ZAP_DP_RD]} =
                                                 ARCH_DUMMY_REG0;
                                 end
@@ -558,7 +558,7 @@ begin:blk_a
                                 i_instruction[19:16], 4'b0000, 12'd0};
                                 // The 0000 is replaced with dummy0 below.
 
-                                {o_instruction[`ZAP_SRCDEST_EXTEND],
+                                {o_instruction[ZAP_SRCDEST_EXTEND],
                                  o_instruction[`ZAP_SRCDEST]} = ARCH_DUMMY_REG0;
 
                                 o_instruction_valid = 1'd1;
@@ -635,7 +635,7 @@ begin:blk_a
 
                                 o_stall_from_decode = 1'd1;
                                 o_instruction_valid = 1'd1;
-                                {o_instruction[`ZAP_SRCDEST_EXTEND], o_instruction[`ZAP_SRCDEST]}
+                                {o_instruction[ZAP_SRCDEST_EXTEND], o_instruction[`ZAP_SRCDEST]}
                                  = ARCH_DUMMY_REG0;
 
                                 state_nxt = LDR_TO_PC_S0;
@@ -713,7 +713,7 @@ begin:blk_a
                         o_instruction[31:0] = {cc, 2'b00, 1'd0, MOV, 1'd0, 4'b0000,
                                          rd, 12'd0}; // ALU src doesn't matter.
 
-                        {o_instruction[`ZAP_DP_RB_EXTEND], o_instruction[`ZAP_DP_RB]}
+                        {o_instruction[ZAP_DP_RB_EXTEND], o_instruction[`ZAP_DP_RB]}
                                         = ARCH_DUMMY_REG0;
 
                         state_nxt = IDLE;
@@ -773,7 +773,7 @@ begin:blk_a
                         { cc, 2'b00, 1'd0, MOV, s_bit, 4'd0, ARCH_PC,
                                                                 8'd0, 4'd0 };
 
-                        {o_instruction[`ZAP_DP_RB_EXTEND], o_instruction[`ZAP_DP_RB]}
+                        {o_instruction[ZAP_DP_RB_EXTEND], o_instruction[`ZAP_DP_RB]}
                                         = ARCH_DUMMY_REG1;
 
                         o_instruction_valid = 1'd1;
@@ -818,7 +818,7 @@ begin
         map[27:26] = 2'b01;         // Memory instruction.
 
         map[`ZAP_SRCDEST] = enc;
-        {map[`ZAP_BASE_EXTEND],map[`ZAP_BASE]} = ARCH_DUMMY_REG0;//Use as base register.
+        {map[ZAP_BASE_EXTEND],map[`ZAP_BASE]} = ARCH_DUMMY_REG0;//Use as base register.
 
         // If not up, then DA -> IB and DB -> IA.
         if ( !up ) // DA or DB.
@@ -847,7 +847,7 @@ begin
                                 { 2'd0, cc, 2'b0, 1'b0, MOV, 1'b0, 4'd0,
                                                 base, 8'd0, 4'd0 };
 
-                                {map[`ZAP_DP_RB_EXTEND],map[`ZAP_DP_RB]} =
+                                {map[ZAP_DP_RB_EXTEND],map[`ZAP_DP_RB]} =
                                                 ARCH_DUMMY_REG0;
                         end
                         else
@@ -866,13 +866,13 @@ begin
         // STR with S bit or LDR with S bit and no PC - force user bank access.
         begin
                         case ( map[`ZAP_SRCDEST] ) // Force user bank.
-                        8: {map[`ZAP_SRCDEST_EXTEND],map[`ZAP_SRCDEST]} = ARCH_USR2_R8;
-                        9: {map[`ZAP_SRCDEST_EXTEND],map[`ZAP_SRCDEST]} = ARCH_USR2_R9;
-                        10:{map[`ZAP_SRCDEST_EXTEND],map[`ZAP_SRCDEST]} = ARCH_USR2_R10;
-                        11:{map[`ZAP_SRCDEST_EXTEND],map[`ZAP_SRCDEST]} = ARCH_USR2_R11;
-                        12:{map[`ZAP_SRCDEST_EXTEND],map[`ZAP_SRCDEST]} = ARCH_USR2_R12;
-                        13:{map[`ZAP_SRCDEST_EXTEND],map[`ZAP_SRCDEST]} = ARCH_USR2_R13;
-                        14:{map[`ZAP_SRCDEST_EXTEND],map[`ZAP_SRCDEST]} = ARCH_USR2_R14;
+                        8: {map[ZAP_SRCDEST_EXTEND],map[`ZAP_SRCDEST]} = ARCH_USR2_R8;
+                        9: {map[ZAP_SRCDEST_EXTEND],map[`ZAP_SRCDEST]} = ARCH_USR2_R9;
+                        10:{map[ZAP_SRCDEST_EXTEND],map[`ZAP_SRCDEST]} = ARCH_USR2_R10;
+                        11:{map[ZAP_SRCDEST_EXTEND],map[`ZAP_SRCDEST]} = ARCH_USR2_R11;
+                        12:{map[ZAP_SRCDEST_EXTEND],map[`ZAP_SRCDEST]} = ARCH_USR2_R12;
+                        13:{map[ZAP_SRCDEST_EXTEND],map[`ZAP_SRCDEST]} = ARCH_USR2_R13;
+                        14:{map[ZAP_SRCDEST_EXTEND],map[`ZAP_SRCDEST]} = ARCH_USR2_R14;
                         endcase
         end
         else if ( load && enc == 4'd15  )
@@ -887,7 +887,7 @@ begin
                         //
                         // For now, load to ARCH_DUMMY_REG1.
                         //
-                        {map[`ZAP_SRCDEST_EXTEND],map[`ZAP_SRCDEST]} = ARCH_DUMMY_REG1;
+                        {map[ZAP_SRCDEST_EXTEND],map[`ZAP_SRCDEST]} = ARCH_DUMMY_REG1;
         end
 end
 endfunction
