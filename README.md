@@ -509,7 +509,7 @@ Accessing unaligned `LDRH/STRH` will cause the processor to ignore bit 0 for the
 
 Accessing unaligned `LDR` will cause the 32-bit data read at the aligned address to be rotated right. For `STR`, the lower 2-bits of the address are treated as 0x0 for the memory access.
 
-## 1.6. Known Issues
+### 1.6. Known Issues
 
 `SWAP` and `SWAPB` do not lock the bus during their individual memory accesses. 
 
