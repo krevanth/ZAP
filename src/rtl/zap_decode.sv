@@ -3,7 +3,7 @@
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
-// as published by the Free Software Foundation; either version 2
+// as published by the Free Software Foundation; either version 3
 // of the License, or (at your option) any later version.
 //
 // This program is distributed in the hope that it will be useful,
@@ -265,7 +265,7 @@ begin: tskDecodeClz
         o_alu_source[32]        =       IMMED_EN;
 
         // Rm = register whose CLZ must be found.
-        o_shift_source          =       {28'd0, instruction[`ZAP_DP_RB_EXTEND], instruction[`ZAP_DP_RB]}; // Rm
+        o_shift_source          =       {28'd0, instruction[ZAP_DP_RB_EXTEND], instruction[`ZAP_DP_RB]}; // Rm
         o_shift_source[32]      =       INDEX_EN;
         o_shift_operation       =       {1'd0, LSL};
         o_shift_length          =       33'd0;
@@ -292,7 +292,7 @@ begin: tskLDecodeMult
         o_flag_update           =       instruction[20];
 
         // mode32 rd.
-        o_destination_index     =       {instruction[`ZAP_DP_RD_EXTEND],
+        o_destination_index     =       {instruction[ZAP_DP_RD_EXTEND],
                                          instruction[19:16]};
 
         // For MUL, Rd and Rn are interchanged.
@@ -301,12 +301,12 @@ begin: tskLDecodeMult
         o_alu_source            =       {29'd0, instruction[11:8]}; // mode32 rs
         o_alu_source[32]        =       INDEX_EN;
 
-        o_shift_source          =       {28'd0, instruction[`ZAP_DP_RB_EXTEND],
+        o_shift_source          =       {28'd0, instruction[ZAP_DP_RB_EXTEND],
                                          instruction[`ZAP_DP_RB]};
         o_shift_source[32]      =       INDEX_EN;            // mode32 rm
 
         // mode32 rn
-        o_shift_length          =       {28'd0, instruction[`ZAP_DP_RA_EXTEND],
+        o_shift_length          =       {28'd0, instruction[ZAP_DP_RA_EXTEND],
                                          instruction[`ZAP_DP_RD]};
 
         o_shift_length[32]      =       INDEX_EN;
@@ -344,7 +344,7 @@ begin: tskLDecodeMult
         end
         endcase
 
-        if ( instruction[`ZAP_OPCODE_EXTEND] == 1'd0 )
+        if ( instruction[ZAP_OPCODE_EXTEND] == 1'd0 )
         // Low request - change destination index.
         begin
                         o_destination_index = {1'd0, instruction[15:12]}; // Low register.
@@ -427,7 +427,7 @@ begin: tskDecodeHalfWordLs
         end
 
         o_alu_operation     = instruction[23] ? {2'd0, ADD} : {2'd0, SUB};
-        o_alu_source        = { 28'd0, instruction[`ZAP_BASE_EXTEND],
+        o_alu_source        = { 28'd0, instruction[ZAP_BASE_EXTEND],
                                 instruction[`ZAP_BASE]}; // Pointer register.
         o_alu_source[32]    = INDEX_EN;
         o_mem_load          = instruction[20];
@@ -440,7 +440,7 @@ begin: tskDecodeHalfWordLs
                                 o_alu_source[4:0] :
                                 RAZ_REGISTER; // Pointer register already added.
 
-        o_mem_srcdest_index = {instruction[`ZAP_SRCDEST_EXTEND],
+        o_mem_srcdest_index = {instruction[ZAP_SRCDEST_EXTEND],
                                instruction[`ZAP_SRCDEST]};
 
         // Transfer size.
@@ -474,20 +474,20 @@ begin: tskDecodeMult
         o_condition_code        =       instruction[31:28];
         o_flag_update           =       instruction[20];
         o_alu_operation         =       {1'd0, UMLALL};
-        o_destination_index     =       {instruction[`ZAP_DP_RD_EXTEND],
+        o_destination_index     =       {instruction[ZAP_DP_RD_EXTEND],
                                          instruction[19:16]};
 
         // For MUL, Rd and Rn are interchanged.
         o_alu_source            =       {29'd0, instruction[11:8]}; // mode32 rs
         o_alu_source[32]        =       INDEX_EN;
 
-        o_shift_source          =       {28'd0, instruction[`ZAP_DP_RB_EXTEND],
+        o_shift_source          =       {28'd0, instruction[ZAP_DP_RB_EXTEND],
                                          instruction[`ZAP_DP_RB]};
         o_shift_source[32]      =       INDEX_EN;            // mode32 rm
 
         // mode32 rn - Set for accumulate.
         o_shift_length          =       instruction[21] ?
-                                        {28'd0, instruction[`ZAP_DP_RA_EXTEND],
+                                        {28'd0, instruction[ZAP_DP_RA_EXTEND],
                                          instruction[`ZAP_DP_RD]} : 33'd0;
 
         o_shift_length[32]      =       instruction[21] ? INDEX_EN : IMMED_EN;
@@ -516,14 +516,14 @@ begin
                            instruction[6:5] == 2'b11 ? OP_SMUL11 : OP_SMUL11) ;
 
         // mode32 rd
-        o_destination_index = {instruction[`ZAP_DP_RD_EXTEND], instruction[19:16]};
+        o_destination_index = {instruction[ZAP_DP_RD_EXTEND], instruction[19:16]};
 
         // mode32 Rs.
         o_alu_source = {29'd0, instruction[11:8]};
         o_alu_source[32] = INDEX_EN;
 
         // mode32 rm
-        o_shift_source = {28'd0, instruction[`ZAP_DP_RB_EXTEND], instruction[`ZAP_DP_RB]};
+        o_shift_source = {28'd0, instruction[ZAP_DP_RB_EXTEND], instruction[`ZAP_DP_RB]};
         o_shift_source[32] = INDEX_EN;
 
         // mode32 rm=0
@@ -548,7 +548,7 @@ begin: tskLDecodeMultDsp
         o_flag_update           =       1'd1;
 
         // mode32 rd.
-        o_destination_index     =       {instruction[`ZAP_DP_RD_EXTEND],
+        o_destination_index     =       {instruction[ZAP_DP_RD_EXTEND],
                                          instruction[19:16]};
 
         // For MUL, Rd and Rn are interchanged.
@@ -557,12 +557,12 @@ begin: tskLDecodeMultDsp
         o_alu_source            =       {29'd0, instruction[11:8]}; // mode32 rs
         o_alu_source[32]        =       INDEX_EN;
 
-        o_shift_source          =       {28'd0, instruction[`ZAP_DP_RB_EXTEND],
+        o_shift_source          =       {28'd0, instruction[ZAP_DP_RB_EXTEND],
                                          instruction[`ZAP_DP_RB]};
         o_shift_source[32]      =       INDEX_EN;            // mode32 rm
 
         o_shift_length          =       // mode32 rn.
-                                        {28'd0, instruction[`ZAP_DP_RA_EXTEND],
+                                        {28'd0, instruction[ZAP_DP_RA_EXTEND],
                                          instruction[`ZAP_DP_RD]};
 
         o_shift_length[32]      =       INDEX_EN;
@@ -601,7 +601,7 @@ begin: tskLDecodeMultDsp
 
         endcase
 
-        if ( instruction[`ZAP_OPCODE_EXTEND] == 1'd0 && instruction[31:0] ==? SMLALxy ) // Low request.
+        if ( instruction[ZAP_OPCODE_EXTEND] == 1'd0 && instruction[31:0] ==? SMLALxy ) // Low request.
         begin
                         o_destination_index = {1'd0, instruction[15:12]}; // Low register.
                         o_alu_operation[0]  = 1'd0;                       // Request low operation.
@@ -681,7 +681,7 @@ begin: tskDecodeLs
         o_alu_operation = instruction[23] ? {2'd0, ADD} : {2'd0, SUB};
 
         // Pointer register.
-        o_alu_source    = {28'd0, instruction[`ZAP_BASE_EXTEND], instruction[`ZAP_BASE]};
+        o_alu_source    = {28'd0, instruction[ZAP_BASE_EXTEND], instruction[`ZAP_BASE]};
         o_alu_source[32] = INDEX_EN;
         o_mem_load          = instruction[20];
         o_mem_store         = !o_mem_load;
@@ -698,7 +698,7 @@ begin: tskDecodeLs
                                 RAZ_REGISTER; // Pointer register already added.
         o_mem_unsigned_byte_enable = instruction[22];
 
-        o_mem_srcdest_index = {instruction[`ZAP_SRCDEST_EXTEND], instruction[`ZAP_SRCDEST]};
+        o_mem_srcdest_index = {instruction[ZAP_SRCDEST_EXTEND], instruction[`ZAP_SRCDEST]};
 
         assert ( ~(o_mem_load && o_mem_srcdest_index == 'd15) ) else
                 $info("Warning: Use of PC as a source reg of STORE is UNPREDICTABLE.");
@@ -722,7 +722,7 @@ begin
         process_immediate ( {instruction[11:0]} );
 
         o_condition_code    = instruction[31:28];
-        o_destination_index = {instruction[`ZAP_DP_RD_EXTEND], instruction[`ZAP_DP_RD]};
+        o_destination_index = {instruction[ZAP_DP_RD_EXTEND], instruction[`ZAP_DP_RD]};
         o_alu_source        = instruction[22] ? ARCH_CURR_SPSR : ARCH_CPSR;
         o_alu_source[32]    = INDEX_EN;
         o_alu_operation     = instruction[22] ? {2'd0, ADD} : FADD;
@@ -794,7 +794,7 @@ begin
         o_condition_code        = instruction[31:28];
         o_alu_operation         = {2'd0, instruction[24:21]};
         o_flag_update           = instruction[20];
-        o_destination_index     = {instruction[`ZAP_DP_RD_EXTEND], instruction[`ZAP_DP_RD]};
+        o_destination_index     = {instruction[ZAP_DP_RD_EXTEND], instruction[`ZAP_DP_RD]};
         o_alu_source            = {29'd0, instruction[`ZAP_DP_RA]};
         o_alu_source[32]        = INDEX_EN;
         o_mem_srcdest_index     = ARCH_CURR_SPSR;
@@ -813,7 +813,9 @@ begin
         3'b001: process_register_specified_shift ( instruction[32:0] );
         default:
         begin
-                // error.
+                // Cannot happen. Synthesis will OPTIMIZE. OK to do for FPGA synth.
+                {o_condition_code,o_alu_operation,o_flag_update,
+                 o_destination_index,o_alu_source, o_mem_srcdest_index} = 'x;
         end
         endcase
 end
@@ -864,7 +866,7 @@ begin
         // ROR #n = ROR_1 #n ( n > 0 )
         o_shift_length          = {28'd0, xinstruction[11:7]};
         o_shift_length[32]      = IMMED_EN;
-        o_shift_source          = {28'd0, xinstruction[`ZAP_DP_RB_EXTEND],xinstruction[`ZAP_DP_RB]};
+        o_shift_source          = {28'd0, xinstruction[ZAP_DP_RB_EXTEND],xinstruction[`ZAP_DP_RB]};
         o_shift_source[32]      = INDEX_EN;
         o_shift_operation       = {1'd0, xinstruction[6:5]};
 
@@ -898,7 +900,7 @@ begin
         unused                  = |{xinstruction[31:12],xinstruction[7],xinstruction[4]};
         o_shift_length          = {29'd0, xinstruction[11:8]};
         o_shift_length[32]      = INDEX_EN;
-        o_shift_source          = {28'd0, xinstruction[`ZAP_DP_RB_EXTEND], xinstruction[`ZAP_DP_RB]};
+        o_shift_source          = {28'd0, xinstruction[ZAP_DP_RB_EXTEND], xinstruction[`ZAP_DP_RB]};
         o_shift_source[32]      = INDEX_EN;
         o_shift_operation       = {1'd0, xinstruction[6:5]};
 

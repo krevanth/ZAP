@@ -3,7 +3,7 @@
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
-// as published by the Free Software Foundation; either version 2
+// as published by the Free Software Foundation; either version 3
 // of the License, or (at your option) any later version.
 //
 // This program is distributed in the hope that it will be useful,
@@ -594,7 +594,8 @@ begin
         case ( r_clear_from_alu )
         BRANCH_TARGET     : o_pc_from_alu = w_pc_from_alu_btarget;
         NEXT_INSTR_RESYNC : o_pc_from_alu = w_pc_from_alu_resync;
-        default:            o_pc_from_alu = 'dx; // Synthesis will optimize.
+        default:            o_pc_from_alu = 'dx; // Synthesis will OPTIMIZE.
+                                                 // OK to do for FPGA synthesis.
         endcase
 end
 
@@ -864,8 +865,8 @@ always @ ( posedge i_clk )
 begin
         if ( opcode == {1'd0, MMOV} && o_dav_nxt && !i_reset )
         begin
-                assert ( flags_ff[`ZAP_CPSR_MODE] != USR &&
-                         flags_ff[`ZAP_CPSR_MODE] != SYS ) else
+                assert ( flags_ff[ZAP_CPSR_MODE:0] != USR &&
+                         flags_ff[ZAP_CPSR_MODE:0] != SYS ) else
                 $info(2, "Warning: Writing to SPSR in USR/SYS in UNDEFINED.");
 
                 assert ( flags_ff[T] == o_flags_nxt[T] ) else
@@ -874,14 +875,14 @@ begin
 
         if ( opcode == {1'd0, FMOV} && o_dav_nxt && !i_reset )
         begin
-                if ( flags_ff[`ZAP_CPSR_MODE] == USR )
+                if ( flags_ff[ZAP_CPSR_MODE:0] == USR )
                         assert ( tmp_flags[7:0] == flags_ff[7:0] ) else
                 $info("Info: USR attempting to change 23:0 of CPSR. Blocked.");
         end
         else if ( i_destination_index_ff == {2'd0, ARCH_PC} &&
                   i_condition_code_ff != NV && !i_reset && i_flag_update_ff )
         begin
-                assert (~(flags_ff[`ZAP_CPSR_MODE] == USR || flags_ff[`ZAP_CPSR_MODE] == SYS))
+                assert (~(flags_ff[ZAP_CPSR_MODE:0] == USR || flags_ff[ZAP_CPSR_MODE:0] == SYS))
                 else $info("Warning: Attempting to read SPSR in USR/SYS mode for context restore.");
         end
 end
@@ -911,7 +912,7 @@ begin: flags_bp_feedback
                 // USR cannot change 7:0 of CPSR. Will silently fail.
                 flags_nxt[7:0]   =
                 (
-                        flags_ff[`ZAP_CPSR_MODE] == USR
+                        flags_ff[ZAP_CPSR_MODE:0] == USR
                 ) ?
                 flags_ff [7:0] :
                 flags_nxt[7:0] ; // Security.
@@ -927,8 +928,8 @@ begin: flags_bp_feedback
 
                         // Restore CPSR from SPSR if not in USR/SYS mode.
 
-                        if ( flags_ff[`ZAP_CPSR_MODE] == USR ||
-                             flags_ff[`ZAP_CPSR_MODE] == SYS )
+                        if ( flags_ff[ZAP_CPSR_MODE:0] == USR ||
+                             flags_ff[ZAP_CPSR_MODE:0] == SYS )
                                 flags_nxt = flags_ff;
                         else
                                 flags_nxt = i_mem_srcdest_value_ff;

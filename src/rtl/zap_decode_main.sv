@@ -3,7 +3,7 @@
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
-// as published by the Free Software Foundation; either version 2
+// as published by the Free Software Foundation; either version 3
 // of the License, or (at your option) any later version.
 //
 // This program is distributed in the hope that it will be useful,
@@ -78,7 +78,7 @@ module zap_decode_main #(
         input logic  [31:0]                      i_pc_plus_8_ff,
 
         // CPU mode. Taken from CPSR.
-        input   logic    [`ZAP_CPSR_MODE]        i_cpsr_ff_mode, // Mode.
+        input   logic    [ZAP_CPSR_MODE:0]        i_cpsr_ff_mode, // Mode.
 
         // Instruction input.
         input     logic  [35:0]                  i_instruction,

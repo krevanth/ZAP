@@ -3,7 +3,7 @@
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
-// as published by the Free Software Foundation; either version 2
+// as published by the Free Software Foundation; either version 3
 // of the License, or (at your option) any later version.
 //
 // This program is distributed in the hope that it will be useful,
@@ -20,33 +20,11 @@
 `ifndef _ZAP_DEFINES_VH_
 `define _ZAP_DEFINES_VH_
 
-`define ZAP_CPSR_MODE               4:0     // CPSR bits.
-
-`define ZAP_BASE_EXTEND             33      // Base address register for MEMOPS.
 `define ZAP_BASE                    19:16   // Base address extend.
-
-`define ZAP_SRCDEST_EXTEND          32      // Data Src/Dest extend register for MEMOPS.
-`define ZAP_SRCDEST                 15:12   // Data src/dest register MEMOPS.
-
-`define ZAP_DP_RD_EXTEND            33      // Destination source extend.
-`define ZAP_DP_RD                   15:12   // Destination source.
-
-`define ZAP_DP_RB_EXTEND            32      // Shift source extend.
-`define ZAP_DP_RB                   3:0     // Shift source. DDI0100E refers to this as rm.
-
 `define ZAP_DP_RA                   19:16   // ALU source. DDI0100E rn.
-`define ZAP_DP_RA_EXTEND            34      // ALU source extend. DDI0100E rn.
-
-`define ZAP_OPCODE_EXTEND           35      // To differentiate lower and higher for multiplication ->
-                                        // 1 means higher, 0 lower.
-
-// Instruction fields in CP15 instruction.
-`define ZAP_OPCODE_2                7:5
-`define ZAP_CRM                     3:0
-`define ZAP_CRN                     19:16
-`define ZAP_CP_ID                   11:8
-
-// ----------------------------------------------------------------------------
+`define ZAP_SRCDEST                 15:12   // Data src/dest register MEMOPS.
+`define ZAP_DP_RD                   15:12   // Destination source.
+`define ZAP_DP_RB                   3:0     // Shift source. DDI0100E refers to this as rm.
 
 // Generic defines.
 `define ZAP_DESC_ID               1:0  // Determine type of descriptor.
@@ -143,22 +121,5 @@
 `define ZAP_LPAGE_TLB_WDT         (32 + (32-$clog2(LPAGE_TLB_ENTRIES)-16))
 `define ZAP_SPAGE_TLB_WDT         (36 + (32-$clog2(SPAGE_TLB_ENTRIES)-12))
 `define ZAP_FPAGE_TLB_WDT         (32 + (32-$clog2(FPAGE_TLB_ENTRIES)-10))
-
-// ----------------------------------------------------------------------------
-
-`define ZAP_DECOMPILE_CCC            cond_code(i_instruction[31:28])
-`define ZAP_DECOMPILE_CRB            arch_reg_num({i_instruction[`ZAP_DP_RB_EXTEND], i_instruction[`ZAP_DP_RB]})
-`define ZAP_DECOMPILE_CRD            arch_reg_num({i_instruction[`ZAP_DP_RD_EXTEND], i_instruction[`ZAP_DP_RD]})
-`define ZAP_DECOMPILE_CRD1           arch_reg_num({i_instruction[`ZAP_SRCDEST_EXTEND], i_instruction[`ZAP_SRCDEST]})
-`define ZAP_DECOMPILE_CRN            arch_reg_num({i_instruction[`ZAP_DP_RA_EXTEND], i_instruction[`ZAP_DP_RA]})
-`define ZAP_DECOMPILE_CRN1           arch_reg_num({i_instruction[`ZAP_BASE_EXTEND], i_instruction[`ZAP_BASE]})
-`define ZAP_DECOMPILE_CRM            arch_reg_num({i_instruction[`ZAP_DP_RB_EXTEND], i_instruction[`ZAP_DP_RB]});
-`define ZAP_DECOMPILE_COPCODE        get_opcode({i_instruction[`ZAP_OPCODE_EXTEND], i_instruction[24:21]})
-`define ZAP_DECOMPILE_CSHTYPE        get_shtype(i_instruction[6:5])
-`define ZAP_DECOMPILE_CRS            arch_reg_num(i_instruction[11:8]);
-`define ZAP_DECOMPILE_XUMULL         3'b100
-`define ZAP_DECOMPILE_XUMLAL         3'b101
-`define ZAP_DECOMPILE_XSMULL         3'b110
-`define ZAP_DECOMPILE_XSMLAL         3'b111
 
 `endif

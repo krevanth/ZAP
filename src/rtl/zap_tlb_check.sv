@@ -3,7 +3,7 @@
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
-// as published by the Free Software Foundation; either version 2
+// as published by the Free Software Foundation; either version 3
 // of the License, or (at your option) any later version.
 //
 // This program is distributed in the hope that it will be useful,
@@ -72,7 +72,7 @@ input logic [31:0]                       i_va;           // Virtual address.
 input logic                              i_rd;           // Read request.
 input logic                              i_wr;           // Write request.
 
-input logic [`ZAP_CPSR_MODE]             i_cpsr;         // CPSR.
+input logic [ZAP_CPSR_MODE:0]             i_cpsr;         // CPSR.
 input logic [1:0]                        i_sr;           // Status Register.
 input logic [31:0]                       i_dac_reg;      // Domain Access Control Register.
 
@@ -142,7 +142,7 @@ begin:blk1
                         (
                                 1'd0, 1'd1, 1'd0, 1'd0,         // Small page.
                                 i_va[`ZAP_VA__SPAGE_AP_SEL],
-                                i_cpsr[`ZAP_CPSR_MODE] == USR,
+                                i_cpsr[ZAP_CPSR_MODE:0] == USR,
                                 i_rd,
                                 i_wr,
                                 i_sr,
@@ -162,7 +162,7 @@ begin:blk1
                         (
                                 1'd0, 1'd0, 1'd1, 1'd0,         // Large page.
                                 i_va[`ZAP_VA__LPAGE_AP_SEL],
-                                i_cpsr[`ZAP_CPSR_MODE] == USR,
+                                i_cpsr[ZAP_CPSR_MODE:0] == USR,
                                 i_rd,
                                 i_wr,
                                 i_sr,
@@ -181,7 +181,7 @@ begin:blk1
                         (
                                 1'd1, 1'd0, 1'd0, 1'd0,         // Section.
                                 2'd0,                           // DONT CARE. Sections don't subdv in AP SEL.
-                                i_cpsr[`ZAP_CPSR_MODE] == USR,
+                                i_cpsr[ZAP_CPSR_MODE:0] == USR,
                                 i_rd,
                                 i_wr,
                                 i_sr,
@@ -200,7 +200,7 @@ begin:blk1
                         (
                                 1'd0, 1'd0, 1'd0, 1'd1,
                                 2'd0,
-                                i_cpsr[`ZAP_CPSR_MODE] == USR,
+                                i_cpsr[ZAP_CPSR_MODE:0] == USR,
                                 i_rd,
                                 i_wr,
                                 i_sr,

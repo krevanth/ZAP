@@ -3,7 +3,7 @@
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
-// as published by the Free Software Foundation; either version 2
+// as published by the Free Software Foundation; either version 3
 // of the License, or (at your option) any later version.
 //
 // This program is distributed in the hope that it will be useful,
@@ -40,7 +40,7 @@ function automatic [3:0] be_sel_32 (input [3:0] sel);
         4'b0011: return 4'b1100;
         4'b1100: return 4'b0011;
         4'b1111: return sel;
-        default: return {4{1'dx}}; // Synthesis will optimize.
+        default: return {4{1'dx}}; // Synthesis will OPTIMIZE. OK to do for FPGA synthesis.
         endcase
 endfunction
 
@@ -186,9 +186,9 @@ begin
                         endcase
                 end
 
-                default: // To avoid lint warnings.
-                begin
-                end
+                default:;
+                // To workaround verilator lint that fails to detect
+                // all cases have been covered.
         endcase
 end
 endfunction

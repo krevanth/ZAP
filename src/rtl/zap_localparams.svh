@@ -3,7 +3,7 @@
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
-// as published by the Free Software Foundation; either version 2
+// as published by the Free Software Foundation; either version 3
 // of the License, or (at your option) any later version.
 //
 // This program is distributed in the hope that it will be useful,
@@ -185,14 +185,15 @@ localparam AL =  4'hE;
 localparam NV =  4'hF; // NeVer execute!
 
 // CPSR flags.
-localparam N = 31;
-localparam Z = 30;
-localparam C = 29;
-localparam V = 28;
-localparam Q = 27;
-localparam I = 7;
-localparam F = 6;
-localparam T = 5;
+localparam N             = 31;
+localparam Z             = 30;
+localparam C             = 29;
+localparam V             = 28;
+localparam Q             = 27;
+localparam I             = 7;
+localparam F             = 6;
+localparam T             = 5;
+localparam ZAP_CPSR_MODE = 4;
 
 // For transferring indices/immediates across stages.
 localparam INDEX_EN = 1'd0;
@@ -474,6 +475,13 @@ localparam  [1:0]    WNT     =       2'b01; // Weakly Not Taken.
 localparam  [1:0]    WT      =       2'b10; // Weakly Taken.
 localparam  [1:0]    ST      =       2'b11; // Strongly Taken.
 
+// Extension field bits.
+localparam ZAP_SRCDEST_EXTEND =  32 ;     // Data Src/Dest extend register for MEMOPS.
+localparam ZAP_DP_RB_EXTEND   =  32 ;     // Shift source extend.
+localparam ZAP_BASE_EXTEND    =  33 ;     // Base address register for MEMOPS.
+localparam ZAP_DP_RD_EXTEND   =  33 ;     // Destination source extend.
+localparam ZAP_DP_RA_EXTEND   =  34 ;     // ALU source extend. DDI0100E rn.
+localparam ZAP_OPCODE_EXTEND  =  35 ;     // To differentiate lower and higher for multiplication
 
 /* verilator lint_on UNUSED */
 

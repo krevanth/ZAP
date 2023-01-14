@@ -3,7 +3,7 @@
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
-// as published by the Free Software Foundation; either version 2
+// as published by the Free Software Foundation; either version 3
 // of the License, or (at your option) any later version.
 //
 // This program is distributed in the hope that it will be useful,
@@ -23,7 +23,9 @@
 // interface with this block.
 //
 
-module zap_cp15_cb #(
+module zap_cp15_cb
+
+#(
         parameter bit CP15_L4_DEFAULT          = 1'd0,
         parameter bit BE_32_ENABLE             = 1'd0,
         parameter bit ONLY_CORE                = 1'd0,
@@ -32,7 +34,18 @@ module zap_cp15_cb #(
         parameter bit [31:0] CODE_CACHE_LINE   = 32'd64,
         parameter bit [31:0] DATA_CACHE_LINE   = 32'd64,
         parameter bit [31:0] CODE_CACHE_SIZE   = 32'd1024,
-        parameter bit [31:0] DATA_CACHE_SIZE   = 32'd1024
+        parameter bit [31:0] DATA_CACHE_SIZE   = 32'd1024,
+
+        localparam type t_cp_instruction =
+                        struct packed   {
+                        logic [11:0]  cp_rsvd_fld_1;          // 31:20 - 12 (32)
+                        logic [3:0]  ZAP_CRN;                 // 19:16 - 4 (20)
+                        logic [3:0]  cp_srvd_fld_0;           // 15:12 - 4 (16)
+                        logic [3:0]  ZAP_CP_ID;               // 11:8 - 4 (12)
+                        logic [2:0]  ZAP_OPCODE_2;            // 7:5 - 3 (8)
+                        logic [0:0]  cp_rsvd_fld;             // 4   - 1 (5)
+                        logic [3:0]  ZAP_CRM;                 // 3:0 - 4 (4)
+                        }
 )
 (
         // ----------------------------------------------------------------
@@ -46,7 +59,7 @@ module zap_cp15_cb #(
         // Coprocessor instruction and done signal.
         // ----------------------------------------------------------------
 
-        input logic      [31:0]                  i_cp_word,
+        input t_cp_instruction                   i_cp_word,
         input logic                              i_cp_dav,
         output logic                             o_cp_done,
 
@@ -203,6 +216,8 @@ begin
         65536: xCACHE_TYPE_WORD[0][8:6] = 3'd7;
         default:
         begin
+                // Cannot happen - assign X to OPTIMIZE. OK to do for FPGA synth.
+                xCACHE_TYPE_WORD[0][8:6] = {3{1'dx}};
                 assert(ONLY_CORE) else $fatal(2, "Code cache size not in range.");
         end
         endcase
@@ -230,6 +245,8 @@ begin
         65536: xCACHE_TYPE_WORD[1][8:6] = 3'd7;
         default:
         begin
+                // Cannot happen - assign X to OPTIMIZE. OK to do for FPGA synth.
+                xCACHE_TYPE_WORD[1][8:6] = {3{1'dx}};
                 assert(ONLY_CORE) else $fatal(2, "Data cache size not in range.");
         end
         endcase
@@ -336,9 +353,9 @@ begin
                         end
 
                         // Coprocessor instruction.
-                        if ( i_cp_dav && i_cp_word[`ZAP_CP_ID] == 15 )
+                        if ( i_cp_dav && i_cp_word.ZAP_CP_ID == 15 )
                         begin
-                                if ( i_cpsr[`ZAP_CPSR_MODE] != USR )
+                                if ( i_cpsr[ZAP_CPSR_MODE:0] != USR )
                                 begin
                                         // ACTIVATE this block.
                                         state     <= ACTIVE;
@@ -374,15 +391,15 @@ begin
                 begin
                         state <= DONE;
 
-                        r [ i_cp_word[`ZAP_CRN] ] <= i_reg_rd_data;
+                        r [ i_cp_word.ZAP_CRN ] <= i_reg_rd_data;
 
                         if
                         (
-                                i_cp_word[`ZAP_CRN] == TLB_REG  // TLB control.
+                                i_cp_word.ZAP_CRN == TLB_REG  // TLB control.
                         )
                         begin
-                                casez({i_cp_word[`ZAP_OPCODE_2],
-                                       i_cp_word[`ZAP_CRM]})
+                                casez({i_cp_word.ZAP_OPCODE_2,
+                                       i_cp_word.ZAP_CRM})
 
                                 CASE_FLUSH_ID_TLB:
                                 begin
@@ -408,11 +425,11 @@ begin
 
                                 endcase
                         end
-                        else if ( i_cp_word[`ZAP_CRN] == CACHE_REG )
+                        else if ( i_cp_word.ZAP_CRN == CACHE_REG )
                         // Cache control selected.
                         begin
-                                casez({i_cp_word[`ZAP_OPCODE_2],
-                                       i_cp_word[`ZAP_CRM]})
+                                casez({i_cp_word.ZAP_OPCODE_2,
+                                       i_cp_word.ZAP_CRM})
 
                                 CASE_FLUSH_ID_CACHE:
                                 begin
@@ -576,7 +593,7 @@ task automatic load_to_cp_reg;
         // Generate CPU register read command. CP write.
         o_reg_en        <= 1'd1;
         o_reg_rd_index  <= translate({2'd0, i_cp_word[15:12]},
-                                     i_cpsr[`ZAP_CPSR_MODE]);
+                                     i_cpsr[ZAP_CPSR_MODE:0]);
         o_reg_wr_index  <= 16;
 endtask
 
@@ -585,13 +602,13 @@ task automatic load_to_cpu_reg;
         // Register write command.
         o_reg_en        <= 1'd1;
         o_reg_wr_index  <= translate( {2'd0, i_cp_word[15:12]},
-                                       i_cpsr[`ZAP_CPSR_MODE] );
+                                       i_cpsr[ZAP_CPSR_MODE:0] );
         //
         // The condition checks for CP WORD = 0 and OPCODE2 = 1 to access the
         // hidden cache type register.
         //
         o_reg_wr_data   <=
-                i_cp_word[19:16] == 0 && i_cp_word[`ZAP_OPCODE_2] == 1 ?
+                i_cp_word[19:16] == 0 && i_cp_word.ZAP_OPCODE_2 == 1 ?
                 CACHE_TYPE_WORD                                        :
                 r[ i_cp_word[19:16] ];
 endtask

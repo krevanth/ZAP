@@ -3,7 +3,7 @@
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
-// as published by the Free Software Foundation; either version 2
+// as published by the Free Software Foundation; either version 3
 // of the License, or (at your option) any later version.
 //
 // This program is distributed in the hope that it will be useful,
@@ -191,6 +191,7 @@ begin
                 5'b0001?: {o_und_ff, o_fiq_ff, o_irq_ff, o_swi_ff, o_instr_abort_ff} <= 5'b00010;
                 5'b00001: {o_und_ff, o_fiq_ff, o_irq_ff, o_swi_ff, o_instr_abort_ff} <= 5'b00001;
                 5'b00000: {o_und_ff, o_fiq_ff, o_irq_ff, o_swi_ff, o_instr_abort_ff} <= 5'b00000;
+                // Synthesis will OPTIMIZE. OK to do for FPGA synthesis.
                 default : {o_und_ff, o_fiq_ff, o_irq_ff, o_swi_ff, o_instr_abort_ff} <= {5{1'bx}};
                 endcase
 

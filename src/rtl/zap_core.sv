@@ -3,7 +3,7 @@
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
-// as published by the Free Software Foundation; either version 2
+// as published by the Free Software Foundation; either version 3
 // of the License, or (at your option) any later version.
 //
 // This program is distributed in the hope that it will be useful,
@@ -116,7 +116,7 @@ output logic     [31:0]                  o_instr_wb_adr_nxt,
 output logic    [31:0]                   o_instr_wb_adr_check,
 
 // Determines user or supervisory mode. Cache must use this for VM.
-output logic      [`ZAP_CPSR_MODE]       o_cpsr,
+output logic      [ZAP_CPSR_MODE:0]       o_cpsr,
 
 // -----------------------------------------------------
 // For MMU/cache connectivity.
@@ -500,7 +500,7 @@ wire unused = |{rb_decompile, CPU_MODE, alu_cpsr_nxt[31:30], alu_cpsr_nxt[28:0],
                 predecode_inst[39:36], postalu_mem_translate_ff,
                i_dc_reg_idx[63:PHY_REGS]};
 
-assign o_cpsr                   = alu_flags_ff[`ZAP_CPSR_MODE];
+assign o_cpsr                   = alu_flags_ff[ZAP_CPSR_MODE:0];
 assign o_data_wb_adr            = {postalu_address_ff[31:2], 2'd0};
 assign o_data_wb_adr_nxt        = {alu_address_ff[31:2], 2'd0};
 assign o_instr_wb_we            = 1'd0;
@@ -715,7 +715,7 @@ u_zap_predecode (
                                          mode16_pc_plus_8_ff - 32'd8),
 
         .i_cpu_mode_t                   (alu_flags_ff[T]),
-        .i_cpu_mode_mode                (alu_flags_ff[`ZAP_CPSR_MODE]),
+        .i_cpu_mode_mode                (alu_flags_ff[ZAP_CPSR_MODE:0]),
 
         .i_instruction                  (mode16_instruction),
         .i_instruction_valid            (mode16_valid),
@@ -788,7 +788,7 @@ u_zap_decode_main (
         .i_pc_plus_8_ff                 (predecode_pc_plus_8),
         .i_pc_ff                        (predecode_pc),
 
-        .i_cpsr_ff_mode                 (alu_flags_ff[`ZAP_CPSR_MODE]),
+        .i_cpsr_ff_mode                 (alu_flags_ff[ZAP_CPSR_MODE:0]),
 
         .i_instruction                  (predecode_inst[35:0]),
         .i_instruction_valid            (predecode_val),
@@ -1603,7 +1603,7 @@ zap_cp15_cb #(
 
 // Readout of CPU mode. Useful for debugging.
 always_comb
-case(o_cpsr[`ZAP_CPSR_MODE])
+case(o_cpsr[ZAP_CPSR_MODE:0])
 FIQ:     CPU_MODE = "FIQ";
 IRQ:     CPU_MODE = "IRQ";
 USR:     CPU_MODE = "USR";
@@ -1620,13 +1620,13 @@ begin
         if ( !i_reset )
         begin
                 assert (
-                        o_cpsr[`ZAP_CPSR_MODE] == FIQ ||
-                        o_cpsr[`ZAP_CPSR_MODE] == IRQ ||
-                        o_cpsr[`ZAP_CPSR_MODE] == USR ||
-                        o_cpsr[`ZAP_CPSR_MODE] == UND ||
-                        o_cpsr[`ZAP_CPSR_MODE] == SVC ||
-                        o_cpsr[`ZAP_CPSR_MODE] == ABT ||
-                        o_cpsr[`ZAP_CPSR_MODE] == SYS
+                        o_cpsr[ZAP_CPSR_MODE:0] == FIQ ||
+                        o_cpsr[ZAP_CPSR_MODE:0] == IRQ ||
+                        o_cpsr[ZAP_CPSR_MODE:0] == USR ||
+                        o_cpsr[ZAP_CPSR_MODE:0] == UND ||
+                        o_cpsr[ZAP_CPSR_MODE:0] == SVC ||
+                        o_cpsr[ZAP_CPSR_MODE:0] == ABT ||
+                        o_cpsr[ZAP_CPSR_MODE:0] == SYS
                 ) else
                         $fatal(2, "Error: CPU in unknown mode.");
         end

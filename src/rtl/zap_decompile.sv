@@ -1,35 +1,29 @@
-// ---------------------------------------------------------------------------
-// --                                                                       --
-// --    (C) 2016-2022 Revanth Kamaraj (krevanth)                           --
-// --                                                                       --
-// -- ------------------------------------------------------------------------
-// --                                                                       --
-// -- This program is free software; you can redistribute it and/or         --
-// -- modify it under the terms of the GNU General Public License           --
-// -- as published by the Free Software Foundation; either version 2        --
-// -- of the License, or (at your option) any later version.                --
-// --                                                                       --
-// -- This program is distributed in the hope that it will be useful,       --
-// -- but WITHOUT ANY WARRANTY; without even the implied warranty of        --
-// -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         --
-// -- GNU General Public License for more details.                          --
-// --                                                                       --
-// -- You should have received a copy of the GNU General Public License     --
-// -- along with this program; if not, write to the Free Software           --
-// -- Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA         --
-// -- 02110-1301, USA.                                                      --
-// --                                                                       --
-// ---------------------------------------------------------------------------
-// --                                                                       --
-// -- When running in simulation mode, this module will decompile binary    --
-// -- mode32 instrs to assembler instructions for debug purposes.           --
-// -- When running in synthesis mode, the output of this module is tied     --
-// -- to a constant since this module really finds use only in debug.       --
-// -- Define DEBUG_EN during simulation to help in debugging.               --
-// --                                                                       --
-// ---------------------------------------------------------------------------
+//
+// (C) 2016-2022 Revanth Kamaraj (krevanth)
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 3
+// of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+// 02110-1301, USA.
+//
+// When running in simulation mode, this module will decompile binary
+// mode32 instrs to assembler instructions for debug purposes.
+// When running in synthesis mode, the output of this module is tied
+// to a constant since this module really finds use only in debug.
+// Define DEBUG_EN during simulation to help in debugging.
+//
 
-
+`include "zap_decompile.svh"
 
 module zap_decompile #(parameter [31:0] INS_WDT = 32'd36) (
                 input logic      [36-1:0]        i_instruction,  // 36-bit instruction into decode.

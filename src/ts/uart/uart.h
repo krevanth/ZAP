@@ -1,12 +1,12 @@
 // -----------------------------------------------------------------------------
 // --                                                                         --
 // --                   (C) 2016-2022 Revanth Kamaraj (krevanth)              --
-// --                                                                         -- 
+// --                                                                         --
 // -- --------------------------------------------------------------------------
 // --                                                                         --
 // -- This program is free software; you can redistribute it and/or           --
 // -- modify it under the terms of the GNU General Public License             --
-// -- as published by the Free Software Foundation; either version 2          --
+// -- as published by the Free Software Foundation; either version 3          --
 // -- of the License, or (at your option) any later version.                  --
 // --                                                                         --
 // -- This program is distributed in the hope that it will be useful,         --
@@ -37,7 +37,7 @@
 
         // Initialization functions.
         void UARTInit(void);
-        void UARTEnableTX(void);        
+        void UARTEnableTX(void);
         void UARTEnableRX(void);
 
         // Open loop functions.
@@ -47,7 +47,7 @@
         // UART interrupt related functions.
         void UARTEnableTXInterrupt(void);
         void UARTEnableRXInterrupt(void);
-        
+
         // Check THRE
         int UARTTransmitEmpty(void);
 
@@ -56,5 +56,5 @@
 
         // String processing functions.
         int strlen(char*);
-        
+
 #endif

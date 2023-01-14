@@ -301,6 +301,8 @@ When **ONLY_CORE = 0x0**, the following types of accesses can result in mostly W
 
 Please refer to ref \[1] for CP15 CSR architectural requirements. The ZAP implements the following software accessible registers within its CP15 coprocessor.  
 
+> `MCR/MRC/LDC/STC` act as fence instructions, and ensure all instructions before them have executed before executing.
+
 #### 1.3.1. Register 0: **ID Code Register (Opcode2 = 0x0).**
 
 | Bit   | Meaning      |
@@ -743,7 +745,7 @@ Testbench assembly code in `src/ts/mode16_test*/` is based on Julian Smolka's wo
 
 Copyright (C) 2016-2022 Revanth Kamaraj
 
-This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 3 of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
