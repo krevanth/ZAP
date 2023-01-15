@@ -179,12 +179,12 @@ begin: blk1
         begin
                 if ( i_mmu_en && i_idle )
                 begin
-                        if ( i_walk ) /* Prepare to access the PTEs. */
+                        if ( i_walk ) // Prepare to access the PTEs.
                         begin
                                 o_busy    = 1'd1;
                                 state_nxt = PRE_FETCH_L1_DESC_0;
                         end
-                        else if ( i_fsr[3:0] != 4'b0000 ) /* Access Violation. */
+                        else if ( i_fsr[3:0] != 4'b0000 ) // Access Violation.
                         begin
                                 o_fault = 1'd1;
                                 o_busy  = 1'd0;
@@ -196,14 +196,14 @@ begin: blk1
 
         PRE_FETCH_L1_DESC_0:
         begin
-                /* Connect this to the next state. */
+                // Connect this to the next state.
                 o_busy    = 1'd1;
                 state_nxt = FETCH_L1_DESC_0;
 
-                /*
-                 * We need to page walk to get the page table.
-                 * Call for access to L1 level page table.
-                 */
+                //
+                // We need to page walk to get the page table.
+                // Call for access to L1 level page table.
+                //
                 tsk_prpr_wb_rd({i_baddr[`ZAP_VA__TRANSLATION_BASE],
                                 address[`ZAP_VA__TABLE_INDEX], 2'd0});
         end
@@ -225,10 +225,10 @@ begin: blk1
 
         FETCH_L1_DESC:
         begin
-                /*
-                 * What we would have fetched is the L1 descriptor.
-                 * Examine it. dff holds the L1 descriptor.
-                 */
+                //
+                // What we would have fetched is the L1 descriptor.
+                // Examine it. dff holds the L1 descriptor.
+                //
 
                 o_busy = 1'd1;
 
@@ -236,11 +236,11 @@ begin: blk1
 
                 SECTION_ID, 2'b00:
                 begin
-                        /*
-                         * It is a section itself so there is no need
-                         * for another fetch. Simply reload the TLB
-                         * and we are good.
-                         */
+                        //
+                        // It is a section itself so there is no need
+                        // for another fetch. Simply reload the TLB
+                        // and we are good.
+                        //
                         o_setlb_wen       = 1'd1;
                         o_setlb_wdata     = {address[`ZAP_VA__SECTION_TAG],
                                              dff};
@@ -250,12 +250,12 @@ begin: blk1
 
                 PAGE_ID:
                 begin
-                        /*
-                         * Page ID requires that DAC from current
-                         * descriptor is remembered because when we
-                         * reload the TLB, it would be useful. Anyway,
-                         * we need to initiate another access.
-                         */
+                        //
+                        // Page ID requires that DAC from current
+                        // descriptor is remembered because when we
+                        // reload the TLB, it would be useful. Anyway,
+                        // we need to initiate another access.
+                        //
 
                         // dac register holds the dac sel for future use.
                         dac_nxt         = dff[`ZAP_L1_PAGE__DAC_SEL];

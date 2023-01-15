@@ -34,16 +34,16 @@ module zap_cache_fsm   #(
 
 (
 
-/* Clock and reset */
+// Clock and reset
 input   logic                      i_clk,
 input   logic                      i_reset,
 
-/* From/to processor */
+// From/to processor
 input   logic    [31:0]            i_address,
 input   logic                      i_rd,
 input   logic                      i_wr,
 input   logic    [31:0]            i_din,
-input   logic    [3:0]             i_ben, /* Valid only for writes. */
+input   logic    [3:0]             i_ben, // Valid only for writes.
 
 output  logic     [31:0]            o_dat,
 output  logic                       o_ack,
@@ -52,7 +52,7 @@ output  logic     [7:0]             o_fsr,
 output  logic     [31:0]            o_far,
 output  logic                       o_err2,
 
-/* From/To CP15 unit */
+// From/To CP15 unit
 input   logic                      i_cache_en,
 input   logic                      i_cache_inv,
 input   logic                      i_cache_clean,
@@ -60,7 +60,7 @@ input   logic                      i_cache_clean,
 output  logic                       o_cache_inv_done,
 output  logic                       o_cache_clean_done,
 
-/* From/to cache. */
+// From/to cache.
 input   logic    [CACHE_LINE*8-1:0]     i_cache_line,
 
 input   logic                           i_cache_tag_dirty,
@@ -72,7 +72,7 @@ output  logic                            o_cache_tag_dirty,
 output  logic                            o_cache_tag_wr_en,
 
 output  logic     [CACHE_LINE*8-1:0] o_cache_line,
-output  logic     [CACHE_LINE-1:0]   o_cache_line_ben,    /* Write + Byte enable */
+output  logic     [CACHE_LINE-1:0]   o_cache_line_ben,    // Write + Byte enable
 
 output  logic                       o_cache_clean_req,
 input   logic                       i_cache_clean_done,
@@ -82,7 +82,7 @@ input   logic                       i_cache_inv_done,
 
 output logic [31:0]                 o_address,
 
-/* From/to TLB unit */
+// From/to TLB unit
 input   logic    [31:0]            i_phy_addr,
 input   logic    [7:0]             i_fsr,
 input   logic    [31:0]            i_far,
@@ -91,17 +91,17 @@ input   logic                      i_cacheable,
 input   logic                      i_busy,
 output  logic                      o_hold,
 
-/* Cache state */
+// Cache state
 output  logic                      o_idle,
 
-/* Memory access ports, both NXT and FF. Usually you'll be connecting NXT ports */
+// Bus access ports.
 output  logic             o_wb_cyc_ff, o_wb_cyc_nxt,
 output  logic             o_wb_stb_ff, o_wb_stb_nxt,
 output  logic     [31:0]  o_wb_adr_ff, o_wb_adr_nxt,
 output  logic     [31:0]  o_wb_dat_ff, o_wb_dat_nxt,
 output  logic     [3:0]   o_wb_sel_ff, o_wb_sel_nxt,
 output  logic             o_wb_wen_ff, o_wb_wen_nxt,
-output  logic     [2:0]   o_wb_cti_ff, o_wb_cti_nxt,/* Cycle Type Indicator - 010, 111 */
+output  logic     [2:0]   o_wb_cti_ff, o_wb_cti_nxt,// Cycle Type Indicator - 010, 111
 input   logic             i_wb_ack,
 input   logic    [31:0]   i_wb_dat
 
@@ -114,14 +114,14 @@ input   logic    [31:0]   i_wb_dat
 `include "zap_localparams.svh"
 `include "zap_defines.svh"
 
-/* States */
-localparam IDLE                 = 0; /* Resting state. */
-localparam UNCACHEABLE          = 1; /* Uncacheable access. */
-localparam UNCACHEABLE_PREPARE  = 2; /* Prepare uncacheable access. */
-localparam CLEAN_SINGLE         = 3; /* Ultimately cleans up cache line. Parent state */
-localparam FETCH_SINGLE         = 4; /* Ultimately validates cache line. Parent state */
-localparam INVALIDATE           = 5; /* Cache invalidate parent state */
-localparam CLEAN                = 6; /* Cache clean parent state */
+// States
+localparam IDLE                 = 0; // Resting state.
+localparam UNCACHEABLE          = 1; // Uncacheable access.
+localparam UNCACHEABLE_PREPARE  = 2; // Prepare uncacheable access.
+localparam CLEAN_SINGLE         = 3; // Ultimately cleans up cache line. Parent state
+localparam FETCH_SINGLE         = 4; // Ultimately validates cache line. Parent state
+localparam INVALIDATE           = 5; // Cache invalidate parent state
+localparam CLEAN                = 6; // Cache clean parent state
 localparam NUMBER_OF_STATES     = 7;
 
 localparam ADR_PAD              = 32 - $clog2(CACHE_LINE/4) - 1;
@@ -145,11 +145,11 @@ logic                                     cache_inv_req_nxt,
 logic [$clog2(CACHE_LINE/4):0]            adr_ctr_ff, adr_ctr_nxt; // Needs to take on 0,1,2,3, ... CACHE_LINE/4
 logic                                     rhit, whit;              // For debug only.
 
-/* From/to processor */
+// From/to processor
 logic    [31:0]                           address;
 logic                                     wr;
 logic    [31:0]                           din;
-logic    [3:0]                            ben; /* Valid only for writes. */
+logic    [3:0]                            ben; // Valid only for writes.
 logic    [CACHE_LINE*8-1:0]               cache_line;
 logic  [`ZAP_CACHE_TAG_WDT-1:0]           cache_tag; // Tag
 logic    [31:0]                           phy_addr;
@@ -160,18 +160,18 @@ logic                                     UNUSED_1B, UNUSED_2B, unused;
 // Logic
 // ----------------------------------------------------------------------------
 
-/* Unused */
+// Unused
 always_comb unused = |{rhit, whit, UNUSED_1B, UNUSED_2B, phy_addr[$clog2(CACHE_LINE)-1:0]};
 
-/* Tie flops to the output */
+// Tie flops to the output
 always_comb o_cache_clean_req = cache_clean_req_ff; // Tie req flop to output.
 always_comb o_cache_inv_req   = cache_inv_req_ff;   // Tie inv flop to output.
 
-/* Alias */
+// Alias
 always_comb cache_cmp   = (i_cache_tag[`ZAP_CACHE_TAG__TAG] == i_address[`ZAP_VA__CACHE_TAG]);
 always_comb cache_dirty = i_cache_tag_dirty;
 
-/* Buffers */
+// Buffers
 always_ff @ ( posedge i_clk )
 begin
         if ( state_ff == IDLE )
@@ -186,7 +186,7 @@ begin
         end
 end
 
-/* Sequential Block */
+// Sequential Block
 always_ff @ ( posedge i_clk )
 begin
         if ( i_reset )
@@ -225,13 +225,13 @@ begin
                 buf_ff[i] <= buf_nxt[i];
 end
 
-/* Idle indication */
+// Idle indication
 always_ff @ ( posedge i_clk )
 begin
         o_idle <= ~(|state_nxt);
 end
 
-/* Combo block */
+// Combo block
 always_comb
 begin:blk1
        logic [$clog2(CACHE_LINE/4)-1:0] a;
@@ -239,7 +239,7 @@ begin:blk1
        UNUSED_1B = '0;
        UNUSED_2B = '0;
 
-        /* Default values */
+        // Default values
         a                       = {($clog2(CACHE_LINE/4)){1'd0}};
         state_nxt               = state_ff;
         adr_ctr_nxt             = adr_ctr_ff;
@@ -302,7 +302,7 @@ begin:blk1
                 end
                 else if ( i_fault )
                 begin
-                        /* MMU access fault. */
+                        // MMU access fault.
                         o_err = 1'd1;
                         o_ack = 1'd1;
                         o_fsr = i_fsr;
@@ -310,7 +310,7 @@ begin:blk1
                 end
                 else if ( i_busy )
                 begin
-                        /* Wait it out */
+                        // Wait it out
                         o_err2 = 1'd1;
                         o_ack  = 1'd1;
                 end
@@ -319,7 +319,7 @@ begin:blk1
                         if ( !i_cache_en )
                         begin
                                 state_nxt       = UNCACHEABLE;
-                                o_ack           = 1'd0; /* Wait...*/
+                                o_ack           = 1'd0; // Wait...
                                 o_wb_stb_nxt    = 1'd1;
                                 o_wb_cyc_nxt    = 1'd1;
                                 o_wb_adr_nxt    = i_address;
@@ -332,14 +332,14 @@ begin:blk1
                         begin
                                 case ({cache_cmp,i_cache_tag_valid})
 
-                                2'b11: /* Cache Hit */
+                                2'b11: // Cache Hit
                                 begin
-                                        if ( i_rd ) /* Read request. */
+                                        if ( i_rd ) // Read request.
                                         begin
                                                 rhit    = 1'd1;
                                                 o_ack   = 1'd1;
                                         end
-                                        else if ( i_wr ) /* Write request */
+                                        else if ( i_wr ) // Write request
                                         begin
                                                 o_ack        = 1'd1;
                                                 whit         = 1'd1;
@@ -351,7 +351,7 @@ begin:blk1
                                                         i_address[$clog2(CACHE_LINE)-1:2],
                                                         i_ben );
 
-                                                /* Write to tag and also write out physical address. */
+                                                // Write to tag and also write out physical address.
                                                 o_cache_tag_wr_en                = 1'd1;
                                                 o_cache_tag[`ZAP_CACHE_TAG__TAG] = i_address[`ZAP_VA__CACHE_TAG];
                                                 o_cache_tag_dirty                = 1'd1;
@@ -360,48 +360,48 @@ begin:blk1
                                         end
                                 end
 
-                                2'b01: /* Unrelated tag, possibly dirty. */
+                                2'b01: // Unrelated tag, possibly dirty.
                                 begin
-                                        /* CPU should retry */
+                                        // CPU should retry
                                         o_ack  = 1'd1;
                                         o_err2 = 1'd1;
 
                                         if ( cache_dirty )
                                         begin
-                                                /* Set up counter */
+                                                // Set up counter
                                                 adr_ctr_nxt = 0;
 
-                                                /* Clean a single cache line */
+                                                // Clean a single cache line
                                                 state_nxt = CLEAN_SINGLE;
                                         end
                                         else if ( i_rd | i_wr )
                                         begin
-                                                /* Set up counter */
+                                                // Set up counter
                                                 adr_ctr_nxt = 0;
 
-                                                /* Fetch a single cache line */
+                                                // Fetch a single cache line
                                                 state_nxt = FETCH_SINGLE;
                                         end
                                 end
 
-                                default: /* Need to generate a new tag. */
+                                default: // Need to generate a new tag.
                                 begin
-                                                /* CPU should wait. */
+                                                // CPU should wait.
                                                 o_ack  = 1'd1;
                                                 o_err2 = 1'd1;
 
-                                                /* Set up counter */
+                                                // Set up counter
                                                 adr_ctr_nxt = 0;
 
-                                                /* Fetch a single cache line */
+                                                // Fetch a single cache line
                                                 state_nxt = FETCH_SINGLE;
                                 end
                                 endcase
                         end
-                        else /* Decidedly non cacheable. */
+                        else // Decidedly non cacheable.
                         begin
                                 state_nxt       = UNCACHEABLE_PREPARE;
-                                o_ack           = 1'd0; /* Wait...*/
+                                o_ack           = 1'd0; // Wait...
                                 o_hold          = 1'd1;
                         end
                 end
@@ -421,7 +421,7 @@ begin:blk1
                 o_wb_cti_nxt    = CTI_EOB;
         end
 
-        UNCACHEABLE: /* Uncacheable reads and writes definitely go through this. */
+        UNCACHEABLE: // Uncacheable reads and writes definitely go through this.
         begin
                 o_ack  = 1'd0;
                 o_hold = 1'd1;
@@ -436,18 +436,18 @@ begin:blk1
                 end
         end
 
-        CLEAN_SINGLE: /* Clean single cache line */
+        CLEAN_SINGLE: // Clean single cache line
         begin
                 o_ack  = 1'd1;
                 o_err2 = i_rd || i_wr ? 1'd1 : 1'd0;
 
-                /* Generate address */
+                // Generate address
                 adr_ctr_nxt = adr_ctr_ff + ((o_wb_stb_ff && i_wb_ack) ? {{($clog2(CACHE_LINE/4) ){1'd0}}, 1'd1} :
                                                                          {($clog2(CACHE_LINE/4)+1){1'd0}});
 
                 if ( {{ADR_PAD{1'd0}}, adr_ctr_nxt} <= ((CACHE_LINE/4) - 1) )
                 begin
-                        /* Sync up with memory. Use PA in cache tag itself. */
+                        // Sync up with memory. Use PA in cache tag itself.
                         wb_prpr_write( clean_single_d (cache_line, adr_ctr_nxt),
 
                                       {cache_tag[`ZAP_CACHE_TAG__PA], {$clog2(CACHE_LINE){1'd0}}} +
@@ -460,11 +460,11 @@ begin:blk1
                 end
                 else
                 begin
-                        /* Move to wait state */
+                        // Move to wait state
                         kill_access ();
                         state_nxt = IDLE;
 
-                        /* Update tag. Remove dirty bit. */
+                        // Update tag. Remove dirty bit.
                         o_cache_tag_wr_en                      = 1'd1; // Implicitly sets valid (redundant).
                         o_cache_tag[`ZAP_CACHE_TAG__TAG]       = cache_tag[`ZAP_CACHE_TAG__TAG]; // Preserve.
                         o_cache_tag_dirty                      = 1'd0;
@@ -472,21 +472,21 @@ begin:blk1
                 end
         end
 
-        FETCH_SINGLE: /* Fetch a single cache line */
+        FETCH_SINGLE: // Fetch a single cache line
         begin
                 o_ack  = 1'd1;
                 o_err2 = i_rd || i_wr ? 1'd1 : 1'd0;
 
-                /* Generate address */
+                // Generate address
                 adr_ctr_nxt = adr_ctr_ff + ((o_wb_stb_ff && i_wb_ack) ? {{($clog2(CACHE_LINE/4) ){1'd0}}, 1'd1} :
                                                                          {($clog2(CACHE_LINE/4)+1){1'd0}}) ;
 
-                /* Write to buffer */
+                // Write to buffer
                 buf_nxt[adr_ctr_ff[$clog2(CACHE_LINE/4)-1:0]] = i_wb_ack ?
                                                                 i_wb_dat :
                                                                 buf_ff[adr_ctr_ff[$clog2(CACHE_LINE/4)-1:0]];
 
-                /* Manipulate buffer as needed */
+                // Manipulate buffer as needed
                 if ( wr )
                 begin
                         a = address[$clog2(CACHE_LINE/4)+1:2]; // Use value of X/4.
@@ -500,14 +500,14 @@ begin:blk1
                 if ( {{ADR_PAD{1'd0}}, adr_ctr_nxt} <= (CACHE_LINE/4) - 1 )
                 begin
 
-                        /* Fetch line from memory */
+                        // Fetch line from memory
                         wb_prpr_read(
                                      {phy_addr[31:$clog2(CACHE_LINE)], {$clog2(CACHE_LINE){1'd0}}} + (adr_ctr_nxt * (32/8)),
                                      ({{ADR_PAD{1'd0}}, adr_ctr_nxt} != CACHE_LINE/4 - 1) ? CTI_BURST : CTI_EOB);
                 end
                 else
                 begin:blk12
-                        /* Update cache with previous buffers. Here _nxt refers to _ff except for the last one. */
+                        // Update cache with previous buffers. Here _nxt refers to _ff except for the last one.
 
                         o_cache_line = 0;
 
@@ -516,19 +516,19 @@ begin:blk1
 
                         o_cache_line_ben  = {CACHE_LINE{1'd1}};
 
-                        /* Update tag. Remove dirty and set valid */
+                        // Update tag. Remove dirty and set valid
                         o_cache_tag_wr_en                       = 1'd1; // Implicitly sets valid.
                         o_cache_tag[`ZAP_CACHE_TAG__TAG]        = address[`ZAP_VA__CACHE_TAG];
                         o_cache_tag[`ZAP_CACHE_TAG__PA]         = phy_addr[31:$clog2(CACHE_LINE)];
                         o_cache_tag_dirty                       = !wr ? 1'd0 : 1'd1; // BUG FIX.
 
-                        /* Move to idle state */
+                        // Move to idle state
                         kill_access ();
                         state_nxt = IDLE;
                 end
         end
 
-        INVALIDATE: /* Invalidate the cache - Almost Single Cycle */
+        INVALIDATE: // Invalidate the cache - Almost Single Cycle
         begin
                 cache_inv_req_nxt = 1'd1;
                 cache_clean_req_nxt = 1'd0;
@@ -541,7 +541,7 @@ begin:blk1
                 end
         end
 
-        CLEAN:  /* Force cache to clean itself */
+        CLEAN:  // Force cache to clean itself
         begin
                 cache_clean_req_nxt = 1'd1;
                 cache_inv_req_nxt   = 1'd0;
@@ -600,7 +600,7 @@ begin
 end
 endfunction
 
-/* Task to generate Wishbone read signals. */
+// Task to generate Wishbone read signals.
 function automatic void wb_prpr_read (
         input [31:0] Address,
         input [2:0]  cti
@@ -616,7 +616,7 @@ begin
 end
 endfunction
 
-/* Function to generate Wishbone write signals */
+// Function to generate Wishbone write signals
 function automatic void wb_prpr_write (
         input   [31:0]  data,
         input   [31:0]  Address,
@@ -634,7 +634,7 @@ begin
 end
 endfunction
 
-/* Disables Wishbone */
+// Disables Wishbone
 function automatic void kill_access ();
 begin
         o_wb_cyc_nxt = 0;

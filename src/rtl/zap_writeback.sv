@@ -60,9 +60,9 @@ module zap_writeback #(
         input logic                           i_clear_from_decode,
         input logic      [31:0]               i_pc_from_decode,
         input logic                           i_clear_from_icache,
-        input logic                           i_confirm_from_alu, // Added
-        input logic [31:0]                    i_alu_pc_ff, // Added
-        input logic [1:0]                     i_taken,            // Added
+        input logic                           i_confirm_from_alu,
+        input logic [31:0]                    i_alu_pc_ff,
+        input logic [1:0]                     i_taken,
 
         // 4 read ports for high performance.
         input logic   [$clog2(PHY_REGS)-1:0] i_rd_index_0,
@@ -530,7 +530,7 @@ endfunction
 
 `ifdef DEBUG_EN
 
-        /* For simulation only */
+        // For simulation only
         logic [1023:0] msg_nxt;
         logic          trace_uop_last_nxt;
         logic          trace_valid_nxt;
@@ -654,7 +654,7 @@ endfunction
                 end
         end
 
-        /* Above block is for simulation only */
+        // Above block is for simulation only
 `else
 
 // Tie off trace to 0.

@@ -258,7 +258,7 @@ function automatic void decode_clz ();
 begin: tskDecodeClz
         o_condition_code        =       instruction[31:28];
         o_flag_update           =       1'd0; // Instruction does not update any flags.
-        o_alu_operation         =       {1'd0, CLZ};  // Added.
+        o_alu_operation         =       {1'd0, CLZ};
 
         // Rn = 0.
         o_alu_source            =       33'd0;

@@ -209,7 +209,7 @@ localparam SYS = 5'b11_111;
 localparam UND = 5'b11_011;
 
 // Instruction definitions.
-/* MODE32 */
+// MODE32
 
 // DSP multiplication accumulate (DSP)
 
@@ -293,7 +293,7 @@ localparam      [31:0] BLX2                                             =       
 // BKPT
 localparam      [31:0] BKPT                                             =                                       32'b1110_00010010_????_????_????_0111_????;
 
-/* 16-bit ISA */
+// 16-bit ISA
 
 //B
 localparam      [15:0]  T_BRANCH_COND                                   =                                       16'b1101_????_????????; // Overlaps with SWI.
@@ -321,10 +321,10 @@ localparam      [15:0]  T_ALU_LO                                        =       
 // ALU hi.
 localparam      [15:0]  T_ALU_HI                                        =                                       16'b010001_??_?_?_???_???;
 
-// *Get address.
+// Get address.
 localparam      [15:0]  T_GET_ADDR                                      =                                       16'b1010_?_???_????????;
 
-// *Add offset to SP.
+// Add offset to SP.
 localparam      [15:0]  T_MOD_SP                                        =                                       16'b10110000_?_????_???;
 
 // PC relative load.
