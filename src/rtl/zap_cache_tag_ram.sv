@@ -54,17 +54,17 @@ output  logic                             o_cache_clean_done,
 input   logic                             i_cache_inv_req,
 output  logic                             o_cache_inv_done,
 
-/*
- * Cache clean operations occur through these ports.
- * Memory access ports, both NXT and FF. Usually you'll be connecting NXT ports
- */
+//
+// Cache clean operations occur through these ports.
+// Bus access ports.
+//
 output  logic                             o_wb_cyc_ff, o_wb_cyc_nxt,
 output  logic                             o_wb_stb_ff, o_wb_stb_nxt,
 output  logic     [31:0]                  o_wb_adr_ff, o_wb_adr_nxt,
 output  logic     [31:0]                  o_wb_dat_ff, o_wb_dat_nxt,
 output  logic     [3:0]                   o_wb_sel_ff, o_wb_sel_nxt,
 output  logic                             o_wb_wen_ff, o_wb_wen_nxt,
-output  logic     [2:0]                   o_wb_cti_ff, o_wb_cti_nxt, /* Cycle Type Indicator - 010, 111 */
+output  logic     [2:0]                   o_wb_cti_ff, o_wb_cti_nxt,
 input logic      [31:0]                   i_wb_dat,
 input logic                               i_wb_ack
 
@@ -444,7 +444,7 @@ endfunction
 
 // ----------------------------------------------------------------------------
 
-/* Function to generate Wishbone read signals. */
+// Function to generate Wishbone read signals.
 function automatic void wb_prpr_read (
         input [31:0] address,
         input [2:0]  cti
@@ -462,7 +462,7 @@ endfunction
 
 // ----------------------------------------------------------------------------
 
-/* Function to generate Wishbone write signals */
+// Function to generate Wishbone write signals
 function automatic void wb_prpr_write (
         input   [31:0]  data,
         input   [31:0]  address,
@@ -482,7 +482,7 @@ endfunction
 
 // ----------------------------------------------------------------------------
 
-/* Disables Wishbone */
+// Disables Wishbone
 function automatic void  kill_access ();
 begin
         o_wb_cyc_nxt = 0;

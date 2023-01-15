@@ -32,7 +32,7 @@ module zap_decompile #(parameter [31:0] INS_WDT = 32'd36) (
         );
 
 `ifdef DEBUG_EN
-                        /* ONLY IN SIMULATION */
+                        // ONLY IN SIMULATION
 
                         `include "zap_defines.svh"
                         `include "zap_localparams.svh"

@@ -31,7 +31,8 @@ parameter bit [31:0] FPAGE_TLB_ENTRIES      = 32'd8,
 parameter bit [31:0] CACHE_LINE             = 32'd8,
 parameter bit        BE_32_ENABLE           = 1'd0
 
-) /* Port List */ (
+)
+(
 
 // Clock and reset.
 input   logic            i_clk,
@@ -62,10 +63,10 @@ output  logic            o_err,
 output  logic [7:0]      o_fsr,
 output  logic [31:0]     o_far,
 output  logic            o_err2,
-input   logic [63:0]     i_reg_idx, /* Register to load to. added */
-output  logic [63:0]     o_lock,    /* Register that is locked. added */
-output  logic [31:0]     o_reg_dat, /* Register data. aded */
-output  logic [63:0]     o_reg_idx, /* Register index. added */
+input   logic [63:0]     i_reg_idx,
+output  logic [63:0]     o_lock,
+output  logic [31:0]     o_reg_dat,
+output  logic [63:0]     o_reg_idx,
 
 // MMU controls from/to processor.
 input   logic            i_mmu_en,
