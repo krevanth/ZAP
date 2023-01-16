@@ -30,14 +30,14 @@ module zap_issue_main
         // Parameters.
 
         // Number of physical registers.
-        parameter PHY_REGS = 46,
+        parameter [31:0] PHY_REGS = 64,
 
         // Although DDI0100E mentions only 16 ALU operations, the processor
         // internally performs many more operations.
-        parameter ALU_OPS   = 32,
+        parameter [31:0] ALU_OPS   = 32,
 
         // Number of supported shift operations.
-        parameter SHIFT_OPS = 5
+        parameter [31:0] SHIFT_OPS = 5
 )
 (
         // Clock and reset.

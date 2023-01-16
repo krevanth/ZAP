@@ -23,8 +23,8 @@
 //
 
 module zap_mem_inv_block #(
-        parameter DEPTH = 32,
-        parameter WIDTH = 32   // Not including valid bit.
+        parameter [31:0] DEPTH = 32,
+        parameter [31:0] WIDTH = 32   // Not including valid bit.
 )(
 
 

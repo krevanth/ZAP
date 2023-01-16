@@ -27,13 +27,13 @@ module zap_decode_main #(
         parameter [31:0] ARCH_REGS = 32'd32,
 
         // Number of arithm. opcodes
-        parameter ALU_OPS   = 32,
+        parameter [31:0] ALU_OPS   = 32,
 
         // Total shift operations supported.
-        parameter SHIFT_OPS = 6,
+        parameter [31:0] SHIFT_OPS = 6,
 
         // Number of physical registers.
-        parameter PHY_REGS = 46
+        parameter [31:0] PHY_REGS = 46
 )
 (
         output logic  [64*8-1:0]                  o_decompile, // For debug purposes.

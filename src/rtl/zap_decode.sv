@@ -23,9 +23,9 @@
 //
 
 module zap_decode #(
-parameter ARCH_REGS  = 32,
-parameter ALU_OPS    = 32,
-parameter SHIFT_OPS  = 6
+parameter [31:0] ARCH_REGS  = 32,
+parameter [31:0] ALU_OPS    = 32,
+parameter [31:0] SHIFT_OPS  = 6
 )
 (
 input   logic                             i_irq,

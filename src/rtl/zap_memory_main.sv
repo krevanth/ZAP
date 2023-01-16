@@ -25,10 +25,10 @@
 module zap_memory_main
 #(
         // Width of CPSR.
-        parameter FLAG_WDT = 32,
+        parameter [31:0] FLAG_WDT = 32,
 
         // Number of physical registers.
-        parameter PHY_REGS = 46
+        parameter [31:0] PHY_REGS = 46
 )
 (
         // Debug
