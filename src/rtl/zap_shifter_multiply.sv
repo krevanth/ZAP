@@ -62,12 +62,13 @@ module zap_shifter_multiply
 ///////////////////////////////////////////////////////////////////////////////
 
 // States
-localparam IDLE             = 0;
-localparam S1               = 1;
-localparam S2               = 2;
-localparam S3               = 3;
-localparam S4               = 4;
-localparam NUMBER_OF_STATES = 5;
+
+localparam [31:0] NUMBER_OF_STATES = 5;
+localparam [$clog2(NUMBER_OF_STATES)-1:0] IDLE = 3'd0;
+localparam [$clog2(NUMBER_OF_STATES)-1:0] S1   = 3'd1;
+localparam [$clog2(NUMBER_OF_STATES)-1:0] S2   = 3'd2;
+localparam [$clog2(NUMBER_OF_STATES)-1:0] S3   = 3'd3;
+localparam [$clog2(NUMBER_OF_STATES)-1:0] S4   = 3'd4;
 
 ///////////////////////////////////////////////////////////////////////////////
 

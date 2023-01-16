@@ -88,33 +88,21 @@ always_ff @ ( posedge i_clk )
 begin
         if (  i_reset )
         begin
-                o_pc_plus_8_ff  <= 0;
-                o_pc_ff         <= 0;
-                o_instruction   <= 0;
-
-                // Unit has no valid output.
+                o_pc_plus_8_ff  <= 'x;
+                o_pc_ff         <= 'x;
+                o_instruction   <= 'x;
                 o_valid         <= 1'd0;
-
-                // Do not signal any abort.
                 o_instr_abort   <= 1'd0;
-
-                // Wake unit up.
                 sleep_ff        <= 1'd0;
-
-                // Set pred to 0x0.
-                o_pred          <= 33'd0;
+                o_pred          <= 'x;
         end
-        else if ( i_clear_from_writeback )
+        else if(( i_clear_from_writeback )
+        ||      ( i_clear_from_alu )
+        ||      ( i_clear_from_decode ))
         begin
-                clear_unit;
-        end
-        else if ( i_clear_from_alu )
-        begin
-                clear_unit;
-        end
-        else if ( i_clear_from_decode )
-        begin
-                clear_unit;
+                o_valid         <= 1'd0;
+                o_instr_abort   <= 1'd0;
+                sleep_ff        <= 1'd0;
         end
         // If unit is sleeping.
         else if ( sleep_ff && !i_code_stall )
@@ -181,23 +169,6 @@ begin
                 o_valid        <= 1'd0;
         end
 end
-
-//
-// This task automatic clears out the unit and refreshes it for a new
-// service session. Will wake the unit up and clear the outputs.
-//
-task automatic clear_unit;
-begin
-                // No valid output.
-                o_valid         <= 1'd0;
-
-                // No aborts since we are clearing out the unit.
-                o_instr_abort   <= 1'd0;
-
-                // Wake up the unit.
-                sleep_ff        <= 1'd0;
-end
-endtask
 
 zap_decompile u_zap_decompile (
         .i_instruction  ({4'd0, o_instruction}),

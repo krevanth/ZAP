@@ -109,13 +109,13 @@ input  logic                     i_wb_ack
 
 // ----------------------------------------------------------------------------
 
-localparam IDLE                 = 0; // Idle State
-localparam PRE_FETCH_L1_DESC_0  = 1; // Trigger fetch
-localparam FETCH_L1_DESC        = 2; // Fetch L1 descriptor
-localparam FETCH_L2_DESC        = 3; // Fetch L2 descriptor
-localparam FETCH_L1_DESC_0      = 4;
-localparam FETCH_L2_DESC_0      = 5;
-localparam NUMBER_OF_STATES     = 6;
+localparam [2:0] IDLE                 = 0; // Idle State
+localparam [2:0] PRE_FETCH_L1_DESC_0  = 1; // Trigger fetch
+localparam [2:0] FETCH_L1_DESC        = 2; // Fetch L1 descriptor
+localparam [2:0] FETCH_L2_DESC        = 3; // Fetch L2 descriptor
+localparam [2:0] FETCH_L1_DESC_0      = 4;
+localparam [2:0] FETCH_L2_DESC_0      = 5;
+localparam [31:0] NUMBER_OF_STATES    = 6;
 
 // ----------------------------------------------------------------------------
 

@@ -120,40 +120,31 @@ always_ff @ (posedge i_clk)
 begin
         if ( i_reset )
         begin
-                reset;
-                o_instruction_valid <= 1'd0;
-                o_irq <= 0;
-                o_fiq <= 0;
-                o_und <= 0;
-                o_iabort <= 0;
+                o_instruction           <= 0;
+                o_force32_align         <= 0;
+                o_pc_ff                 <= 0;
+                o_taken_ff              <= 0;
+                o_pred                  <= 33'd0;
+                o_instruction_valid     <= 1'd0;
+                o_irq                   <= 0;
+                o_fiq                   <= 0;
+                o_und                   <= 0;
+                o_iabort                <= 0;
         end
-        else if ( i_clear_from_writeback )
+        else if(( i_clear_from_writeback )
+        ||      ( i_clear_from_alu && !i_data_stall )
+        ||      ( i_clear_from_decode && !stall ))
         begin
                 o_instruction_valid <= 1'd0;
                 o_irq <= 0;
                 o_fiq <= 0;
                 o_und <= 0;
                 o_iabort <= 0;
-        end
-        else if ( i_data_stall )
-        begin
-                // Save state
-        end
-        else if ( i_clear_from_alu && !i_data_stall )
-        begin
-                o_instruction_valid <= 1'd0;
-                o_irq <= 0;
-                o_fiq <= 0;
-                o_und <= 0;
-                o_iabort <= 0;
-        end
-        else if ( i_clear_from_decode && !stall )
-        begin
-                o_instruction_valid <= 1'd0;
-                o_irq <= 0;
-                o_fiq <= 0;
-                o_und <= 0;
-                o_iabort <= 0;
+                o_force32_align <= 'x;
+                o_pred <= 'x;
+                o_pc_ff <= 'x;
+                o_instruction <= 'x;
+                o_taken_ff <= 'x;
         end
         else if ( !stall )
         begin
@@ -171,22 +162,6 @@ begin
                 o_pred                  <= i_pred;
         end
 end
-
-task automatic reset;
-begin
-                o_iabort                <= 0;
-                o_instruction_valid     <= 0;
-                o_instruction           <= 0;
-                o_und                   <= 0;
-                o_force32_align         <= 0;
-                o_pc_ff                 <= 0;
-                o_pc_plus_8_ff          <= 0;
-                o_irq                   <= 0;
-                o_fiq                   <= 0;
-                o_taken_ff              <= 0;
-                o_pred                  <= 33'd0;
-end
-endtask
 
 // Helpful for debug.
 zap_decompile u_zap_decompile (

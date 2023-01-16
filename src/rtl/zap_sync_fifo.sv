@@ -46,7 +46,7 @@ module zap_sync_fifo #(
         output logic              o_full_n
 );
 
-localparam PTR_WDT = $clog2(DEPTH) + 32'd1;
+localparam [31:0] PTR_WDT = $clog2(DEPTH) + 32'd1;
 
 // Variables
 logic [PTR_WDT-1:0] rptr_ff, rptr_nxt;

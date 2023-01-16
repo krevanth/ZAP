@@ -517,29 +517,106 @@ always_ff @ ( posedge i_clk )
 begin
         if ( i_reset )
         begin
-                // On reset, processor enters supervisory mode with interrupts
-                // masked.
-                reset;
-                clear ( CPSR_INIT );
+                o_decompile_valid                <= 1'd0;
+                o_uop_last                       <= 1'd0;
+                o_clear_from_alu                 <= 0;
+                o_dav_ff                         <= 0;
+                o_alt_dav_ff                     <= 0;
+                flags_ff                         <= CPSR_INIT;
+                o_abt_ff                         <= 0;
+                o_irq_ff                         <= 0;
+                o_fiq_ff                         <= 0;
+                o_swi_ff                         <= 0;
+                o_und_ff                         <= 0;
+                sleep_ff                         <= 0;
+                o_mem_load_ff                    <= 0;
+                o_force32align_ff                <= 0;
+
+                o_alt_result_ff                  <= 'x; //
+                o_alu_result_ff                  <= 'x; //
+                o_pc_plus_8_ff                   <= 'x; //
+                o_destination_index_ff           <= 'x; //
+                o_mem_srcdest_index_ff           <= 'x; //
+                o_mem_srcdest_index_ff           <= 'x; //
+                o_mem_unsigned_byte_enable_ff    <= 'x; //
+                o_mem_signed_byte_enable_ff      <= 'x; //
+                o_mem_signed_halfword_enable_ff  <= 'x; //
+                o_mem_unsigned_halfword_enable_ff<= 'x; //
+                o_mem_translate_ff               <= 'x; //
+                w_pc_from_alu_btarget            <= 'x; //
+                w_pc_from_alu_resync             <= 'x; //
+                o_decompile                      <= 'x; //
+                o_taken_ff                       <= 'x; //
+                o_confirm_from_alu               <= 'x; //
         end
         else if ( i_clear_from_writeback )
         begin
                 // Clear but take CPSR from writeback.
-                clear ( i_cpsr_nxt );
+                o_decompile_valid                <= 1'd0;
+                o_uop_last                       <= 1'd0;
+                o_clear_from_alu                 <= 0;
+                o_dav_ff                         <= 0;
+                o_alt_dav_ff                     <= 0;
+                flags_ff                         <= i_cpsr_nxt;
+                o_abt_ff                         <= 0;
+                o_irq_ff                         <= 0;
+                o_fiq_ff                         <= 0;
+                o_swi_ff                         <= 0;
+                o_und_ff                         <= 0;
+                sleep_ff                         <= 0;
+                o_mem_load_ff                    <= 0;
+                o_force32align_ff                <= 0;
+
+                o_alt_result_ff                  <= 'x; //
+                o_alu_result_ff                  <= 'x; //
+                o_pc_plus_8_ff                   <= 'x; //
+                o_destination_index_ff           <= 'x; //
+                o_mem_srcdest_index_ff           <= 'x; //
+                o_mem_srcdest_index_ff           <= 'x; //
+                o_mem_unsigned_byte_enable_ff    <= 'x; //
+                o_mem_signed_byte_enable_ff      <= 'x; //
+                o_mem_signed_halfword_enable_ff  <= 'x; //
+                o_mem_unsigned_halfword_enable_ff<= 'x; //
+                o_mem_translate_ff               <= 'x; //
+                w_pc_from_alu_btarget            <= 'x; //
+                w_pc_from_alu_resync             <= 'x; //
+                o_decompile                      <= 'x; //
+                o_taken_ff                       <= 'x; //
+                o_confirm_from_alu               <= 'x; //
         end
         else if ( (i_data_mem_fault || sleep_ff) && !i_data_stall )
         begin
                 // Clear and preserve flags. Keep sleeping.
-                clear ( flags_ff );
-                sleep_ff                         <= 1'd1;
-                o_dav_ff                         <= 1'd0; // Don't give any output.
-                o_alt_dav_ff                     <= 2'd0;
                 o_decompile_valid                <= 1'd0;
                 o_uop_last                       <= 1'd0;
+                o_clear_from_alu                 <= 0;
+                o_dav_ff                         <= 0;
+                o_alt_dav_ff                     <= 0;
+                o_abt_ff                         <= 0;
+                o_irq_ff                         <= 0;
+                o_fiq_ff                         <= 0;
+                o_swi_ff                         <= 0;
+                o_und_ff                         <= 0;
+                sleep_ff                         <= 1'd1;
+                o_mem_load_ff                    <= 0;
+                o_force32align_ff                <= 0;
         end
         else if ( o_clear_from_alu && !i_data_stall )
         begin
-                clear ( flags_ff );
+                // Clear and preserve flags. Wake up from sleep.
+                o_decompile_valid                <= 1'd0;
+                o_uop_last                       <= 1'd0;
+                o_clear_from_alu                 <= 0;
+                o_dav_ff                         <= 0;
+                o_alt_dav_ff                     <= 0;
+                o_abt_ff                         <= 0;
+                o_irq_ff                         <= 0;
+                o_fiq_ff                         <= 0;
+                o_swi_ff                         <= 0;
+                o_und_ff                         <= 0;
+                sleep_ff                         <= 0;
+                o_mem_load_ff                    <= 0;
+                o_force32align_ff                <= 0;
         end
         else if ( !i_data_stall )
         begin
@@ -1070,30 +1147,6 @@ end
 endfunction
 
 //
-// This task automatic clears out the flip-flops in this module.
-// The flag input is used to preserve/force flags to
-// a specific state.
-//
-task automatic clear ( input [31:0] flags );
-begin
-                o_decompile_valid                <= 1'd0;
-                o_uop_last                       <= 1'd0;
-                o_clear_from_alu                 <= 0;
-                o_dav_ff                         <= 0;
-                o_alt_dav_ff                     <= 0;
-                flags_ff                         <= flags;
-                o_abt_ff                         <= 0;
-                o_irq_ff                         <= 0;
-                o_fiq_ff                         <= 0;
-                o_swi_ff                         <= 0;
-                o_und_ff                         <= 0;
-                sleep_ff                         <= 0;
-                o_mem_load_ff                    <= 0;
-                o_force32align_ff                <= 0;
-end
-endtask
-
-//
 // The reason we use the duplicate function is to copy value over the memory
 // bus for memory stores. If we have a byte write to address 1, then the
 // memory controller basically takes address 0 and byte enable 0010 and writes
@@ -1180,38 +1233,7 @@ begin
 end
 endfunction // generate_ben
 
-task automatic reset;
-begin
-                o_alt_result_ff                  <= 0;
-                o_alt_dav_ff                     <= 0;
-                o_alu_result_ff                  <= 0;
-                o_dav_ff                         <= 0;
-                o_pc_plus_8_ff                   <= 0;
-                o_destination_index_ff           <= 0;
-                flags_ff                         <= 0;
-                o_abt_ff                         <= 0;
-                o_irq_ff                         <= 0;
-                o_fiq_ff                         <= 0;
-                o_swi_ff                         <= 0;
-                o_mem_srcdest_index_ff           <= 0;
-                o_mem_srcdest_index_ff           <= 0;
-                o_mem_load_ff                    <= 0;
-                o_mem_unsigned_byte_enable_ff    <= 0;
-                o_mem_signed_byte_enable_ff      <= 0;
-                o_mem_signed_halfword_enable_ff  <= 0;
-                o_mem_unsigned_halfword_enable_ff<= 0;
-                o_mem_translate_ff               <= 0;
-                w_pc_from_alu_btarget            <= 0;
-                w_pc_from_alu_resync             <= 0;
-                o_decompile                      <= 0;
-                o_taken_ff                       <= 0;
-                o_confirm_from_alu               <= 0;
-                o_decompile_valid                <= 0;
-                o_uop_last                       <= 0;
-end
-endtask
-
-endmodule // zap_alu_main.v
+endmodule
 
 // ----------------------------------------------------------------------------
 // END OF FILE

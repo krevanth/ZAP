@@ -323,40 +323,41 @@ always_ff @ ( posedge i_clk )
 begin
         if ( i_reset )
         begin
-                o_condition_code_ff               <= 0;
-                o_destination_index_ff            <= 0;
-                o_alu_operation_ff                <= 0;
-                o_shift_operation_ff              <= 0;
-                o_flag_update_ff                  <= 0;
-                o_mem_srcdest_index_ff            <= 0;
-                o_mem_load_ff                     <= 0;
-                o_mem_store_ff                    <= 0;
-                o_mem_pre_index_ff                <= 0;
-                o_mem_unsigned_byte_enable_ff     <= 0;
-                o_mem_signed_byte_enable_ff       <= 0;
-                o_mem_signed_halfword_enable_ff   <= 0;
-                o_mem_unsigned_halfword_enable_ff <= 0;
-                o_mem_translate_ff                <= 0;
+                o_condition_code_ff               <= NV;
                 o_irq_ff                          <= 0;
                 o_fiq_ff                          <= 0;
                 o_abt_ff                          <= 0;
                 o_swi_ff                          <= 0;
-                o_pc_plus_8_ff                    <= 0;
-                o_shifter_disable_ff              <= 0;
-                o_alu_source_ff                   <= 0;
-                o_shift_source_ff                 <= 0;
-                o_alu_source_value_ff             <= 0;
-                o_shift_source_value_ff           <= 0;
-                o_shift_length_value_ff           <= 0;
-                o_mem_srcdest_value_ff            <= 0;
-                o_switch_ff                       <= 0;
-                o_force32align_ff                 <= 0;
                 o_und_ff                          <= 0;
-                o_taken_ff                        <= 0;
-                o_pc_ff                           <= 0;
-                o_decompile                       <= 0;
-                o_ppc_ff                          <= 0;
+                o_flag_update_ff                  <= 0;
                 o_stall_from_issue                <= 0;
+
+                o_destination_index_ff            <= 'x; //
+                o_alu_operation_ff                <= 'x; //
+                o_shift_operation_ff              <= 'x; //
+                o_mem_srcdest_index_ff            <= 'x; //
+                o_mem_load_ff                     <= 'x; //
+                o_mem_store_ff                    <= 'x; //
+                o_mem_pre_index_ff                <= 'x; //
+                o_mem_unsigned_byte_enable_ff     <= 'x; //
+                o_mem_signed_byte_enable_ff       <= 'x; //
+                o_mem_signed_halfword_enable_ff   <= 'x; //
+                o_mem_unsigned_halfword_enable_ff <= 'x; //
+                o_mem_translate_ff                <= 'x; //
+                o_pc_plus_8_ff                    <= 'x; //
+                o_shifter_disable_ff              <= 'x; //
+                o_alu_source_ff                   <= 'x; //
+                o_shift_source_ff                 <= 'x; //
+                o_alu_source_value_ff             <= 'x; //
+                o_shift_source_value_ff           <= 'x; //
+                o_shift_length_value_ff           <= 'x; //
+                o_mem_srcdest_value_ff            <= 'x; //
+                o_switch_ff                       <= 'x; //
+                o_force32align_ff                 <= 'x; //
+                o_taken_ff                        <= 'x; //
+                o_pc_ff                           <= 'x; //
+                o_decompile                       <= 'x; //
+                o_ppc_ff                          <= 'x; //
         end
         else if ( clear )
         begin
@@ -368,6 +369,33 @@ begin
                 o_und_ff             <= 0;
                 o_flag_update_ff     <= 0;
                 o_stall_from_issue   <= 0;
+
+                o_destination_index_ff            <= 'x; //
+                o_alu_operation_ff                <= 'x; //
+                o_shift_operation_ff              <= 'x; //
+                o_mem_srcdest_index_ff            <= 'x; //
+                o_mem_load_ff                     <= 'x; //
+                o_mem_store_ff                    <= 'x; //
+                o_mem_pre_index_ff                <= 'x; //
+                o_mem_unsigned_byte_enable_ff     <= 'x; //
+                o_mem_signed_byte_enable_ff       <= 'x; //
+                o_mem_signed_halfword_enable_ff   <= 'x; //
+                o_mem_unsigned_halfword_enable_ff <= 'x; //
+                o_mem_translate_ff                <= 'x; //
+                o_pc_plus_8_ff                    <= 'x; //
+                o_shifter_disable_ff              <= 'x; //
+                o_alu_source_ff                   <= 'x; //
+                o_shift_source_ff                 <= 'x; //
+                o_alu_source_value_ff             <= 'x; //
+                o_shift_source_value_ff           <= 'x; //
+                o_shift_length_value_ff           <= 'x; //
+                o_mem_srcdest_value_ff            <= 'x; //
+                o_switch_ff                       <= 'x; //
+                o_force32align_ff                 <= 'x; //
+                o_taken_ff                        <= 'x; //
+                o_pc_ff                           <= 'x; //
+                o_decompile                       <= 'x; //
+                o_ppc_ff                          <= 'x; //
         end
         else if ( ~stall )
         begin

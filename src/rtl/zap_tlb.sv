@@ -205,7 +205,7 @@ end
 
 // -----------------------------------------------------------------------------
 
-localparam W = max (
+localparam [31:0] W = max (
         20+$clog2(SECTION_TLB_ENTRIES),
         16+$clog2(LPAGE_TLB_ENTRIES),
         12+$clog2(SPAGE_TLB_ENTRIES),

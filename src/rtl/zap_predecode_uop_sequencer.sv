@@ -915,20 +915,20 @@ always_ff @ (posedge i_clk)
 begin
         if      ( i_reset )
         begin
-                clear;
+                state_ff                <= IDLE;
+                reglist_ff              <= {16{1'dx}};
+                const_ff                <= {32{1'dx}};
         end
-        else if ( i_clear_from_writeback)
+        else if
+        (
+                  i_clear_from_writeback                 ||
+                ( i_clear_from_alu    && !i_data_stall ) ||
+                ( i_clear_from_decode && !i_stall_from_shifter && !i_issue_stall && !i_data_stall )
+        )
         begin
-                clear;
-        end
-        else if ( i_clear_from_alu && !i_data_stall )
-        begin
-                clear;
-        end
-        else if ( i_clear_from_decode &&
-                 !i_stall_from_shifter && !i_issue_stall && !i_data_stall )
-        begin
-                clear;
+                state_ff                <= IDLE;
+                reglist_ff              <= {16{1'dx}};
+                const_ff                <= {32{1'dx}};
         end
         else if ( !i_stall_from_shifter && !i_issue_stall && !i_data_stall )
         begin
@@ -938,16 +938,9 @@ begin
         end
 end
 
-///////////////////////////////////////////////////////////////////////////////
-
-// Unit is reset.
-task automatic clear;
-begin
-        state_ff                <= IDLE;
-        reglist_ff              <= 16'd0;
-        const_ff                <= 32'd0;
-end
-endtask
+////////////////////
+// Functions
+////////////////////
 
 // Counts the number of ones and multiplies that by 4 to get final
 // address offset.

@@ -92,9 +92,9 @@ input  logic              i_wb_ack
 `include "zap_defines.svh"
 `include "zap_localparams.svh"
 
-localparam                      SELECT_CCH=0;
-localparam                      SELECT_TAG=1;
-localparam                      SELECT_TLB=2;
+localparam [1:0] SELECT_CCH = 2'd0;
+localparam [1:0] SELECT_TAG = 2'd1;
+localparam [1:0] SELECT_TLB = 2'd2;
 
 logic [2:0]                      wb_stb;
 logic [2:0]                      wb_cyc;
@@ -281,11 +281,11 @@ begin
                 state_ff <= SELECT_CCH;
                 o_wb_stb <= 1'd0;
                 o_wb_cyc <= 1'd0;
-                o_wb_adr <= 32'd0;
+                o_wb_adr <= 'x;
                 o_wb_cti <= CTI_EOB;
-                o_wb_sel <= 4'd0;
-                o_wb_dat <= 32'd0;
-                o_wb_wen <= 1'd0;
+                o_wb_sel <= 'x;
+                o_wb_dat <= 'x;
+                o_wb_wen <= 'x;
         end
         else
         begin
