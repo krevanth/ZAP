@@ -898,11 +898,14 @@ function automatic shifter_lock_check (
         input [3:0]                  condition_code_ff
 );
 begin
+        logic unused;
+        unused = |index[31:6];
+
         // Simply check if the operand index is on the output of this unit
         // and that the output is valid.
         // If immediate, no lock obviously.
 
-        if ( index[32] == IMMED_EN || index == PHY_RAZ_REGISTER )
+        if ( index[32] == IMMED_EN || index[5:0] == PHY_RAZ_REGISTER )
         begin
                 shifter_lock_check = 1'd0;
         end

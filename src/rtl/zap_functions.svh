@@ -94,7 +94,7 @@ endfunction
 
 function automatic  [5:0] translate (
 
-        input [5:0] index,      // Requested instruction index.
+        input [4:0] index,      // Requested instruction index.
         input [4:0] cpu_mode    // Current CPU mode.
 
 );
@@ -136,7 +136,7 @@ begin
 
               ARCH_DUMMY_REG0:translate = PHY_DUMMY_REG0;
               ARCH_DUMMY_REG1:translate = PHY_DUMMY_REG1;
-                default      :translate = index;
+                default      :translate = {1'd0, index};
         endcase
 
         // Override per specific mode.

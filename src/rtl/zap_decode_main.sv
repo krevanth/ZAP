@@ -230,25 +230,25 @@ always_comb  o_fiq_nxt = i_fiq && !o_abt_nxt;
 // architectural register numbers.
 //
 always_comb  o_destination_index_nxt = // Always a register so no need for IMMED_EN.
-        translate ( {1'd0, destination_index_nxt}, i_cpsr_ff_mode );
+        translate ( destination_index_nxt, i_cpsr_ff_mode );
 
 always_comb  o_alu_source_nxt =
         (alu_source_nxt[32] == IMMED_EN ) ? // Constant...?
         alu_source_nxt : // Pass constant on.
-        {27'd0, translate ( alu_source_nxt[5:0], i_cpsr_ff_mode )}; // Translate index.
+        {27'd0, translate ( alu_source_nxt[4:0], i_cpsr_ff_mode )}; // Translate index.
 
 always_comb  o_shift_source_nxt =
         (shift_source_nxt[32] == IMMED_EN ) ? // Constant...?
         shift_source_nxt : // Pass constant on.
-        {27'd0, translate ( shift_source_nxt[5:0], i_cpsr_ff_mode )}; // Translate index.
+        {27'd0, translate ( shift_source_nxt[4:0], i_cpsr_ff_mode )}; // Translate index.
 
 always_comb  o_shift_length_nxt =
         (shift_length_nxt[32] == IMMED_EN ) ? // Constant...?
         shift_length_nxt : // Pass constant on.
-        {27'd0, translate ( shift_length_nxt[5:0], i_cpsr_ff_mode )}; // Translate index.
+        {27'd0, translate ( shift_length_nxt[4:0], i_cpsr_ff_mode )}; // Translate index.
 
 always_comb  o_mem_srcdest_index_nxt = // Always a register so no need for IMMED_EN.
-        translate ( {1'd0, mem_srcdest_index_nxt}, i_cpsr_ff_mode );
+        translate ( mem_srcdest_index_nxt, i_cpsr_ff_mode );
 
 
 // ----------------------------------------------------------------------------

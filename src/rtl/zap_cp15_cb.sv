@@ -592,7 +592,7 @@ end
 task automatic load_to_cp_reg;
         // Generate CPU register read command. CP write.
         o_reg_en        <= 1'd1;
-        o_reg_rd_index  <= translate({2'd0, i_cp_word[15:12]},
+        o_reg_rd_index  <= translate({1'd0, i_cp_word[15:12]},
                                      i_cpsr[ZAP_CPSR_MODE:0]);
         o_reg_wr_index  <= 16;
 endtask
@@ -601,7 +601,7 @@ endtask
 task automatic load_to_cpu_reg;
         // Register write command.
         o_reg_en        <= 1'd1;
-        o_reg_wr_index  <= translate( {2'd0, i_cp_word[15:12]},
+        o_reg_wr_index  <= translate( {1'd0, i_cp_word[15:12]},
                                        i_cpsr[ZAP_CPSR_MODE:0] );
         //
         // The condition checks for CP WORD = 0 and OPCODE2 = 1 to access the

@@ -438,7 +438,7 @@ begin
         begin
                 resolve_conflict = index_from_issue[31:0];
         end
-        else if ( index_from_issue == PHY_PC )
+        else if ( index_from_issue[5:0] == PHY_PC )
         begin
                 resolve_conflict = i_pc_plus_8_ff;
         end
