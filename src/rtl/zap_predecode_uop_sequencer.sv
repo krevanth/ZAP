@@ -104,36 +104,33 @@ logic  [31:0]  const_ff, const_nxt;        // For BLX - const reg.
 assign {cc, id, pre_index, up, s_bit, writeback, load, base, reglist} = i_instruction[31:0];
 assign store = ~load;
 assign oc_offset = ones_counter(i_instruction[15:0]);
+assign unused = |{pre_index};
 
 ///////////////////////////////////////////////////////////////////////////////
 
-// States (One Hot).
-enum logic [21:0] {
-        IDLE           = 22'b0000000000000000000001,
-        MEMOP          = 22'b0000000000000000000010,
-        WRITE_PC       = 22'b0000000000000000000100,
-        SWAP1          = 22'b0000000000000000001000,
-        SWAP2          = 22'b0000000000000000010000,
-        LMULT_BUSY     = 22'b0000000000000000100000,
-        BL_S1          = 22'b0000000000000001000000,
-        SWAP3          = 22'b0000000000000010000000,
-        BLX1_STATE_S0  = 22'b0000000000000100000000,
-        BLX1_STATE_S1  = 22'b0000000000001000000000,
-        BLX1_STATE_S2  = 22'b0000000000010000000000,
-        BLX1_STATE_S3  = 22'b0000000000100000000000,
-        BLX1_STATE_S4  = 22'b0000000001000000000000,
-        BLX1_STATE_S5  = 22'b0000000010000000000000,
-        BLX2_STATE_S0  = 22'b0000000100000000000000,
-        LDRD_STRD_S0   = 22'b0000001000000000000000,
-        LDRD_STRD_S1   = 22'b0000010000000000000000,
-        LDR_TO_PC_S0   = 22'b0000100000000000000000,
-        DEP_WAIT       = 22'b0001000000000000000000,
-        DEP_WAIT_1     = 22'b0010000000000000000000,
-        DEP_WAIT_2     = 22'b0100000000000000000000,
-        DEP_WAIT_3     = 22'b1000000000000000000000
+enum logic [5:0] {
+        IDLE           ,
+        MEMOP          ,
+        WRITE_PC       ,
+        SWAP1          ,
+        SWAP2          ,
+        LMULT_BUSY     ,
+        BL_S1          ,
+        BLX1_STATE_S0  ,
+        BLX1_STATE_S1  ,
+        BLX1_STATE_S2  ,
+        BLX1_STATE_S3  ,
+        BLX1_STATE_S4  ,
+        BLX1_STATE_S5  ,
+        BLX2_STATE_S0  ,
+        LDRD_STRD_S0   ,
+        LDRD_STRD_S1   ,
+        LDR_TO_PC_S0   ,
+        DEP_WAIT       ,
+        DEP_WAIT_1     ,
+        DEP_WAIT_2     ,
+        DEP_WAIT_3
 } state_ff, state_nxt;
-
-assign unused = |{pre_index, SWAP3};
 
 ///////////////////////////////////////////////////////////////////////////////
 
