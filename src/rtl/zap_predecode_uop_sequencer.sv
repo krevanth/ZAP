@@ -323,9 +323,13 @@ begin:blk_a
                         end
 
                         if ( i_instruction[6:5] == 2'b11 )
+                        begin
                                 o_instruction[20] = 1'd0;       // Store
+                        end
                         else
+                        begin
                                 o_instruction[20] = 1'd1;       // Load
+                        end
                 end
 
                 LDRD_STRD_S1:
@@ -345,9 +349,13 @@ begin:blk_a
                         {o_instruction[ZAP_DP_RA_EXTEND], o_instruction[`ZAP_DP_RA]} = ARCH_DUMMY_REG0;
 
                         if ( i_instruction[6:5] == 2'b11 )
+                        begin
                                 o_instruction[20] = 1'd0;       // Store
+                        end
                         else
+                        begin
                                 o_instruction[20] = 1'd1;       // Load
+                        end
 
                         state_nxt = IDLE;
                 end
@@ -450,9 +458,13 @@ begin:blk_a
 
                                 // Load or Store.
                                 if ( i_instruction[6:5] == 2'b11 )
+                                begin
                                         o_instruction[20] = 1'd0;       // Store
+                                end
                                 else
+                                begin
                                         o_instruction[20] = 1'd1;       // Load
+                                end
 
                                 o_instruction[19:12] = i_instruction[19:12];
 
@@ -736,7 +748,9 @@ begin:blk_a
                         o_instruction_valid = 1'd1;
 
                         if ( o_instruction[27:26] == 2'b01 )
+                        begin
                                 o_align = 1;
+                        end
 
                         if ( reglist_ff == 0 )
                         begin
@@ -767,7 +781,9 @@ begin:blk_a
                         o_stall_from_decode = 1'd0;
 
                         if ( i_l4_enable == 1'd0 )
+                        begin
                                 o_switch = 1;
+                        end
 
                         o_instruction[31:0] =
                         { cc, 2'b00, 1'd0, MOV, s_bit, 4'd0, ARCH_PC,
@@ -873,6 +889,7 @@ begin
                         12:{map[ZAP_SRCDEST_EXTEND],map[`ZAP_SRCDEST]} = ARCH_USR2_R12;
                         13:{map[ZAP_SRCDEST_EXTEND],map[`ZAP_SRCDEST]} = ARCH_USR2_R13;
                         14:{map[ZAP_SRCDEST_EXTEND],map[`ZAP_SRCDEST]} = ARCH_USR2_R14;
+                        default:; // Propagate map as usual.
                         endcase
         end
         else if ( load && enc == 4'd15  )
@@ -943,7 +960,9 @@ begin
 
         // Counter number of ones. We can have up to 16 ones, 5-bits should be enough to hold 0 to 16.
         for(int i=0;i<16;i++)
+        begin
                 offset[4:0] = offset[4:0] + {4'd0, i_word[i]};
+        end
 
         // Since LDM and STM occur only on 4 byte regions, compute the
         // next offset.

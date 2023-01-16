@@ -23,8 +23,8 @@
 //
 
 module zap_mem_inv_block #(
-        parameter DEPTH = 32,
-        parameter WIDTH = 32   // Not including valid bit.
+        parameter [31:0] DEPTH = 32,
+        parameter [31:0] WIDTH = 32   // Not including valid bit.
 )(
 
 
@@ -94,11 +94,17 @@ zap_ram_simple #(.WIDTH(WIDTH), .DEPTH(DEPTH)) u_ram_simple (
 always_ff @ ( posedge i_clk )
 begin
         if ( i_reset )
+        begin
                dav_ff <= '0;
+        end
         else if ( i_inv )
+        begin
                dav_ff <= {DEPTH{1'd0}};
+        end
         else if ( i_wen && i_clken )
+        begin
               dav_ff [ i_waddr ] <= 1'd1;
+        end
 end
 
 ////////////////////////////
@@ -115,21 +121,33 @@ assign conflict_st1 = i_raddr == i_waddr && i_wen;
 always @ ( posedge i_clk )
 begin
         if ( i_reset )
+        begin
                 rdav_st1 <= '0;
+        end
         else if ( i_inv )
+        begin
                 rdav_st1 <= 1'd0;
+        end
         else if ( i_clken )
+        begin
                 rdav_st1 <= conflict_st1 ? 1'd1 : dav_ff [ i_raddr ];
+        end
 end
 
 always_ff @ ( posedge i_clk )
 begin
         if ( i_reset )
+        begin
                 raddr_del <= '0;
+        end
         else if ( i_inv )
+        begin
                 raddr_del <= '0;
+        end
         else if ( i_clken )
+        begin
                 raddr_del <= i_raddr;
+        end
 end
 
 // ----------------------------------------------------------------------------
@@ -142,21 +160,33 @@ assign conflict_st2 = raddr_del == i_waddr && i_wen;
 always_ff @ ( posedge i_clk )
 begin
         if ( i_reset )
+        begin
                 o_rdav_pre <= 1'd0;
+        end
         else if ( i_inv )
+        begin
                 o_rdav_pre <= 1'd0;
+        end
         else if  ( i_clken )
+        begin
                 o_rdav_pre <= conflict_st2 ? 1'd1 : rdav_st1;
+        end
 end
 
 always_ff @ ( posedge i_clk )
 begin
         if ( i_reset )
+        begin
                 raddr_del2 <= '0;
+        end
         else if ( i_inv )
+        begin
                 raddr_del2 <= '0;
+        end
         else if ( i_clken )
+        begin
                 raddr_del2 <= raddr_del;
+        end
 end
 
 // ----------------------------------------------------------------------------
@@ -169,11 +199,17 @@ assign conflict_st3 = raddr_del2 == i_waddr && i_wen;
 always_ff @  (posedge i_clk )
 begin
         if ( i_reset )
+        begin
                 o_rdav <= '0;
+        end
         else if ( i_inv )
+        begin
                 o_rdav <= 1'd0;
+        end
         else if ( i_clken )
+        begin
                 o_rdav <= conflict_st3 ? 1'd1 : o_rdav_pre;
+        end
 end
 
 endmodule

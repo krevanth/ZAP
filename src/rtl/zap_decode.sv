@@ -22,80 +22,37 @@
 // 36-bit before feeding it into this unit.
 //
 
-module zap_decode (
-
-i_irq,  // IRQ request from previous stage.
-i_fiq,  // FIQ request from previous stage.
-i_abt,  // Code abort flagged from previous stage.
-
-// Instruction input from pre-decode.
-i_instruction,
-i_instruction_valid,
-
-// Bits related to decoded instruction...
-
-o_condition_code,       // 4-bit CC.
-o_destination_index,    // Destination register.
-o_alu_source,           // ALU source register.
-o_alu_operation,        // ALU operation to be performed.
-o_shift_source,         // Register to be treated as input to shifter.
-o_shift_operation,      // Shift operation to perform.
-o_shift_length,         // Length of the shift operation.
-o_flag_update,          // 1 means flags must be updated.
-
-// Memory related.
-o_mem_srcdest_index,            // Data register.
-o_mem_load,                     // Load operation.
-o_mem_store,                    // Store operation.
-o_mem_pre_index,                // Pre-Index.
-o_mem_unsigned_byte_enable,     // Access treated as uint8_t.
-o_mem_signed_byte_enable,       // Access treated as int8_t.
-o_mem_signed_halfword_enable,   // Access treated as int16_t.
-o_mem_unsigned_halfword_enable, // Access treated as uint16_t.
-o_mem_translate,                // Force user view of memory.
-
-o_und,   // Declare as undecodable.
-o_switch // Switch between mode32 and mode16 may be needed if this is 1.
-
+module zap_decode #(
+parameter [31:0] ARCH_REGS  = 32,
+parameter [31:0] ALU_OPS    = 32,
+parameter [31:0] SHIFT_OPS  = 6
+)
+(
+input   logic                             i_irq,
+input   logic                             i_fiq,
+input   logic                             i_abt,
+input    logic   [35:0]                   i_instruction,
+input    logic                            i_instruction_valid,
+output   logic    [3:0]                   o_condition_code,
+output   logic    [$clog2(ARCH_REGS)-1:0] o_destination_index,
+output   logic    [32:0]                  o_alu_source,
+output   logic    [$clog2(ALU_OPS)-1:0]   o_alu_operation,
+output   logic    [32:0]                  o_shift_source,
+output   logic    [$clog2(SHIFT_OPS)-1:0] o_shift_operation,
+output   logic    [32:0]                  o_shift_length,
+output  logic                             o_flag_update,
+output  logic   [$clog2(ARCH_REGS)-1:0]   o_mem_srcdest_index,
+output  logic                             o_mem_load,
+output  logic                             o_mem_store,
+output  logic                             o_mem_pre_index,
+output  logic                             o_mem_unsigned_byte_enable,
+output  logic                             o_mem_signed_byte_enable,
+output  logic                             o_mem_signed_halfword_enable,
+output  logic                             o_mem_unsigned_halfword_enable,
+output  logic                             o_mem_translate,
+output  logic                             o_und,
+output  logic                             o_switch
 );
-
-// ----------------------------------------------------------------------------
-
-// Number of architectural registers.
-parameter ARCH_REGS = 32;
-
-// Number of opcodes.
-parameter ALU_OPS   = 32;
-
-// Number of shift operations.
-parameter SHIFT_OPS = 6;
-
-
-// I/O Ports.
-input   logic                             i_irq, i_fiq, i_abt;
-input    logic   [35:0]                   i_instruction;
-input    logic                            i_instruction_valid;
-output   logic    [3:0]                   o_condition_code;
-output   logic    [$clog2(ARCH_REGS)-1:0] o_destination_index;
-output   logic    [32:0]                  o_alu_source;
-output   logic    [$clog2(ALU_OPS)-1:0]   o_alu_operation;
-output   logic    [32:0]                  o_shift_source;
-output   logic    [$clog2(SHIFT_OPS)-1:0] o_shift_operation;
-output   logic    [32:0]                  o_shift_length;
-output  logic                             o_flag_update;
-output  logic   [$clog2(ARCH_REGS)-1:0]   o_mem_srcdest_index;
-output  logic                             o_mem_load;
-output  logic                             o_mem_store;
-output  logic                             o_mem_pre_index;
-output  logic                             o_mem_unsigned_byte_enable;
-output  logic                             o_mem_signed_byte_enable;
-output  logic                             o_mem_signed_halfword_enable;
-output  logic                             o_mem_unsigned_halfword_enable;
-output  logic                             o_mem_translate;
-output  logic                             o_und;
-output  logic                             o_switch;
-
-// ----------------------------------------------------------------------------
 
 `include "zap_defines.svh"
 `include "zap_localparams.svh"
@@ -197,7 +154,7 @@ begin
                 HALFWORD_LS:            decode_halfword_ls ();
                 SOFTWARE_INTERRUPT:     decode_swi         ();
 
-                default:
+                default: // Raise undefined exception.
                 begin
                         decode_und;
                 end
@@ -229,6 +186,7 @@ begin
         2'b01: o_alu_operation         = {1'd0, OP_QSUB};
         2'b10: o_alu_operation         = {1'd0, OP_QDADD};
         2'b11: o_alu_operation         = {1'd0, OP_QDSUB};
+      default: o_alu_operation         = 'x; // Propagate X;
         endcase
 
         // Processor does Rn - Rm.
@@ -314,6 +272,7 @@ begin: tskLDecodeMult
 
         // We need to generate output code.
         case ( instruction[22:21] )
+
         2'b00:
         begin
                 // Unsigned MULT64
@@ -322,12 +281,14 @@ begin: tskLDecodeMult
                 o_shift_length      = '0;
                 o_shift_length[32]  = IMMED_EN; // rn
         end
+
         2'b01:
         begin
                 // Unsigned MAC64. Need mem_srcdest as source for RdHi.
                 o_alu_operation = {1'd0, UMLALH};
                 o_mem_srcdest_index = {1'd0, instruction[19:16]};
         end
+
         2'b10:
         begin
                 // Signed MULT64
@@ -336,12 +297,20 @@ begin: tskLDecodeMult
                 o_shift_length = '0;
                 o_shift_length[32] = IMMED_EN; // rn
         end
+
         2'b11:
         begin
                 // Signed MAC64. Need mem_srcdest as source of RdHi.
                 o_alu_operation = {1'd0, SMLALH};
                 o_mem_srcdest_index = {1'd0, instruction[19:16]};
         end
+
+        default: // Propagate X.
+        begin
+                o_alu_operation = 'x;
+                o_mem_srcdest_index = 'x;
+        end
+
         endcase
 
         if ( instruction[ZAP_OPCODE_EXTEND] == 1'd0 )
@@ -434,8 +403,10 @@ begin: tskDecodeHalfWordLs
         o_mem_store         = !o_mem_load;
         o_mem_pre_index     = instruction[24];
 
+        //
         // If post-index is used or pre-index is used with writeback,
         // take is as a request to update the base register.
+        //
         o_destination_index = (instruction[21] || !o_mem_pre_index) ?
                                 o_alu_source[4:0] :
                                 RAZ_REGISTER; // Pointer register already added.
@@ -451,6 +422,7 @@ begin: tskDecodeHalfWordLs
         SIGNED_HALF_WORD:       o_mem_signed_halfword_enable   = 1'd1;
         default:
         begin
+                o_mem_signed_byte_enable        = 1'd0;
                 o_mem_unsigned_halfword_enable  = 1'd0;
                 o_mem_signed_halfword_enable    = 1'd0;
         end
@@ -599,18 +571,32 @@ begin: tskLDecodeMultDsp
                 o_mem_srcdest_index = {1'd0, instruction[19:16]}; // rh
         end
 
+        default:
+        begin
+                // Synth will OPTIMIZE. OK to do for FPGA synthesis.
+                {o_alu_operation, o_mem_srcdest_index} = 'x;
+        end
+
         endcase
 
-        if ( instruction[ZAP_OPCODE_EXTEND] == 1'd0 && instruction[31:0] ==? SMLALxy ) // Low request.
+        // Detect a low request.
+        if
+        (
+                instruction[ZAP_OPCODE_EXTEND] == 1'd0 &&
+                instruction[31:0] ==? SMLALxy
+        )
         begin
                         o_destination_index = {1'd0, instruction[15:12]}; // Low register.
-                        o_alu_operation[0]  = 1'd0;                       // Request low operation.
 
-                        o_alu_operation     =
-                                      instruction[6:5] == 2'b00 ? SMLAL00L :
-                                      instruction[6:5] == 2'b01 ? SMLAL01L :
-                                      instruction[6:5] == 2'b10 ? SMLAL10L :
-                                      instruction[6:5] == 2'b11 ? SMLAL11L : SMLAL11L ;
+                        o_alu_operation =
+                        instruction[6:5] == 2'b00 ? SMLAL00L :
+                        instruction[6:5] == 2'b01 ? SMLAL01L :
+                        instruction[6:5] == 2'b10 ? SMLAL10L :
+                                                    SMLAL11L;
+
+                        // Ensure low register operation.
+                        assert ( o_alu_operation[0] == 1'd0 ) else
+                        $fatal(2, "ALU low bit not set to zero.");
         end
 end
 
@@ -723,7 +709,7 @@ begin
 
         o_condition_code    = instruction[31:28];
         o_destination_index = {instruction[ZAP_DP_RD_EXTEND], instruction[`ZAP_DP_RD]};
-        o_alu_source        = instruction[22] ? ARCH_CURR_SPSR : ARCH_CPSR;
+        o_alu_source[4:0]   = instruction[22] ? ARCH_CURR_SPSR : ARCH_CPSR;
         o_alu_source[32]    = INDEX_EN;
         o_alu_operation     = instruction[22] ? {2'd0, ADD} : FADD;
 end
@@ -870,20 +856,23 @@ begin
         o_shift_source[32]      = INDEX_EN;
         o_shift_operation       = {1'd0, xinstruction[6:5]};
 
+        // Repair shift length.
         case ( o_shift_operation[1:0] )
                 LSR: if ( o_shift_length[31:0] == 32'd0 ) o_shift_length[31:0] = 32;
                 ASR: if ( o_shift_length[31:0] == 32'd0 ) o_shift_length[31:0] = 32;
                 ROR:
                 begin
+                        // Differs in carry generation behavior.
                         if ( o_shift_length[31:0] == 32'd0 )
+                        begin
                                 o_shift_operation    = RRC;
+                        end
                         else
+                        begin
                                 o_shift_operation    = ROR_1;
-                                // Differs in carry generation behavior.
+                        end
                 end
-                default: // For lint. Default values set in function anyway.
-                begin
-                end
+                default:; // For lint. Default values set in function anyway.
         endcase
 
         // Reinforce the fact.

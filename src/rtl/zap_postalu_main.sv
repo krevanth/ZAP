@@ -21,8 +21,8 @@
 //
 
 module zap_postalu_main #(
-        parameter bit [31:0] PHY_REGS  = 32'd46, // Number of physical registers.
-        parameter bit [31:0] FLAG_WDT  = 32'd32  // Width of active CPSR.
+        parameter logic [31:0] PHY_REGS  = 32'd46, // Number of physical registers.
+        parameter logic [31:0] FLAG_WDT  = 32'd32  // Width of active CPSR.
 )
 (
         // ------------------------------------------------------------------

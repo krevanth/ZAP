@@ -25,8 +25,8 @@
 //
 
 module zap_ram_simple #(
-        parameter bit [31:0] WIDTH = 32'd32,
-        parameter bit [31:0] DEPTH = 32'd32
+        parameter logic [31:0] WIDTH = 32'd32,
+        parameter logic [31:0] DEPTH = 32'd32
 )
 (
         // Clock.
@@ -72,7 +72,9 @@ begin
         if ( i_clken )
         begin
                 if ( i_wr_en )
+                begin
                         mem [ i_wr_addr ] <= i_wr_data;
+                end
         end
 end
 
@@ -103,9 +105,13 @@ begin
                 // We encode as 1-hot.
                 //
                 if ( i_wr_addr == i_rd_addr && i_wr_en )
+                begin
                         sel_st1 <= 2'b10;
+                end
                 else
+                begin
                         sel_st1 <= 2'b01;
+                end
         end
 end
 
@@ -154,9 +160,13 @@ begin
                 // <-- Read Lat.--> Read trig. at W1 reads W3
                 //
                 if ( i_wr_addr == rd_addr_st1 && i_wr_en )
+                begin
                         sel_st2       <= 3'b100;
+                end
                 else
+                begin
                         sel_st2       <= {1'd0, sel_st1};
+                end
         end
 end
 
@@ -209,9 +219,13 @@ begin
         if ( i_clken )
         begin
                 if ( i_wr_addr == rd_addr_st2 && i_wr_en )
+                begin
                         o_rd_data <= i_wr_data;
+                end
                 else
+                begin
                         o_rd_data <= o_rd_data_pre;
+                end
         end
 end
 

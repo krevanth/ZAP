@@ -23,10 +23,10 @@
 //
 
 module zap_alu_main #(
-        parameter bit [31:0] PHY_REGS  = 32'd46, // Number of physical registers.
-        parameter bit [31:0] ALU_OPS   = 32'd32, // Number of arithmetic operations.
-        parameter bit [31:0] FLAG_WDT  = 32'd32, // Width of active CPSR.
-        parameter bit [31:0] CPSR_INIT = 32'd0   // Initial value of CPSR.
+        parameter logic [31:0] PHY_REGS  = 32'd46, // Number of physical registers.
+        parameter logic [31:0] ALU_OPS   = 32'd32, // Number of arithmetic operations.
+        parameter logic [31:0] FLAG_WDT  = 32'd32, // Width of active CPSR.
+        parameter logic [31:0] CPSR_INIT = 32'd0   // Initial value of CPSR.
 )
 (
         // ------------------------------------------------------------------
@@ -395,6 +395,8 @@ logic                            o_uop_last_nxt;
 
 // Misc.
 logic                            arith_overflow;
+logic                            load_to_pc;
+logic                            branch_instruction;
 
 // ----------------------------------------------------------------------------
 // Aliases
@@ -678,13 +680,19 @@ begin:pre_post_index_address_generator
         // For pre-index, update is done before memory access.
         //
         if ( i_mem_pre_index_ff == 0 )
+        begin
                 mem_address_nxt = rn;               // Postindex;
+        end
         else
+        begin
                 mem_address_nxt = sum[31:0];        // Preindex.
+        end
 
         // FCSE.
         if ( mem_address_nxt[31:25] == 0 )
+        begin
                 mem_address_nxt[31:25] = i_cpu_pid;
+        end
 end
 
 // -----------------------------------------------------------------------------
@@ -830,9 +838,9 @@ end
 // Flag propagation and branch prediction feedback unit
 // ----------------------------------------------------------------------------
 
-wire load_to_pc = i_mem_srcdest_index_ff == {2'd0, ARCH_PC} &&
-                  o_dav_nxt                                 &&
-                  i_mem_load_ff;
+assign load_to_pc = i_mem_srcdest_index_ff == {2'd0, ARCH_PC} &&
+                    o_dav_nxt                                 &&
+                    i_mem_load_ff;
 
 assign  o_dav_nxt  = is_cc_satisfied ( i_condition_code_ff, flags_ff[31:28] )
                      || i_irq_ff || i_fiq_ff || i_abt_ff || i_und_ff;
@@ -876,8 +884,10 @@ begin
         if ( opcode == {1'd0, FMOV} && o_dav_nxt && !i_reset )
         begin
                 if ( flags_ff[ZAP_CPSR_MODE:0] == USR )
+                begin
                         assert ( tmp_flags[7:0] == flags_ff[7:0] ) else
-                $info("Info: USR attempting to change 23:0 of CPSR. Blocked.");
+                        $info("Info: USR attempting to change 23:0 of CPSR. Blocked.");
+                end
         end
         else if ( i_destination_index_ff == {2'd0, ARCH_PC} &&
                   i_condition_code_ff != NV && !i_reset && i_flag_update_ff )
@@ -887,8 +897,8 @@ begin
         end
 end
 
-wire branch_instruction = i_destination_index_ff == {2'd0, ARCH_PC} &&
-                          (i_condition_code_ff != NV);
+assign branch_instruction = i_destination_index_ff == {2'd0, ARCH_PC} &&
+                           (i_condition_code_ff != NV);
 
 always_comb
 begin: flags_bp_feedback
@@ -905,9 +915,13 @@ begin: flags_bp_feedback
 
                 // If 7:0 is touched, RESYNC pipeline.
                 if ( flags_ff[7:0] != flags_nxt[7:0] )
+                begin
                         w_clear_from_alu        = NEXT_INSTR_RESYNC;
+                end
                 else
+                begin
                         w_clear_from_alu        = CONTINUE;
+                end
 
                 // USR cannot change 7:0 of CPSR. Will silently fail.
                 flags_nxt[7:0]   =
@@ -930,9 +944,13 @@ begin: flags_bp_feedback
 
                         if ( flags_ff[ZAP_CPSR_MODE:0] == USR ||
                              flags_ff[ZAP_CPSR_MODE:0] == SYS )
+                        begin
                                 flags_nxt = flags_ff;
+                        end
                         else
+                        begin
                                 flags_nxt = i_mem_srcdest_value_ff;
+                        end
                 end
                 else if ( o_dav_nxt ) // Branch taken and no flag update.
                 begin
@@ -1018,7 +1036,7 @@ begin: blk2
         {2'd0, TEQ}: rd = RN ^   RM; // Target is not written.
         default:
         begin
-                rd = 0;
+                rd = 'x;
         end
         endcase
 
@@ -1034,11 +1052,15 @@ begin: blk2
                 flags_out[_C] = shift_carry;
 
                 if ( nozero )
+                begin
                         // This specifically states that we must NOT set the
                         // ZERO flag under any circumstance.
                         flags_out[_Z] = 1'd0;
+                end
                 else
+                begin
                         flags_out[_Z] = (rd == 0);
+                end
 
                 flags_out[_N] = rd[31];
         end
@@ -1138,6 +1160,7 @@ begin
                 2'd1: x = 4'b0010;
                 2'd2: x = 4'b0100;
                 2'd3: x = 4'b1000;
+             default: x = 'x;
                 endcase
         end
         else if ( uh || sh ) // Halfword. A word = 2 half words.
@@ -1145,6 +1168,7 @@ begin
                 case ( addr[1] )
                 1'd0: x = 4'b0011;
                 1'd1: x = 4'b1100;
+            default : x = 'x;
                 endcase
         end
         else

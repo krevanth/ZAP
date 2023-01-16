@@ -20,7 +20,7 @@
 // consists of an async FIFO wrapped around with some control logic.
 //
 
-module zap_fifo #(parameter WDT = 32, DEPTH = 8) (
+module zap_fifo #(parameter [31:0] WDT = 32, DEPTH = 8) (
 
 // Clock and reset.
 input logic             i_clk,

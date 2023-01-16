@@ -26,15 +26,15 @@
 module zap_cp15_cb
 
 #(
-        parameter bit CP15_L4_DEFAULT          = 1'd0,
-        parameter bit BE_32_ENABLE             = 1'd0,
-        parameter bit ONLY_CORE                = 1'd0,
+        parameter logic CP15_L4_DEFAULT          = 1'd0,
+        parameter logic BE_32_ENABLE             = 1'd0,
+        parameter logic ONLY_CORE                = 1'd0,
 
-        parameter bit [31:0] PHY_REGS          = 32'd64,
-        parameter bit [31:0] CODE_CACHE_LINE   = 32'd64,
-        parameter bit [31:0] DATA_CACHE_LINE   = 32'd64,
-        parameter bit [31:0] CODE_CACHE_SIZE   = 32'd1024,
-        parameter bit [31:0] DATA_CACHE_SIZE   = 32'd1024,
+        parameter logic [31:0] PHY_REGS          = 32'd64,
+        parameter logic [31:0] CODE_CACHE_LINE   = 32'd64,
+        parameter logic [31:0] DATA_CACHE_LINE   = 32'd64,
+        parameter logic [31:0] CODE_CACHE_SIZE   = 32'd1024,
+        parameter logic [31:0] DATA_CACHE_SIZE   = 32'd1024,
 
         localparam type t_cp_instruction =
                         struct packed   {
@@ -592,7 +592,7 @@ end
 task automatic load_to_cp_reg;
         // Generate CPU register read command. CP write.
         o_reg_en        <= 1'd1;
-        o_reg_rd_index  <= translate({2'd0, i_cp_word[15:12]},
+        o_reg_rd_index  <= translate({1'd0, i_cp_word[15:12]},
                                      i_cpsr[ZAP_CPSR_MODE:0]);
         o_reg_wr_index  <= 16;
 endtask
@@ -601,7 +601,7 @@ endtask
 task automatic load_to_cpu_reg;
         // Register write command.
         o_reg_en        <= 1'd1;
-        o_reg_wr_index  <= translate( {2'd0, i_cp_word[15:12]},
+        o_reg_wr_index  <= translate( {1'd0, i_cp_word[15:12]},
                                        i_cpsr[ZAP_CPSR_MODE:0] );
         //
         // The condition checks for CP WORD = 0 and OPCODE2 = 1 to access the
@@ -665,8 +665,10 @@ assign r4 = r[4];
 assign r5 = r[5];
 assign r6 = r[6];
 
-wire unused = |{r0, r1, r2, r3, r4, r5, r6, i_cpsr[27:5],
-                i_icache_clean_done};
+logic unused;
+
+assign unused = |{r0, r1, r2, r3, r4, r5, r6, i_cpsr[27:5],
+                  i_icache_clean_done};
 
 endmodule
 

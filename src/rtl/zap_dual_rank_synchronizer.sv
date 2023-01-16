@@ -21,7 +21,7 @@
 
 module zap_dual_rank_synchronizer
 #(
-        parameter bit [31:0] WIDTH = 32'd1
+        parameter logic [31:0] WIDTH = 32'd1
 )
 (
         input  logic             i_clk,
@@ -35,17 +35,25 @@ logic [WIDTH-1:0] meta;
 always_ff @ ( posedge i_clk )
 begin
         if ( i_reset )
+        begin
                 meta <= '0;
+        end
         else
+        begin
                 meta <= i_async;
+        end
 end
 
 always_ff @ ( posedge i_clk )
 begin
         if ( i_reset )
+        begin
                 o_sync <= '0;
+        end
         else
+        begin
                 o_sync <= meta;
+        end
 end
 
 endmodule

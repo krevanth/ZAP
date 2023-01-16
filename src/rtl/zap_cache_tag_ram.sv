@@ -28,8 +28,8 @@
 
 module zap_cache_tag_ram #(
 
-parameter bit [31:0] CACHE_SIZE = 32'd1024, // Bytes.
-parameter bit [31:0] CACHE_LINE = 32'd8
+parameter logic [31:0] CACHE_SIZE = 32'd1024, // Bytes.
+parameter logic [31:0] CACHE_LINE = 32'd8
 
 )(
 
@@ -289,9 +289,13 @@ begin:blk1
         o_cache_clean_done      = cache_clean_done_ff;
 
         if ( state_ff == IDLE )
+        begin
                 tag_ram_rd_addr = i_address_nxt [`ZAP_VA__CACHE_INDEX];
+        end
         else
+        begin
                 tag_ram_rd_addr = tag_ram_rd_addr_ff;
+        end
 
         case ( state_ff )
 
@@ -401,6 +405,38 @@ begin:blk1
                 o_cache_inv_done = 1'd1;
         end
 
+        default: // Cannot happen.
+        begin
+                line_dummy              = 'x; //
+                shamt                   = 'x; //
+                data                    = 'x; //
+                pa                      = 'x; //
+                dummy                   = 'x; //
+                unused_0                = 'x; //
+                unusedx                 = 'x; //
+                state_nxt               = 'x; //
+                tag_ram_rd_addr_nxt     = 'x; //
+                tag_ram_rd_addr         = 'x; //
+                tag_ram_wr_addr         = 'x; //
+                tag_ram_wr_en           = 'x; //
+                tag_ram_clear           = 'x; //
+                tag_ram_clean           = 'x; //
+                adr_ctr_nxt             = 'x; //
+                blk_ctr_nxt             = 'x; //
+                cache_clean_done_nxt    = 'x; //
+                o_cache_inv_done        = 'x; //
+                o_wb_cyc_nxt            = 'x; //
+                o_wb_stb_nxt            = 'x; //
+                o_wb_adr_nxt            = 'x; //
+                o_wb_dat_nxt            = 'x; //
+                o_wb_sel_nxt            = 'x; //
+                o_wb_wen_nxt            = 'x; //
+                o_wb_cti_nxt            = 'x; //
+                tag_ram_wr_data         = 'x; //
+                o_cache_clean_done      = 'x; //
+                tag_ram_rd_addr         = 'x; //
+        end
+
         endcase
 end
 
@@ -415,7 +451,9 @@ begin: priEncFn
                 for(int j=15;j>=0;j--) // 15 downto 0.
                 begin
                         if ( in[j] == 1'd1 )
+                        begin
                                 pri_enc_1[4:0] = j[4:0];
+                        end
                 end
 end
 endfunction

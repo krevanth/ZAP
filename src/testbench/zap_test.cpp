@@ -109,7 +109,15 @@ int main(int argc, char** argv, char** env) {
 
                 if ( end_nxt )
                 {
-                        printf("%s\nError: Ending simulation due to error. Waves are here : obj/ts/%s/zap.vcd\n%s", KRED, argv[2], KNRM);
+                        if ( argc == 4 )
+                        {
+                                printf("%s\nError: Ending simulation due to error. Waves are here : obj/ts/%s/zap.vcd\n%s", KRED, argv[2], KNRM);
+                        }
+                        else
+                        {
+                                printf("%s\nError: Ending simulation due to error. Pass seed manually to get waves.\n%s", KRED, KNRM);
+                        }
+
                         zap_test->final();
                         return end_nxt;
                 }

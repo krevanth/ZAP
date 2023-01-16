@@ -22,8 +22,6 @@
 // present in the coprocessor to account for CPU modes.
 //
 
-
-
 module zap_predecode_coproc #(
         parameter [31:0] PHY_REGS = 32'd46
 )
@@ -84,8 +82,8 @@ module zap_predecode_coproc #(
 
 ///////////////////////////////////////////////////////////////////////////////
 
-localparam IDLE = 0;
-localparam BUSY = 1;
+localparam logic IDLE = 1'd0;
+localparam logic BUSY = 1'd1;
 
 ///////////////////////////////////////////////////////////////////////////////
 

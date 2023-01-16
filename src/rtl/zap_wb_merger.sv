@@ -25,7 +25,7 @@
 module zap_wb_merger #(
 
         // If ONLY_CORE=0, use NXT ports from cache, else use FF ports from CPU.
-        parameter bit ONLY_CORE = 1'd0
+        parameter logic ONLY_CORE = 1'd0
 )
 (
 
@@ -93,24 +93,41 @@ begin
         begin
                 // Switch over if EOB and data STB exists.
                 if ( i_wb_ack && (o_wb_cti == CTI_EOB) && i_d_wb_stb )
+                begin
                         sel_nxt = DATA;
+                end
                 // Switch over if code STB == 0 and data STB exists.
                 else if ( !i_c_wb_stb && i_d_wb_stb )
+                begin
                         sel_nxt = DATA;
+                end
                 else
+                begin
                         sel_nxt = sel_ff;
+                end
         end
 
         DATA:
         begin
                 // Switch over if EOB and code STB exists.
                 if ( i_wb_ack && (o_wb_cti == CTI_EOB) && i_c_wb_stb )
+                begin
                         sel_nxt = CODE;
+                end
                 // Switch over if data STB == 0 and code STB exists.
                 else if ( i_c_wb_stb && !i_d_wb_stb )
+                begin
                         sel_nxt = CODE;
+                end
                 else
+                begin
                         sel_nxt = sel_ff;
+                end
+        end
+
+        default: // Propagate X.
+        begin
+                sel_nxt = 'x;
         end
 
         endcase
@@ -119,9 +136,13 @@ end
 always_ff @ (posedge i_clk)
 begin
         if ( i_reset )
+        begin
                 sel_ff <= CODE;
+        end
         else
+        begin
                 sel_ff <= sel_nxt;
+        end
 end
 
 ////////////////////////////////////
@@ -136,8 +157,8 @@ assign o_d_wb_ack = (sel_ff == DATA) & i_wb_ack;
 // WB output generation logic.
 /////////////////////////////////////
 
-generate if ( !ONLY_CORE )
-begin: genblk1
+if ( !ONLY_CORE )
+begin: l_genblk1
 
         //
         // We can flop these, because we're using NXT ports.
@@ -177,9 +198,9 @@ begin: genblk1
                 end
         end
 
-end: genblk1
+end: l_genblk1
 else
-begin: genblk2
+begin: l_genblk2
 
         //
         // Not required to flop these since the sources are flops themselves.
@@ -209,9 +230,7 @@ begin: genblk2
                         o_wb_cti = i_d_wb_cti;
                 end
         end
-end: genblk2
-
-endgenerate
+end: l_genblk2
 
 endmodule
 

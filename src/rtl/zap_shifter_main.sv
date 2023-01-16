@@ -26,9 +26,9 @@
 
 module zap_shifter_main
 #(
-        parameter bit [31:0] PHY_REGS  = 32'd46,
-        parameter bit [31:0] ALU_OPS   = 32'd32,
-        parameter bit [31:0] SHIFT_OPS = 32'd5
+        parameter logic [31:0] PHY_REGS  = 32'd46,
+        parameter logic [31:0] ALU_OPS   = 32'd32,
+        parameter logic [31:0] SHIFT_OPS = 32'd5
 )
 (
         // For debug
@@ -438,7 +438,7 @@ begin
         begin
                 resolve_conflict = index_from_issue[31:0];
         end
-        else if ( index_from_issue == PHY_PC )
+        else if ( index_from_issue[5:0] == PHY_PC )
         begin
                 resolve_conflict = i_pc_plus_8_ff;
         end
@@ -454,7 +454,9 @@ begin
         // If not load or store, align to 4 bytes. All i_ signals
         // for this.
         if ( align32 && !i_mem_load_ff && !i_mem_store_ff )
+        begin
                 resolve_conflict[1:0] = 2'b00;
+        end
 end
 endfunction
 

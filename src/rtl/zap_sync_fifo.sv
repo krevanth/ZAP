@@ -20,8 +20,8 @@
 //
 
 module zap_sync_fifo #(
-        parameter bit [31:0] WIDTH = 32'd32,
-        parameter bit [31:0] DEPTH = 32'd32
+        parameter logic [31:0] WIDTH = 32'd32,
+        parameter logic [31:0] DEPTH = 32'd32
 )
 (
         // Clock and reset
@@ -90,8 +90,12 @@ assign read_ok  = i_ack   & ~o_empty;
 
 // FIFO write.
 always_ff @ (posedge i_clk)
+begin
         if ( write_ok )
+        begin
                 mem[wptr_ff[PTR_WDT-2:0]] <= i_data;
+        end
+end
 
 // Pointer updates.
 assign  wptr_nxt = i_clear ? 'd0 : (wptr_ff + (write_ok ? 'd1 : 'd0));

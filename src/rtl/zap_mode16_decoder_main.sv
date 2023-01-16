@@ -94,6 +94,7 @@ logic und_nxt;
 logic force32_nxt;
 logic irq_nxt;
 logic fiq_nxt;
+logic stall;
 
 zap_mode16_decoder u_zap_mode16_decoder (
         .i_instruction(i_instruction),
@@ -110,7 +111,7 @@ zap_mode16_decoder u_zap_mode16_decoder (
         .o_fiq(fiq_nxt)
 );
 
-wire stall =   i_stall_from_shifter ||
+assign stall = i_stall_from_shifter ||
                i_stall_from_issue   ||
                i_stall_from_decode  ||
                i_data_stall;

@@ -22,7 +22,7 @@
 module zap_shifter_shift
 #(
         // Number of shift operations defined.
-        parameter bit [31:0] SHIFT_OPS = 32'd5
+        parameter logic [31:0] SHIFT_OPS = 32'd5
 )
 (
         // Source value.
@@ -107,9 +107,13 @@ begin
                         if ( o_sat )
                         begin
                                 if ( i_source[31] == 1'd0 )
+                                begin
                                         o_result = {1'd0, {31{1'd1}}}; // Most +ve
+                                end
                                 else
+                                begin
                                         o_result = {1'd1, {31{1'd0}}}; // Most -ve
+                                end
                         end
                 end
 

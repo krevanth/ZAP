@@ -34,16 +34,16 @@ localparam [1:0] FPAGE_ID   = 2'b11; // Fine page.
 
 // APSR bits.
 // K  U (kernel user) permissions.
-localparam APSR_NA_NA = 4'b00_00;
-localparam APSR_RO_RO = 4'b00_01;
-localparam APSR_RO_NA = 4'b00_10;
-localparam APSR_RW_NA = 4'b01_??;
-localparam APSR_RW_RO = 4'b10_??;
-localparam APSR_RW_RW = 4'b11_??;
+localparam [3:0] APSR_NA_NA = 4'b00_00;
+localparam [3:0] APSR_RO_RO = 4'b00_01;
+localparam [3:0] APSR_RO_NA = 4'b00_10;
+localparam [3:0] APSR_RW_NA = 4'b01_??;
+localparam [3:0] APSR_RW_RO = 4'b10_??;
+localparam [3:0] APSR_RW_RW = 4'b11_??;
 
 // DAC bits.
-localparam DAC_MANAGER = 2'b11;
-localparam DAC_CLIENT  = 2'b01;
+localparam [1:0] DAC_MANAGER = 2'b11;
+localparam [1:0] DAC_CLIENT  = 2'b01;
 
 // FSR related.
 // These localparams relate to FSR values. Notice how
@@ -167,46 +167,46 @@ localparam [5:0] OP_SMLAL11H = 61;
 localparam [5:0] SAT_MOV   = 49;
 
 // Conditionals defined as per v5T spec.
-localparam EQ =  4'h0;
-localparam NE =  4'h1;
-localparam CS =  4'h2;
-localparam CC =  4'h3;
-localparam MI =  4'h4;
-localparam PL =  4'h5;
-localparam VS =  4'h6;
-localparam VC =  4'h7;
-localparam HI =  4'h8;
-localparam LS =  4'h9;
-localparam GE =  4'hA;
-localparam LT =  4'hB;
-localparam GT =  4'hC;
-localparam LE =  4'hD;
-localparam AL =  4'hE;
-localparam NV =  4'hF; // NeVer execute!
+localparam [3:0] EQ =  4'h0;
+localparam [3:0] NE =  4'h1;
+localparam [3:0] CS =  4'h2;
+localparam [3:0] CC =  4'h3;
+localparam [3:0] MI =  4'h4;
+localparam [3:0] PL =  4'h5;
+localparam [3:0] VS =  4'h6;
+localparam [3:0] VC =  4'h7;
+localparam [3:0] HI =  4'h8;
+localparam [3:0] LS =  4'h9;
+localparam [3:0] GE =  4'hA;
+localparam [3:0] LT =  4'hB;
+localparam [3:0] GT =  4'hC;
+localparam [3:0] LE =  4'hD;
+localparam [3:0] AL =  4'hE;
+localparam [3:0] NV =  4'hF; // NeVer execute!
 
 // CPSR flags.
-localparam N             = 31;
-localparam Z             = 30;
-localparam C             = 29;
-localparam V             = 28;
-localparam Q             = 27;
-localparam I             = 7;
-localparam F             = 6;
-localparam T             = 5;
-localparam ZAP_CPSR_MODE = 4;
+localparam [31:0] N             = 31;
+localparam [31:0] Z             = 30;
+localparam [31:0] C             = 29;
+localparam [31:0] V             = 28;
+localparam [31:0] Q             = 27;
+localparam [31:0] I             = 7;
+localparam [31:0] F             = 6;
+localparam [31:0] T             = 5;
+localparam [31:0] ZAP_CPSR_MODE = 4;
 
 // For transferring indices/immediates across stages.
-localparam INDEX_EN = 1'd0;
-localparam IMMED_EN = 1'd1;
+localparam [0:0] INDEX_EN = 1'd0;
+localparam [0:0] IMMED_EN = 1'd1;
 
 // Processor Modes
-localparam FIQ = 5'b10_001;
-localparam IRQ = 5'b10_010;
-localparam ABT = 5'b10_111;
-localparam SVC = 5'b10_011;
-localparam USR = 5'b10_000;
-localparam SYS = 5'b11_111;
-localparam UND = 5'b11_011;
+localparam [4:0] FIQ = 5'b10_001;
+localparam [4:0] IRQ = 5'b10_010;
+localparam [4:0] ABT = 5'b10_111;
+localparam [4:0] SVC = 5'b10_011;
+localparam [4:0] USR = 5'b10_000;
+localparam [4:0] SYS = 5'b11_111;
+localparam [4:0] UND = 5'b11_011;
 
 // Instruction definitions.
 // MODE32
@@ -358,93 +358,71 @@ localparam      [15:0]  T_BKPT                                          =       
 // Architectural registers are registered defined by the architecture plus
 // a few more. Basically instructions index into architectural registers.
 //
-localparam [3:0] ARCH_SP   = 13;
-localparam [3:0] ARCH_LR   = 14;
-localparam [3:0] ARCH_PC   = 15;
-localparam RAZ_REGISTER    = 16; // Serves as $0 does on MIPS.
 
-// These always point to user registers irrespective of mode.
-localparam ARCH_USR2_R8    = 18;
-localparam ARCH_USR2_R9    = 19;
-localparam ARCH_USR2_R10   = 20;
-localparam ARCH_USR2_R11   = 21;
-localparam ARCH_USR2_R12   = 22;
-localparam ARCH_USR2_R13   = 23;
-localparam ARCH_USR2_R14   = 24;
-
-// Dummy architectural registers.
-localparam ARCH_DUMMY_REG0 = 25;
-localparam ARCH_DUMMY_REG1 = 26;
-
-// CPSR and SPSR.
-localparam ARCH_CPSR       = 17;
-localparam ARCH_CURR_SPSR  = 27; // Alias to real SPSR.
-
-// Total architectural registers.
-localparam TOTAL_ARCH_REGS = 28;
+localparam [31:0] TOTAL_ARCH_REGS = 28;
+localparam [3:0] ARCH_SP                                 = 13;
+localparam [3:0] ARCH_LR                                 = 14;
+localparam [3:0] ARCH_PC                                 = 15;
+localparam [$clog2(TOTAL_ARCH_REGS)-1:0] RAZ_REGISTER    = 16; // Serves as $0 does on MIPS.
+localparam [$clog2(TOTAL_ARCH_REGS)-1:0] ARCH_USR2_R8    = 18;
+localparam [$clog2(TOTAL_ARCH_REGS)-1:0] ARCH_USR2_R9    = 19;
+localparam [$clog2(TOTAL_ARCH_REGS)-1:0] ARCH_USR2_R10   = 20;
+localparam [$clog2(TOTAL_ARCH_REGS)-1:0] ARCH_USR2_R11   = 21;
+localparam [$clog2(TOTAL_ARCH_REGS)-1:0] ARCH_USR2_R12   = 22;
+localparam [$clog2(TOTAL_ARCH_REGS)-1:0] ARCH_USR2_R13   = 23;
+localparam [$clog2(TOTAL_ARCH_REGS)-1:0] ARCH_USR2_R14   = 24;
+localparam [$clog2(TOTAL_ARCH_REGS)-1:0] ARCH_DUMMY_REG0 = 25;
+localparam [$clog2(TOTAL_ARCH_REGS)-1:0] ARCH_DUMMY_REG1 = 26;
+localparam [$clog2(TOTAL_ARCH_REGS)-1:0] ARCH_CPSR       = 17;
+localparam [$clog2(TOTAL_ARCH_REGS)-1:0] ARCH_CURR_SPSR  = 27; // Alias to real SPSR.
 
 //
 // Physical registers.
 // Physical registers can be mapped directly into the internal
 // register file.
 //
-localparam  PHY_PC               =       15; // DO NOT CHANGE!
-localparam  PHY_RAZ_REGISTER     =       16; // DO NOT CHANGE!
-localparam  PHY_CPSR             =       17; // DO NOT CHANGE!
 
-localparam  PHY_USR_R0           =       0;
-localparam  PHY_USR_R1           =       1;
-localparam  PHY_USR_R2           =       2;
-localparam  PHY_USR_R3           =       3;
-localparam  PHY_USR_R4           =       4;
-localparam  PHY_USR_R5           =       5;
-localparam  PHY_USR_R6           =       6;
-localparam  PHY_USR_R7           =       7;
-localparam  PHY_USR_R8           =       8;
-localparam  PHY_USR_R9           =       9;
-localparam  PHY_USR_R10          =       10;
-localparam  PHY_USR_R11          =       11;
-localparam  PHY_USR_R12          =       12;
-localparam  PHY_USR_R13          =       13;
-localparam  PHY_USR_R14          =       14;
-
-localparam  PHY_FIQ_R8           =       18;
-localparam  PHY_FIQ_R9           =       19;
-localparam  PHY_FIQ_R10          =       20;
-localparam  PHY_FIQ_R11          =       21;
-localparam  PHY_FIQ_R12          =       22;
-localparam  PHY_FIQ_R13          =       23;
-localparam  PHY_FIQ_R14          =       24;
-
-localparam  PHY_IRQ_R13          =       25;
-localparam  PHY_IRQ_R14          =       26;
-
-localparam  PHY_SVC_R13          =       27;
-localparam  PHY_SVC_R14          =       28;
-
-localparam  PHY_UND_R13          =       29;
-localparam  PHY_UND_R14          =       30;
-
-localparam  PHY_ABT_R13          =       31;
-localparam  PHY_ABT_R14          =       32;
-
-// Dummy registers for various purposes.
-localparam  PHY_DUMMY_REG0       =       33;
-localparam  PHY_DUMMY_REG1       =       34;
-
-// SPSRs.
-localparam  PHY_FIQ_SPSR         =       35;
-localparam  PHY_IRQ_SPSR         =       36;
-localparam  PHY_SVC_SPSR         =       37;
-localparam  PHY_UND_SPSR         =       38;
-localparam  PHY_ABT_SPSR         =       39;
-
-//
-// Count of total registers
-// (Can go up to 64 with no problems). Used to set register index widths of
-// the control signals.
-//
-localparam  TOTAL_PHY_REGS       =       40;
+localparam [31:0] TOTAL_PHY_REGS                           = 40;
+localparam  [$clog2(TOTAL_PHY_REGS)-1:0] PHY_PC            = 15; // DO NOT CHANGE!
+localparam  [$clog2(TOTAL_PHY_REGS)-1:0] PHY_RAZ_REGISTER  = 16; // DO NOT CHANGE!
+localparam  [$clog2(TOTAL_PHY_REGS)-1:0] PHY_CPSR          = 17; // DO NOT CHANGE!
+localparam  [$clog2(TOTAL_PHY_REGS)-1:0] PHY_USR_R0        = 0;
+localparam  [$clog2(TOTAL_PHY_REGS)-1:0] PHY_USR_R1        = 1;
+localparam  [$clog2(TOTAL_PHY_REGS)-1:0] PHY_USR_R2        = 2;
+localparam  [$clog2(TOTAL_PHY_REGS)-1:0] PHY_USR_R3        = 3;
+localparam  [$clog2(TOTAL_PHY_REGS)-1:0] PHY_USR_R4        = 4;
+localparam  [$clog2(TOTAL_PHY_REGS)-1:0] PHY_USR_R5        = 5;
+localparam  [$clog2(TOTAL_PHY_REGS)-1:0] PHY_USR_R6        = 6;
+localparam  [$clog2(TOTAL_PHY_REGS)-1:0] PHY_USR_R7        = 7;
+localparam  [$clog2(TOTAL_PHY_REGS)-1:0] PHY_USR_R8        = 8;
+localparam  [$clog2(TOTAL_PHY_REGS)-1:0] PHY_USR_R9        = 9;
+localparam  [$clog2(TOTAL_PHY_REGS)-1:0] PHY_USR_R10       = 10;
+localparam  [$clog2(TOTAL_PHY_REGS)-1:0] PHY_USR_R11       = 11;
+localparam  [$clog2(TOTAL_PHY_REGS)-1:0] PHY_USR_R12       = 12;
+localparam  [$clog2(TOTAL_PHY_REGS)-1:0] PHY_USR_R13       = 13;
+localparam  [$clog2(TOTAL_PHY_REGS)-1:0] PHY_USR_R14       = 14;
+localparam  [$clog2(TOTAL_PHY_REGS)-1:0] PHY_FIQ_R8        = 18;
+localparam  [$clog2(TOTAL_PHY_REGS)-1:0] PHY_FIQ_R9        = 19;
+localparam  [$clog2(TOTAL_PHY_REGS)-1:0] PHY_FIQ_R10       = 20;
+localparam  [$clog2(TOTAL_PHY_REGS)-1:0] PHY_FIQ_R11       = 21;
+localparam  [$clog2(TOTAL_PHY_REGS)-1:0] PHY_FIQ_R12       = 22;
+localparam  [$clog2(TOTAL_PHY_REGS)-1:0] PHY_FIQ_R13       = 23;
+localparam  [$clog2(TOTAL_PHY_REGS)-1:0] PHY_FIQ_R14       = 24;
+localparam  [$clog2(TOTAL_PHY_REGS)-1:0] PHY_IRQ_R13       = 25;
+localparam  [$clog2(TOTAL_PHY_REGS)-1:0] PHY_IRQ_R14       = 26;
+localparam  [$clog2(TOTAL_PHY_REGS)-1:0] PHY_SVC_R13       = 27;
+localparam  [$clog2(TOTAL_PHY_REGS)-1:0] PHY_SVC_R14       = 28;
+localparam  [$clog2(TOTAL_PHY_REGS)-1:0] PHY_UND_R13       = 29;
+localparam  [$clog2(TOTAL_PHY_REGS)-1:0] PHY_UND_R14       = 30;
+localparam  [$clog2(TOTAL_PHY_REGS)-1:0] PHY_ABT_R13       = 31;
+localparam  [$clog2(TOTAL_PHY_REGS)-1:0] PHY_ABT_R14       = 32;
+localparam  [$clog2(TOTAL_PHY_REGS)-1:0] PHY_DUMMY_REG0    = 33;
+localparam  [$clog2(TOTAL_PHY_REGS)-1:0] PHY_DUMMY_REG1    = 34;
+localparam  [$clog2(TOTAL_PHY_REGS)-1:0] PHY_FIQ_SPSR      = 35;
+localparam  [$clog2(TOTAL_PHY_REGS)-1:0] PHY_IRQ_SPSR      = 36;
+localparam  [$clog2(TOTAL_PHY_REGS)-1:0] PHY_SVC_SPSR      = 37;
+localparam  [$clog2(TOTAL_PHY_REGS)-1:0] PHY_UND_SPSR      = 38;
+localparam  [$clog2(TOTAL_PHY_REGS)-1:0] PHY_ABT_SPSR      = 39;
 
 // Shift type.
 localparam [1:0] LSL     = 0;
@@ -457,17 +435,17 @@ localparam [2:0] ROR_1   = 6; // ROR with instruction specified shift.
 localparam [2:0] LSL_SAT = 7; // Shift left saturated.
 
 // Wishbone CTI.
-localparam CTI_BURST    = 3'b010;
-localparam CTI_EOB      = 3'b111;
+localparam [2:0] CTI_BURST    = 3'b010;
+localparam [2:0] CTI_EOB      = 3'b111;
 
 // Interrupt vectors.
-localparam RST_VECTOR   = 32'h00000000;
-localparam UND_VECTOR   = 32'h00000004;
-localparam SWI_VECTOR   = 32'h00000008;
-localparam PABT_VECTOR  = 32'h0000000C;
-localparam DABT_VECTOR  = 32'h00000010;
-localparam IRQ_VECTOR   = 32'h00000018;
-localparam FIQ_VECTOR   = 32'h0000001C;
+localparam [31:0] RST_VECTOR   = 32'h00000000;
+localparam [31:0] UND_VECTOR   = 32'h00000004;
+localparam [31:0] SWI_VECTOR   = 32'h00000008;
+localparam [31:0] PABT_VECTOR  = 32'h0000000C;
+localparam [31:0] DABT_VECTOR  = 32'h00000010;
+localparam [31:0] IRQ_VECTOR   = 32'h00000018;
+localparam [31:0] FIQ_VECTOR   = 32'h0000001C;
 
 // Branches
 localparam  [1:0]    SNT     =       2'b00; // Strongly Not Taken.
@@ -476,12 +454,12 @@ localparam  [1:0]    WT      =       2'b10; // Weakly Taken.
 localparam  [1:0]    ST      =       2'b11; // Strongly Taken.
 
 // Extension field bits.
-localparam ZAP_SRCDEST_EXTEND =  32 ;     // Data Src/Dest extend register for MEMOPS.
-localparam ZAP_DP_RB_EXTEND   =  32 ;     // Shift source extend.
-localparam ZAP_BASE_EXTEND    =  33 ;     // Base address register for MEMOPS.
-localparam ZAP_DP_RD_EXTEND   =  33 ;     // Destination source extend.
-localparam ZAP_DP_RA_EXTEND   =  34 ;     // ALU source extend. DDI0100E rn.
-localparam ZAP_OPCODE_EXTEND  =  35 ;     // To differentiate lower and higher for multiplication
+localparam [31:0] ZAP_SRCDEST_EXTEND =  32 ;     // Data Src/Dest extend register for MEMOPS.
+localparam [31:0] ZAP_DP_RB_EXTEND   =  32 ;     // Shift source extend.
+localparam [31:0] ZAP_BASE_EXTEND    =  33 ;     // Base address register for MEMOPS.
+localparam [31:0] ZAP_DP_RD_EXTEND   =  33 ;     // Destination source extend.
+localparam [31:0] ZAP_DP_RA_EXTEND   =  34 ;     // ALU source extend. DDI0100E rn.
+localparam [31:0] ZAP_OPCODE_EXTEND  =  35 ;     // To differentiate lower and higher for multiplication
 
 /* verilator lint_on UNUSED */
 
