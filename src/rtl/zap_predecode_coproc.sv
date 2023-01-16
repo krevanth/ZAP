@@ -22,8 +22,6 @@
 // present in the coprocessor to account for CPU modes.
 //
 
-
-
 module zap_predecode_coproc #(
         parameter [31:0] PHY_REGS = 32'd46
 )

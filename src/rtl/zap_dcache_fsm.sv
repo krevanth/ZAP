@@ -24,9 +24,9 @@
 `include "zap_defines.svh"
 
 module zap_dcache_fsm   #(
-        parameter bit [31:0] CACHE_SIZE    = 32'd1024,  // Bytes.
-        parameter bit [31:0] CACHE_LINE    = 32'd8,
-        parameter bit        BE_32_ENABLE  = 1'd0
+        parameter logic [31:0] CACHE_SIZE    = 32'd1024,  // Bytes.
+        parameter logic [31:0] CACHE_LINE    = 32'd8,
+        parameter logic        BE_32_ENABLE  = 1'd0
 )
 
 // ----------------------------------------------
@@ -194,9 +194,13 @@ end
 always_ff @ ( posedge i_clk )
 begin
         if ( state_ff == IDLE )
+        begin
                 cache_line      <= i_cache_line;
+        end
         else if ( state_nxt == UNLOCK_REG )
+        begin
                 cache_line      <= o_cache_line;
+        end
 end
 
 always_ff @ ( posedge i_clk )
@@ -247,7 +251,9 @@ end
 always_ff @ ( posedge i_clk )
 begin
         for(int i=0;i<CACHE_LINE/4;i++)
+        begin
                 buf_ff[i] <= buf_nxt[i];
+        end
 end
 
 // Idle indication
@@ -299,7 +305,9 @@ begin:blk1
         o_address               = address;
 
         for(int i=0;i<CACHE_LINE/4;i++)
+        begin
                 buf_nxt[i] = buf_ff[i];
+        end
 
         rhit                     = 1'd0;
         whit                     = 1'd0;
@@ -403,11 +411,19 @@ begin:blk1
                                         if ( i_rd )
                                         begin
                                                 for(int i=0;i<64;i++)
+                                                begin
                                                         if (i_reg_idx[i] )
+                                                        begin
                                                                 if ( !lock_ff[i] )
+                                                                begin
                                                                         lock_nxt[i] = 1'd1;
+                                                                end
                                                                 else
+                                                                begin
                                                                         o_err2 = 1'd1;
+                                                                end
+                                                        end
+                                                end
                                         end
 
                                         if ( cache_dirty )
@@ -443,11 +459,19 @@ begin:blk1
                                                 if ( i_rd )
                                                 begin
                                                         for(int i=0;i<64;i++)
+                                                        begin
                                                                 if(i_reg_idx[i])
+                                                                begin
                                                                         if(!lock_ff[i])
+                                                                        begin
                                                                                 lock_nxt[i] = 1'd1;
+                                                                        end
                                                                         else
+                                                                        begin
                                                                                 o_err2 = 1'd1;
+                                                                        end
+                                                                end
+                                                        end
                                                 end
                                 end
                                 endcase
@@ -594,7 +618,9 @@ begin:blk1
                         o_cache_line = 0;
 
                         for(int i=0;i<CACHE_LINE/4;i++)
+                        begin
                                 o_cache_line = o_cache_line | ({{LINE_PAD{1'd0}},buf_nxt[i][31:0]} << (32 * i));
+                        end
 
                         o_cache_line_ben  = {CACHE_LINE{1'd1}};
 
@@ -650,8 +676,12 @@ begin:blk1
                 if ( !wr )
                 begin
                         for(int i=0;i<64;i++)
+                        begin
                                 if ( reg_idx[i] )
+                                begin
                                         lock_nxt[i] = 1'd0;
+                                end
+                        end
                 end
 
                 // Back to IDLE

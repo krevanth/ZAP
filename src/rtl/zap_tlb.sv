@@ -23,10 +23,10 @@
 
 module zap_tlb #(
 
-parameter bit [31:0] LPAGE_TLB_ENTRIES   = 32'd8,
-parameter bit [31:0] SPAGE_TLB_ENTRIES   = 32'd8,
-parameter bit [31:0] SECTION_TLB_ENTRIES = 32'd8,
-parameter bit [31:0] FPAGE_TLB_ENTRIES   = 32'd8
+parameter logic [31:0] LPAGE_TLB_ENTRIES   = 32'd8,
+parameter logic [31:0] SPAGE_TLB_ENTRIES   = 32'd8,
+parameter logic [31:0] SECTION_TLB_ENTRIES = 32'd8,
+parameter logic [31:0] FPAGE_TLB_ENTRIES   = 32'd8
 
 ) (
 
@@ -61,7 +61,7 @@ output  logic    [31:0]  o_far,
 output  logic            o_fault,
 output  logic            o_cacheable,
 output  logic            o_busy,
-input   wire             i_idle,
+input   logic            i_idle,
 
 // Wishbone memory interface - Needs to go through some OR gates.
 output logic             o_wb_stb_nxt,
@@ -109,33 +109,99 @@ function automatic [31:0] max ( input [31:0] a, b, c, d );
         else                                                  max = d;
 endfunction
 
-generate
-        if      ( 10+$clog2(FPAGE_TLB_ENTRIES) == 11 ) always_comb u0 = i_address_nxt[11];
-        else                                           always_comb u0 = 1'd0;
+// U0 generation.
+if      ( 10+$clog2(FPAGE_TLB_ENTRIES) == 11 )
+begin: l_two_fp
+        always_comb u0 = i_address_nxt[11];
+end
+else
+begin: l_more_than_two_fp
+        always_comb u0 = 1'd0;
+end
 
-        if      ( 12+$clog2(SPAGE_TLB_ENTRIES) == 13 ) always_comb u1 = |i_address_nxt[15:13];
-        else if ( 12+$clog2(SPAGE_TLB_ENTRIES) == 14 ) always_comb u1 = |i_address_nxt[15:14];
-        else if ( 12+$clog2(SPAGE_TLB_ENTRIES) == 15 ) always_comb u1 = i_address_nxt[15];
-        else                                           always_comb u1 = 1'd0;
+// U1 generation.
+if      ( 12+$clog2(SPAGE_TLB_ENTRIES) == 13 )
+begin: l_two_sp
+        always_comb u1 = |i_address_nxt[15:13];
+end
+else if ( 12+$clog2(SPAGE_TLB_ENTRIES) == 14 )
+begin: l_four_sp
+        always_comb u1 = |i_address_nxt[15:14];
+end
+else if ( 12+$clog2(SPAGE_TLB_ENTRIES) == 15 )
+begin: l_eight_sp
+        always_comb u1 = i_address_nxt[15];
+end
+else
+begin: l_more_than_eight_sp
+        always_comb u1 = 1'd0;
+end
 
-        if      ( 16+$clog2(LPAGE_TLB_ENTRIES) == 17 ) always_comb u2 = |i_address_nxt[19:17];
-        else if ( 16+$clog2(LPAGE_TLB_ENTRIES) == 18 ) always_comb u2 = |i_address_nxt[19:18];
-        else if ( 16+$clog2(LPAGE_TLB_ENTRIES) == 19 ) always_comb u2 = i_address_nxt[19];
-        else                                           always_comb u2 = 1'd0;
+// U2 generation
+if      ( 16+$clog2(LPAGE_TLB_ENTRIES) == 17 )
+begin: l_two_lp
+        always_comb u2 = |i_address_nxt[19:17];
+end
+else if ( 16+$clog2(LPAGE_TLB_ENTRIES) == 18 )
+begin: l_four_lp
+        always_comb u2 = |i_address_nxt[19:18];
+end
+else if ( 16+$clog2(LPAGE_TLB_ENTRIES) == 19 )
+begin: l_eight_lp
+        always_comb u2 = i_address_nxt[19];
+end
+else
+begin: l_more_than_eight_lp
+        always_comb u2 = 1'd0;
+end
 
-        if      ( 10+$clog2(FPAGE_TLB_ENTRIES) == 11 ) always_comb u3 = tlb_address[11];
-        else                                           always_comb u3 = 1'd0;
+///////////////////////////////////////////////////////////////////////////////
 
-        if      ( 12+$clog2(SPAGE_TLB_ENTRIES) == 13 ) always_comb u4 = |tlb_address[15:13];
-        else if ( 12+$clog2(SPAGE_TLB_ENTRIES) == 14 ) always_comb u4 = |tlb_address[15:14];
-        else if ( 12+$clog2(SPAGE_TLB_ENTRIES) == 15 ) always_comb u4 = tlb_address[15];
-        else                                           always_comb u4 = 1'd0;
+// U3 generation.
+if      ( 10+$clog2(FPAGE_TLB_ENTRIES) == 11 )
+begin: l_two_fp_tlb
+        always_comb u3 = tlb_address[11];
+end
+else
+begin: l_more_than_two_fp_tlb
+        always_comb u3 = 1'd0;
+end
 
-        if      ( 16+$clog2(LPAGE_TLB_ENTRIES) == 17 ) always_comb u5 = |tlb_address[19:17];
-        else if ( 16+$clog2(LPAGE_TLB_ENTRIES) == 18 ) always_comb u5 = |tlb_address[19:18];
-        else if ( 16+$clog2(LPAGE_TLB_ENTRIES) == 19 ) always_comb u5 = tlb_address[19];
-        else                                           always_comb u5 = 1'd0;
-endgenerate
+// U4 generation
+if      ( 12+$clog2(SPAGE_TLB_ENTRIES) == 13 )
+begin: l_two_sp_tlb
+        always_comb u4 = |tlb_address[15:13];
+end
+else if ( 12+$clog2(SPAGE_TLB_ENTRIES) == 14 )
+begin: l_four_sp_tlb
+        always_comb u4 = |tlb_address[15:14];
+end
+else if ( 12+$clog2(SPAGE_TLB_ENTRIES) == 15 )
+begin: l_eight_sp_tlb
+        always_comb u4 = tlb_address[15];
+end
+else
+begin: l_more_than_eight_sp_tlb
+        always_comb u4 = 1'd0;
+end
+
+// U5 generation.
+if      ( 16+$clog2(LPAGE_TLB_ENTRIES) == 17 )
+begin: l_two_lp_tlb
+        always_comb u5 = |tlb_address[19:17];
+end
+else if ( 16+$clog2(LPAGE_TLB_ENTRIES) == 18 )
+begin: l_four_lp_tlb
+        always_comb u5 = |tlb_address[19:18];
+end
+else if ( 16+$clog2(LPAGE_TLB_ENTRIES) == 19 )
+begin: l_eight_lp_tlb
+        always_comb u5 = tlb_address[19];
+end
+else
+begin: l_more_than_eight_lp_tlb
+        always_comb u5 = 1'd0;
+end
 
 // -----------------------------------------------------------------------------
 

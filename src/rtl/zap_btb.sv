@@ -25,7 +25,7 @@ module zap_btb #(
         // Entries in the branch predictor RAM. Only half are available
         // in 32-bit state.
         //
-        parameter bit [31:0] BP_ENTRIES = 32'd1024,
+        parameter logic [31:0] BP_ENTRIES = 32'd1024,
 
         //
         // Address breakup. We use direct mapped addressing. We have a
@@ -96,10 +96,12 @@ module zap_btb #(
 localparam TAG_WDT = 32 - $clog2(BP_ENTRIES) - 1;
 localparam MAX_WDT = 32 + 2 + TAG_WDT;
 
-wire unused = |{i_rd_addr[0],
-                i_rd_addr    [31:$clog2(BP_ENTRIES)+1],
-                i_rd_addr_del[$clog2(BP_ENTRIES):0],
-                i_fb_branch_src_address[0]};
+logic unused;
+
+assign unused = |{i_rd_addr[0],
+                  i_rd_addr    [31:$clog2(BP_ENTRIES)+1],
+                  i_rd_addr_del[$clog2(BP_ENTRIES):0],
+                  i_fb_branch_src_address[0]};
 
 logic [BP_ENTRIES-1:0] dav;
 logic                  bp_dav;
@@ -146,22 +148,34 @@ zap_ram_simple_nopipe #(.DEPTH(BP_ENTRIES), .WIDTH(MAX_WDT)) u_br_ram
 always_ff @ ( posedge i_clk )
 begin
         if ( i_reset )
+        begin
                 dav    <= '0;
+        end
         else if ( i_clear )
+        begin
                 dav    <= '0;
+        end
         else
+        begin
                 dav[i_fb_branch_src_address.index] <= mem_wr_en;
+        end
 end
 
 // Clocked out in parallel with the RAM.
 always_ff @ ( posedge i_clk )
 begin
         if ( i_reset )
+        begin
                 bp_dav <= 1'd0;
+        end
         else if ( i_clear )
+        begin
                 bp_dav <= 1'd0;
+        end
         else if ( mem_rd_en )
+        begin
                 bp_dav <= dav[i_rd_addr.index];
+        end
 end
 
 logic mem_rd_taken;
@@ -218,6 +232,7 @@ begin
                         WNT: return WT;  // Perhaps it is taken.
                         WT:  return WNT; // Perhaps it is not taken.
                         ST:  return WT;  // May be not so strongy taken.
+                   default:  return 'x;  // Propagate X.
                         endcase
                 end
                 else // Confirm that branch was correctly predicted.
@@ -227,6 +242,7 @@ begin
                         WNT: return SNT; // Reinforce.
                         WT:  return ST;  // Reinforce.
                         ST:  return ST;  // Reinforce.
+                   default:  return 'x;  // Propagate X.
                         endcase
                 end
 end

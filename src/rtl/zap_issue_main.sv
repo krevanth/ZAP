@@ -310,12 +310,14 @@ logic                              skid_swi_ff;
 logic                              skid_force32align_ff;
 logic                              skid_und_ff;
 logic  [31:0]                      skid_ppc_ff;
+logic                              clear;
+logic                              stall;
 
 assign lock = (shift_lock | load_lock) &
               (skid_condition_code_ff != NV);
 
-wire clear = i_clear_from_writeback | i_clear_from_alu;
-wire stall = i_data_stall           | i_stall_from_shifter;
+assign clear = i_clear_from_writeback | i_clear_from_alu;
+assign stall = i_data_stall           | i_stall_from_shifter;
 
 always_ff @ ( posedge i_clk )
 begin
@@ -408,40 +410,44 @@ begin
 end
 
 // Skid buffer.
-always_ff @ ( posedge i_clk ) if ( ~o_stall_from_issue )
-        skid <= {
-                i_pc_plus_8_ff,
-                i_pc_ff,
-                i_switch_ff,
-                i_taken_ff,
-                i_decompile,
-                i_uop_last,
-                i_condition_code_ff,
-                i_destination_index_ff,
-                i_alu_source_ff,
-                i_alu_operation_ff,
-                i_shift_source_ff,
-                i_shift_operation_ff,
-                i_shift_length_ff,
-                i_flag_update_ff,
-                i_mem_srcdest_index_ff,
-                i_mem_load_ff,
-                i_mem_store_ff,
-                i_mem_pre_index_ff,
-                i_mem_unsigned_byte_enable_ff,
-                i_mem_signed_byte_enable_ff,
-                i_mem_signed_halfword_enable_ff,
-                i_mem_unsigned_halfword_enable_ff,
-                i_mem_translate_ff,
-                i_irq_ff,
-                i_fiq_ff,
-                i_abt_ff,
-                i_swi_ff,
-                i_force32align_ff,
-                i_und_ff,
-                i_ppc_ff
-        };
-
+always_ff @ ( posedge i_clk )
+begin
+        if ( ~o_stall_from_issue )
+        begin
+                skid <= {
+                        i_pc_plus_8_ff,
+                        i_pc_ff,
+                        i_switch_ff,
+                        i_taken_ff,
+                        i_decompile,
+                        i_uop_last,
+                        i_condition_code_ff,
+                        i_destination_index_ff,
+                        i_alu_source_ff,
+                        i_alu_operation_ff,
+                        i_shift_source_ff,
+                        i_shift_operation_ff,
+                        i_shift_length_ff,
+                        i_flag_update_ff,
+                        i_mem_srcdest_index_ff,
+                        i_mem_load_ff,
+                        i_mem_store_ff,
+                        i_mem_pre_index_ff,
+                        i_mem_unsigned_byte_enable_ff,
+                        i_mem_signed_byte_enable_ff,
+                        i_mem_signed_halfword_enable_ff,
+                        i_mem_unsigned_halfword_enable_ff,
+                        i_mem_translate_ff,
+                        i_irq_ff,
+                        i_fiq_ff,
+                        i_abt_ff,
+                        i_swi_ff,
+                        i_force32align_ff,
+                        i_und_ff,
+                        i_ppc_ff
+                };
+        end
+end
 
 // Get values from the feedback network.
 always_comb
@@ -692,17 +698,22 @@ begin
         end
 end
 
-wire skid_is_lsl_0 = skid_shift_operation_ff    == {1'd0, LSL} &&
-                     skid_shift_length_ff[31:0] == 32'd0 &&
-                     skid_shift_length_ff[32]   == IMMED_EN;
+logic skid_is_lsl_0;
+logic skid_is_rori;
+logic w_shift_lock;
+logic skid_is_mult;
 
-wire   skid_is_rori          = skid_shift_operation_ff == RORI;
+assign skid_is_lsl_0 = skid_shift_operation_ff    == {1'd0, LSL} &&
+                       skid_shift_length_ff[31:0] == 32'd0 &&
+                       skid_shift_length_ff[32]   == IMMED_EN;
+
+assign   skid_is_rori          = skid_shift_operation_ff == RORI;
 
 // Constant RORI #0 were converted to Constant LSL #0 in decode.
 assign o_shifter_disable_nxt = skid_is_lsl_0 | skid_is_mult;
 
-wire w_shift_lock
-=  shifter_lock_check ( skid_shift_source_ff,
+assign w_shift_lock =
+   shifter_lock_check ( skid_shift_source_ff,
                         o_destination_index_ff, o_condition_code_ff )
 || shifter_lock_check ( skid_shift_length_ff,
                         o_destination_index_ff, o_condition_code_ff )
@@ -712,30 +723,30 @@ wire w_shift_lock
                         o_destination_index_ff, o_condition_code_ff );
 
 
-wire skid_is_mult = skid_alu_operation_ff == {1'd0, UMLALL}     ||
-                    skid_alu_operation_ff == {1'd0, UMLALH}     ||
-                    skid_alu_operation_ff == {1'd0, SMLALL}     ||
-                    skid_alu_operation_ff == {1'd0, SMLALH}     ||
-                    skid_alu_operation_ff == SMULW0             ||
-                    skid_alu_operation_ff == SMULW1             ||
-                    skid_alu_operation_ff == SMUL00             ||
-                    skid_alu_operation_ff == SMUL01             ||
-                    skid_alu_operation_ff == SMUL10             ||
-                    skid_alu_operation_ff == SMUL11             ||
-                    skid_alu_operation_ff == SMLA00             ||
-                    skid_alu_operation_ff == SMLA01             ||
-                    skid_alu_operation_ff == SMLA10             ||
-                    skid_alu_operation_ff == SMLA11             ||
-                    skid_alu_operation_ff == SMLAW0             ||
-                    skid_alu_operation_ff == SMLAW1             ||
-                    skid_alu_operation_ff == SMLAL00L           ||
-                    skid_alu_operation_ff == SMLAL01L           ||
-                    skid_alu_operation_ff == SMLAL10L           ||
-                    skid_alu_operation_ff == SMLAL11L           ||
-                    skid_alu_operation_ff == SMLAL00H           ||
-                    skid_alu_operation_ff == SMLAL01H           ||
-                    skid_alu_operation_ff == SMLAL10H           ||
-                    skid_alu_operation_ff == SMLAL11H;
+assign skid_is_mult = skid_alu_operation_ff == {1'd0, UMLALL}     ||
+                      skid_alu_operation_ff == {1'd0, UMLALH}     ||
+                      skid_alu_operation_ff == {1'd0, SMLALL}     ||
+                      skid_alu_operation_ff == {1'd0, SMLALH}     ||
+                      skid_alu_operation_ff == SMULW0             ||
+                      skid_alu_operation_ff == SMULW1             ||
+                      skid_alu_operation_ff == SMUL00             ||
+                      skid_alu_operation_ff == SMUL01             ||
+                      skid_alu_operation_ff == SMUL10             ||
+                      skid_alu_operation_ff == SMUL11             ||
+                      skid_alu_operation_ff == SMLA00             ||
+                      skid_alu_operation_ff == SMLA01             ||
+                      skid_alu_operation_ff == SMLA10             ||
+                      skid_alu_operation_ff == SMLA11             ||
+                      skid_alu_operation_ff == SMLAW0             ||
+                      skid_alu_operation_ff == SMLAW1             ||
+                      skid_alu_operation_ff == SMLAL00L           ||
+                      skid_alu_operation_ff == SMLAL01L           ||
+                      skid_alu_operation_ff == SMLAL10L           ||
+                      skid_alu_operation_ff == SMLAL11L           ||
+                      skid_alu_operation_ff == SMLAL00H           ||
+                      skid_alu_operation_ff == SMLAL01H           ||
+                      skid_alu_operation_ff == SMLAL10H           ||
+                      skid_alu_operation_ff == SMLAL11H;
 
 //
 // Look for reads from registers to be loaded from memory. Four
@@ -892,11 +903,17 @@ begin
         // If immediate, no lock obviously.
 
         if ( index[32] == IMMED_EN || index == PHY_RAZ_REGISTER )
+        begin
                 shifter_lock_check = 1'd0;
+        end
         else if ( destination_index_ff == index[5:0] && condition_code_ff != NV )
+        begin
                 shifter_lock_check = 1'd1;
+        end
         else
+        begin
                 shifter_lock_check = 1'd0;
+        end
 end
 endfunction
 
@@ -1096,10 +1113,11 @@ begin
         else    // Index not found in the pipeline, fallback to register access.
         begin
                 case ( rd_port )
-                        0: get =   rd_data_0;
-                        1: get =   rd_data_1;
-                        2: get =   rd_data_2;
-                        3: get =   rd_data_3;
+                        2'd0: get =   rd_data_0;
+                        2'd1: get =   rd_data_1;
+                        2'd2: get =   rd_data_2;
+                        2'd3: get =   rd_data_3; // rd_port == 2'd3
+                     default: get =   'x;
                 endcase
         end
 

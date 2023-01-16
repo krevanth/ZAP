@@ -21,8 +21,8 @@
 //
 
 module zap_predecode_main #(
-        parameter bit [31:0] PHY_REGS  = 32'd64,
-        parameter bit [31:0] RAS_DEPTH = 32'd8
+        parameter logic [31:0] PHY_REGS  = 32'd64,
+        parameter logic [31:0] RAS_DEPTH = 32'd8
 )
 (
         // Clock and reset.
@@ -150,8 +150,9 @@ logic [RAS_DEPTH-1:0][31:0]         ras_ff, ras_nxt;
 logic [$clog2(RAS_DEPTH)-1:0]       ras_ptr_ff, ras_ptr_nxt;
 logic                               align_nxt;
 logic                               switch_nxt;
+logic                               stall;
 
-wire stall = i_data_stall || i_stall_from_shifter || i_stall_from_issue;
+assign stall = i_data_stall || i_stall_from_shifter || i_stall_from_issue;
 
 // Flop the outputs to break the pipeline at this point.
 always_ff @ (posedge i_clk)
@@ -400,10 +401,14 @@ begin:bprblk1
 
         // Indicates a left shift of 1 i.e., X = X * 2.
         if ( mode32_instruction[34] )
+        begin
                 addr_final = addr << 1;
+        end
         // Indicates a left shift of 2 i.e., X = X * 4.
         else
+        begin
                 addr_final = addr << 2;
+        end
 
         //
         // Is it an instruction that we support ?
@@ -424,11 +429,17 @@ begin:bprblk1
                         ppc_nxt             = w_pc_from_decode;
 
                         if ( skid_pred[32] && skid_pred[31:0] != w_pc_from_decode )
+                        begin
                                 w_clear_from_decode = 1'd1;
+                        end
                         else if ( !skid_pred[32] )
+                        begin
                                 w_clear_from_decode = 1'd1;
+                        end
                         else
+                        begin
                                 w_clear_from_decode = 1'd0;
+                        end
 
                         // Force taken status to ST.
                         if ( mode32_instruction[31:28] == AL )
@@ -496,14 +507,22 @@ begin:bprblk1
                         w_pc_from_decode    = ras_ff[ras_ptr_nxt];
 
                         if ( skid_pred[32] && skid_pred[31:0] != w_pc_from_decode )
+                        begin
                                 w_clear_from_decode = 1'd1;
+                        end
                         else if (!skid_pred[32])
+                        begin
                                 w_clear_from_decode = 1'd1;
+                        end
                         else
+                        begin
                                 w_clear_from_decode = 1'd0;
+                        end
 
                         if ( mode32_instruction[31:28] == AL )
+                        begin
                                 taken_nxt = ST;
+                        end
 
                         // Helps ALU verify that the RAS is correct.
                         ppc_nxt             = w_pc_from_decode;

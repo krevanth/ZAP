@@ -22,8 +22,8 @@
 
 module zap_shifter_multiply
 #(
-        parameter bit [31:0] PHY_REGS  = 32'd46,
-        parameter bit [31:0] ALU_OPS   = 32'd32
+        parameter logic [31:0] PHY_REGS  = 32'd46,
+        parameter logic [31:0] ALU_OPS   = 32'd32
 )
 (
         input logic                              i_clk,
@@ -190,7 +190,9 @@ begin
                 d = $signed({1'd0, i_rs[31:16]});
 
                 if ( i_alu_operation_ff == OP_SMLAL01L || i_alu_operation_ff == OP_SMLAL01H )
+                begin
                         take_upper = 1'd1;
+                end
         end
         else if ( i_alu_operation_ff == OP_SMUL10   || i_alu_operation_ff == OP_SMLA10 ||
                   i_alu_operation_ff == OP_SMLAL10L || i_alu_operation_ff == OP_SMLAL10H )
@@ -204,7 +206,9 @@ begin
                 d = $signed({1'd0, i_rs[15:0]});
 
                 if ( i_alu_operation_ff == OP_SMLAL10L || i_alu_operation_ff == OP_SMLAL10H )
+                begin
                         take_upper = 1'd1;
+                end
         end
         else if ( i_alu_operation_ff == OP_SMUL11   || i_alu_operation_ff == OP_SMLA11 ||
                   i_alu_operation_ff == OP_SMLAL11L || i_alu_operation_ff == OP_SMLAL11H)
@@ -315,9 +319,13 @@ begin
                         end
 
                         if ( tmp_sat )
+                        begin
                                 state_nxt = S4;
+                        end
                         else
+                        begin
                                 state_nxt = S3;
+                        end
                 end
 
                 S3, S4:
@@ -334,8 +342,10 @@ begin
 
                         // Record if older was not zero.
                         if ( !higher )
+                        begin
                                 old_nozero_nxt = |x_nxt[31:0]; // 0x1 - Older was not zero.
                                                                // 0x0 - Older was zero.
+                        end
 
                         o_busy     = 1'd0;
 
@@ -347,6 +357,18 @@ begin
                         begin
                                 o_nozero = 1'd1;
                         end
+                end
+
+                default:
+                begin
+                        old_nozero_nxt = 'x; //
+                        o_nozero       = 'x; //
+                        o_busy         = 'x; //
+                        o_rd           = 'x; //
+                        state_nxt      = 'x; //
+                        x_nxt          = 'x; //
+                        o_sat          = 'x; //
+                        tmp_sat        = 'x; //
                 end
         endcase
 end

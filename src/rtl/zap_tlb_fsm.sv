@@ -23,10 +23,10 @@
 
 module zap_tlb_fsm #(
 
-parameter bit [31:0] LPAGE_TLB_ENTRIES   = 32'd8,
-parameter bit [31:0] SPAGE_TLB_ENTRIES   = 32'd8,
-parameter bit [31:0] SECTION_TLB_ENTRIES = 32'd8,
-parameter bit [31:0] FPAGE_TLB_ENTRIES   = 32'd8
+parameter logic [31:0] LPAGE_TLB_ENTRIES   = 32'd8,
+parameter logic [31:0] SPAGE_TLB_ENTRIES   = 32'd8,
+parameter logic [31:0] SECTION_TLB_ENTRIES = 32'd8,
+parameter logic [31:0] FPAGE_TLB_ENTRIES   = 32'd8
 
 )(
 
@@ -146,7 +146,9 @@ assign unused           = |{i_baddr[13:0]};
 always_ff @ ( posedge i_clk )
 begin
         if ( state_ff == IDLE )
+        begin
                 address <= i_address;
+        end
 end
 
 always_comb
@@ -358,6 +360,31 @@ begin: blk1
                 end
 
                 endcase
+        end
+
+        default:
+        begin
+                o_fsr           = 'x; //
+                o_far           = 'x; //
+                o_fault         = 'x; //
+                o_busy          = 'x; //
+                o_phy_addr      = 'x; //
+                o_cacheable     = 'x; //
+                o_setlb_wen     = 'x; //
+                o_lptlb_wen     = 'x; //
+                o_sptlb_wen     = 'x; //
+                o_setlb_wdata   = 'x; //
+                o_sptlb_wdata   = 'x; //
+                o_lptlb_wdata   = 'x; //
+                o_fptlb_wdata   = 'x; //
+                o_fptlb_wen     = 'x; //
+                wb_stb_nxt      = 'x; //
+                wb_cyc_nxt      = 'x; //
+                wb_adr_nxt      = 'x; //
+                wb_sel_nxt      = 'x; //
+                dac_nxt         = 'x; //
+                state_nxt       = 'x; //
+                dnxt            = 'x; //
         end
 
         endcase

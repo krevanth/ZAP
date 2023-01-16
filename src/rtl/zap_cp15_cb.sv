@@ -26,15 +26,15 @@
 module zap_cp15_cb
 
 #(
-        parameter bit CP15_L4_DEFAULT          = 1'd0,
-        parameter bit BE_32_ENABLE             = 1'd0,
-        parameter bit ONLY_CORE                = 1'd0,
+        parameter logic CP15_L4_DEFAULT          = 1'd0,
+        parameter logic BE_32_ENABLE             = 1'd0,
+        parameter logic ONLY_CORE                = 1'd0,
 
-        parameter bit [31:0] PHY_REGS          = 32'd64,
-        parameter bit [31:0] CODE_CACHE_LINE   = 32'd64,
-        parameter bit [31:0] DATA_CACHE_LINE   = 32'd64,
-        parameter bit [31:0] CODE_CACHE_SIZE   = 32'd1024,
-        parameter bit [31:0] DATA_CACHE_SIZE   = 32'd1024,
+        parameter logic [31:0] PHY_REGS          = 32'd64,
+        parameter logic [31:0] CODE_CACHE_LINE   = 32'd64,
+        parameter logic [31:0] DATA_CACHE_LINE   = 32'd64,
+        parameter logic [31:0] CODE_CACHE_SIZE   = 32'd1024,
+        parameter logic [31:0] DATA_CACHE_SIZE   = 32'd1024,
 
         localparam type t_cp_instruction =
                         struct packed   {
@@ -665,8 +665,10 @@ assign r4 = r[4];
 assign r5 = r[5];
 assign r6 = r[6];
 
-wire unused = |{r0, r1, r2, r3, r4, r5, r6, i_cpsr[27:5],
-                i_icache_clean_done};
+logic unused;
+
+assign unused = |{r0, r1, r2, r3, r4, r5, r6, i_cpsr[27:5],
+                  i_icache_clean_done};
 
 endmodule
 

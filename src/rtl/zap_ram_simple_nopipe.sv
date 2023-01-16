@@ -24,8 +24,8 @@
 //
 
 module zap_ram_simple_nopipe #(
-        parameter bit [31:0] WIDTH = 32'd32,
-        parameter bit [31:0] DEPTH = 32'd32
+        parameter logic [31:0] WIDTH = 32'd32,
+        parameter logic [31:0] DEPTH = 32'd32
 )
 (
         // Clock

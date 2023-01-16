@@ -283,6 +283,7 @@ begin: transform_function
                 2'd1: transform = {24'd0, d[15:8]};
                 2'd2: transform = {24'd0, d[23:16]};
                 2'd3: transform = {24'd0, d[31: 24]};
+            default : transform = 'x;
                 endcase
         end
         // Signed byte. Sign extend lower byte.
@@ -290,10 +291,11 @@ begin: transform_function
         begin
                 // Take lower byte and sign extend it.
                 case ( address[1:0] )
-                0: transform = {{24{d[7] }},d[7:0]};
-                1: transform = {{24{d[15]}},d[15:8]};
-                2: transform = {{24{d[23]}},d[23:16]};
-                3: transform = {{24{d[31]}},d[31:24]};
+                2'd0: transform = {{24{d[7] }},d[7:0]};
+                2'd1: transform = {{24{d[15]}},d[15:8]};
+                2'd2: transform = {{24{d[23]}},d[23:16]};
+                2'd3: transform = {{24{d[31]}},d[31:24]};
+             default: transform = 'x;
                 endcase
         end
         // Signed half word. Sign extend lower 16-bit.
@@ -302,6 +304,7 @@ begin: transform_function
                 case ( address[1] )
                 1'd0: transform = {{16{d[15]}},d[15:0]};
                 1'd1: transform = {{16{d[31]}},d[31:16]};
+             default: transform = 'x;
                 endcase
 
                 if ( o_dav_ff && mem_load_ff2 )
@@ -315,7 +318,8 @@ begin: transform_function
         begin
                 case ( address[1] )
                 1'd0: transform = {16'd0, d[15:0]};
-                1'd1: transform = {16'd0, d[31:16]};
+                1'd1: transform = {16'd0, d[31:16]}; // address[1] = 1'd1
+             default: transform = 'x;
                 endcase
 
                 if ( o_dav_ff && mem_load_ff2 )
@@ -333,6 +337,7 @@ begin: transform_function
                 2'b01: transform = {data  [7:0], data [31:8]};
                 2'b10: transform = {data [15:0], data[31:16]};
                 2'b11: transform = {data [23:0], data[31:24]};
+              default: transform = 'x;
                 endcase
         end
 end

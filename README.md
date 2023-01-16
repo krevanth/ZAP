@@ -643,6 +643,8 @@ To run all/a specific TC, do:
 
 See `src/ts` for a list of test names. Not providing a testname will run all tests.
 
+The test will open an XTERM window (per TC). The window will auto close on success, but will remain open with an error message on failure.
+
 To remove existing object/simulation/synthesis files, do:
 
 > `make [DOCKER=1] clean`
@@ -707,9 +709,13 @@ To remove existing object/simulation/synthesis files, do:
 
 ### 3.3. Running RTL Lint
 
-To run RTL lint, simply do:
+To run RTL lint with Verilator, simply do:
 
 > `make [DOCKER=1] lint`
+
+To run RTL lint with svlint (no Docker support, install with `cargo install svlint`):
+
+> `make svlint`
 
 ### 3.4. Running Xilinx Vivado Synthesis
 

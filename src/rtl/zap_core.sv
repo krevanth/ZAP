@@ -23,29 +23,29 @@
 module zap_core #(
 
         // For CP15 purposes.
-        parameter bit [0:0]  CP15_L4_DEFAULT = 0,
-        parameter bit [31:0] DATA_CACHE_SIZE = 1024,
-        parameter bit [31:0] CODE_CACHE_SIZE = 1024,
-        parameter bit [31:0] DATA_CACHE_LINE = 64,
-        parameter bit [31:0] CODE_CACHE_LINE = 64,
+        parameter logic [0:0]  CP15_L4_DEFAULT = 0,
+        parameter logic [31:0] DATA_CACHE_SIZE = 1024,
+        parameter logic [31:0] CODE_CACHE_SIZE = 1024,
+        parameter logic [31:0] DATA_CACHE_LINE = 64,
+        parameter logic [31:0] CODE_CACHE_LINE = 64,
 
         // Reset vector. Safe to not override.
-        parameter bit [31:0] RESET_VECTOR     = 32'd0,
+        parameter logic [31:0] RESET_VECTOR     = 32'd0,
 
         // Initial CPSR. Safe to not override.
-        parameter bit [31:0] CPSR_INIT        = {24'd0, 1'd1,1'd1,1'd0,5'b10011},
+        parameter logic [31:0] CPSR_INIT        = {24'd0, 1'd1,1'd1,1'd0,5'b10011},
 
         // For CP15 purposes. Actual conversion is handled at a higher module.
-        parameter bit BE_32_ENABLE            = 1'd0,
+        parameter logic BE_32_ENABLE            = 1'd0,
 
         // Number of branch predictor entries.
-        parameter bit [31:0] BP_ENTRIES       = 32'd1024,
+        parameter logic [31:0] BP_ENTRIES       = 32'd1024,
 
         // Depth of FIFO.
-        parameter bit [31:0] FIFO_DEPTH       = 32'd4,
+        parameter logic [31:0] FIFO_DEPTH       = 32'd4,
 
         // RAS depth.
-        parameter bit [31:0] RAS_DEPTH        = 32'd4
+        parameter logic [31:0] RAS_DEPTH        = 32'd4
 )
 (
 
@@ -495,10 +495,10 @@ logic [64*8-1:0]                 memory_decompile;
 logic [64*8-1:0]                 rb_decompile;
 
 logic [(8*8)-1:0] CPU_MODE;
-
-wire unused = |{rb_decompile, CPU_MODE, alu_cpsr_nxt[31:30], alu_cpsr_nxt[28:0],
-                predecode_inst[39:36], postalu_mem_translate_ff,
-               i_dc_reg_idx[63:PHY_REGS]};
+logic unused;
+assign unused = |{rb_decompile, CPU_MODE, alu_cpsr_nxt[31:30], alu_cpsr_nxt[28:0],
+                 predecode_inst[39:36], postalu_mem_translate_ff,
+                 i_dc_reg_idx[63:PHY_REGS]};
 
 assign o_cpsr                   = alu_flags_ff[ZAP_CPSR_MODE:0];
 assign o_data_wb_adr            = {postalu_address_ff[31:2], 2'd0};

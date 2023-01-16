@@ -200,13 +200,13 @@ localparam INDEX_EN = 1'd0;
 localparam IMMED_EN = 1'd1;
 
 // Processor Modes
-localparam FIQ = 5'b10_001;
-localparam IRQ = 5'b10_010;
-localparam ABT = 5'b10_111;
-localparam SVC = 5'b10_011;
-localparam USR = 5'b10_000;
-localparam SYS = 5'b11_111;
-localparam UND = 5'b11_011;
+localparam [4:0] FIQ = 5'b10_001;
+localparam [4:0] IRQ = 5'b10_010;
+localparam [4:0] ABT = 5'b10_111;
+localparam [4:0] SVC = 5'b10_011;
+localparam [4:0] USR = 5'b10_000;
+localparam [4:0] SYS = 5'b11_111;
+localparam [4:0] UND = 5'b11_011;
 
 // Instruction definitions.
 // MODE32

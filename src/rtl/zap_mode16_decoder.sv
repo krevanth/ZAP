@@ -67,8 +67,9 @@ assign  offset_w = i_offset[10:0];
 ///////////////////////////////////////////////////////////////////////////////
 
 int debug; // For debug purpose, to determine branch taken.
+logic unused;
 
-wire unused = |debug;
+assign unused = |debug;
 
 always_comb
 begin
@@ -108,7 +109,9 @@ begin
                         decode_bkpt();
                         debug = 5;
                 end
-                else casez ( i_instruction[15:0] )
+                else
+                begin
+                        casez ( i_instruction[15:0] )
                         T_BLX1                  : begin debug = 6  ; decode_blx1(); end
                         T_BRANCH_COND           : begin debug = 7  ; decode_conditional_branch(); end
                         T_BRANCH_NOCOND         : begin debug = 8  ; decode_unconditional_branch(); end
@@ -131,7 +134,8 @@ begin
                                 o_und = 1; // Will take UND trap.
                                 debug = 23;
                         end
-                endcase
+                        endcase
+                end
         end
 end
 
@@ -286,7 +290,8 @@ begin: dcdLdrhStrh
           2'd0: o_instruction[34:0] = {3'd0, AL, 3'b011, 1'd1, 1'd1, 1'd0, 1'd0, 1'd0, base, srcdest, offset};// STR
           2'd1: o_instruction[34:0] = {3'd0, AL, 3'b011, 1'd1, 1'd1, 1'd1, 1'd0, 1'd0, base, srcdest, offset};// STRB
           2'd2: o_instruction[34:0] = {3'd0, AL, 3'b011, 1'd1, 1'd1, 1'd0, 1'd0, 1'd1, base, srcdest, offset};// LDR
-          2'd3: o_instruction[34:0] = {3'd0, AL, 3'b011, 1'd1, 1'd1, 1'd1, 1'd0, 1'd1, base, srcdest, offset};// LDRB
+          2'd3: o_instruction[34:0] = {3'd0, AL, 3'b011, 1'd1, 1'd1, 1'd1, 1'd0, 1'd1, base, srcdest, offset};// LDRB(SH=2'd3)
+       default: o_instruction[34:0] = 'x;
           endcase
         end
         else
@@ -296,7 +301,8 @@ begin: dcdLdrhStrh
           2'd0: o_instruction[34:0] = {3'd0, AL, 3'b000, 1'd1, 1'd1, 1'd0, 1'd0, 1'd0, base, srcdest, 4'd0, 1'd1, 2'b01, 1'd1, offset[3:0]};// STRH
           2'd1: o_instruction[34:0] = {3'd0, AL, 3'b000, 1'd1, 1'd1, 1'd0, 1'd0, 1'd1, base, srcdest, 4'd0, 1'd1, 2'b01, 1'd1, offset[3:0]};// LDRH
           2'd2: o_instruction[34:0] = {3'd0, AL, 3'b000, 1'd1, 1'd1, 1'd0, 1'd0, 1'd1, base, srcdest, 4'd0, 1'd1, 2'b10, 1'd1, offset[3:0]};// LDSB
-          2'd3: o_instruction[34:0] = {3'd0, AL, 3'b000, 1'd1, 1'd1, 1'd0, 1'd0, 1'd1, base, srcdest, 4'd0, 1'd1, 2'b11, 1'd1, offset[3:0]};// LDSH
+          2'd3: o_instruction[34:0] = {3'd0, AL, 3'b000, 1'd1, 1'd1, 1'd0, 1'd0, 1'd1, base, srcdest, 4'd0, 1'd1, 2'b11, 1'd1, offset[3:0]};// LDSH(SH=2'd3)
+       default: o_instruction[34:0] = 'x;
           endcase
         end
 end
@@ -347,9 +353,13 @@ begin: dcLdrStr5BitOff
         rd = {1'd0, i_instruction[2:0]};
 
         if ( i_instruction[12] == 1'd0 )
+        begin
                 imm[11:0] = {5'd0, i_instruction[10:6], 2'd0};
+        end
         else
+        begin
                 imm[11:0] = {7'd0, i_instruction[10:6]};
+        end
 
                            //  CC                 U          B             0
         o_instruction[34:0] = {3'd0, AL, 3'b010, 1'd1, 1'd1, i_instruction[12], 1'd0,
@@ -390,12 +400,15 @@ begin:dcAluHi
         rs = {i_instruction[6], i_instruction[5:3]};
 
         case(op)
-        0: o_instruction[31:0] = {AL, 2'b00, 1'b0, ADD, 1'b0, rd, rd, 8'd0, rs}; // ADD Rd, Rd, Rs
-        1: o_instruction[31:0] = {AL, 2'b00, 1'b0, CMP, 1'b1, rd, rd, 8'd0, rs}; // CMP Rd, Rs
-        2: o_instruction[31:0] = {AL, 2'b00, 1'b0, MOV, 1'b0, rd, rd, 8'd0, rs}; // MOV Rd, Rs
-        3:
+        2'd0: o_instruction[31:0] = {AL, 2'b00, 1'b0, ADD, 1'b0, rd, rd, 8'd0, rs}; // ADD Rd, Rd, Rs
+        2'd1: o_instruction[31:0] = {AL, 2'b00, 1'b0, CMP, 1'b1, rd, rd, 8'd0, rs}; // CMP Rd, Rs
+        2'd2: o_instruction[31:0] = {AL, 2'b00, 1'b0, MOV, 1'b0, rd, rd, 8'd0, rs}; // MOV Rd, Rs
+        default:
         begin
-                // Error.
+                o_instruction = 'X;
+
+                assert(1'd0) else
+                $fatal(2, "Unexpected case way in decode_alu_hi().");
         end
         endcase
 end
@@ -415,22 +428,23 @@ begin: tskDecAluLo
         o_instruction[34:0] = 35'd0;
 
         case(op)
-        0:      o_instruction[31:0] = {AL, 2'b00, 1'b0, AND, 1'd1, rd, rd, 8'd0, rs};                   // ANDS Rd, Rd, Rs
-        1:      o_instruction[31:0] = {AL, 2'b00, 1'b0, EOR, 1'd1, rd, rd, 8'd0, rs};                   // EORS Rd, Rd, Rs
-        2:      o_instruction[31:0] = {AL, 2'b00, 1'b0, MOV, 1'd1, rd, rd, rs, 1'd0, LSL, 1'd1, rd};    // MOVS Rd, Rd, LSL Rs
-        3:      o_instruction[31:0] = {AL, 2'b00, 1'b0, MOV, 1'd1, rd, rd, rs, 1'd0, LSR, 1'd1, rd};    // MOVS Rd, Rd, LSR Rs
-        4:      o_instruction[31:0] = {AL, 2'b00, 1'b0, MOV, 1'd1, rd, rd, rs, 1'd0, ASR, 1'd1, rd};    // MOVS Rd, Rd, ASR Rs
-        5:      o_instruction[31:0] = {AL, 2'b00, 1'b0, ADC, 1'd1, rd, rd, 8'd0, rs};                   // ADCS Rd, Rd, Rs
-        6:      o_instruction[31:0] = {AL, 2'b00, 1'b0, SBC, 1'd1, rd, rd, 8'd0, rs};                   // SBCS Rd, Rs, Rs
-        7:      o_instruction[31:0] = {AL, 2'b00, 1'b0, MOV, 1'd1, rd, rd, rs, 1'd0, ROR, 1'd1, rd};    // MOVS Rd, Rd, ROR Rs.
-        8:      o_instruction[31:0] = {AL, 2'b00, 1'b0, TST, 1'd1, rd, rd, 8'd0, rs};                   // TST Rd, Rs
-        9:      o_instruction[31:0] = {AL, 2'b00, 1'b1, RSB, 1'd1, rs, rd, 12'd0};                      // Rd = 0 - Rs
-        10:     o_instruction[31:0] = {AL, 2'b00, 1'b0, CMP, 1'd1, rd, rd, 8'd0, rs};                   // CMP Rd, Rs
-        11:     o_instruction[31:0] = {AL, 2'b00, 1'b0, CMN, 1'd1, rd, rd, 8'd0, rs};                   // CMN Rd, Rs
-        12:     o_instruction[31:0] = {AL, 2'b00, 1'b0, ORR, 1'd1, rd, rd, 8'd0, rs};                   // ORRS Rd, Rd, rs
-        13:     o_instruction[31:0] = {AL, 4'b0000,  3'b000, 1'd1, rd, 4'd0, rd, 4'b1001, rs};          // MULS Rd, Rs, Rd
-        14:     o_instruction[31:0] = {AL, 2'b00, 1'b0, BIC, 1'd1, rd, rd, 8'd0, rs};                   // BICS rd, rd, rs
-        15:     o_instruction[31:0] = {AL, 2'b00, 1'b0, MVN, 1'd1, rd, rd, 8'd0, rs};                   // MVNS rd, rd, rs
+        4'd0:      o_instruction[31:0] = {AL, 2'b00, 1'b0, AND, 1'd1, rd, rd, 8'd0, rs};                   // ANDS Rd, Rd, Rs
+        4'd1:      o_instruction[31:0] = {AL, 2'b00, 1'b0, EOR, 1'd1, rd, rd, 8'd0, rs};                   // EORS Rd, Rd, Rs
+        4'd2:      o_instruction[31:0] = {AL, 2'b00, 1'b0, MOV, 1'd1, rd, rd, rs, 1'd0, LSL, 1'd1, rd};    // MOVS Rd, Rd, LSL Rs
+        4'd3:      o_instruction[31:0] = {AL, 2'b00, 1'b0, MOV, 1'd1, rd, rd, rs, 1'd0, LSR, 1'd1, rd};    // MOVS Rd, Rd, LSR Rs
+        4'd4:      o_instruction[31:0] = {AL, 2'b00, 1'b0, MOV, 1'd1, rd, rd, rs, 1'd0, ASR, 1'd1, rd};    // MOVS Rd, Rd, ASR Rs
+        4'd5:      o_instruction[31:0] = {AL, 2'b00, 1'b0, ADC, 1'd1, rd, rd, 8'd0, rs};                   // ADCS Rd, Rd, Rs
+        4'd6:      o_instruction[31:0] = {AL, 2'b00, 1'b0, SBC, 1'd1, rd, rd, 8'd0, rs};                   // SBCS Rd, Rs, Rs
+        4'd7:      o_instruction[31:0] = {AL, 2'b00, 1'b0, MOV, 1'd1, rd, rd, rs, 1'd0, ROR, 1'd1, rd};    // MOVS Rd, Rd, ROR Rs.
+        4'd8:      o_instruction[31:0] = {AL, 2'b00, 1'b0, TST, 1'd1, rd, rd, 8'd0, rs};                   // TST Rd, Rs
+        4'd9:      o_instruction[31:0] = {AL, 2'b00, 1'b1, RSB, 1'd1, rs, rd, 12'd0};                      // Rd = 0 - Rs
+        4'd10:     o_instruction[31:0] = {AL, 2'b00, 1'b0, CMP, 1'd1, rd, rd, 8'd0, rs};                   // CMP Rd, Rs
+        4'd11:     o_instruction[31:0] = {AL, 2'b00, 1'b0, CMN, 1'd1, rd, rd, 8'd0, rs};                   // CMN Rd, Rs
+        4'd12:     o_instruction[31:0] = {AL, 2'b00, 1'b0, ORR, 1'd1, rd, rd, 8'd0, rs};                   // ORRS Rd, Rd, rs
+        4'd13:     o_instruction[31:0] = {AL, 4'b0000,  3'b000, 1'd1, rd, 4'd0, rd, 4'b1001, rs};          // MULS Rd, Rs, Rd
+        4'd14:     o_instruction[31:0] = {AL, 2'b00, 1'b0, BIC, 1'd1, rd, rd, 8'd0, rs};                   // BICS rd, rd, rs
+        4'd15:     o_instruction[31:0] = {AL, 2'b00, 1'b0, MVN, 1'd1, rd, rd, 8'd0, rs};                   // MVNS rd, rd, rs(op==15)
+      default:     o_instruction[31:0] = 'x;
         endcase
 end
 endfunction
@@ -470,6 +484,10 @@ begin: tskDecodeMcasImm
                         // SUBS Rd, Rd, Offset8
                         o_instruction[31:0] = {AL, 2'b00, 1'b1, SUB, 1'd1, rd, rd, imm};
                 end
+                default:
+                begin
+                        o_instruction[31:0] = 'x;
+                end
         endcase
 end
 endfunction
@@ -508,6 +526,10 @@ begin: tskDecodeAddSubLo
         begin
                 // SUBS Rd, Rs, #Offset3 - Immediate.
                 o_instruction[31:0] = {AL, 2'b00, 1'b1, SUB, 1'd1, rs, rd, imm};
+        end
+        default:
+        begin
+                o_instruction[31:0] = 'x;
         end
         endcase
 end
@@ -590,6 +612,12 @@ begin
                         o_instruction[23:0]--;
                         o_irq               = 1'd0;
                         o_fiq               = 1'd0;
+                end
+                default:
+                begin
+                        o_instruction = 'x;
+                        o_irq         = 'x;
+                        o_fiq         = 'x;
                 end
         endcase
 end

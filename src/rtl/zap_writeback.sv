@@ -18,11 +18,11 @@
 //
 
 module zap_writeback #(
-        parameter bit [31:0] BP_ENTRIES   = 32'd1024,  // BP entries.
-        parameter bit [31:0] FLAG_WDT     = 32'd32,    // Flags width a.k.a CPSR.
-        parameter bit [31:0] PHY_REGS     = 32'd46,    // Number of physical registers.
-        parameter bit [31:0] CPSR_INIT    = 32'd0,     // Initial value of CPSR.
-        parameter bit [31:0] RESET_VECTOR = 32'd0      // Reset vector.
+        parameter logic [31:0] BP_ENTRIES   = 32'd1024,  // BP entries.
+        parameter logic [31:0] FLAG_WDT     = 32'd32,    // Flags width a.k.a CPSR.
+        parameter logic [31:0] PHY_REGS     = 32'd46,    // Number of physical registers.
+        parameter logic [31:0] CPSR_INIT    = 32'd0,     // Initial value of CPSR.
+        parameter logic [31:0] RESET_VECTOR = 32'd0      // Reset vector.
 )
 (
         // Decompile.
@@ -661,7 +661,10 @@ endfunction
 assign o_trace         = '0;
 assign o_trace_valid   = '0;
 assign o_trace_uop_last= '0;
-wire   unused          = |{i_decompile_valid, i_uop_last};
+
+logic unused;
+
+assign unused          = |{i_decompile_valid, i_uop_last};
 
 `endif
 

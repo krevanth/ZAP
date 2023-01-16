@@ -92,9 +92,9 @@ input  logic              i_wb_ack
 `include "zap_defines.svh"
 `include "zap_localparams.svh"
 
-localparam                      S0=0;
-localparam                      S1=1;
-localparam                      S2=2;
+localparam                      SELECT_CCH=0;
+localparam                      SELECT_TAG=1;
+localparam                      SELECT_TLB=2;
 
 logic [2:0]                      wb_stb;
 logic [2:0]                      wb_cyc;
@@ -278,7 +278,7 @@ always_ff @ ( posedge i_clk )
 begin
         if ( i_reset )
         begin
-                state_ff <= S0;
+                state_ff <= SELECT_CCH;
                 o_wb_stb <= 1'd0;
                 o_wb_cyc <= 1'd0;
                 o_wb_adr <= 32'd0;
@@ -309,9 +309,9 @@ begin
         if ( !o_wb_stb || (o_wb_stb && i_wb_ack) )
         begin
                 casez({wb_cyc[2],wb_cyc[1],wb_cyc[0]})
-                3'b1?? : state_nxt = S2; // TLB.
-                3'b01? : state_nxt = S1; // Tag.
-                3'b001 : state_nxt = S0; // Cache.
+                3'b1?? : state_nxt = SELECT_TLB; // TLB.
+                3'b01? : state_nxt = SELECT_TAG; // Tag.
+                3'b001 : state_nxt = SELECT_CCH; // Cache.
                 default: state_nxt = state_ff;
                 endcase
         end
@@ -323,9 +323,10 @@ begin
         wb_ack = 0;
 
         case(state_ff)
-        S0: wb_ack[0] = i_wb_ack;
-        S1: wb_ack[1] = i_wb_ack;
-        S2: wb_ack[2] = i_wb_ack;
+        SELECT_CCH: wb_ack[0] = i_wb_ack;
+        SELECT_TAG: wb_ack[1] = i_wb_ack;
+        SELECT_TLB: wb_ack[2] = i_wb_ack;
+        default: wb_ack = {3{1'dx}};
         endcase
 end
 

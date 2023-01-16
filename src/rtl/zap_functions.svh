@@ -73,8 +73,11 @@ begin: blk1
         LT:     ok = (n != v);
         GT:     ok = (n == v) && !z;
         LE:     ok = (n != v) || z;
-        AL:     ok = 1'd1;
-        NV:     ok = 1'd0;
+
+        AL:     ok = 1'd1; // Always execute.
+        NV:     ok = 1'd0; // Never eXecute.
+
+        default:ok = 'x;   // Propagate X.
         endcase
 
         is_cc_satisfied = ok;
@@ -96,8 +99,6 @@ function automatic  [5:0] translate (
 
 );
 begin
-        translate = index; // Avoid latch inference.
-
         // User/System mode map.
         case ( index )
                       0:      translate = PHY_USR_R0;
@@ -121,7 +122,10 @@ begin
                ARCH_CPSR:     translate = PHY_CPSR;
           ARCH_CURR_SPSR:     translate = PHY_CPSR;
 
+              //
               // USR2 registers are looped back to USER registers.
+              // in all modes
+              //
               ARCH_USR2_R8:   translate = PHY_USR_R8;
               ARCH_USR2_R9:   translate = PHY_USR_R9;
               ARCH_USR2_R10:  translate = PHY_USR_R10;
@@ -132,6 +136,7 @@ begin
 
               ARCH_DUMMY_REG0:translate = PHY_DUMMY_REG0;
               ARCH_DUMMY_REG1:translate = PHY_DUMMY_REG1;
+                default      :translate = index;
         endcase
 
         // Override per specific mode.
@@ -147,6 +152,7 @@ begin
                                 13:     translate = PHY_FIQ_R13;
                                 14:     translate = PHY_FIQ_R14;
                     ARCH_CURR_SPSR:     translate = PHY_FIQ_SPSR;
+                           default:;
                         endcase
                 end
 
@@ -156,6 +162,7 @@ begin
                                 13:     translate = PHY_IRQ_R13;
                                 14:     translate = PHY_IRQ_R14;
                     ARCH_CURR_SPSR:     translate = PHY_IRQ_SPSR;
+                          default:;
                         endcase
                 end
 
@@ -165,6 +172,7 @@ begin
                                 13:     translate = PHY_ABT_R13;
                                 14:     translate = PHY_ABT_R14;
                     ARCH_CURR_SPSR:     translate = PHY_ABT_SPSR;
+                           default:;
                         endcase
                 end
 
@@ -174,6 +182,7 @@ begin
                                 13:     translate = PHY_UND_R13;
                                 14:     translate = PHY_UND_R14;
                     ARCH_CURR_SPSR:     translate = PHY_UND_SPSR;
+                           default:;
                         endcase
                 end
 
@@ -183,13 +192,42 @@ begin
                                 13:     translate = PHY_SVC_R13;
                                 14:     translate = PHY_SVC_R14;
                     ARCH_CURR_SPSR:     translate = PHY_SVC_SPSR;
+                           default:;
                         endcase
                 end
 
-                default:;
-                // To workaround verilator lint that fails to detect
-                // all cases have been covered.
+                USR:;
+                SYS:;
+
+                default:
+                begin
+                        translate = 'x;
+                end
         endcase
+
+        if ( cpu_mode inside {USR,SYS,FIQ,IRQ,SVC,UND,ABT} )
+        begin
+                assert((index == ARCH_USR2_R8 && translate  == PHY_USR_R8) || index !=ARCH_USR2_R8 )
+                else $fatal(2, "USR loopback fail");
+
+                assert((index == ARCH_USR2_R9 && translate  == PHY_USR_R9) || index !=ARCH_USR2_R9 )
+                else $fatal(2, "USR loopback fail");
+
+                assert((index == ARCH_USR2_R10 && translate == PHY_USR_R10) || index !=ARCH_USR2_R10)
+                else $fatal(2, "USR loopback fail");
+
+                assert((index == ARCH_USR2_R11 && translate == PHY_USR_R11) || index !=ARCH_USR2_R11)
+                else $fatal(2, "USR loopback fail");
+
+                assert((index == ARCH_USR2_R12 && translate == PHY_USR_R12) || index !=ARCH_USR2_R12)
+                else $fatal(2, "USR loopback fail");
+
+                assert((index == ARCH_USR2_R13 && translate == PHY_USR_R13) || index !=ARCH_USR2_R13)
+                else $fatal(2, "USR loopback fail");
+
+                assert((index == ARCH_USR2_R14 && translate == PHY_USR_R14) || index !=ARCH_USR2_R14)
+                else $fatal(2, "USR loopback fail");
+        end
 end
 endfunction
 

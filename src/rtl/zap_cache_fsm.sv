@@ -24,8 +24,8 @@
 `include "zap_defines.svh"
 
 module zap_cache_fsm   #(
-        parameter bit [31:0] CACHE_SIZE    = 32'd1024,  // Bytes.
-        parameter bit [31:0] CACHE_LINE    = 32'd8
+        parameter logic [31:0] CACHE_SIZE    = 32'd1024,  // Bytes.
+        parameter logic [31:0] CACHE_LINE    = 32'd8
 )
 
 // ----------------------------------------------
@@ -43,7 +43,7 @@ input   logic    [31:0]            i_address,
 input   logic                      i_rd,
 input   logic                      i_wr,
 input   logic    [31:0]            i_din,
-input   logic    [3:0]             i_ben, // Valid only for writes.
+input   logic    [3:0]             i_ben,
 
 output  logic     [31:0]            o_dat,
 output  logic                       o_ack,
@@ -64,7 +64,7 @@ output  logic                       o_cache_clean_done,
 input   logic    [CACHE_LINE*8-1:0]     i_cache_line,
 
 input   logic                           i_cache_tag_dirty,
-input   logic  [`ZAP_CACHE_TAG_WDT-1:0] i_cache_tag, // Tag
+input   logic  [`ZAP_CACHE_TAG_WDT-1:0] i_cache_tag,
 input   logic                           i_cache_tag_valid,
 
 output  logic   [`ZAP_CACHE_TAG_WDT-1:0] o_cache_tag,
@@ -72,7 +72,7 @@ output  logic                            o_cache_tag_dirty,
 output  logic                            o_cache_tag_wr_en,
 
 output  logic     [CACHE_LINE*8-1:0] o_cache_line,
-output  logic     [CACHE_LINE-1:0]   o_cache_line_ben,    // Write + Byte enable
+output  logic     [CACHE_LINE-1:0]   o_cache_line_ben,
 
 output  logic                       o_cache_clean_req,
 input   logic                       i_cache_clean_done,
@@ -101,7 +101,7 @@ output  logic     [31:0]  o_wb_adr_ff, o_wb_adr_nxt,
 output  logic     [31:0]  o_wb_dat_ff, o_wb_dat_nxt,
 output  logic     [3:0]   o_wb_sel_ff, o_wb_sel_nxt,
 output  logic             o_wb_wen_ff, o_wb_wen_nxt,
-output  logic     [2:0]   o_wb_cti_ff, o_wb_cti_nxt,// Cycle Type Indicator - 010, 111
+output  logic     [2:0]   o_wb_cti_ff, o_wb_cti_nxt,
 input   logic             i_wb_ack,
 input   logic    [31:0]   i_wb_dat
 
@@ -222,7 +222,9 @@ end
 always_ff @ ( posedge i_clk )
 begin
         for(int i=0;i<CACHE_LINE/4;i++)
+        begin
                 buf_ff[i] <= buf_nxt[i];
+        end
 end
 
 // Idle indication
@@ -265,17 +267,24 @@ begin:blk1
 
         // Output data port.
         if ( state_ff == UNCACHEABLE )
+        begin
                 o_dat           = i_wb_dat;
+        end
         else
+        begin
                 o_dat           = adapt_cache_data(i_address[$clog2(CACHE_LINE)-1:2],
                                                    i_cache_line);
+        end
+
         o_ack                   = 0;
         o_err                   = 0;
         o_err2                  = 0;
         o_address               = address;
 
         for(int i=0;i<CACHE_LINE/4;i++)
+        begin
                 buf_nxt[i] = buf_ff[i];
+        end
 
         rhit                     = 0;
         whit                     = 0;
@@ -512,7 +521,10 @@ begin:blk1
                         o_cache_line = 0;
 
                         for(int i=0;i<CACHE_LINE/4;i++)
-                                o_cache_line = o_cache_line | ({{LINE_PAD{1'd0}},buf_nxt[i][31:0]} << (32 * i));
+                        begin
+                                o_cache_line = o_cache_line |
+                                               ({{LINE_PAD{1'd0}},buf_nxt[i][31:0]} << (32 * i));
+                        end
 
                         o_cache_line_ben  = {CACHE_LINE{1'd1}};
 
@@ -552,6 +564,45 @@ begin:blk1
                         state_nxt            = IDLE;
                         o_cache_clean_done   = 1'd1;
                 end
+        end
+
+        default:
+        begin
+                a                       = 'x; //
+                state_nxt               = 'x; //
+                adr_ctr_nxt             = 'x; //
+                o_wb_cyc_nxt            = 'x; //
+                o_wb_stb_nxt            = 'x; //
+                o_wb_adr_nxt            = 'x; //
+                o_wb_dat_nxt            = 'x; //
+                o_wb_cti_nxt            = 'x; //
+                o_wb_wen_nxt            = 'x; //
+                o_wb_sel_nxt            = 'x; //
+                cache_clean_req_nxt     = 'x; //
+                cache_inv_req_nxt       = 'x; //
+                o_fsr                   = 'x; //
+                o_far                   = 'x; //
+                o_cache_tag             = 'x; //
+                o_cache_inv_done        = 'x; //
+                o_cache_clean_done      = 'x; //
+                o_cache_tag_dirty       = 'x; //
+                o_cache_tag_wr_en       = 'x; //
+                o_cache_line            = 'x; //
+                o_cache_line_ben        = 'x; //
+                o_hold                  = 'x; //
+                o_dat                   = 'x; //
+                o_ack                   = 'x; //
+                o_err                   = 'x; //
+                o_err2                  = 'x; //
+                o_address               = 'x; //
+
+                for(int i=0;i<CACHE_LINE/4;i++)
+                begin
+                        buf_nxt[i] = 'x;
+                end
+
+                rhit                     = 'x;
+                whit                     = 'x;
         end
 
         endcase

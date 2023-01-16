@@ -33,8 +33,8 @@
 //
 
 module zap_ram_simple_ben #(
-        parameter bit [31:0] WIDTH = 32'd32,
-        parameter bit [31:0] DEPTH = 32'd32
+        parameter logic [31:0] WIDTH = 32'd32,
+        parameter logic [31:0] DEPTH = 32'd32
 )
 (
         // Clock and reset.
@@ -88,8 +88,10 @@ begin
                 for(int i=0;i<WIDTH/8;i++)
                 begin
                         if ( i_wr_en[i] )
+                        begin
                                 mem [ i_wr_addr ][ i*8 +: 8 ] <=
                                 i_wr_data [i*8 +: 8];
+                        end
                 end
         end
 end
@@ -113,9 +115,13 @@ begin
         for(int i=0;i<WIDTH/8;i++)
         begin
                 if ( i_wr_addr == i_rd_addr && i_wr_en[i] )
+                begin
                         sel_st1[i] <= 2'd2;
+                end
                 else
+                begin
                         sel_st1[i] <= 2'd1;
+                end
         end
 end
 
@@ -146,9 +152,13 @@ begin
                 for(int i=0;i<WIDTH/8;i++)
                 begin
                         if ( i_wr_addr == rd_addr_st1 && i_wr_en[i] )
+                        begin
                                 sel_st2[i] <= {1'd1, 2'd0};
+                        end
                         else
+                        begin
                                 sel_st2[i] <= {1'd0, sel_st1[i]};
+                        end
                 end
         end
 end
@@ -189,9 +199,13 @@ begin
                 for(int i=0;i<WIDTH/8;i++)
                 begin
                         if ( i_wr_addr == rd_addr_st2 && i_wr_en[i] )
+                        begin
                                 o_rd_data[i*8 +: 8] <= i_wr_data[i*8 +: 8];
+                        end
                         else
+                        begin
                                 o_rd_data[i*8 +: 8] <= o_rd_data_pre[i*8 +: 8];
+                        end
                 end
         end
 end
