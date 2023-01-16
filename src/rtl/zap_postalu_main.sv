@@ -104,71 +104,103 @@ always_ff @ (posedge i_clk)
 begin
         if ( i_reset )
         begin
-                o_alu_result_ff                  <= 0;
-                o_dav_ff                         <= 0;
-                o_decompile_valid                <= 0;
-                o_uop_last                       <= 0;
-                o_pc_plus_8_ff                   <= 0;
-                o_destination_index_ff           <= 0;
-                o_abt_ff                         <= 0;
-                o_irq_ff                         <= 0;
-                o_fiq_ff                         <= 0;
-                o_swi_ff                         <= 0;
-                o_und_ff                         <= 0;
-                o_mem_srcdest_index_ff           <= 0;
-                o_mem_srcdest_index_ff           <= 0;
-                o_mem_load_ff                    <= 0;
-                o_mem_unsigned_byte_enable_ff    <= 0;
-                o_mem_signed_byte_enable_ff      <= 0;
-                o_mem_signed_halfword_enable_ff  <= 0;
-                o_mem_unsigned_halfword_enable_ff<= 0;
-                o_mem_translate_ff               <= 0;
-                o_decompile                      <= 0;
-                o_data_wb_cyc_ff                 <= 0;
-                o_data_wb_stb_ff                 <= 0;
-                o_data_wb_sel_ff                 <= 0;
-                o_data_wb_dat_ff                 <= 0;
-                o_data_wb_we_ff                  <= 0;
-                o_flags_ff                       <= 0;
+                sleep_ff                         <= 1'd0;
+                o_dav_ff                         <= '0;
+                o_decompile_valid                <= '0;
+                o_uop_last                       <= '0;
+                o_abt_ff                         <= '0;
+                o_irq_ff                         <= '0;
+                o_fiq_ff                         <= '0;
+                o_swi_ff                         <= '0;
+                o_und_ff                         <= '0;
+                o_data_wb_cyc_ff                 <= '0;
+                o_data_wb_stb_ff                 <= '0;
+
+                o_alu_result_ff                  <= 'x;
+                o_mem_srcdest_index_ff           <= 'x;
+                o_mem_srcdest_index_ff           <= 'x;
+                o_mem_load_ff                    <= 'x;
+                o_mem_unsigned_byte_enable_ff    <= 'x;
+                o_mem_signed_byte_enable_ff      <= 'x;
+                o_mem_signed_halfword_enable_ff  <= 'x;
+                o_mem_unsigned_halfword_enable_ff<= 'x;
+                o_mem_translate_ff               <= 'x;
+                o_decompile                      <= 'x;
+                o_data_wb_sel_ff                 <= 'x;
+                o_data_wb_dat_ff                 <= 'x;
+                o_data_wb_we_ff                  <= 'x;
+                o_flags_ff                       <= 'x;
+                o_pc_plus_8_ff                   <= 'x;
+                o_destination_index_ff           <= 'x;
         end
         else if ( i_clear_from_writeback )
         begin
-                sleep_ff                         <= 'd1;
-                o_dav_ff                         <= 'd0;
-                o_decompile_valid                <= 'd0;
-                o_uop_last                       <= 'd0;
-                o_mem_load_ff                    <= 'd0;
-                o_dav_ff                         <= 'd0;
-                o_flags_ff                       <= 'd0;
-                o_abt_ff                         <= 'd0;
-                o_irq_ff                         <= 'd0;
-                o_fiq_ff                         <= 'd0;
-                o_swi_ff                         <= 'd0;
-                o_und_ff                         <= 'd0;
-                sleep_ff                         <= 'd0;
-                o_data_wb_cyc_ff                 <= 'd0;
-                o_data_wb_stb_ff                 <= 'd0;
+                o_dav_ff                         <= '0;
+                o_decompile_valid                <= '0;
+                o_uop_last                       <= '0;
+                o_mem_load_ff                    <= '0;
+                o_dav_ff                         <= '0;
+                o_abt_ff                         <= '0;
+                o_irq_ff                         <= '0;
+                o_fiq_ff                         <= '0;
+                o_swi_ff                         <= '0;
+                o_und_ff                         <= '0;
+                sleep_ff                         <= '0;
+                o_data_wb_cyc_ff                 <= '0;
+                o_data_wb_stb_ff                 <= '0;
+
+                o_alu_result_ff                  <= 'x;
+                o_mem_srcdest_index_ff           <= 'x;
+                o_mem_srcdest_index_ff           <= 'x;
+                o_mem_load_ff                    <= 'x;
+                o_mem_unsigned_byte_enable_ff    <= 'x;
+                o_mem_signed_byte_enable_ff      <= 'x;
+                o_mem_signed_halfword_enable_ff  <= 'x;
+                o_mem_unsigned_halfword_enable_ff<= 'x;
+                o_mem_translate_ff               <= 'x;
+                o_decompile                      <= 'x;
+                o_data_wb_sel_ff                 <= 'x;
+                o_data_wb_dat_ff                 <= 'x;
+                o_data_wb_we_ff                  <= 'x;
+                o_flags_ff                       <= 'x;
+                o_pc_plus_8_ff                   <= 'x;
+                o_destination_index_ff           <= 'x;
         end
         else if ( !i_data_stall )
         begin
                 if ( i_data_mem_fault || sleep_ff )
                 begin
-                        sleep_ff                         <= 'd1;
-                        o_dav_ff                         <= 'd0;
-                        o_mem_load_ff                    <= 'd0;
-                        o_dav_ff                         <= 'd0;
-                        o_decompile_valid                <= 'd0;
-                        o_uop_last                       <= 'd0;
-                        o_flags_ff                       <= 'd0;
-                        o_abt_ff                         <= 'd0;
-                        o_irq_ff                         <= 'd0;
-                        o_fiq_ff                         <= 'd0;
-                        o_swi_ff                         <= 'd0;
-                        o_und_ff                         <= 'd0;
-                        sleep_ff                         <= 'd0;
-                        o_mem_load_ff                    <= 'd0;
-                        o_data_wb_cyc_ff                 <= 'd0;
-                        o_data_wb_stb_ff                 <= 'd0;
+                        sleep_ff                         <= 1'd1;
+                        o_dav_ff                         <= '0;
+                        o_mem_load_ff                    <= '0;
+                        o_dav_ff                         <= '0;
+                        o_decompile_valid                <= '0;
+                        o_uop_last                       <= '0;
+                        o_abt_ff                         <= '0;
+                        o_irq_ff                         <= '0;
+                        o_fiq_ff                         <= '0;
+                        o_swi_ff                         <= '0;
+                        o_und_ff                         <= '0;
+                        o_mem_load_ff                    <= '0;
+                        o_data_wb_cyc_ff                 <= '0;
+                        o_data_wb_stb_ff                 <= '0;
+
+                        o_alu_result_ff                  <= 'x;
+                        o_mem_srcdest_index_ff           <= 'x;
+                        o_mem_srcdest_index_ff           <= 'x;
+                        o_mem_load_ff                    <= 'x;
+                        o_mem_unsigned_byte_enable_ff    <= 'x;
+                        o_mem_signed_byte_enable_ff      <= 'x;
+                        o_mem_signed_halfword_enable_ff  <= 'x;
+                        o_mem_unsigned_halfword_enable_ff<= 'x;
+                        o_mem_translate_ff               <= 'x;
+                        o_decompile                      <= 'x;
+                        o_data_wb_sel_ff                 <= 'x;
+                        o_data_wb_dat_ff                 <= 'x;
+                        o_data_wb_we_ff                  <= 'x;
+                        o_flags_ff                       <= 'x;
+                        o_pc_plus_8_ff                   <= 'x;
+                        o_destination_index_ff           <= 'x;
                 end
                 else
                 begin
@@ -203,7 +235,7 @@ begin
 end
 
 
-endmodule // zap_postalu_main.v
+endmodule
 
 // ----------------------------------------------------------------------------
 // END OF FILE

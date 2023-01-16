@@ -229,20 +229,17 @@ begin
         if ( i_reset )
         begin
                 cp_word_ff <= 0;
-                clear;
+                state_ff   <= IDLE;
+                cp_dav_ff  <= 1'd0;
         end
-        else if ( i_clear_from_writeback )
+        else if(( i_clear_from_writeback )
+             || ( i_clear_from_alu && !i_data_stall )
+             || ( i_clear_from_decode && !i_data_stall && !i_stall_from_shifter
+                  && !i_stall_from_issue ))
         begin
-                clear;
-        end
-        else if ( i_clear_from_alu && !i_data_stall )
-        begin
-                clear;
-        end
-        else if ( i_clear_from_decode && !i_data_stall && !i_stall_from_shifter
-                  && !i_stall_from_issue )
-        begin
-                clear;
+                cp_word_ff <= 0;
+                state_ff   <= IDLE;
+                cp_dav_ff  <= 1'd0;
         end
         else if ( !i_data_stall && !i_stall_from_shifter && !i_stall_from_issue )
         begin
@@ -251,14 +248,6 @@ begin
                 cp_dav_ff  <= cp_dav_nxt;
         end
 end
-
-// Clear out the unit.
-task automatic clear;
-begin
-                state_ff            <= IDLE;
-                cp_dav_ff           <= 1'd0;
-end
-endtask
 
 endmodule
 

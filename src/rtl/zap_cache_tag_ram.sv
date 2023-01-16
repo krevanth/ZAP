@@ -74,20 +74,21 @@ input logic                               i_wb_ack
 
 `include "zap_localparams.svh"
 
-localparam NUMBER_OF_DIRTY_BLOCKS = ((CACHE_SIZE/CACHE_LINE)/16); // Keep cache size > 16 bytes.
+localparam [31:0] NUMBER_OF_DIRTY_BLOCKS = ((CACHE_SIZE/CACHE_LINE)/16); // Keep cache size > 16 bytes.
 
 // States.
-localparam IDLE                           = 0;
-localparam CACHE_CLEAN_GET_ADDRESS        = 1;
-localparam CACHE_INV                      = 2;
-localparam CACHE_CLEAN_WRITE_PRE_PRE_WAIT = 3;
-localparam CACHE_CLEAN_WRITE_PRE_WAIT     = 4;
-localparam CACHE_CLEAN_WRITE_PRE          = 5;
-localparam CACHE_CLEAN_WRITE              = 6;
+localparam [2:0] IDLE                           = 0;
+localparam [2:0] CACHE_CLEAN_GET_ADDRESS        = 1;
+localparam [2:0] CACHE_INV                      = 2;
+localparam [2:0] CACHE_CLEAN_WRITE_PRE_PRE_WAIT = 3;
+localparam [2:0] CACHE_CLEAN_WRITE_PRE_WAIT     = 4;
+localparam [2:0] CACHE_CLEAN_WRITE_PRE          = 5;
+localparam [2:0] CACHE_CLEAN_WRITE              = 6;
 
-localparam BLK_CTR_PAD = 32 - $clog2(NUMBER_OF_DIRTY_BLOCKS) - 1;
-localparam ADR_CTR_PAD = 32 - $clog2(CACHE_LINE/4) - 1;
-localparam ZERO_WDT    = $clog2(CACHE_LINE/4) + 1;
+// Padding widths.
+localparam [31:0] BLK_CTR_PAD = 32 - $clog2(NUMBER_OF_DIRTY_BLOCKS) - 1;
+localparam [31:0] ADR_CTR_PAD = 32 - $clog2(CACHE_LINE/4) - 1;
+localparam [31:0] ZERO_WDT    = $clog2(CACHE_LINE/4) + 1;
 
 // ----------------------------------------------------------------------------
 
@@ -221,11 +222,11 @@ begin
         begin
                 o_wb_cyc_ff             <= 0;
                 o_wb_stb_ff             <= 0;
-                o_wb_wen_ff             <= 0;
-                o_wb_sel_ff             <= 0;
-                o_wb_dat_ff             <= 0;
+                o_wb_wen_ff             <= 'x;
+                o_wb_sel_ff             <= 'x;
+                o_wb_dat_ff             <= 'x;
                 o_wb_cti_ff             <= CTI_EOB;
-                o_wb_adr_ff             <= 0;
+                o_wb_adr_ff             <= 'x;
                 adr_ctr_ff              <= 0;
                 blk_ctr_ff              <= 0;
                 state_ff                <= IDLE;
@@ -464,7 +465,9 @@ function automatic [$clog2(CACHE_SIZE/CACHE_LINE)-1:0] get_tag_ram_rd_addr (
 input [$clog2(NUMBER_OF_DIRTY_BLOCKS):0]   blk_ctr,
 input [CACHE_SIZE/CACHE_LINE-1:0]          Dirty
 );
-localparam W = $clog2(NUMBER_OF_DIRTY_BLOCKS) + 5;
+
+localparam [31:0] W = $clog2(NUMBER_OF_DIRTY_BLOCKS) + 5;
+
 logic [15:0]                      dirty_new;
 logic [4:0]                       enc;
 logic [W-1:0]                     shamt;

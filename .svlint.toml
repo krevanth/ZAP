@@ -46,3 +46,5 @@ unique_keyword = false
 keyword_forbidden_wire_reg = true
 generate_keyword = false
 genvar_declaration = false
+blocking_assignment_in_always_ff = true
+non_blocking_assignment_in_always_comb = true

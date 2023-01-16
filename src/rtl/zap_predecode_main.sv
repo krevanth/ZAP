@@ -159,28 +159,40 @@ always_ff @ (posedge i_clk)
 begin
         if ( i_reset )
         begin
-                reset;
-                clear;
-
-                // Return address stack is RESET.
-                ras_ff     <= '0;
-                ras_ptr_ff <= '0;
+                ras_ff                 <= '0;
+                ras_ptr_ff             <= '0;
+                o_irq_ff               <= 0;
+                o_fiq_ff               <= 0;
+                o_abt_ff               <= 0;
+                o_und_ff               <= 0;
+                o_pc_plus_8_ff         <= 0;
+                o_pc_ff                <= 0;
+                o_force32align_ff      <= 0;
+                o_taken_ff             <= 0;
+                o_instruction_ff       <= 0;
+                o_instruction_valid_ff <= 0;
+                o_uop_last             <= 0;
+                o_ppc_ff               <= 0;
+                o_clear_from_decode    <= 0;
+                o_pc_from_decode       <= 0;
+                o_copro_word_ff        <= 0;
+                o_copro_dav_ff         <= 0;
+                o_switch_ff            <= 0;
         end
-        else if ( i_clear_from_writeback )
+        else if(( i_clear_from_writeback )
+        ||      ( i_clear_from_alu && !i_data_stall )
+        ||      ( o_clear_from_decode && !stall ))
         begin
-                clear;
-        end
-        else if ( i_data_stall )
-        begin
-                // Preserve state.
-        end
-        else if ( i_clear_from_alu && !i_data_stall )
-        begin
-                clear;
-        end
-        else if ( o_clear_from_decode && !stall )
-        begin
-                reset;
+                o_irq_ff                <= 0;
+                o_fiq_ff                <= 0;
+                o_abt_ff                <= 0;
+                o_und_ff                <= 0;
+                o_taken_ff              <= 0;
+                o_instruction_valid_ff  <= 0;
+                o_uop_last              <= 0;
+                o_clear_from_decode     <= 0;
+                o_force32align_ff       <= 0;
+                o_switch_ff             <= 0;
         end
         // If no stall, only then update...
         else if ( !stall )
@@ -211,42 +223,6 @@ begin
                 end
         end
 end
-
-task automatic reset;
-begin
-                o_irq_ff               <= 0;
-                o_fiq_ff               <= 0;
-                o_abt_ff               <= 0;
-                o_und_ff               <= 0;
-                o_pc_plus_8_ff         <= 0;
-                o_pc_ff                <= 0;
-                o_force32align_ff      <= 0;
-                o_taken_ff             <= 0;
-                o_instruction_ff       <= 0;
-                o_instruction_valid_ff <= 0;
-                o_uop_last             <= 0;
-                o_ppc_ff               <= 0;
-                o_clear_from_decode    <= 0;
-                o_pc_from_decode       <= 0;
-                o_copro_word_ff        <= 0;
-                o_copro_dav_ff         <= 0;
-end
-endtask
-
-task automatic clear;
-begin
-                o_irq_ff                                <= 0;
-                o_fiq_ff                                <= 0;
-                o_abt_ff                                <= 0;
-                o_und_ff                                <= 0;
-                o_taken_ff                              <= 0;
-                o_instruction_valid_ff                  <= 0;
-                o_uop_last                              <= 0;
-                o_clear_from_decode                     <= 0;
-                o_force32align_ff                       <= 0;
-                o_switch_ff                             <= 0;
-end
-endtask
 
 always_ff @ ( posedge i_clk)
 begin

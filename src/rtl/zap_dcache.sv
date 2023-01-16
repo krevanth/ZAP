@@ -291,11 +291,11 @@ begin
                 state_ff <= SELECT_CCH;
                 o_wb_stb <= 1'd0;
                 o_wb_cyc <= 1'd0;
-                o_wb_adr <= 32'd0;
+                o_wb_adr <= 'x;
                 o_wb_cti <= CTI_EOB;
-                o_wb_sel <= 4'd0;
-                o_wb_dat <= 32'd0;
-                o_wb_wen <= 1'd0;
+                o_wb_sel <= 'x;
+                o_wb_dat <= 'x;
+                o_wb_wen <= 'x;
         end
         else
         begin

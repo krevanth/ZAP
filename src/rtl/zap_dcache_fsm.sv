@@ -120,19 +120,19 @@ input   logic    [31:0]   i_wb_dat
 `include "zap_functions.svh"
 
 // States
-localparam IDLE                 = 0; // Resting state.
-localparam UNCACHEABLE          = 1; // Uncacheable access.
-localparam UNCACHEABLE_PREPARE  = 2; // Prepare uncacheable access.
-localparam CLEAN_SINGLE         = 3; // Ultimately cleans up cache line. Parent state
-localparam FETCH_SINGLE         = 4; // Ultimately validates cache line. Parent state
-localparam INVALIDATE           = 5; // Cache invalidate parent state
-localparam CLEAN                = 6; // Cache clean parent state
-localparam UNLOCK_REG           = 7; // Unlock register
-localparam NUMBER_OF_STATES     = 8;
+localparam [2:0] IDLE                 = 3'd0; // Resting state.
+localparam [2:0] UNCACHEABLE          = 3'd1; // Uncacheable access.
+localparam [2:0] UNCACHEABLE_PREPARE  = 3'd2; // Prepare uncacheable access.
+localparam [2:0] CLEAN_SINGLE         = 3'd3; // Ultimately cleans up cache line. Parent state
+localparam [2:0] FETCH_SINGLE         = 3'd4; // Ultimately validates cache line. Parent state
+localparam [2:0] INVALIDATE           = 3'd5; // Cache invalidate parent state
+localparam [2:0] CLEAN                = 3'd6; // Cache clean parent state
+localparam [2:0] UNLOCK_REG           = 3'd7; // Unlock register
+localparam [31:0] NUMBER_OF_STATES    = 32'd8;
 
-localparam ADR_PAD              = 32 - $clog2(CACHE_LINE/4) - 1;
-localparam ADR_PAD_MINUS_2      = ADR_PAD - 2;
-localparam LINE_PAD             = (CACHE_LINE*8) - 32;
+localparam [31:0] ADR_PAD              =  32'd32 - $clog2(CACHE_LINE/4) - 32'd1;
+localparam [31:0] ADR_PAD_MINUS_2      =  ADR_PAD - 32'd2;
+localparam [31:0] LINE_PAD             = (CACHE_LINE * 32'd8) - 32'd32;
 
 // ----------------------------------------------------------------------------
 // Variables
@@ -220,11 +220,11 @@ begin
         begin
                 o_wb_cyc_ff             <= 0;
                 o_wb_stb_ff             <= 0;
-                o_wb_wen_ff             <= 0;
-                o_wb_sel_ff             <= 0;
-                o_wb_dat_ff             <= 0;
+                o_wb_wen_ff             <= 'x;
+                o_wb_sel_ff             <= 'x;
+                o_wb_dat_ff             <= 'x;
                 o_wb_cti_ff             <= CTI_EOB;
-                o_wb_adr_ff             <= 0;
+                o_wb_adr_ff             <= 'x;
                 cache_clean_req_ff      <= 0;
                 cache_inv_req_ff        <= 0;
                 adr_ctr_ff              <= 0;
@@ -725,7 +725,7 @@ function automatic [31:0] adapt_cache_data (
         input [$clog2(CACHE_LINE) - 3:0] shift,
         input [CACHE_LINE*8-1:0]         data
 );
-localparam W = $clog2(CACHE_LINE) + 3;
+localparam [31:0] W = $clog2(CACHE_LINE) + 3;
 logic [LINE_PAD-1:0] dummy;
 logic [W-1:0]        shamt;
 begin
@@ -739,7 +739,7 @@ function automatic [CACHE_LINE-1:0] ben_comp (
         input [$clog2(CACHE_LINE) - 3:0] shift,
         input [3:0]                      bv
 );
-localparam W = $clog2(CACHE_LINE);
+localparam [31:0] W = $clog2(CACHE_LINE);
 logic [W-1:0] shamt;
 begin
         shamt    = {shift, 2'd0};

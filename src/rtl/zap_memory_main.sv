@@ -127,41 +127,51 @@ logic                             shalf_ff2             ;
 logic                             uhalf_ff2             ;
 logic [31:0]                      mem_rd_data           ;
 
-// Invalidates the outptus of this stage.
-task automatic clear;
-begin
-        o_dav_ff                  <= 0;
-        o_decompile_valid         <= 0;
-        o_uop_last                <= 0;
-        o_irq_ff                  <= 0;
-        o_fiq_ff                  <= 0;
-        o_swi_ff                  <= 0;
-        o_instr_abort_ff          <= 0;
-        o_und_ff                  <= 0;
-        o_mem_fault               <= 0;
-        o_alu_result_ff           <= 0;
-        o_flags_ff                <= 0;
-        o_mem_srcdest_index_ff    <= 0;
-        o_destination_index_ff    <= 0;
-        o_pc_plus_8_ff            <= 0;
-        o_instr_abort_ff          <= 0;
-        o_mem_load_ff             <= 0;
-        mem_rd_data               <= 0;
-        o_decompile               <= 0;
-end
-endtask
-
 // On reset or on a clear from WB, we will disable the vectors
 // in this unit. Else, we will just flop everything out.
 always_ff @ (posedge i_clk)
 begin
         if ( i_reset )
         begin
-                clear;
+                o_dav_ff                  <= 0;
+                o_decompile_valid         <= 0;
+                o_uop_last                <= 0;
+                o_irq_ff                  <= 0;
+                o_fiq_ff                  <= 0;
+                o_swi_ff                  <= 0;
+                o_instr_abort_ff          <= 0;
+                o_und_ff                  <= 0;
+                o_mem_fault               <= 0;
+                o_alu_result_ff           <= 'x;
+                o_flags_ff                <= 0;
+                o_mem_srcdest_index_ff    <= 'x;
+                o_destination_index_ff    <= 'x;
+                o_pc_plus_8_ff            <= 'x;
+                o_instr_abort_ff          <= 0;
+                o_mem_load_ff             <= 'x;
+                mem_rd_data               <= 'x;
+                o_decompile               <= 0;
         end
         else if ( i_clear_from_writeback )
         begin
-                clear;
+                o_dav_ff                  <= 0;
+                o_decompile_valid         <= 0;
+                o_uop_last                <= 0;
+                o_irq_ff                  <= 0;
+                o_fiq_ff                  <= 0;
+                o_swi_ff                  <= 0;
+                o_instr_abort_ff          <= 0;
+                o_und_ff                  <= 0;
+                o_mem_fault               <= 0;
+                o_alu_result_ff           <= 'x;
+                o_flags_ff                <= 0;
+                o_mem_srcdest_index_ff    <= 'x;
+                o_destination_index_ff    <= 'x;
+                o_pc_plus_8_ff            <= 'x;
+                o_instr_abort_ff          <= 0;
+                o_mem_load_ff             <= 'x;
+                mem_rd_data               <= 'x;
+                o_decompile               <= 0;
         end
         else if ( i_data_stall )
         begin

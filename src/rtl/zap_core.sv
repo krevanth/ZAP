@@ -159,11 +159,11 @@ output  logic [63:0]                     o_dc_reg_idx  // Register index.
 `include "zap_localparams.svh"
 `include "zap_defines.svh"
 
-localparam ARCH_REGS = 32;
-localparam ALU_OPS   = 64;
-localparam SHIFT_OPS = 8;
-localparam PHY_REGS  = TOTAL_PHY_REGS;
-localparam FLAG_WDT  = 32;
+localparam [31:0] ARCH_REGS = 32;
+localparam [31:0] ALU_OPS   = 64;
+localparam [31:0] SHIFT_OPS = 8;
+localparam [31:0] PHY_REGS  = TOTAL_PHY_REGS;
+localparam [31:0] FLAG_WDT  = 32;
 
 // Low Bandwidth Coprocessor (COP) I/F to CP15 control block.
 logic                             copro_done;        // COP done.

@@ -68,8 +68,8 @@ input logic             i_wb_ack
 `include "zap_defines.svh"
 `include "zap_localparams.svh"
 
-localparam CODE = 1'd0;
-localparam DATA = 1'd1;
+localparam logic CODE = 1'd0;
+localparam logic DATA = 1'd1;
 
 ////////////////////////////////////
 // FSM

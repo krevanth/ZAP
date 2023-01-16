@@ -161,37 +161,36 @@ logic [3:0]    state; // State variable.
 // ---------------------------------------------
 
 // States.
-localparam IDLE                 = 0;
-localparam ACTIVE               = 1;
-localparam DONE                 = 2;
-localparam READ                 = 3;
-localparam READ_DLY             = 4;
-localparam TERM                 = 5;
-localparam CLR_D_CACHE_AND      = 6;
-localparam CLR_D_CACHE          = 7;
-localparam CLR_I_CACHE          = 8;
-localparam CLEAN_D_CACHE        = 9;
-localparam CLFLUSH_ID_CACHE     = 10;
-localparam CLFLUSH_D_CACHE      = 11;
+localparam [3:0] IDLE                 = 0;
+localparam [3:0] ACTIVE               = 1;
+localparam [3:0] DONE                 = 2;
+localparam [3:0] READ                 = 3;
+localparam [3:0] READ_DLY             = 4;
+localparam [3:0] TERM                 = 5;
+localparam [3:0] CLR_D_CACHE_AND      = 6;
+localparam [3:0] CLR_D_CACHE          = 7;
+localparam [3:0] CLR_I_CACHE          = 8;
+localparam [3:0] CLEAN_D_CACHE        = 9;
+localparam [3:0] CLFLUSH_ID_CACHE     = 10;
+localparam [3:0] CLFLUSH_D_CACHE      = 11;
 
 // Register numbers.
-localparam FSR_REG              = 5;
-localparam FAR_REG              = 6;
-localparam CACHE_REG            = 7;
-localparam TLB_REG              = 8;
+localparam [3:0] FSR_REG              = 5;
+localparam [3:0] FAR_REG              = 6;
+localparam [3:0] CACHE_REG            = 7;
+localparam [3:0] TLB_REG              = 8;
 
 //{OPCODE_2, CRM} values that are valid for this implementation.
-localparam CASE_FLUSH_ID_CACHE       = 7'b000_0111;
-localparam CASE_FLUSH_I_CACHE        = 7'b000_0101;
-localparam CASE_FLUSH_D_CACHE        = 7'b000_0110;
-localparam CASE_CLEAN_ID_CACHE       = 7'b000_1011;
-localparam CASE_CLEAN_D_CACHE        = 7'b000_1010;
-localparam CASE_CLFLUSH_ID_CACHE     = 7'b000_1111;
-localparam CASE_CLFLUSH_D_CACHE      = 7'b000_1110;
-
-localparam CASE_FLUSH_ID_TLB         = 7'b00?_0111;
-localparam CASE_FLUSH_I_TLB          = 7'b00?_0101;
-localparam CASE_FLUSH_D_TLB          = 7'b00?_0110;
+localparam [6:0] CASE_FLUSH_ID_CACHE       = 7'b000_0111;
+localparam [6:0] CASE_FLUSH_I_CACHE        = 7'b000_0101;
+localparam [6:0] CASE_FLUSH_D_CACHE        = 7'b000_0110;
+localparam [6:0] CASE_CLEAN_ID_CACHE       = 7'b000_1011;
+localparam [6:0] CASE_CLEAN_D_CACHE        = 7'b000_1010;
+localparam [6:0] CASE_CLFLUSH_ID_CACHE     = 7'b000_1111;
+localparam [6:0] CASE_CLFLUSH_D_CACHE      = 7'b000_1110;
+localparam [6:0] CASE_FLUSH_ID_TLB         = 7'b00?_0111;
+localparam [6:0] CASE_FLUSH_I_TLB          = 7'b00?_0101;
+localparam [6:0] CASE_FLUSH_D_TLB          = 7'b00?_0110;
 
 logic [1:0][11:0] xCACHE_TYPE_WORD;
 logic [31:0]      CACHE_TYPE_WORD ; // Provides cache info.
@@ -311,21 +310,20 @@ begin
                 o_reg_wr_data  <= 0;
                 o_reg_wr_index <= 0;
                 o_reg_rd_index <= 0;
-                r[0]           <= 32'h0;
-
-                r[1]           <= 32'd0;
+                r[0]           <= 0;
+                r[1]           <= 0;
                 r[1][14]       <= CP15_L4_DEFAULT;
-
                 r[2]           <= 32'd0;
                 r[3]           <= 32'd0;
                 r[4]           <= 32'd0;
                 r[5]           <= 32'd0;
                 r[6]           <= 32'd0;
-                r[13]          <= 32'd0; //FCSE
-
-                // Overrides.
-                generate_r0_constants;
-                generate_r1_constants;
+                r[13]          <= 32'd0;
+                r[0][15:4]     <= 12'hAAA;
+                r[0][19:16]    <= 4'h5;
+                r[1][7]        <= BE_32_ENABLE;
+                r[1][6:4]      <= 3'b111;
+                r[1][11]       <= 1'd1;
         end
         else
         begin
@@ -544,110 +542,78 @@ begin
 
                 ACTIVE: // Access processor registers.
                 begin
-                        if ( is_cc_satisfied ( i_cp_word[31:28], i_cpsr[31:28] ) )
+                        if ( is_cc_satisfied ( i_cp_word[31:28], i_cpsr[31:28] ) ||
+                             i_cp_word ==? MRC2 ||
+                             i_cp_word ==? MCR2 ||
+                             i_cp_word ==? LDC2 ||
+                             i_cp_word ==? STC2 )
                         begin
                                         if ( i_cp_word[20] ) // Load to CPU reg.
                                         begin
-                                                load_to_cpu_reg;
-                                                state <= DONE;
+                                                // Register write command.
+                                                o_reg_en        <= 1'd1;
+                                                o_reg_wr_index  <= translate( {1'd0, i_cp_word[15:12]}, i_cpsr[ZAP_CPSR_MODE:0] );
+                                                o_reg_wr_data   <= i_cp_word[19:16] == 0 && i_cp_word.ZAP_OPCODE_2 == 1 ?
+                                                                   CACHE_TYPE_WORD : r[ i_cp_word[19:16] ];
+                                                state           <= DONE;
                                         end
                                         else // Store from CPU register.
                                         begin
-                                                load_to_cp_reg;
-                                                state           <= READ_DLY;
+                                                // Generate CPU register read command. CP write.
+                                                o_reg_en        <= 1'd1;
+                                                o_reg_rd_index  <= translate({1'd0, i_cp_word[15:12]}, i_cpsr[ZAP_CPSR_MODE:0]);
+                                                o_reg_wr_index  <= 16;
+                                                state <= READ_DLY;
                                         end
                         end
                         else
                         begin
                                 state <= DONE;
                         end
-
-                        // Process unconditional words to CP15.
-                        casez ( i_cp_word )
-                        MCR2, MRC2, LDC2, STC2:
-                        begin
-                                if ( i_cp_word[20] ) // Load to CPU reg.
-                                begin
-                                        load_to_cpu_reg;
-                                        state <= DONE;
-                                end
-                                else // Store from CPU register.
-                                begin
-                                        // Generate register read command.
-                                        load_to_cp_reg;
-                                        state <= READ_DLY;
-                                end
-                        end
-                        endcase
                 end
+
+                default: // X propagate
+                begin
+                        state          <= 'x; //
+                        o_dcache_inv   <= 'x; //
+                        o_icache_inv   <= 'x; //
+                        o_dcache_clean <= 'x; //
+                        o_icache_clean <= 'x; //
+                        o_dtlb_inv     <= 'x; //
+                        o_itlb_inv     <= 'x; //
+                        o_reg_en       <= 'x; //
+                        o_cp_done      <= 'x; //
+                        o_reg_wr_data  <= 'x; //
+                        o_reg_wr_index <= 'x; //
+                        o_reg_rd_index <= 'x; //
+
+                        foreach(r[i])
+                                r[i] <= 'x;
+                end
+
                 endcase
 
                 // Constants.
-                generate_r0_constants;
-                generate_r1_constants;
+
+                r[0][3:0]   <= 4'd0;
+                r[0][15:4]  <= 12'hAAA;
+                r[0][19:16] <= 4'h5;
+                r[0][23:20] <= 4'd0;
+                r[0][31:24] <= 8'd0;
+                r[1][1]     <= 1'd0;
+                r[1][3]     <= 1'd0;
+                r[1][7]     <= BE_32_ENABLE ? 1'd1 : 1'd0;
+                r[1][6:4]   <= 3'b111;
+                r[1][11]    <= 1'd1;
+
+                if ( ONLY_CORE )
+                begin
+                        r[1][2]  <= 1'd0;
+                        r[1][12] <= 1'd0;
+                        r[1][0]  <= 1'd0;
+                end
         end
 end
-
-// Load to CP register.
-task automatic load_to_cp_reg;
-        // Generate CPU register read command. CP write.
-        o_reg_en        <= 1'd1;
-        o_reg_rd_index  <= translate({1'd0, i_cp_word[15:12]},
-                                     i_cpsr[ZAP_CPSR_MODE:0]);
-        o_reg_wr_index  <= 16;
-endtask
-
-// Load to CPU register.
-task automatic load_to_cpu_reg;
-        // Register write command.
-        o_reg_en        <= 1'd1;
-        o_reg_wr_index  <= translate( {1'd0, i_cp_word[15:12]},
-                                       i_cpsr[ZAP_CPSR_MODE:0] );
-        //
-        // The condition checks for CP WORD = 0 and OPCODE2 = 1 to access the
-        // hidden cache type register.
-        //
-        o_reg_wr_data   <=
-                i_cp_word[19:16] == 0 && i_cp_word.ZAP_OPCODE_2 == 1 ?
-                CACHE_TYPE_WORD                                        :
-                r[ i_cp_word[19:16] ];
-endtask
-
-// CPU info register constants.
-task automatic generate_r0_constants;
-begin
-        r[0][3:0]   <= 4'd0;    // Revision 0.
-        r[0][15:4]  <= 12'hAAA; // Primary part number.
-        r[0][19:16] <= 4'h5;    // Indicates V5TE.
-        r[0][23:20] <= 4'd0;    // Variant 0.
-        r[0][31:24] <= 8'd0;    // Implementor code = ZAP (Code = 0x0)
-end
-endtask
-
-// CP15 R1 register constants.
-task automatic generate_r1_constants;
-        r[1][1]         <= 1'd0;    // Alignment fault check disabled.
-        r[1][3]         <= 1'd0;    // Write buffer always disabled.
-
-        // Endianness.
-        r[1][7]         <= BE_32_ENABLE ? 1'd1 : 1'd0;
-
-        r[1][6:4]       <= 3'b111;  // 1 = Base updated abort model.
-                                    // 1 = 32-bit address range,
-                                    // 1 = 32-bit handlers enabled.
-        r[1][11]        <= 1'd1;    // Branch predictor always enabled.
-
-        //
-        // If only core is present, there is no cache -
-        // so in that case, always set to 0.
-        //
-        if ( ONLY_CORE )
-        begin
-                r[1][2]  <= 1'd0;
-                r[1][12] <= 1'd0;
-                r[1][0]  <= 1'd0;
-        end
-endtask
 
 logic [31:0] r0;
 logic [31:0] r1;

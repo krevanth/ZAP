@@ -93,8 +93,8 @@ module zap_btb #(
 `include "zap_localparams.svh"
 `include "zap_functions.svh"
 
-localparam TAG_WDT = 32 - $clog2(BP_ENTRIES) - 1;
-localparam MAX_WDT = 32 + 2 + TAG_WDT;
+localparam [31:0] TAG_WDT = 32 - $clog2(BP_ENTRIES) - 1;
+localparam [31:0] MAX_WDT = 32 + 2 + TAG_WDT;
 
 logic unused;
 
@@ -196,8 +196,8 @@ begin
         if ( i_reset )
         begin
                 o_clear_from_btb <= 1'd0;
-                o_pc_from_btb    <= 32'd0;
-                o_branch_state   <= 2'd0;
+                o_pc_from_btb    <= {32{1'dx}};
+                o_branch_state   <= {2{1'dx}};
         end
         else if ( !i_stall )
         begin
