@@ -42,7 +42,7 @@ TB_FILES     := $(wildcard src/testbench/*)
 SCRIPT_FILES := $(wildcard scripts/*)
 TEST         := $(shell find src/ts/* -type d -exec basename {} \; | xargs echo)
 DLOAD        := "FROM archlinux:latest\nRUN  pacman -Syyu --noconfirm arm-none-eabi-gcc arm-none-eabi-binutils gcc \
-                 make perl verilator xterm"
+                 make perl verilator xterm cargo"
 
 ########################################## User Accessible Targets ####################################################
 
@@ -276,9 +276,17 @@ ifdef TC
 	$(info RUNNING SIMULATION            )
 	$(info ******************************)       
 ifdef SEED 
+ifdef XTERM
 	cd obj/ts/$(TC) && xterm -e "./Vzap_test $(TC).bin $(TC) $(SEED) || read" &
 else
+	cd obj/ts/$(TC) && ./Vzap_test $(TC).bin $(TC) $(SEED) 
+endif
+else
+ifdef XTERM
 	cd obj/ts/$(TC) && xterm -e "./Vzap_test $(TC).bin $(TC) || read" &
+else
+	cd obj/ts/$(TC) && ./Vzap_test $(TC).bin $(TC)
+endif
 endif
 	echo "Generated waveform file 'obj/ts/$(TC)/zap.vcd'"
 else
