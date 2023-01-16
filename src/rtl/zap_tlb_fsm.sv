@@ -246,6 +246,18 @@ begin: blk1
                         o_setlb_wen       = 1'd1;
                         o_setlb_wdata     = {address[`ZAP_VA__SECTION_TAG],
                                              dff};
+
+                        assert(o_setlb_wdata[19:12] == '0)
+                        else $info("Error: Section page table format incorrect. Ignoring bits 15:12.");
+
+                        assert(o_setlb_wdata[9] == '0)
+                        else $info("Error: Section page table format incorrect. Ignoring bit 9");
+
+                        // Tell synth that some bits will be zero.
+                        o_setlb_wdata[19:12] = '0;
+                        o_setlb_wdata[9]     = '0;
+                        o_setlb_wdata[4]     = '0;
+
                         state_nxt         = IDLE;
 
                 end
@@ -327,12 +339,10 @@ begin: blk1
                         o_lptlb_wen   = 1'd1;
 
                         // Define TLB fields to write.
-
                         o_lptlb_wdata[`ZAP_LPAGE_TLB__TAG]     = address[`ZAP_VA__LPAGE_TAG];
 
                         // DAC selector from L1.
                         o_lptlb_wdata[`ZAP_LPAGE_TLB__DAC_SEL] = dac_ff;
-
                         o_lptlb_wdata[`ZAP_LPAGE_TLB__AP]      = dff[`ZAP_L2_LPAGE__AP];
                         o_lptlb_wdata[`ZAP_LPAGE_TLB__CB]      = dff[`ZAP_L2_LPAGE__CB];
                         o_lptlb_wdata[`ZAP_LPAGE_TLB__BASE]    = dff[`ZAP_L2_LPAGE__BASE];
@@ -351,7 +361,6 @@ begin: blk1
 
                         // DAC selector from L1.
                         o_fptlb_wdata[`ZAP_FPAGE_TLB__DAC_SEL] = dac_ff;
-
                         o_fptlb_wdata[`ZAP_FPAGE_TLB__AP]      = dff[`ZAP_L2_FPAGE__AP];
                         o_fptlb_wdata[`ZAP_FPAGE_TLB__CB]      = dff[`ZAP_L2_FPAGE__CB];
                         o_fptlb_wdata[`ZAP_FPAGE_TLB__BASE]    = dff[`ZAP_L2_FPAGE__BASE];

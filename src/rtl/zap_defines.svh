@@ -82,32 +82,32 @@
 `define ZAP_L2_FPAGE__CB     3:2
 
 // Section TLB Structure - 1:0 is undefined.
-`define ZAP_SECTION_TLB__BASE    31:20
-`define ZAP_SECTION_TLB__DAC_SEL 8:5
-`define ZAP_SECTION_TLB__AP      11:10
-`define ZAP_SECTION_TLB__CB      3:2
 `define ZAP_SECTION_TLB__TAG     32+(32-$clog2(SECTION_TLB_ENTRIES)-20)-1:32
+`define ZAP_SECTION_TLB__BASE    31:20
+`define ZAP_SECTION_TLB__AP      11:10
+`define ZAP_SECTION_TLB__DAC_SEL 8:5
+`define ZAP_SECTION_TLB__CB      3:2
 
-// Lpage TLB Structure - 1:0 is undefined
+// Large page TLB Structure - 1:0 is undefined
+`define ZAP_LPAGE_TLB__TAG       32+(32-$clog2(LPAGE_TLB_ENTRIES)-16)-1:32
 `define ZAP_LPAGE_TLB__BASE      31:16
-`define ZAP_LPAGE_TLB__DAC_SEL   15:12 // Squeezed in blank space.
+`define ZAP_LPAGE_TLB__DAC_SEL   15:12
 `define ZAP_LPAGE_TLB__AP        11:4
 `define ZAP_LPAGE_TLB__CB        3:2
-`define ZAP_LPAGE_TLB__TAG       32+(32-$clog2(LPAGE_TLB_ENTRIES)-16)-1:32
 
-// Spage TLB Structure - 1:0 is undefined
-`define ZAP_SPAGE_TLB__BASE      31:12
-`define ZAP_SPAGE_TLB__DAC_SEL   35:32
+// Small page TLB Structure - 1:0 is undefined
+`define ZAP_SPAGE_TLB__TAG       36+(32-$clog2(SPAGE_TLB_ENTRIES)-12)-1:36
+`define ZAP_SPAGE_TLB__BASE      35:16
+`define ZAP_SPAGE_TLB__DAC_SEL   15:12
 `define ZAP_SPAGE_TLB__AP        11:4
 `define ZAP_SPAGE_TLB__CB        3:2
-`define ZAP_SPAGE_TLB__TAG       36+(32-$clog2(SPAGE_TLB_ENTRIES)-12)-1:36
 
-// Fpage TLB Structure - 5:0 is undefined
-`define ZAP_FPAGE_TLB__BASE       31:10
-`define ZAP_FPAGE_TLB__DAC_SEL    8:5
-`define ZAP_FPAGE_TLB__AP         9:8
-`define ZAP_FPAGE_TLB__CB         7:6
+// Fine page TLB Structure - 1:0 is undefined
 `define ZAP_FPAGE_TLB__TAG        32+(32-$clog2(FPAGE_TLB_ENTRIES)-10)-1:32
+`define ZAP_FPAGE_TLB__BASE       31:10
+`define ZAP_FPAGE_TLB__DAC_SEL    9:6
+`define ZAP_FPAGE_TLB__AP         5:4
+`define ZAP_FPAGE_TLB__CB         3:2
 
 // Cache tag width. Tag consists of the tag and the physical address. valid and dirty are stored as flops.
 `define ZAP_VA__CACHE_INDEX        $clog2(CACHE_LINE)+$clog2(CACHE_SIZE/CACHE_LINE)-1:$clog2(CACHE_LINE)
