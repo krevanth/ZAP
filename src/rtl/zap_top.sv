@@ -247,8 +247,15 @@ zap_core #(
 .o_instr_wb_sel         (),
 /* verilator lint_on PINCONNECTEMPTY */
 .o_code_stall           (code_stall),
+
+//
+// When cache is enabled, err is always accompanied with ack. Without
+// cache, the wishbone generates err and ack as exclusive, so they must
+// be forced in ONLY_CORE=1 case when err=1 (ack=1 must be forced).
+//
+
 .i_instr_wb_dat         (!ONLY_CORE ? ic_data   : i_wb_dat),
-.i_instr_wb_ack         (instr_ack),
+.i_instr_wb_ack         (!ONLY_CORE ? instr_ack : (instr_ack | i_wb_err)),
 .i_instr_wb_err         (!ONLY_CORE ? instr_err : i_wb_err),
 
 // Data related.
@@ -264,7 +271,7 @@ zap_core #(
 .i_data_wb_dat          (!ONLY_CORE ? dc_data :
                          BE_32_ENABLE ? be_32(i_wb_dat, o_wb_sel) : i_wb_dat),
                         // Swap data into CPU based on current o_wb_sel.
-.i_data_wb_ack          (data_ack),
+.i_data_wb_ack          (!ONLY_CORE ? data_ack : (data_ack | i_wb_err)),
 .i_data_wb_err          (!ONLY_CORE ? data_err : i_wb_err),
 
 // Interrupts.
