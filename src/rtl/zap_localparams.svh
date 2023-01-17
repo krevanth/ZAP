@@ -46,22 +46,25 @@ localparam [1:0] DAC_MANAGER = 2'b11;
 localparam [1:0] DAC_CLIENT  = 2'b01;
 
 // FSR related.
-// These localparams relate to FSR values. Notice how
-// only some FSR values make sense in this implementation.
 
-//Section.
+// Section.
 localparam [3:0] FSR_SECTION_DOMAIN_FAULT      = 4'b1001;
 localparam [3:0] FSR_SECTION_TRANSLATION_FAULT = 4'b0101;
 localparam [3:0] FSR_SECTION_PERMISSION_FAULT  = 4'b1101;
+localparam [3:0] FSR_L1_EXTERNAL_ABORT         = 4'b1100;
 
-//Page.
+// Page.
 localparam [3:0] FSR_PAGE_TRANSLATION_FAULT    = 4'b0111;
 localparam [3:0] FSR_PAGE_DOMAIN_FAULT         = 4'b1011;
 localparam [3:0] FSR_PAGE_PERMISSION_FAULT     = 4'b1111;
+localparam [3:0] FSR_L2_EXTERNAL_ABORT         = 4'b1110;
 
+// Terminal exception
+parameter [3:0] TERMINAL_EXCEPTION              = 4'b0010;
 
-
-///////////////////////////////////////////////////////////////////////////////
+//////////////////////
+// Opcodes
+//////////////////////
 
 // Standard opcodes.
 // These map to the opcode map in the spec.

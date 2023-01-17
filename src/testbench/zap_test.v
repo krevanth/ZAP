@@ -440,6 +440,7 @@ u_zap_top
         .i_wb_dat (data_wb_din),
         .o_wb_dat (data_wb_dout),
         .i_wb_ack (data_wb_ack),
+        .i_wb_err (1'd0),
         .o_wb_sel (data_wb_sel),
         .o_wb_bte ()             // Always zero (Linear)
 

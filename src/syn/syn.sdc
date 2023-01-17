@@ -26,6 +26,7 @@ set_input_delay -clock [get_clocks i_clk] -add_delay 1.000 [get_ports i_irq]
 set_input_delay -clock [get_clocks i_clk] -add_delay 1.000 [get_ports {i_wb_dat[*]}]
 set_input_delay -clock [get_clocks i_clk] -add_delay 1.000 [get_ports i_reset]
 set_input_delay -clock [get_clocks i_clk] -add_delay 1.000 [get_ports i_wb_ack]
+set_input_delay -clock [get_clocks i_clk] -add_delay 1.000 [get_ports i_wb_err]
 
 # Output pin configuration.
 set_output_delay -clock [get_clocks i_clk] -max -add_delay 2.000 [get_ports {o_wb_adr[*]}]

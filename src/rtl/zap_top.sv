@@ -126,7 +126,8 @@ parameter logic [31:0] CODE_CACHE_LINE          =  32'd64    // Ccahe line size 
         output  logic  [2:0]     o_wb_cti,
         output  logic  [1:0]     o_wb_bte,
         input   logic            i_wb_ack,
-        input   logic  [31:0]    i_wb_dat
+        input   logic  [31:0]    i_wb_dat,
+        input   logic            i_wb_err
 );
 
 always_comb o_wb_bte = 2'b00; // Linear Burst.
@@ -248,7 +249,7 @@ zap_core #(
 .o_code_stall           (code_stall),
 .i_instr_wb_dat         (!ONLY_CORE ? ic_data   : i_wb_dat),
 .i_instr_wb_ack         (instr_ack),
-.i_instr_wb_err         (!ONLY_CORE ? instr_err : 1'd0),
+.i_instr_wb_err         (!ONLY_CORE ? instr_err : i_wb_err),
 
 // Data related.
 .o_data_wb_we           (cpu_dc_we),
@@ -264,7 +265,7 @@ zap_core #(
                          BE_32_ENABLE ? be_32(i_wb_dat, o_wb_sel) : i_wb_dat),
                         // Swap data into CPU based on current o_wb_sel.
 .i_data_wb_ack          (data_ack),
-.i_data_wb_err          (data_err),
+.i_data_wb_err          (!ONLY_CORE ? data_err : i_wb_err),
 
 // Interrupts.
 .i_fiq                  (s_fiq),
