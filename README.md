@@ -27,7 +27,7 @@ The default processor specification is as follows (The table below is based on d
 | Data Width                | 32                                                                                                                                                                                                                         |
 | Address Width             | 32                                                                                                                                                                                                                         |
 | Virtual Address Width     | 32                                                                                                                                                                                                                         |
-| Instruction Set Versions  | V5TE (1999)<br/>V5 32-bit instruction set.<br/>V5T 16-bit instruction set. Can be switched to V4T by setting bit 14 of CP15 register 1<br/>V5E DSP extensions.                                                             |
+| Instruction Set Versions  | V5TE (1999) without FPU                                                                                                                                                                                                    |
 | L1 I-Cache                | 8KB Direct Mapped VIVT Cache.<br/>64 Byte Cache Line                                                                                                                                                                       |
 | L1 D-Cache                | 8KB Direct Mapped VIVT Cache<br>64 Byte Cache Line                                                                                                                                                                         |
 | I-TLB Structure           | 4 x Direct mapped, one direct mapped TLB per page size. 4 entries for 1MB pages, 8 entries for 64KB pages, 16 entries for 4KB pages and 32 entries for 1KB pages. Each page size has a unique hardware buffer.             |
@@ -70,7 +70,7 @@ ZAP includes several microarchitectural enhancements to improve instruction thro
 
 ### 1.1. Superpipelined Microarchitecture
 
-ZAP uses a 17 stage execution pipeline to increase the speed of the flow of instructions to the processor. The 17 stage pipeline consists of Address Generator, TLB Check, Cache Access, Memory, Fetch, Instruction Buffer, T Decoder, Pre-Decoder, Decoder, Issue, Shift, Execute, TLB Check, Cache Access, Memory and Writeback.
+ZAP uses a 17 stage execution pipeline to increase the throughput of instructions to the processor. The 17 stage pipeline consists of Address Generator, TLB Check, Cache Access, Memory, Fetch, Instruction Buffer, T Decoder, Pre-Decoder, Decoder, Issue, Shift, Execute, TLB Check, Cache Access, Memory and Writeback.
 
 > To maintain compatibility with the V5TE standard, reading the program counter (PC) will return PC + 8 when read.
 
@@ -102,7 +102,7 @@ During normal operation:
 * The instruction before that is accessing the cache/TLB RAM.
 * The instruction before that is accessing the cache/TLB RAM.
 
-The deep pipeline, although uses more resources, allows the ZAP to run at high clock speeds.
+The deep pipeline, although uses more resources, allows the ZAP to run at higher clock speeds.
 
 #### 1.1.1. Automatic Dual Forwarding Network
 
@@ -305,7 +305,7 @@ When **ONLY_CORE = 0x0**, the following types of accesses can result in mostly W
 
 ### 1.3. System Control
 
-Please refer to ref \[1] for CP15 CSR architectural requirements. The ZAP implements the following software accessible registers within its CP15 coprocessor.  
+Please refer to the v5TE specification for CP15 CSR architectural requirements. The ZAP implements the following software accessible registers within its CP15 coprocessor.  
 
 > `MCR/MRC/LDC/STC` act as fence instructions, and ensure all instructions before them have executed before executing.
 
@@ -411,7 +411,7 @@ Provide a 16KB aligned translation base address here.
 
 ### 1.4. Implementation Options
 
-ZAP implements the integer instruction set specified in \[1]. T refers to the 16-bit instruction set and E refers to the enhanced DSP extensions. ZAP does not implement the optional floating point extension specified in Part C of \[1].
+ZAP implements the integer instruction set specified in the v5TE specification. T refers to the 16-bit instruction set and E refers to the enhanced DSP extensions. ZAP does not implement the optional floating point extension specified in Part C of v5TE specification.
 
 #### 1.4.1. Big and Little Endian
 
@@ -444,11 +444,11 @@ The ZAP implements the DSP-enhanced instruction set (V5E). There are new multipl
 The ZAP also implements `LDRD`, `STRD` and `PLD` instructions with the following implementation notes:
 
 * `PLD` is interpreted as a `NOP`.
-* `MCRR` and `MRRC` are not intended to be used on coprocessor 15 (see \[1]). Since ZAP does not have an external coprocessor bus, these instructions should not be used.
+* `MCRR` and `MRRC` are not intended to be used on coprocessor 15 (see v5TE specification). Since ZAP does not have an external coprocessor bus, these instructions should not be used.
 
 #### 1.4.5. Base Register Update
 
-If a data abort is signaled on a memory instruction that specifies writeback, the contents of the base register will not be updated. This holds for all load and store instructions. This behavior is referred to in the V5TE architecture \[1] as the Base Restored Abort Model.
+If a data abort is signaled on a memory instruction that specifies writeback, the contents of the base register will not be updated. This holds for all load and store instructions. This behavior is referred to in the V5TE spec as the Base Restored Abort Model.
 
 #### 1.4.6. Cache and TLB Lockdown
 
@@ -737,11 +737,7 @@ Timing report will be available in `obj/syn/syn_timing.rpt`
 * All inputs are given an input delay of 1ns, typical for an FPGA flip-flop.
 * Outputs assume they are driving flip-flops with Tsu = 2ns Th=1ns.
 
-## 4. References
-
-\[1] DDI 0100E Specification
-
-## 5. Acknowledgements
+## 4. Acknowledgements
 
 Thanks to [Erez Binyamin](https://github.com/ErezBinyamin) for adding Docker infrastructure support.
 
@@ -755,7 +751,7 @@ Testbench assembly code in `src/ts/mode32_test*/` is based on Jonathan Masur's a
 
 Testbench assembly code in `src/ts/mode16_test*/` is based on Julian Smolka's work [here](https://github.com/jsmolka/gba-tests)
 
-## 6. License
+## 5. License
 
 Copyright (C) 2016-2022 Revanth Kamaraj
 
