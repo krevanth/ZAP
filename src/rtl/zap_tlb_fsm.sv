@@ -100,7 +100,8 @@ output logic                     o_wb_wen,
 output logic [3:0]               o_wb_sel,
 output logic [31:0]              o_wb_adr,
 input  logic [31:0]              i_wb_dat,
-input  logic                     i_wb_ack
+input  logic                     i_wb_ack,
+input  logic                     i_wb_err
 
 );
 
@@ -119,15 +120,16 @@ localparam [31:0] NUMBER_OF_STATES    = 6;
 
 // ----------------------------------------------------------------------------
 
-logic [3:0]  dac_ff, dac_nxt;                              // Scratchpad register
-logic [$clog2(NUMBER_OF_STATES)-1:0] state_ff, state_nxt; // State register
-logic        wb_stb_nxt, wb_stb_ff;
-logic        wb_cyc_nxt, wb_cyc_ff;
-logic [31:0] wb_adr_nxt, wb_adr_ff;
-logic [31:0] address;
-logic [3:0]  wb_sel_nxt, wb_sel_ff;
-logic [31:0] dff, dnxt; // Wishbone memory buffer.
-logic unused;
+logic [3:0]                          dac_ff, dac_nxt;
+logic [NUMBER_OF_STATES-1:0]         state_ff, state_nxt;
+logic                                wb_stb_nxt, wb_stb_ff;
+logic                                wb_cyc_nxt, wb_cyc_ff;
+logic [31:0]                         wb_adr_nxt, wb_adr_ff;
+logic [31:0]                         address;
+logic [3:0]                          wb_sel_nxt, wb_sel_ff;
+logic [31:0]                         dff, dnxt;
+logic                                err_ff, err_nxt;
+logic                                unused;
 
 // ----------------------------------------------------------------------------
 
@@ -145,7 +147,7 @@ assign unused           = |{i_baddr[13:0]};
 
 always_ff @ ( posedge i_clk )
 begin
-        if ( state_ff == IDLE )
+        if ( state_ff[IDLE] )
         begin
                 address <= i_address;
         end
@@ -175,16 +177,20 @@ begin: blk1
         dac_nxt         = dac_ff;
         state_nxt       = state_ff;
         dnxt            = dff;
+        err_nxt         = err_ff;
 
-        case ( state_ff )
-        IDLE:
+        case ( 1'd1 )
+
+        state_ff[IDLE]:
         begin
                 if ( i_mmu_en && i_idle )
                 begin
                         if ( i_walk ) // Prepare to access the PTEs.
                         begin
                                 o_busy    = 1'd1;
-                                state_nxt = PRE_FETCH_L1_DESC_0;
+
+                                state_nxt[IDLE]                = 1'd0;
+                                state_nxt[PRE_FETCH_L1_DESC_0] = 1'd1;
                         end
                         else if ( i_fsr[3:0] != 4'b0000 ) // Access Violation.
                         begin
@@ -196,11 +202,13 @@ begin: blk1
                 end
         end
 
-        PRE_FETCH_L1_DESC_0:
+        state_ff[PRE_FETCH_L1_DESC_0]:
         begin
                 // Connect this to the next state.
                 o_busy    = 1'd1;
-                state_nxt = FETCH_L1_DESC_0;
+
+                state_nxt[PRE_FETCH_L1_DESC_0] = 1'd0;
+                state_nxt[FETCH_L1_DESC_0]     = 1'd1;
 
                 //
                 // We need to page walk to get the page table.
@@ -210,14 +218,22 @@ begin: blk1
                                 address[`ZAP_VA__TABLE_INDEX], 2'd0});
         end
 
-        FETCH_L1_DESC_0:
+        state_ff[FETCH_L1_DESC_0]:
         begin
                 o_busy = 1;
 
-                if ( i_wb_ack )
+                if ( i_wb_ack | i_wb_err )
                 begin
+                        err_nxt = i_wb_err;
                         dnxt = i_wb_dat;
-                        state_nxt = FETCH_L1_DESC;
+
+                        if ( i_wb_err ) // i_wb_ack checked in parent if.
+                        begin
+                                dnxt[1:0] = 2'b00;
+                        end
+
+                        state_nxt[FETCH_L1_DESC_0] = 1'd0;
+                        state_nxt[FETCH_L1_DESC] = 1'd1;
                 end
                 else
                 begin
@@ -225,7 +241,7 @@ begin: blk1
                 end
         end
 
-        FETCH_L1_DESC:
+        state_ff[FETCH_L1_DESC]:
         begin
                 //
                 // What we would have fetched is the L1 descriptor.
@@ -258,7 +274,13 @@ begin: blk1
                         o_setlb_wdata[9]     = '0;
                         o_setlb_wdata[4]     = '0;
 
-                        state_nxt         = IDLE;
+                        if ( err_ff )
+                        begin
+                                o_setlb_wdata[1:0] = 2'b11; // Indicate translation fault.
+                        end
+
+                        state_nxt[FETCH_L1_DESC] = 1'd0;
+                        state_nxt[IDLE] = 1'd1;
 
                 end
 
@@ -273,7 +295,9 @@ begin: blk1
 
                         // dac register holds the dac sel for future use.
                         dac_nxt         = dff[`ZAP_L1_PAGE__DAC_SEL];
-                        state_nxt       = FETCH_L2_DESC_0;
+
+                        state_nxt[FETCH_L1_DESC]   = 1'd0;
+                        state_nxt[FETCH_L2_DESC_0] = 1'd1;
 
                         tsk_prpr_wb_rd({dff[`ZAP_L1_PAGE__PTBR],
                                           address[`ZAP_VA__L2_TABLE_INDEX], 2'd0});
@@ -283,7 +307,9 @@ begin: blk1
                 begin
                         //  Page ID requires DAC from current descriptor.
                         dac_nxt         = dff[`ZAP_L1_PAGE__DAC_SEL];
-                        state_nxt       = FETCH_L2_DESC_0;
+
+                        state_nxt[FETCH_L1_DESC]   = 1'd0;
+                        state_nxt[FETCH_L2_DESC_0] = 1'd1;
 
                         tsk_prpr_wb_rd({dff[`ZAP_L1_FINE__PTBR],
                                          address[`ZAP_VA__L2_TABLE_INDEX], 2'd0});
@@ -292,14 +318,22 @@ begin: blk1
                 endcase
         end
 
-        FETCH_L2_DESC_0:
+        state_ff[FETCH_L2_DESC_0]:
         begin
                         o_busy = 1;
 
-                        if ( i_wb_ack )
+                        if ( i_wb_ack | i_wb_err )
                         begin
+                                err_nxt         = i_wb_err;
                                 dnxt            = i_wb_dat;
-                                state_nxt       = FETCH_L2_DESC;
+
+                                state_nxt[FETCH_L2_DESC_0] = 1'd0;
+                                state_nxt[FETCH_L2_DESC]   = 1'd1;
+
+                                if ( i_wb_err ) // i_wb_ack checked in parent if.
+                                begin
+                                        dnxt[1:0] = 2'b00;
+                                end
                         end
                         else
                         begin
@@ -307,7 +341,7 @@ begin: blk1
                         end
         end
 
-        FETCH_L2_DESC:
+        state_ff[FETCH_L2_DESC]:
         begin
                 o_busy = 1'd1;
 
@@ -325,12 +359,13 @@ begin: blk1
 
                         // DAC selector for L1.
                         o_sptlb_wdata[`ZAP_SPAGE_TLB__DAC_SEL] = dac_ff;
-                        o_sptlb_wdata[1:0]                     = dff[1:0];
+                        o_sptlb_wdata[1:0]                     = err_ff ? 2'b11 : dff[1:0];
                         o_sptlb_wdata[`ZAP_SPAGE_TLB__AP]      = dff[`ZAP_L2_SPAGE__AP];
                         o_sptlb_wdata[`ZAP_SPAGE_TLB__CB]      = dff[`ZAP_L2_SPAGE__CB];
                         o_sptlb_wdata[`ZAP_SPAGE_TLB__BASE]    = dff[`ZAP_L2_SPAGE__BASE];
 
-                        state_nxt   = IDLE;
+                        state_nxt[FETCH_L2_DESC] = 1'd0;
+                        state_nxt[IDLE] = 1'd1;
                 end
 
                 LPAGE_ID:
@@ -347,7 +382,8 @@ begin: blk1
                         o_lptlb_wdata[`ZAP_LPAGE_TLB__CB]      = dff[`ZAP_L2_LPAGE__CB];
                         o_lptlb_wdata[`ZAP_LPAGE_TLB__BASE]    = dff[`ZAP_L2_LPAGE__BASE];
 
-                        state_nxt   = IDLE;
+                        state_nxt[FETCH_L2_DESC] = 1'd0;
+                        state_nxt[IDLE] = 1'd1;
                 end
 
                 FPAGE_ID:
@@ -365,7 +401,8 @@ begin: blk1
                         o_fptlb_wdata[`ZAP_FPAGE_TLB__CB]      = dff[`ZAP_L2_FPAGE__CB];
                         o_fptlb_wdata[`ZAP_FPAGE_TLB__BASE]    = dff[`ZAP_L2_FPAGE__BASE];
 
-                        state_nxt   = IDLE;
+                        state_nxt[FETCH_L2_DESC] = 1'd0;
+                        state_nxt[IDLE] = 1'd1;
                 end
 
                 endcase
@@ -404,13 +441,15 @@ always_ff @ (posedge i_clk)
 begin
         if ( i_reset )
         begin
-                 state_ff        <=      IDLE;
+                 state_ff        <=      '0;
+                 state_ff[IDLE]  <=      1'd1;
                  wb_stb_ff       <=      0;
                  wb_cyc_ff       <=      0;
                  wb_adr_ff       <=      0;
                  dac_ff          <=      0;
                  wb_sel_ff       <=      0;
                  dff             <=      0;
+                 err_ff          <=      0;
         end
         else
         begin
@@ -420,6 +459,7 @@ begin
                 wb_adr_ff       <=      wb_adr_nxt;
                 dac_ff          <=      dac_nxt;
                 wb_sel_ff       <=      wb_sel_nxt;
+                err_ff          <=      err_nxt;
                 dff             <=      dnxt;
         end
 end

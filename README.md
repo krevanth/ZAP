@@ -12,13 +12,13 @@ You should have received a copy of the GNU General Public License along with thi
 
 ## 1. Introduction
 
-The ZAP is intended to be used in FPGA projects that need a high performance application class soft processor core. Most aspects of the processor can be configured through HDL parameters.  The processor can be synthesized  with 0 slack at 170MHz on Artix-7 series devices in the slow-slow (SS) corner. 
+The ZAP is intended to be used in FPGA projects that need a high performance application class soft processor core. Most aspects of the processor can be configured through HDL parameters.  The processor can be synthesized  with 0 slack at 166MHz on Artix-7 series SG-3 devices in the slow-slow (SS) corner. 
 
 The default processor specification is as follows (The table below is based on default parameters):
 
 | **Property**              | **Value**                                                                                                                                                                                                                  |
 | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Performance               | Synthesized at 170MHz @ xc7a75tcsg324-3 Artix-7 FPGA with 0 slack. <br/>130 DMIPS @ 170MHz with cache enabled. **Cache must be enabled, and utilized effectively, for peak performance.**                                  |
+| Performance               | Synthesized at 166MHz @ xc7a75tcsg324-3 Artix-7 FPGA with 0 slack. <br/>130 DMIPS @ 166MHz with cache enabled. **Cache must be enabled, and utilized effectively, for peak performance.**                                  |
 | Clock and Reset           | Purely synchronous reset scheme. Purely rising edge clock driven design.                                                                                                                                                   |
 | IRQ                       | Supported. Level sensitive interrupt signal. CPU uses a dual rank synchronizer to sample this and make it synchronous to the rising edge of clock.                                                                         |
 | FIQ                       | Supported. Level sensitive interrupt signal. CPU uses a dual rank synchronizer to sample this and make it synchronous to the rising edge of clock.                                                                         |
@@ -366,12 +366,12 @@ Provide a 16KB aligned translation base address here.
 
 #### 1.3.6. Register 5: **FSR.**
 
-| Bit  | Meaning                                                                                                                              |
-| ---- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| 3:0  | Status bits. <br/>Supported faults: Translation, Domain or Permission Fault.<br/>                                                    |
-| 7:4  | Domain                                                                                                                               |
-| 8    | RAZ                                                                                                                                  |
-| 31:9 | --                                                                                                                                   |
+| Bit  | Meaning                                                                                                                                                                                                                               |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 3:0  | Status bits. <br/>Supported faults: L1 External Abort on Translation, L2 External Abort on Translation, Terminal Exception, Translation, Domain or Permission Fault. Terminal abort is signaled when uncacheable accesses fail. <br/> |
+| 7:4  | Domain                                                                                                                                                                                                                                |
+| 8    | RAZ                                                                                                                                                                                                                                   |
+| 31:9 | --                                                                                                                                                                                                                                    |
 
 #### 1.3.7. Register 6: **FAR**.
 
@@ -509,21 +509,34 @@ Accessing unaligned `LDRH/STRH` will cause the processor to ignore bit 0 for the
 
 Accessing unaligned `LDR` will cause the 32-bit data read at the aligned address to be rotated right. For `STR`, the lower 2-bits of the address are treated as 0x0 for the memory access.
 
-### 1.6. Known Issues
+Implementation specific parts of the page table are UNUSED.
 
-`SWAP` and `SWAPB` do not lock the bus during their individual memory accesses. 
+External aborts on uncacheable accesses (MMIO) will result in a TERMINAL ABORT.
 
-### 1.7. Performance
+### 1.6. External Aborts
 
-The bus latency is assumed to be 2 cycles. The assumption for the numbers below is that the bus suffers 2 cycles of latency if the next address is not known beforehand (block/classic). If the address is known beforehand (linear burst), the bus can sustain 1 transfer per cycle. 
+ZAP provides an external abort pin `I_WB_ERR`, but it must be used with great care. In particular, the following scenarios should be carefully considered.
 
-| Access Type                                    | ONLY_CORE | Cycles |
-| ---------------------------------------------- | --------- | ------ |
-| Cache Access Hit (16 words)                    | 0x0       | 1      |
-| Cacheline Fetch/Cacheline Writeback (16 words) | 0x0       | 18     |
-| Cacheline Writeback and Fetch (16 words)       | 0x0       | 36     |
-| Access MMIO peripheral (16 words)              | 0x0       | 112    |
-| Access memory/peripheral (16 words)            | 0x1       | 32     |
+- Cacheable memory accesses that are validated by the TLB cannot be externally aborted. This applies to cache cleaning operations as well.
+
+### 1.7. Multiprocessing
+
+Because `SWAP` and `SWAPB` do not lock the bus during their individual memory accesses, ZAP cannot be used in a multiprocessing system that requires semaphores.
+
+### 1.8. Performance
+
+For the performance numbers below:
+
+- The bus latency is assumed to be X cycles if the next address is not indicated beforehand (classic/block). 
+
+- Else, the bus latency is assumed 1 cycle if the next address is known before hand (burst). Note that X cycles of initial latency is still assumed for the burst as well.
+
+| Access Type                                      | ONLY_CORE | Total Cycles (ONLY_CORE=0x0) | Total Cycles (ONLY_CORE=0x1)                  | Cache Benefit Threshold |
+| ------------------------------------------------ | --------- | ---------------------------- | --------------------------------------------- | ----------------------- |
+| `LDM/STM` of 16 registers. (Cache hit)           | 0x0       | 16                           | N/A. Direct bus access will take 16*X cycles. | Always                  |
+| `LDM/STM` of 16 registers. (Cache Miss)          | 0x0       | X + 34                       | N/A. Direct bus access will take16*X cycles.  | X > 2                   |
+| `LDM/STM` of 16 registers (Cache Miss, Replace)  | 0x0       | 2*X + 52                     | N/A. Direct bus access will take 16*X cycles. | X > 3                   |
+| `LDM/STM` of 16 registers to uncacheable region. | 0x0       | 112*X                        | 16*X cycles.                                  | Never                   |
 
 ## System Integration
 
@@ -573,7 +586,7 @@ Note that all parameters should be 2^n. Cache size should be multiple of line si
 | o\_wb\_cti[2:0]  | Wishbone CTI (Incrementing Burst and EOB are supported)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | o\_wb\_bte[1:0]  | Wishbone BTE (Always reads "linear" i.e., 0x0)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | i\_wb\_ack       | Wishbone acknowledge signal. <br/>**RECOMMENDATION**: This should come from a flip-flop placed close to the processor.                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| i_wb_err         | Wishbone error signal.<br/>**RECOMMENDATION:** This should come from a flip-flop placed closed to the processor.                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| i_wb_err         | Wishbone error signal. The system should never flag an abort on cacheable memory regions validated by the page tables. <br/>**RECOMMENDATION:** This should come from a flip-flop placed closed to the processor.                                                                                                                                                                                                                                                                                                                                        |
 | i\_wb\_dat[31:0] | Wishbone data input signal. <br/>**RECOMMENDATION**: This should come from a register placed close to the processor.                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | o_trace[1023:0]  | Generates trace information over a 1024-bit bus. This signal is only intended for DV and is meant to be used only in simulation.<br/>The format of the trace string is as follows:<br/>PC_ADDRESS:\<INSTRUCTION\> WA1\@WDATA2 WA2\@WDATA2 CPSR<br/>(or)<br/>PC_ADDRESS:\<INSTRUCTION\>\* for an instruction whose condition code failed.<br/>If an exception is taken, the words, DABT, FIQ, IRQ, IABT, SWI and UND are display in place of the above formats. Out of reset, RESET is shown.<br/>When DEBUG_EN is not defined, this port is not defined. |
 | o_trace_valid    | Sample trace information when this signal is 1. This signal is only intended for DV and is meant to be used only in simulation. The signal is not available when DEBUG_EN is not defined.                                                                                                                                                                                                                                                                                                                                                                |

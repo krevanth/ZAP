@@ -42,6 +42,7 @@ input logic [31:0]      i_c_wb_dat,
 input logic [31:0]      i_c_wb_adr,
 input logic [2:0]       i_c_wb_cti,
 output logic            o_c_wb_ack,
+output logic            o_c_wb_err,
 
 // Wishbone bus 2
 input logic             i_d_wb_stb,
@@ -52,6 +53,7 @@ input logic [31:0]      i_d_wb_dat,
 input logic [31:0]      i_d_wb_adr,
 input logic [2:0]       i_d_wb_cti,
 output logic            o_d_wb_ack,
+output logic            o_d_wb_err,
 
 // Common bus
 output logic            o_wb_cyc,
@@ -61,7 +63,8 @@ output logic [3:0]      o_wb_sel,
 output logic [31:0]     o_wb_dat,
 output logic [31:0]     o_wb_adr,
 output logic [2:0]      o_wb_cti,
-input logic             i_wb_ack
+input logic             i_wb_ack,
+input logic             i_wb_err
 
 );
 
@@ -92,7 +95,7 @@ begin
         CODE:
         begin
                 // Switch over if EOB and data STB exists.
-                if ( i_wb_ack && (o_wb_cti == CTI_EOB) && i_d_wb_stb )
+                if ( (i_wb_ack|i_wb_err) && (o_wb_cti == CTI_EOB) && i_d_wb_stb )
                 begin
                         sel_nxt = DATA;
                 end
@@ -110,7 +113,7 @@ begin
         DATA:
         begin
                 // Switch over if EOB and code STB exists.
-                if ( i_wb_ack && (o_wb_cti == CTI_EOB) && i_c_wb_stb )
+                if ( (i_wb_ack|i_wb_err) && (o_wb_cti == CTI_EOB) && i_c_wb_stb )
                 begin
                         sel_nxt = CODE;
                 end
@@ -150,8 +153,10 @@ end
 ////////////////////////////////////
 
 // Based on the current selection, redirect ACK to code or data.
-assign o_c_wb_ack = (sel_ff == CODE) & i_wb_ack;
-assign o_d_wb_ack = (sel_ff == DATA) & i_wb_ack;
+assign o_c_wb_ack = (sel_ff == CODE) & (i_wb_err | i_wb_ack);
+assign o_d_wb_ack = (sel_ff == DATA) & (i_wb_err | i_wb_ack);
+assign o_c_wb_err = (sel_ff == CODE) & i_wb_err;
+assign o_d_wb_err = (sel_ff == DATA) & i_wb_err;
 
 /////////////////////////////////////
 // WB output generation logic.

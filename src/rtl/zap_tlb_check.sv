@@ -269,19 +269,26 @@ begin
         begin
                 return {tlb[`ZAP_L1_SECTION__DAC_SEL], FSR_SECTION_TRANSLATION_FAULT};
         end
-        case(dac)
-        DAC_MANAGER:return '0; // No fault.
-        DAC_CLIENT:
-                if ( is_apsr_ok ( user, rd, wr, apsr ) == APSR_OK )
-                begin
-                        return '0; // No fault.
-                end
-                else
-                begin
-                         return {tlb[`ZAP_SECTION_TLB__DAC_SEL], FSR_SECTION_PERMISSION_FAULT};
-                end
-        default:return {tlb[`ZAP_SECTION_TLB__DAC_SEL], FSR_SECTION_DOMAIN_FAULT};
-        endcase
+        else if ( tlb[1:0] == 2'b11 )
+        begin
+                return {tlb[`ZAP_L1_SECTION__DAC_SEL], FSR_L1_EXTERNAL_ABORT};
+        end
+        else
+        begin
+                case(dac)
+                DAC_MANAGER: return '0; // No fault.
+                DAC_CLIENT:
+                        if ( is_apsr_ok ( user, rd, wr, apsr ) == APSR_OK )
+                        begin
+                                return '0; // No fault.
+                        end
+                        else
+                        begin
+                                 return {tlb[`ZAP_SECTION_TLB__DAC_SEL], FSR_SECTION_PERMISSION_FAULT};
+                        end
+                default: return {tlb[`ZAP_SECTION_TLB__DAC_SEL], FSR_SECTION_DOMAIN_FAULT};
+                endcase
+        end
 end
 
 endfunction
@@ -312,6 +319,10 @@ begin
         if ( tlb[1:0] == 2'b00 )
         begin
                 return {tlb[`ZAP_L1_PAGE__DAC_SEL], FSR_PAGE_TRANSLATION_FAULT};
+        end
+        else if ( tlb[1:0] == 2'b11 )
+        begin
+                return {tlb[`ZAP_L1_PAGE__DAC_SEL], FSR_L2_EXTERNAL_ABORT};
         end
         else
         begin

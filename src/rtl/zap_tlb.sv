@@ -71,7 +71,8 @@ output logic             o_wb_wen_nxt,
 output logic [3:0]       o_wb_sel_nxt,
 input  logic [31:0]      i_wb_dat,
 output logic [31:0]      o_wb_dat_nxt,
-input  logic             i_wb_ack
+input  logic             i_wb_ack,
+input  logic             i_wb_err
 
 );
 
@@ -402,6 +403,7 @@ zap_tlb_fsm #(
 
 .i_wb_dat       (i_wb_dat),
 .i_wb_ack       (i_wb_ack),
+.i_wb_err       (i_wb_err),
 
 .o_wb_sel_nxt   (o_wb_sel_nxt),
 .o_wb_cyc_nxt   (o_wb_cyc_nxt),

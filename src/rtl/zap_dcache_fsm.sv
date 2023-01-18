@@ -107,7 +107,8 @@ output  logic     [3:0]   o_wb_sel_ff, o_wb_sel_nxt,
 output  logic             o_wb_wen_ff, o_wb_wen_nxt,
 output  logic     [2:0]   o_wb_cti_ff, o_wb_cti_nxt,
 input   logic             i_wb_ack,
-input   logic    [31:0]   i_wb_dat
+input   logic    [31:0]   i_wb_dat,
+input   logic             i_wb_err
 
 );
 
@@ -119,7 +120,7 @@ input   logic    [31:0]   i_wb_dat
 `include "zap_defines.svh"
 `include "zap_functions.svh"
 
-// States
+// States. FSM is 1-hot.
 localparam [2:0] IDLE                 = 3'd0; // Resting state.
 localparam [2:0] UNCACHEABLE          = 3'd1; // Uncacheable access.
 localparam [2:0] UNCACHEABLE_PREPARE  = 3'd2; // Prepare uncacheable access.
@@ -141,7 +142,7 @@ localparam [31:0] LINE_PAD             = (CACHE_LINE * 32'd8) - 32'd32;
 logic                                     cache_cmp;
 logic                                     cache_dirty;
 
-logic [$clog2(NUMBER_OF_STATES)-1:0]      state_ff, state_nxt;
+logic [NUMBER_OF_STATES-1:0]              state_ff, state_nxt;
 logic [31:0]                              buf_ff [(CACHE_LINE/4)-1:0];
 logic [31:0]                              buf_nxt[(CACHE_LINE/4)-1:0];
 logic                                     cache_clean_req_nxt,
@@ -182,7 +183,7 @@ always_comb cache_dirty = i_cache_tag_dirty;
 // Buffers
 always_ff @ ( posedge i_clk )
 begin
-        if ( state_ff == IDLE )
+        if ( state_ff[IDLE] )
         begin
                 address         <= i_address ;
                 wr              <= i_wr;
@@ -193,11 +194,11 @@ end
 
 always_ff @ ( posedge i_clk )
 begin
-        if ( state_ff == IDLE )
+        if ( state_ff [IDLE] )
         begin
                 cache_line      <= i_cache_line;
         end
-        else if ( state_nxt == UNLOCK_REG )
+        else if ( state_nxt[UNLOCK_REG] )
         begin
                 cache_line      <= o_cache_line;
         end
@@ -205,7 +206,7 @@ end
 
 always_ff @ ( posedge i_clk )
 begin
-        if ( state_ff == IDLE )
+        if ( state_ff [IDLE] )
         begin
                 cache_tag       <= i_cache_tag;
                 phy_addr        <= i_phy_addr;
@@ -228,11 +229,15 @@ begin
                 cache_clean_req_ff      <= 0;
                 cache_inv_req_ff        <= 0;
                 adr_ctr_ff              <= 0;
-                state_ff                <= IDLE;
+                state_ff                <= 0;
+                state_ff[IDLE]          <= 1'd1;
                 lock_ff                 <= 64'd0;
         end
         else
         begin
+                assert($onehot(state_nxt)) else
+                $fatal(2, "State is not 1-hot encoded.");
+
                 o_wb_cyc_ff             <= o_wb_cyc_nxt;
                 o_wb_stb_ff             <= o_wb_stb_nxt;
                 o_wb_wen_ff             <= o_wb_wen_nxt;
@@ -259,7 +264,7 @@ end
 // Idle indication
 always_ff @ ( posedge i_clk )
 begin
-        o_idle <= ~(|state_nxt);
+        o_idle <= state_nxt[IDLE];
 end
 
 // Combo block
@@ -312,21 +317,23 @@ begin:blk1
         rhit                     = 1'd0;
         whit                     = 1'd0;
 
-        case(state_ff)
+        case(1'd1)
 
-        IDLE:
+        state_ff[IDLE]:
         begin
                 kill_access ();
 
                 if ( i_cache_inv )
                 begin
                         o_ack     = 1'd0;
-                        state_nxt = INVALIDATE;
+                        state_nxt[IDLE] = 1'd0;
+                        state_nxt[INVALIDATE] = 1'd1;
                 end
                 else if ( i_cache_clean )
                 begin
                         o_ack     = 1'd0;
-                        state_nxt = CLEAN;
+                        state_nxt[IDLE] = 1'd0;
+                        state_nxt[CLEAN] = 1'd1;
                 end
                 else if ( !i_rd && !i_wr )
                 begin
@@ -351,7 +358,10 @@ begin:blk1
                         if ( !i_cache_en )
                         begin
                                 o_hold          = 1'd1;
-                                state_nxt       = UNCACHEABLE;
+
+                                state_nxt[IDLE] = 1'd0;
+                                state_nxt[UNCACHEABLE] = 1'd1;
+
                                 o_ack           = 1'd0; // Wait...
                                 o_wb_stb_nxt    = 1'd1;
                                 o_wb_cyc_nxt    = 1'd1;
@@ -432,7 +442,8 @@ begin:blk1
                                                 adr_ctr_nxt = 0;
 
                                                 // Clean a single cache line
-                                                state_nxt = CLEAN_SINGLE;
+                                                state_nxt[IDLE] = 1'd0;
+                                                state_nxt[CLEAN_SINGLE] = 1'd1;
                                         end
                                         else if ( i_rd | i_wr )
                                         begin
@@ -440,7 +451,8 @@ begin:blk1
                                                 adr_ctr_nxt = 0;
 
                                                 // Fetch a single cache line
-                                                state_nxt = FETCH_SINGLE;
+                                                state_nxt[IDLE] = 1'd0;
+                                                state_nxt[FETCH_SINGLE] = 1'd1;
                                         end
                                 end
 
@@ -453,7 +465,8 @@ begin:blk1
                                                 adr_ctr_nxt = 0;
 
                                                 // Fetch a single cache line
-                                                state_nxt = FETCH_SINGLE;
+                                                state_nxt[IDLE] = 1'd0;
+                                                state_nxt[FETCH_SINGLE] = 1'd1;
 
                                                 // Lock register on load
                                                 if ( i_rd )
@@ -478,18 +491,23 @@ begin:blk1
                         end
                         else // Decidedly non cacheable.
                         begin
-                                state_nxt       = UNCACHEABLE_PREPARE;
+                                state_nxt[IDLE] = 1'd0;
+                                state_nxt[UNCACHEABLE_PREPARE] = 1'd1;
+
                                 o_ack           = 1'd0; // Wait...
                                 o_hold          = 1'd1;
                         end
                 end
         end
 
-        UNCACHEABLE_PREPARE:
+        state_ff[UNCACHEABLE_PREPARE]:
         begin
                 o_ack           = 1'd0;
                 o_hold          = 1'd1;
-                state_nxt       = UNCACHEABLE;
+
+                state_nxt[UNCACHEABLE_PREPARE] = 1'd0;
+                state_nxt[UNCACHEABLE]         = 1'd1;
+
                 o_wb_stb_nxt    = 1'd1;
                 o_wb_cyc_nxt    = 1'd1;
                 o_wb_adr_nxt    = i_phy_addr;
@@ -507,7 +525,7 @@ begin:blk1
                 end
         end
 
-        UNCACHEABLE: // Uncacheable reads and writes definitely go through this.
+        state_ff[UNCACHEABLE]: // Uncacheable reads and writes definitely go through this.
         begin
                 if ( BE_32_ENABLE )
                 begin
@@ -521,17 +539,22 @@ begin:blk1
                 o_ack  = 1'd0;
                 o_hold = 1'd1;
 
-                if ( i_wb_ack )
+                if ( i_wb_ack | i_wb_err )
                 begin
                         o_ack           = 1'd1;
                         o_hold          = 1'd0;
-                        state_nxt       = IDLE;
+
+                        state_nxt[UNCACHEABLE] = 1'd0;
+                        state_nxt[IDLE]        = 1'd1;
+
+                        o_err           = i_wb_err;
+                        o_fsr[3:0]      = TERMINAL_EXCEPTION;
 
                         kill_access ();
                 end
         end
 
-        CLEAN_SINGLE: // Clean single cache line
+        state_ff[CLEAN_SINGLE]: // Clean single cache line
         begin
                 hit_under_miss();
 
@@ -563,7 +586,9 @@ begin:blk1
                         kill_access ();
 
                         adr_ctr_nxt = 0;
-                        state_nxt   = FETCH_SINGLE;
+
+                        state_nxt[CLEAN_SINGLE] = 1'd0;
+                        state_nxt[FETCH_SINGLE] = 1'd1;
 
                         // Update tag. Remove dirty bit.
                         o_cache_tag_wr_en                      = 1'd1; // Implicitly sets valid (redundant).
@@ -573,7 +598,7 @@ begin:blk1
                 end
         end
 
-        FETCH_SINGLE: // Fetch a single cache line
+        state_ff[FETCH_SINGLE]: // Fetch a single cache line
         begin
                 hit_under_miss();
 
@@ -632,11 +657,13 @@ begin:blk1
 
                         // Move to idle state
                         kill_access ();
-                        state_nxt = UNLOCK_REG;
+
+                        state_nxt[FETCH_SINGLE] = 1'd0;
+                        state_nxt[UNLOCK_REG]   = 1'd1;
                 end
         end
 
-        UNLOCK_REG: // Load data into the register if required.
+        state_ff[UNLOCK_REG]: // Load data into the register if required.
         begin
                 hit_under_miss();
 
@@ -685,10 +712,11 @@ begin:blk1
                 end
 
                 // Back to IDLE
-                state_nxt = IDLE;
+                state_nxt[UNLOCK_REG] = 1'd0;
+                state_nxt[IDLE]       = 1'd1;
         end
 
-        INVALIDATE: // Invalidate the cache - Almost Single Cycle
+        state_ff[INVALIDATE]: // Invalidate the cache - Almost Single Cycle
         begin
                 cache_inv_req_nxt = 1'd1;
                 cache_clean_req_nxt = 1'd0;
@@ -696,12 +724,15 @@ begin:blk1
                 if ( i_cache_inv_done )
                 begin
                         cache_inv_req_nxt    = 1'd0;
-                        state_nxt            = IDLE;
+
+                        state_nxt[INVALIDATE] = 1'd0;
+                        state_nxt[IDLE]       = 1'd1;
+
                         o_cache_inv_done     = 1'd1;
                 end
         end
 
-        CLEAN:  // Force cache to clean itself
+        state_ff[CLEAN]:  // Force cache to clean itself
         begin
                 cache_clean_req_nxt = 1'd1;
                 cache_inv_req_nxt   = 1'd0;
@@ -709,8 +740,54 @@ begin:blk1
                 if ( i_cache_clean_done )
                 begin
                         cache_clean_req_nxt  = 1'd0;
-                        state_nxt            = IDLE;
+
+                        state_nxt[CLEAN]     = 1'd0;
+                        state_nxt[IDLE]      = 1'd1;
+
                         o_cache_clean_done   = 1'd1;
+                end
+        end
+
+        default:
+        begin
+                state_nxt               = 'x; //
+                a                       = 'x; //
+                state_nxt               = 'x; //
+                adr_ctr_nxt             = 'x; //
+                o_wb_cyc_nxt            = 'x; //
+                o_wb_stb_nxt            = 'x; //
+                o_wb_adr_nxt            = 'x; //
+                o_wb_dat_nxt            = 'x; //
+                o_wb_cti_nxt            = 'x; //
+                lock_nxt                = 'x; //
+                o_wb_wen_nxt            = 'x; //
+                o_wb_sel_nxt            = 'x; //
+                cache_clean_req_nxt     = 'x; //
+                cache_inv_req_nxt       = 'x; //
+                o_lock                  = 'x; //
+                o_fsr                   = 'x; //
+                o_far                   = 'x; //
+                o_cache_tag             = 'x; //
+                o_cache_inv_done        = 'x; //
+                o_cache_clean_done      = 'x; //
+                o_cache_tag_dirty       = 'x; //
+                o_cache_tag_wr_en       = 'x; //
+                o_cache_line            = 'x; //
+                o_cache_line_ben        = 'x; //
+                o_hold                  = 'x; //
+                o_reg_dat               = 'x; //
+                o_reg_idx               = 'x; //
+                o_dat                   = 'x; //
+                o_ack                   = 'x; //
+                o_err                   = 'x; //
+                o_err2                  = 'x; //
+                o_address               = 'x; //
+                rhit                    = 'x; //
+                whit                    = 'x; //
+
+                for(int i=0;i<CACHE_LINE/4;i++)
+                begin
+                        buf_nxt[i] = 'x; //
                 end
         end
 

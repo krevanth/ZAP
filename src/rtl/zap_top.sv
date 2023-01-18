@@ -151,6 +151,7 @@ logic [31:0]     wb_dat, wb_idat;
 logic [31:0]     wb_adr;
 logic [2:0]      wb_cti;
 logic            wb_ack;
+logic            wb_err;
 logic            cpu_mmu_en;
 logic [ZAP_CPSR_MODE:0] cpu_cpsr;
 logic            cpu_mem_translate;
@@ -178,6 +179,7 @@ logic [31:0]     c_wb_dat;
 logic [31:0]     c_wb_adr;
 logic [2:0]      c_wb_cti;
 logic            c_wb_ack;
+logic            c_wb_err;
 logic            d_wb_stb;
 logic            d_wb_cyc;
 logic            d_wb_wen;
@@ -186,6 +188,7 @@ logic [31:0]     d_wb_dat;
 logic [31:0]     d_wb_adr;
 logic [2:0]      d_wb_cti;
 logic            d_wb_ack;
+logic            d_wb_err;
 logic [63:0]     dc_rreg_idx, dc_wreg_idx;
 logic [63:0]     dc_lock;
 logic [31:0]     dc_reg_data;
@@ -248,15 +251,9 @@ zap_core #(
 /* verilator lint_on PINCONNECTEMPTY */
 .o_code_stall           (code_stall),
 
-//
-// When cache is enabled, err is always accompanied with ack. Without
-// cache, the wishbone generates err and ack as exclusive, so they must
-// be forced in ONLY_CORE=1 case when err=1 (ack=1 must be forced).
-//
-
 .i_instr_wb_dat         (!ONLY_CORE ? ic_data   : i_wb_dat),
-.i_instr_wb_ack         (!ONLY_CORE ? instr_ack : (instr_ack | i_wb_err)),
-.i_instr_wb_err         (!ONLY_CORE ? instr_err : i_wb_err),
+.i_instr_wb_ack         (instr_ack),
+.i_instr_wb_err         (instr_err),
 
 // Data related.
 .o_data_wb_we           (cpu_dc_we),
@@ -271,8 +268,9 @@ zap_core #(
 .i_data_wb_dat          (!ONLY_CORE ? dc_data :
                          BE_32_ENABLE ? be_32(i_wb_dat, o_wb_sel) : i_wb_dat),
                         // Swap data into CPU based on current o_wb_sel.
-.i_data_wb_ack          (!ONLY_CORE ? data_ack : (data_ack | i_wb_err)),
-.i_data_wb_err          (!ONLY_CORE ? data_err : i_wb_err),
+
+.i_data_wb_ack          (data_ack),
+.i_data_wb_err          (data_err),
 
 // Interrupts.
 .i_fiq                  (s_fiq),
@@ -334,12 +332,12 @@ begin : l_tieoffs_only_core
         assign dcache_err2     = '0;
         assign dc_fsr          = '0;
         assign dc_far          = '0;
-        assign instr_err       = '0;
         assign dc_data         = '0;
         assign ic_data         = '0;
-        assign data_err        = '0;
         assign c_wb_ack        = '0;
+        assign c_wb_err        = '0;
         assign d_wb_ack        = '0;
+        assign d_wb_err        = '0;
         assign wb_cyc          = '0;
         assign wb_stb          = '0;
         assign wb_we           = '0;
@@ -348,6 +346,7 @@ begin : l_tieoffs_only_core
         assign wb_adr          = '0;
         assign wb_cti          = CTI_EOB;
         assign wb_ack          = '0;
+        assign wb_err          = '0;
         assign c_wb_stb        = '0;
         assign c_wb_cyc        = '0;
         assign c_wb_wen        = '0;
@@ -378,12 +377,12 @@ begin : l_tieoffs_only_core
          | (    |dcache_err2       )
          | (    |dc_fsr            )
          | (    |dc_far            )
-         | (    |instr_err         )
          | (    |dc_data           )
          | (    |ic_data           )
-         | (    |data_err          )
          | (    |c_wb_ack          )
+         | (    |c_wb_err          )
          | (    |d_wb_ack          )
+         | (    |d_wb_err          )
          | (    |wb_cyc            )
          | (    |wb_stb            )
          | (    |wb_we             )
@@ -392,6 +391,7 @@ begin : l_tieoffs_only_core
          | (    |wb_adr            )
          | (    |wb_cti            )
          | (    |wb_ack            )
+         | (    |wb_err            )
          | (    |c_wb_stb          )
          | (    |c_wb_cyc          )
          | (    |c_wb_wen          )
@@ -448,6 +448,7 @@ begin : l_merger_for_core_with_cache_mmu
         .i_c_wb_adr(c_wb_adr ),
         .i_c_wb_cti(c_wb_cti ),
         .o_c_wb_ack(c_wb_ack ),
+        .o_c_wb_err(c_wb_err ),
 
         .i_d_wb_stb(d_wb_stb ),
         .i_d_wb_cyc(d_wb_cyc ),
@@ -457,6 +458,7 @@ begin : l_merger_for_core_with_cache_mmu
         .i_d_wb_adr(d_wb_adr ),
         .i_d_wb_cti(d_wb_cti ),
         .o_d_wb_ack(d_wb_ack ),
+        .o_d_wb_err(d_wb_err ),
 
         .o_wb_cyc  (wb_cyc   ),
         .o_wb_stb  (wb_stb   ),
@@ -465,7 +467,8 @@ begin : l_merger_for_core_with_cache_mmu
         .o_wb_dat  (wb_idat  ),
         .o_wb_adr  (wb_adr   ),
         .o_wb_cti  (wb_cti   ),
-        .i_wb_ack  (wb_ack   )
+        .i_wb_ack  (wb_ack   ),
+        .i_wb_err  (wb_err   )
 
         );
 end : l_merger_for_core_with_cache_mmu
@@ -484,6 +487,7 @@ begin : l_merger_for_core_without_cache_mmu
         .i_c_wb_adr(cpu_iaddr),
         .i_c_wb_cti(3'b111),
         .o_c_wb_ack(instr_ack),
+        .o_c_wb_err(instr_err),
 
         .i_d_wb_stb(cpu_dc_stb),
         .i_d_wb_cyc(cpu_dc_stb),
@@ -496,6 +500,7 @@ begin : l_merger_for_core_without_cache_mmu
         .i_d_wb_adr(cpu_daddr),
         .i_d_wb_cti(3'b111),
         .o_d_wb_ack(data_ack),
+        .o_d_wb_err(data_err),
 
         .o_wb_cyc  (o_wb_cyc ),
         .o_wb_stb  (o_wb_stb ),
@@ -504,7 +509,8 @@ begin : l_merger_for_core_without_cache_mmu
         .o_wb_dat  (o_wb_dat ),
         .o_wb_adr  (o_wb_adr ),
         .o_wb_cti  (o_wb_cti ),
-        .i_wb_ack  (i_wb_ack )
+        .i_wb_ack  (i_wb_ack ),
+        .i_wb_err  (i_wb_err )
 
         );
 end : l_merger_for_core_without_cache_mmu
@@ -576,6 +582,7 @@ u_data_cache (
 
 .i_wb_dat               (wb_dat),
 .i_wb_ack               (d_wb_ack),
+.i_wb_err               (d_wb_err),
 
 .o_wb_stb_nxt           (d_wb_stb),
 .o_wb_cyc_nxt           (d_wb_cyc),
@@ -644,6 +651,7 @@ u_code_cache (
 
 .i_wb_dat       (wb_dat),
 .i_wb_ack       (c_wb_ack),
+.i_wb_err       (c_wb_err),
 
 .o_wb_stb_nxt   (c_wb_stb),
 .o_wb_cyc_nxt   (c_wb_cyc),
@@ -663,6 +671,7 @@ assign o_wb_adr = wb_adr;
 assign o_wb_cti = wb_cti;
 assign wb_dat   = i_wb_dat;
 assign wb_ack   = i_wb_ack;
+assign wb_err   = i_wb_err;
 
 end : l_generate_with_cache_mmu
 

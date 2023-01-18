@@ -95,15 +95,16 @@ output  logic                      o_hold,
 output  logic                      o_idle,
 
 // Bus access ports.
-output  logic             o_wb_cyc_ff, o_wb_cyc_nxt,
-output  logic             o_wb_stb_ff, o_wb_stb_nxt,
-output  logic     [31:0]  o_wb_adr_ff, o_wb_adr_nxt,
-output  logic     [31:0]  o_wb_dat_ff, o_wb_dat_nxt,
-output  logic     [3:0]   o_wb_sel_ff, o_wb_sel_nxt,
-output  logic             o_wb_wen_ff, o_wb_wen_nxt,
-output  logic     [2:0]   o_wb_cti_ff, o_wb_cti_nxt,
-input   logic             i_wb_ack,
-input   logic    [31:0]   i_wb_dat
+output  logic                   o_wb_cyc_ff, o_wb_cyc_nxt,
+output  logic                   o_wb_stb_ff, o_wb_stb_nxt,
+output  logic     [31:0]        o_wb_adr_ff, o_wb_adr_nxt,
+output  logic     [31:0]        o_wb_dat_ff, o_wb_dat_nxt,
+output  logic     [3:0]         o_wb_sel_ff, o_wb_sel_nxt,
+output  logic                   o_wb_wen_ff, o_wb_wen_nxt,
+output  logic     [2:0]         o_wb_cti_ff, o_wb_cti_nxt,
+input   logic                   i_wb_ack,
+input   logic    [31:0]         i_wb_dat,
+input   logic                   i_wb_err
 
 );
 
@@ -408,7 +409,7 @@ begin:blk1
                                 end
                                 endcase
                         end
-                        else // Decidedly non cacheable.
+                        else // Non cacheable.
                         begin
                                 state_nxt       = UNCACHEABLE_PREPARE;
                                 o_ack           = 1'd0; // Wait...
@@ -431,16 +432,19 @@ begin:blk1
                 o_wb_cti_nxt    = CTI_EOB;
         end
 
-        UNCACHEABLE: // Uncacheable reads and writes definitely go through this.
+        UNCACHEABLE:
+        // Uncacheable reads and writes definitely go through this.
         begin
                 o_ack  = 1'd0;
                 o_hold = 1'd1;
 
-                if ( i_wb_ack )
+                if ( i_wb_ack | i_wb_err )
                 begin
                         o_ack           = 1'd1;
                         o_hold          = 1'd0;
                         state_nxt       = IDLE;
+                        o_err           = i_wb_err;
+                        o_fsr[3:0]      = TERMINAL_EXCEPTION;
 
                         kill_access ();
                 end

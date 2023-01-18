@@ -85,7 +85,8 @@ output logic  [31:0]      o_wb_dat, o_wb_dat_nxt,
 output logic  [31:0]      o_wb_adr, o_wb_adr_nxt,
 output logic  [2:0]       o_wb_cti, o_wb_cti_nxt,
 input  logic [31:0]       i_wb_dat,
-input  logic              i_wb_ack
+input  logic              i_wb_ack,
+input  logic              i_wb_err
 
 );
 
@@ -123,9 +124,14 @@ logic [1:0]                      state_ff, state_nxt;
 logic [31:0]                     cache_address;
 logic                            hold;
 logic                            idle;
+logic [2:0]                      wb_err;
+logic                            unused;
 
 // Selection 2 of Wishbone CTI[2x3] is always on all CPU supported modes.
 always_comb wb_cti[2] = CTI_EOB;
+
+// wb_err[1] is unused.
+assign unused = |{wb_err[1]};
 
 // Basic cache FSM - serves as Master 0.
 zap_cache_fsm #(.CACHE_SIZE(CACHE_SIZE), .CACHE_LINE(CACHE_LINE)) u_zap_cache_fsm (
@@ -188,7 +194,8 @@ zap_cache_fsm #(.CACHE_SIZE(CACHE_SIZE), .CACHE_LINE(CACHE_LINE)) u_zap_cache_fs
         .o_wb_wen_nxt           (wb_wen[0]),
         .o_wb_cti_nxt           (wb_cti[0]),
         .i_wb_dat               (i_wb_dat),
-        .i_wb_ack               (wb_ack[0])
+        .i_wb_ack               (wb_ack[0]),
+        .i_wb_err               (wb_err[0])
 );
 
 // Cache Tag RAM - As a master - this performs cache clean - Master 1.
@@ -270,7 +277,8 @@ u_zap_tlb (
         .o_wb_sel_nxt   (wb_sel[2]),
         .o_wb_dat_nxt   (wb_dat[2]),
         .i_wb_dat       (i_wb_dat),
-        .i_wb_ack       (wb_ack[2])
+        .i_wb_ack       (wb_ack[2]),
+        .i_wb_err       (wb_err[2])
 );
 
 // Sequential Block
@@ -306,7 +314,7 @@ begin
         state_nxt = state_ff;
 
         // Change state only if strobe is inactive or strobe has just completed.
-        if ( !o_wb_stb || (o_wb_stb && i_wb_ack) )
+        if ( !o_wb_stb || (o_wb_stb && (i_wb_ack | i_wb_err)) )
         begin
                 casez({wb_cyc[2],wb_cyc[1],wb_cyc[0]})
                 3'b1?? : state_nxt = SELECT_TLB; // TLB.
@@ -320,13 +328,13 @@ end
 // Route ACKs to respective masters.
 always_comb
 begin
-        wb_ack = 0;
+        {wb_err, wb_ack} = 6'd0;
 
         case(state_ff)
-        SELECT_CCH: wb_ack[0] = i_wb_ack;
-        SELECT_TAG: wb_ack[1] = i_wb_ack;
-        SELECT_TLB: wb_ack[2] = i_wb_ack;
-        default: wb_ack = {3{1'dx}};
+        SELECT_CCH: {wb_err[0], wb_ack[0]} = {i_wb_err, i_wb_ack};
+        SELECT_TAG: {wb_err[1], wb_ack[1]} = {i_wb_err, i_wb_ack};
+        SELECT_TLB: {wb_err[2], wb_ack[2]} = {i_wb_err, i_wb_ack};
+        default:    {wb_err   , wb_ack   } = {6{1'dx}};
         endcase
 end
 
