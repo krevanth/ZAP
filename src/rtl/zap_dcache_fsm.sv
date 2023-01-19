@@ -46,6 +46,7 @@ input   logic                      i_wr,
 input   logic    [31:0]            i_din,
 input   logic    [3:0]             i_ben,
 input   logic    [63:0]            i_reg_idx,
+input   logic    [5:0]             i_reg_idx_bin,
 output  logic     [63:0]           o_lock,
 output  logic [31:0]               o_reg_dat,
 output  logic [63:0]               o_reg_idx,
@@ -420,20 +421,8 @@ begin:blk1
                                         // Lock register on load
                                         if ( i_rd )
                                         begin
-                                                for(int i=0;i<64;i++)
-                                                begin
-                                                        if (i_reg_idx[i] )
-                                                        begin
-                                                                if ( !lock_ff[i] )
-                                                                begin
-                                                                        lock_nxt[i] = 1'd1;
-                                                                end
-                                                                else
-                                                                begin
-                                                                        o_err2 = 1'd1;
-                                                                end
-                                                        end
-                                                end
+                                                lock_nxt[i_reg_idx_bin] = 1'd1;
+                                                o_err2    = lock_ff [i_reg_idx_bin];
                                         end
 
                                         if ( cache_dirty )
@@ -471,20 +460,8 @@ begin:blk1
                                                 // Lock register on load
                                                 if ( i_rd )
                                                 begin
-                                                        for(int i=0;i<64;i++)
-                                                        begin
-                                                                if(i_reg_idx[i])
-                                                                begin
-                                                                        if(!lock_ff[i])
-                                                                        begin
-                                                                                lock_nxt[i] = 1'd1;
-                                                                        end
-                                                                        else
-                                                                        begin
-                                                                                o_err2 = 1'd1;
-                                                                        end
-                                                                end
-                                                        end
+                                                        lock_nxt[i_reg_idx_bin] = 1'd1;
+                                                        o_err2    = lock_ff[i_reg_idx_bin];
                                                 end
                                 end
                                 endcase
@@ -539,8 +516,13 @@ begin:blk1
                 o_ack  = 1'd0;
                 o_hold = 1'd1;
 
-                if ( i_wb_ack | i_wb_err )
+                if ( i_wb_ack )
                 begin
+                        if ( i_wb_err )
+                        begin
+                                assert(i_wb_ack) else $fatal(2, "Error: ERR=1 but ACK=0.");
+                        end
+
                         o_ack           = 1'd1;
                         o_hold          = 1'd0;
 
@@ -699,16 +681,13 @@ begin:blk1
                         o_address                        = address;
                 end
 
-                // Unlock the register on load
+                //
+                // Unlock the register on load. Clear the bit. Invert reg
+                // idx and AND. Removes bits that were marked as 1 in reg_idx.
+                //
                 if ( !wr )
                 begin
-                        for(int i=0;i<64;i++)
-                        begin
-                                if ( reg_idx[i] )
-                                begin
-                                        lock_nxt[i] = 1'd0;
-                                end
-                        end
+                        lock_nxt &= ~(reg_idx);
                 end
 
                 // Back to IDLE

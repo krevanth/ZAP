@@ -222,8 +222,13 @@ begin: blk1
         begin
                 o_busy = 1;
 
-                if ( i_wb_ack | i_wb_err )
+                if ( i_wb_ack )
                 begin
+                        if ( i_wb_err )
+                        begin
+                                assert(i_wb_ack) else $fatal(2, "Error: ERR=1 but ACK=0.");
+                        end
+
                         err_nxt = i_wb_err;
                         dnxt = i_wb_dat;
 
@@ -263,10 +268,10 @@ begin: blk1
                         o_setlb_wdata     = {address[`ZAP_VA__SECTION_TAG],
                                              dff};
 
-                        assert(o_setlb_wdata[19:12] == '0)
+                        assert(o_setlb_wdata[19:12] == '0 || i_reset)
                         else $info("Error: Section page table format incorrect. Ignoring bits 15:12.");
 
-                        assert(o_setlb_wdata[9] == '0)
+                        assert(o_setlb_wdata[9] == '0 || i_reset)
                         else $info("Error: Section page table format incorrect. Ignoring bit 9");
 
                         // Tell synth that some bits will be zero.
@@ -322,8 +327,13 @@ begin: blk1
         begin
                         o_busy = 1;
 
-                        if ( i_wb_ack | i_wb_err )
+                        if ( i_wb_ack )
                         begin
+                                if ( i_wb_err )
+                                begin
+                                        assert(i_wb_ack) else $fatal(2, "ERR=1 but ACK=0.");
+                                end
+
                                 err_nxt         = i_wb_err;
                                 dnxt            = i_wb_dat;
 

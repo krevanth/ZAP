@@ -438,8 +438,13 @@ begin:blk1
                 o_ack  = 1'd0;
                 o_hold = 1'd1;
 
-                if ( i_wb_ack | i_wb_err )
+                if ( i_wb_ack )
                 begin
+                        if ( i_wb_err )
+                        begin
+                                assert ( i_wb_ack) else $fatal(2, "Error: ERR=1 but ACK=0");
+                        end
+
                         o_ack           = 1'd1;
                         o_hold          = 1'd0;
                         state_nxt       = IDLE;

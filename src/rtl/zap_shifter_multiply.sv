@@ -17,7 +17,7 @@
 // 02110-1301, USA.
 //
 // This unit handles 32x32=32/64 multiplication using an FSM using
-// a 17x17 signed array multiplier.
+// a 17x17 signed array multiplier. Takes 5 cycles per 32x32+64 operation.
 //
 
 module zap_shifter_multiply
@@ -63,12 +63,13 @@ module zap_shifter_multiply
 
 // States
 
-localparam [31:0] NUMBER_OF_STATES = 5;
-localparam [$clog2(NUMBER_OF_STATES)-1:0] IDLE = 3'd0;
-localparam [$clog2(NUMBER_OF_STATES)-1:0] S1   = 3'd1;
-localparam [$clog2(NUMBER_OF_STATES)-1:0] S2   = 3'd2;
-localparam [$clog2(NUMBER_OF_STATES)-1:0] S3   = 3'd3;
-localparam [$clog2(NUMBER_OF_STATES)-1:0] S4   = 3'd4;
+localparam [31:0] NUMBER_OF_STATES = 6;
+localparam [$clog2(NUMBER_OF_STATES)-1:0] IDLE          = 3'd0;
+localparam [$clog2(NUMBER_OF_STATES)-1:0] S1            = 3'd1;
+localparam [$clog2(NUMBER_OF_STATES)-1:0] S2            = 3'd2;
+localparam [$clog2(NUMBER_OF_STATES)-1:0] S3            = 3'd3;
+localparam [$clog2(NUMBER_OF_STATES)-1:0] S4            = 3'd4;
+localparam [$clog2(NUMBER_OF_STATES)-1:0] POST_IDLE     = 3'd5;
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -130,69 +131,69 @@ begin
         prod_ad = $signed({{30{xprod_ad[33]}},xprod_ad[33:0]});
 end
 
-always_comb // {ac} * {bd} = RM x RS
+always_ff @ (posedge i_clk) // {ac} * {bd} = RM x RS
 begin
-        take_upper = 1'd0;
+        take_upper <= 1'd0;
 
         if ( i_alu_operation_ff == {1'd0, SMLALL} || i_alu_operation_ff == {1'd0, SMLALH} )
         begin
                 // Signed RM x Signed RS
 
-                a = $signed({i_rm[31], i_rm[31:16]});
-                c = $signed({1'd0, i_rm[15:0]});
+                a <= $signed({i_rm[31], i_rm[31:16]});
+                c <= $signed({1'd0, i_rm[15:0]});
 
-                b = $signed({i_rs[31], i_rs[31:16]});
-                d = $signed({1'd0, i_rs[15:0]});
+                b <= $signed({i_rs[31], i_rs[31:16]});
+                d <= $signed({1'd0, i_rs[15:0]});
         end
         else if ( i_alu_operation_ff == OP_SMULW0 )
         begin
                 // Signed RM x Lower RS
 
-                a = $signed({i_rm[31], i_rm[31:16]});
-                c = $signed({1'd0, i_rm[15:0]});
+                a <= $signed({i_rm[31], i_rm[31:16]});
+                c <= $signed({1'd0, i_rm[15:0]});
 
-                b = $signed({17{i_rs[15]}});
-                d = $signed({1'd0, i_rs[15:0]});
+                b <= $signed({17{i_rs[15]}});
+                d <= $signed({1'd0, i_rs[15:0]});
 
-                take_upper = 1'd1;
+                take_upper <= 1'd1;
         end
         else if ( i_alu_operation_ff == OP_SMULW1 )
         begin
                 // Signed RM x Upper RS
 
-                a = $signed({i_rm[31], i_rm[31:16]});
-                c = $signed({1'd0, i_rm[15:0]});
+                a <= $signed({i_rm[31], i_rm[31:16]});
+                c <= $signed({1'd0, i_rm[15:0]});
 
-                b = $signed({17{i_rs[31]}});
-                d = $signed({1'd0, i_rs[31:16]});
+                b <= $signed({17{i_rs[31]}});
+                d <= $signed({1'd0, i_rs[31:16]});
 
-                take_upper = 1'd1;
+                take_upper <= 1'd1;
         end
         else if ( i_alu_operation_ff == OP_SMUL00   || i_alu_operation_ff == OP_SMLA00  ||
                   i_alu_operation_ff == OP_SMLAL00L || i_alu_operation_ff == OP_SMLAL00H )
         begin
                 // lower RM x lower RS
 
-                a = $signed({17{i_rm[15]}});
-                c = $signed({1'd0, i_rm[15:0]});
+                a <= $signed({17{i_rm[15]}});
+                c <= $signed({1'd0, i_rm[15:0]});
 
-                b = $signed({17{i_rs[15]}});
-                d = $signed({1'd0, i_rs[15:0]});
+                b <= $signed({17{i_rs[15]}});
+                d <= $signed({1'd0, i_rs[15:0]});
         end
         else if (  i_alu_operation_ff == OP_SMUL01   || i_alu_operation_ff == OP_SMLA01 ||
                    i_alu_operation_ff == OP_SMLAL01L || i_alu_operation_ff == OP_SMLAL01H )
         begin
                 // lower RM x upper RS
 
-                a = $signed({17{i_rm[15]}});         // x = 0 for Rm
-                c = $signed({1'd0, i_rm[15:0]});
+                a <= $signed({17{i_rm[15]}});         // x = 0 for Rm
+                c <= $signed({1'd0, i_rm[15:0]});
 
-                b = $signed({17{i_rs[16]}});        // y = 1 for Rs
-                d = $signed({1'd0, i_rs[31:16]});
+                b <= $signed({17{i_rs[16]}});        // y = 1 for Rs
+                d <= $signed({1'd0, i_rs[31:16]});
 
                 if ( i_alu_operation_ff == OP_SMLAL01L || i_alu_operation_ff == OP_SMLAL01H )
                 begin
-                        take_upper = 1'd1;
+                        take_upper <= 1'd1;
                 end
         end
         else if ( i_alu_operation_ff == OP_SMUL10   || i_alu_operation_ff == OP_SMLA10 ||
@@ -200,15 +201,15 @@ begin
         begin
                 // upper RM x lower RS
 
-                a = $signed({17{i_rm[31]}});       // x = 1 for Rm
-                c = $signed({1'd0, i_rm[31:16]});
+                a <= $signed({17{i_rm[31]}});       // x = 1 for Rm
+                c <= $signed({1'd0, i_rm[31:16]});
 
-                b = $signed({17{i_rs[15]}});           // y = 0 for Rs
-                d = $signed({1'd0, i_rs[15:0]});
+                b <= $signed({17{i_rs[15]}});           // y = 0 for Rs
+                d <= $signed({1'd0, i_rs[15:0]});
 
                 if ( i_alu_operation_ff == OP_SMLAL10L || i_alu_operation_ff == OP_SMLAL10H )
                 begin
-                        take_upper = 1'd1;
+                        take_upper <= 1'd1;
                 end
         end
         else if ( i_alu_operation_ff == OP_SMUL11   || i_alu_operation_ff == OP_SMLA11 ||
@@ -216,21 +217,21 @@ begin
         begin
                 // upper RM x upper RS
 
-                a = $signed({17{i_rm[31]}});
-                c = $signed({1'd0, i_rm[31:16]});
+                a <= $signed({17{i_rm[31]}});
+                c <= $signed({1'd0, i_rm[31:16]});
 
-                b = $signed({17{i_rs[31]}});
-                d = $signed({1'd0, i_rs[31:16]});
+                b <= $signed({17{i_rs[31]}});
+                d <= $signed({1'd0, i_rs[31:16]});
         end
         else
         begin
                // unsigned RM x RS
 
-               a = $signed({1'd0, i_rm[31:16]});
-               c = $signed({1'd0, i_rm[15:0]});
+               a <= $signed({1'd0, i_rm[31:16]});
+               c <= $signed({1'd0, i_rm[15:0]});
 
-               b = $signed({1'd0, i_rs[31:16]});
-               d = $signed({1'd0, i_rs[15:0]});
+               b <= $signed({1'd0, i_rs[31:16]});
+               d <= $signed({1'd0, i_rs[15:0]});
 
         end
 end
@@ -253,8 +254,6 @@ begin
         case ( state_ff )
                 IDLE:
                 begin
-                        o_busy = 1'd0;
-
                         // If we have the go signal.
                         if ( i_cc_satisfied && (i_alu_operation_ff == {1'd0, UMLALL} ||
                                                 i_alu_operation_ff == {1'd0, UMLALH} ||
@@ -284,9 +283,17 @@ begin
                                                 i_alu_operation_ff == OP_SMLAL11H   )
                         )
                         begin
-                                o_busy    = 1'd1;
-                                state_nxt = !higher ? S1 : S3;
+                                state_nxt = POST_IDLE;
                         end
+                        else
+                        begin
+                                o_busy = 1'd0;
+                        end
+                end
+
+                POST_IDLE:
+                begin
+                        state_nxt = !higher ? S1 : S3;
                 end
 
                 S1:

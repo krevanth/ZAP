@@ -12,13 +12,13 @@ You should have received a copy of the GNU General Public License along with thi
 
 ## 1. Introduction
 
-The ZAP is intended to be used in FPGA projects that need a high performance application class soft processor core. Most aspects of the processor can be configured through HDL parameters.  The processor can be synthesized  with 0 slack at 166MHz on Artix-7 series SG-3 devices in the slow-slow (SS) corner. 
+The ZAP is intended to be used in FPGA projects that need a high performance application class soft processor core. Most aspects of the processor can be configured through HDL parameters.  The processor can be synthesized  with 0 slack at 170MHz on Artix-7 series SG-3 devices in the slow-slow (SS) corner. 
 
 The default processor specification is as follows (The table below is based on default parameters):
 
 | **Property**              | **Value**                                                                                                                                                                                                                  |
 | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Performance               | Synthesized at 166MHz @ xc7a75tcsg324-3 Artix-7 FPGA with 0 slack. <br/>130 DMIPS @ 166MHz with cache enabled. **Cache must be enabled, and utilized effectively, for peak performance.**                                  |
+| Performance               | Synthesized at 170MHz @ xc7a75tcsg324-3 Artix-7 FPGA with 0 slack. Synthesis scripts are provided. <br/>. **Cache must be enabled, and utilized effectively, for peak performance.**                                  |
 | Clock and Reset           | Purely synchronous reset scheme. Purely rising edge clock driven design.                                                                                                                                                   |
 | IRQ                       | Supported. Level sensitive interrupt signal. CPU uses a dual rank synchronizer to sample this and make it synchronous to the rising edge of clock.                                                                         |
 | FIQ                       | Supported. Level sensitive interrupt signal. CPU uses a dual rank synchronizer to sample this and make it synchronous to the rising edge of clock.                                                                         |
@@ -37,19 +37,6 @@ The default processor specification is as follows (The table below is based on d
 | Branch latency            | 12 cycles (wrong prediction or unrecognized branch)<br>3 cycles (taken, correctly predicted)<br>1 cycle (not-taken, correctly predicted)<br>12 cycles (32-bit/16-bit switch)<br>18 cycles (Exception/Interrupt Entry/Exit) |
 | Fetch Buffer              | FIFO, 16 x 32-bit.                                                                                                                                                                                                         |
 | Bus Interface             | Unified 32-Bit Wishbone B3 bus with CTI and BTE signals.<br/>BTE and CTI signals are used only when cache is enabled.                                                                                                      |
-
-##### FPGA Utilization Report for the Core + Cache + MMU:
-
-> Note that the MMU is present inside the cache.
-
-| Name                                 | Slice  LUTs | Slice  Registers | F7  Muxes | F8  Muxes | Block  RAM  Tile | DSPs |
-| ------------------------------------ | ----------- | ---------------- | --------- | --------- | ---------------- | ---- |
-| zap_top                              | 21662       | 14289            | 991       | 320       | 22.5             | 4    |
-| genblk1.u_code_cache  (zap_cache)    | 4629        | 4270             | 204       | 5         | 10               | 0    |
-| genblk1.u_data_cache  (zap_dcache)   | 7414        | 4617             | 165       | 25        | 10               | 0    |
-| u_sync  (zap_dual_rank_synchronizer) | 0           | 4                | 0         | 0         | 0                | 0    |
-| u_zap_core  (zap_core)               | 9614        | 5325             | 622       | 290       | 2.5              | 4    |
-| u_zap_wb_merger  (zap_wb_merger)     | 5           | 73               | 0         | 0         | 0                | 0    |
 
 A simplified block diagram of the ZAP pipeline is shown below. Note that ZAP is mostly a single issue scalar processor.
 
@@ -748,9 +735,9 @@ Timing report will be available in `obj/syn/syn_timing.rpt`
 
 #### 3.4.1. XDC Setup (Vivado FPGA Synthesis)
 
-* The XDC assumes a 170MHz clock for an Artix 7 FPGA part with -3 speed grade.
-* All inputs are given an input delay of 1ns, typical for an FPGA flip-flop.
-* Outputs assume they are driving flip-flops with Tsu = 2ns Th=1ns.
+* The XDC assumes a 200MHz clock for an Artix 7 FPGA part with -3 speed grade.
+* All timing valid inputs are given an input delay of 1 ns, which is typical for an FPGA flip-flop.
+* Outputs assume they are driving flip-flops with Tsu = 2ns Th=1ns, typical for an FPGA flip-flop.
 
 ## 4. Acknowledgements
 

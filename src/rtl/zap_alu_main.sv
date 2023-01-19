@@ -388,6 +388,7 @@ logic                            w_confirm_from_alu;
 
 // Precompute adder
 logic [31:0]                     quick_sum;
+logic [31:0]                     quick_diff;
 
 // Decompile valid.
 logic                            o_decompile_valid_nxt;
@@ -403,7 +404,8 @@ logic                            branch_instruction;
 // ----------------------------------------------------------------------------
 
 assign opcode       = i_alu_operation_ff;
-assign quick_sum    = rm + rn;
+assign quick_sum    = rn + rm;
+assign quick_diff   = rn - rm;
 assign  rm          = i_shifted_source_value_ff;
 assign  rn          = i_alu_source_value_ff;
 assign  o_flags_ff  = flags_ff;
@@ -760,9 +762,17 @@ begin:pre_post_index_address_generator
         begin
                 mem_address_nxt = rn;               // Postindex;
         end
+        else if ( i_alu_operation_ff == {2'd0, ADD} )
+        begin
+                mem_address_nxt = quick_sum[31:0];        // Preindex.
+        end
+        else if ( i_alu_operation_ff == {2'd0, SUB} )
+        begin
+                mem_address_nxt = quick_diff[31:0];
+        end
         else
         begin
-                mem_address_nxt = sum[31:0];        // Preindex.
+                mem_address_nxt = 'x;
         end
 
         // FCSE.

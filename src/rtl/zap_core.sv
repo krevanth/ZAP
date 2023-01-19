@@ -152,7 +152,8 @@ input   logic                            i_dcache_err2,
 input   logic [63:0]                     i_dc_reg_idx, // Register to load to.
 input   logic [31:0]                     i_dc_reg_dat, // Register data.
 input   logic [63:0]                     i_dc_lock,    // Register that is locked.
-output  logic [63:0]                     o_dc_reg_idx  // Register index.
+output  logic [63:0]                     o_dc_reg_idx, // Register index.
+output  logic [5:0]                      o_dc_reg_idx_bin // Binary index.
 
 );
 
@@ -542,6 +543,8 @@ begin
         o_dc_reg_idx                               = 64'd0;
         o_dc_reg_idx[postalu_mem_srcdest_index_ff] = 1'd1;
 end
+
+assign o_dc_reg_idx_bin = postalu_mem_srcdest_index_ff;
 
 localparam [31:0] MIN_SAT = {1'd1, {31{1'd0}}}; // Smallest -ve value.
 localparam [31:0] MAX_SAT = {1'd0, {31{1'd1}}}; // Largest +ve value.

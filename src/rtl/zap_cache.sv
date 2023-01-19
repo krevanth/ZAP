@@ -93,9 +93,9 @@ input  logic              i_wb_err
 `include "zap_defines.svh"
 `include "zap_localparams.svh"
 
-localparam [1:0] SELECT_CCH = 2'd0;
-localparam [1:0] SELECT_TAG = 2'd1;
-localparam [1:0] SELECT_TLB = 2'd2;
+localparam [2:0] SELECT_CCH = 3'b001;
+localparam [2:0] SELECT_TAG = 3'b010;
+localparam [2:0] SELECT_TLB = 3'b100;
 
 logic [2:0]                      wb_stb;
 logic [2:0]                      wb_cyc;
@@ -120,7 +120,7 @@ logic                            tr_cache_tag_dirty, cf_cache_tag_dirty;
 logic                            cf_cache_clean_req, cf_cache_inv_req;
 logic                            tr_cache_inv_done, tr_cache_clean_done;
 logic [2:0]                      wb_ack;
-logic [1:0]                      state_ff, state_nxt;
+logic [2:0]                      state_ff, state_nxt;
 logic [31:0]                     cache_address;
 logic                            hold;
 logic                            idle;
@@ -313,8 +313,16 @@ always_comb
 begin
         state_nxt = state_ff;
 
+        if ( i_wb_err )
+        begin
+                assert(i_wb_ack) else $fatal(2, "Error: Err=1 but no ACK.");
+        end
+
+        //
         // Change state only if strobe is inactive or strobe has just completed.
-        if ( !o_wb_stb || (o_wb_stb && (i_wb_ack | i_wb_err)) )
+        // ERR follows ACK. There's an assertion to check that.
+        //
+        if ( !o_wb_stb || (o_wb_stb && i_wb_ack) )
         begin
                 casez({wb_cyc[2],wb_cyc[1],wb_cyc[0]})
                 3'b1?? : state_nxt = SELECT_TLB; // TLB.
@@ -325,7 +333,7 @@ begin
         end
 end
 
-// Route ACKs to respective masters.
+// Route ERRs and ACKs to respective masters.
 always_comb
 begin
         {wb_err, wb_ack} = 6'd0;
@@ -341,13 +349,48 @@ end
 // Combo signals for external MUXing.
 always_comb
 begin
-        o_wb_stb_nxt = wb_stb[state_nxt];
-        o_wb_cyc_nxt = wb_cyc[state_nxt];
-        o_wb_adr_nxt = wb_adr[state_nxt];
-        o_wb_dat_nxt = wb_dat[state_nxt];
-        o_wb_cti_nxt = wb_cti[state_nxt];
-        o_wb_sel_nxt = wb_sel[state_nxt];
-        o_wb_wen_nxt = wb_wen[state_nxt];
+        case(state_nxt)
+        SELECT_CCH:
+        begin
+                o_wb_stb_nxt = wb_stb[0];
+                o_wb_cyc_nxt = wb_cyc[0];
+                o_wb_adr_nxt = wb_adr[0];
+                o_wb_dat_nxt = wb_dat[0];
+                o_wb_cti_nxt = wb_cti[0];
+                o_wb_sel_nxt = wb_sel[0];
+                o_wb_wen_nxt = wb_wen[0];
+        end
+        SELECT_TAG:
+        begin
+                o_wb_stb_nxt = wb_stb[1];
+                o_wb_cyc_nxt = wb_cyc[1];
+                o_wb_adr_nxt = wb_adr[1];
+                o_wb_dat_nxt = wb_dat[1];
+                o_wb_cti_nxt = wb_cti[1];
+                o_wb_sel_nxt = wb_sel[1];
+                o_wb_wen_nxt = wb_wen[1];
+        end
+        SELECT_TLB:
+        begin
+                o_wb_stb_nxt = wb_stb[2];
+                o_wb_cyc_nxt = wb_cyc[2];
+                o_wb_adr_nxt = wb_adr[2];
+                o_wb_dat_nxt = wb_dat[2];
+                o_wb_cti_nxt = wb_cti[2];
+                o_wb_sel_nxt = wb_sel[2];
+                o_wb_wen_nxt = wb_wen[2];
+        end
+        default:
+        begin
+                o_wb_stb_nxt = 'x;
+                o_wb_cyc_nxt = 'x;
+                o_wb_adr_nxt = 'x;
+                o_wb_dat_nxt = 'x;
+                o_wb_cti_nxt = 'x;
+                o_wb_sel_nxt = 'x;
+                o_wb_wen_nxt = 'x;
+        end
+        endcase
 end
 
 endmodule // zap_cache

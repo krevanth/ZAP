@@ -190,6 +190,7 @@ logic [2:0]      d_wb_cti;
 logic            d_wb_ack;
 logic            d_wb_err;
 logic [63:0]     dc_rreg_idx, dc_wreg_idx;
+logic [5:0]      dc_rreg_idx_bin;
 logic [63:0]     dc_lock;
 logic [31:0]     dc_reg_data;
 logic            icache_err2, dcache_err2;
@@ -303,6 +304,7 @@ zap_core #(
 .o_instr_wb_adr_check   (cpu_iaddr_check),
 .o_cpsr                 (cpu_cpsr[ZAP_CPSR_MODE:0]),
 .o_dc_reg_idx           (dc_rreg_idx),
+.o_dc_reg_idx_bin       (dc_rreg_idx_bin),
 
 .i_dc_reg_idx           (!ONLY_CORE ? dc_wreg_idx : '0),
 .i_dc_lock              (!ONLY_CORE ? dc_lock : '0),
@@ -426,6 +428,7 @@ begin : l_tieoffs_only_core
          | (    |cpu_dtlb_inv      )
          | (    |cpu_itlb_inv      )
          | (    |dc_rreg_idx       )
+         | (    |dc_rreg_idx_bin   )
          | (    |cpu_dwe_check     )
          | (    |cpu_dre_check     )
          | (    |code_stall        )
@@ -546,6 +549,7 @@ u_data_cache (
 .i_ben                  (cpu_dc_sel),
 .i_dat                  (cpu_dc_dat),
 .i_reg_idx              (dc_rreg_idx),
+.i_reg_idx_bin          (dc_rreg_idx_bin),
 
 .o_dat                  (dc_data),
 .o_ack                  (data_ack),
