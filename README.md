@@ -18,7 +18,7 @@ The default processor specification is as follows (The table below is based on d
 
 | **Property**              | **Value**                                                                                                                                                                                                                  |
 | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Performance               | Synthesized at 170MHz @ xc7a75tcsg324-3 Artix-7 FPGA with 0 slack. Synthesis scripts are provided. <br/>. **Cache must be enabled, and utilized effectively, for peak performance.**                                  |
+| Performance               | Synthesized at 170MHz @ xc7a75tcsg324-3 Artix-7 FPGA with 0 slack. Synthesis scripts are provided. <br/>**Cache must be enabled, and utilized effectively, for peak performance.**                                         |
 | Clock and Reset           | Purely synchronous reset scheme. Purely rising edge clock driven design.                                                                                                                                                   |
 | IRQ                       | Supported. Level sensitive interrupt signal. CPU uses a dual rank synchronizer to sample this and make it synchronous to the rising edge of clock.                                                                         |
 | FIQ                       | Supported. Level sensitive interrupt signal. CPU uses a dual rank synchronizer to sample this and make it synchronous to the rising edge of clock.                                                                         |
@@ -732,6 +732,8 @@ Assuming you have Vivado installed, please do (in project root directory):
 > `make syn`
 
 Timing report will be available in `obj/syn/syn_timing.rpt`
+
+DCP file will be available in `obj/syn/zap.dcp` 
 
 #### 3.4.1. XDC Setup (Vivado FPGA Synthesis)
 

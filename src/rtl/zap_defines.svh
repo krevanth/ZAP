@@ -122,4 +122,7 @@
 `define ZAP_SPAGE_TLB_WDT         (36 + (32-$clog2(SPAGE_TLB_ENTRIES)-12))
 `define ZAP_FPAGE_TLB_WDT         (32 + (32-$clog2(FPAGE_TLB_ENTRIES)-10))
 
+// Misc.
+`define ZAP_DEFAULT_XX            XX = 'X
+
 `endif

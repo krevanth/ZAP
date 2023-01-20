@@ -17,8 +17,10 @@
 # 02110-1301, USA.
 #
 
+# We targeting an Artix-7 speed grade -3 FPGA for synthesis.
 create_project project_1 -part xc7a75tcsg324-3
 
+# Add RTL files and includes for synthesis.
 add_files -scan_for_includes {
 ../../src/rtl/zap_predecode_uop_sequencer.sv \
 ../../src/rtl/zap_wb_merger.sv \
@@ -60,13 +62,47 @@ add_files -scan_for_includes {
 ../../src/rtl/zap_ram_simple_ben.sv\
 }
 
-update_compile_order -fileset sources_1
+# Create a sources_1 fileset.
+update_compile_order \
+-fileset sources_1
 
+# Add XDC file into the mix, into constrs_1.
 add_files -fileset constrs_1 -norecurse ../../src/syn/syn.xdc
 
-synth_design -top zap_top -part xc7a75tcsg324-3 -gated_clock_conversion auto -directive PerformanceOptimized -retiming -fsm_extraction one_hot -keep_equivalent_registers -resource_sharing off -no_lc -shreg_min_size 5 -mode out_of_context
+#
+# Synthesize the design with Vivado high performance defaults, as seen in
+# the GUI.
+#
+synth_design \
+-top zap_top \
+-part xc7a75tcsg324-3 \
+-gated_clock_conversion auto \
+-directive PerformanceOptimized \
+-retiming \
+-keep_equivalent_registers \
+-resource_sharing off \
+-no_lc \
+-shreg_min_size 5 \
+-mode out_of_context
 
+#
+# Generate a timing report for the worst 1000 paths. We expect the timing
+# report to be clean.
+#
+report_timing_summary \
+-delay_type max \
+-report_unconstrained \
+-check_timing_verbose \
+-max_paths 1000 \
+-input_pins \
+-file syn_timing.rpt
 
-report_timing_summary -delay_type max -report_unconstrained -check_timing_verbose -max_paths 1000 -input_pins -file syn_timing.rpt
+#
+# Generate a DCP file that can be loaded for further runs to integrate
+# the design into an SOC.
+#
+write_checkpoint zap.dcp
 
-
+###############################################################################
+# EOF
+###############################################################################

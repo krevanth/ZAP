@@ -108,28 +108,29 @@ assign unused = |{pre_index};
 
 ///////////////////////////////////////////////////////////////////////////////
 
-enum logic [5:0] {
-        IDLE           ,
-        MEMOP          ,
-        WRITE_PC       ,
-        SWAP1          ,
-        SWAP2          ,
-        LMULT_BUSY     ,
-        BL_S1          ,
-        BLX1_STATE_S0  ,
-        BLX1_STATE_S1  ,
-        BLX1_STATE_S2  ,
-        BLX1_STATE_S3  ,
-        BLX1_STATE_S4  ,
-        BLX1_STATE_S5  ,
-        BLX2_STATE_S0  ,
-        LDRD_STRD_S0   ,
-        LDRD_STRD_S1   ,
-        LDR_TO_PC_S0   ,
-        DEP_WAIT       ,
-        DEP_WAIT_1     ,
-        DEP_WAIT_2     ,
-        DEP_WAIT_3
+enum logic [20:0] {
+        IDLE            = 1 << 0 ,
+        MEMOP           = 1 << 1 ,
+        WRITE_PC        = 1 << 2 ,
+        SWAP1           = 1 << 3 ,
+        SWAP2           = 1 << 4 ,
+        LMULT_BUSY      = 1 << 5 ,
+        BL_S1           = 1 << 6 ,
+        BLX1_STATE_S0   = 1 << 7 ,
+        BLX1_STATE_S1   = 1 << 8 ,
+        BLX1_STATE_S2   = 1 << 9 ,
+        BLX1_STATE_S3   = 1 << 10 ,
+        BLX1_STATE_S4   = 1 << 11 ,
+        BLX1_STATE_S5   = 1 << 12 ,
+        BLX2_STATE_S0   = 1 << 13 ,
+        LDRD_STRD_S0    = 1 << 14 ,
+        LDRD_STRD_S1    = 1 << 15 ,
+        LDR_TO_PC_S0    = 1 << 16 ,
+        DEP_WAIT        = 1 << 17 ,
+        DEP_WAIT_1      = 1 << 18 ,
+        DEP_WAIT_2      = 1 << 19 ,
+        DEP_WAIT_3      = 1 << 20 ,
+        `ZAP_DEFAULT_XX
 } state_ff, state_nxt;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -796,8 +797,9 @@ begin:blk_a
 
                 default:
                 begin
-                        {const_nxt,
-                         state_nxt
+                        state_nxt = XX;
+
+                        {const_nxt
                         ,o_stall_from_decode
                         ,o_irq
                         ,o_fiq

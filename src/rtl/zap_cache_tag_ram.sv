@@ -77,13 +77,16 @@ input logic                               i_wb_ack
 localparam [31:0] NUMBER_OF_DIRTY_BLOCKS = ((CACHE_SIZE/CACHE_LINE)/16); // Keep cache size > 16 bytes.
 
 // States.
-localparam [2:0] IDLE                           = 0;
-localparam [2:0] CACHE_CLEAN_GET_ADDRESS        = 1;
-localparam [2:0] CACHE_INV                      = 2;
-localparam [2:0] CACHE_CLEAN_WRITE_PRE_PRE_WAIT = 3;
-localparam [2:0] CACHE_CLEAN_WRITE_PRE_WAIT     = 4;
-localparam [2:0] CACHE_CLEAN_WRITE_PRE          = 5;
-localparam [2:0] CACHE_CLEAN_WRITE              = 6;
+typedef enum logic [6:0] {
+        IDLE                           = 7'b000_0001,
+        CACHE_CLEAN_GET_ADDRESS        = 7'b000_0010,
+        CACHE_CLEAN_WRITE_PRE_PRE_WAIT = 7'b000_0100,
+        CACHE_CLEAN_WRITE_PRE_WAIT     = 7'b000_1000,
+        CACHE_CLEAN_WRITE_PRE          = 7'b001_0000,
+        CACHE_CLEAN_WRITE              = 7'b010_0000,
+        CACHE_INV                      = 7'b100_0000,
+        `ZAP_DEFAULT_XX
+} t_state;
 
 // Padding widths.
 localparam [31:0] BLK_CTR_PAD = 32 - $clog2(NUMBER_OF_DIRTY_BLOCKS) - 1;
@@ -102,7 +105,7 @@ logic [$clog2(CACHE_SIZE/CACHE_LINE)-1:0]  tag_ram_rd_addr, tag_ram_rd_addr_del,
                                            tag_ram_rd_addr_nxt;
 logic                                      tag_ram_clear;
 logic                                      tag_ram_clean;
-logic [2:0]                                state_ff, state_nxt;
+t_state                                    state_ff, state_nxt;
 logic [$clog2(NUMBER_OF_DIRTY_BLOCKS):0]   blk_ctr_ff, blk_ctr_nxt;
 logic [$clog2(CACHE_LINE/4):0]             adr_ctr_ff, adr_ctr_nxt;
 logic                                      cache_tag_dirty, cache_tag_dirty_del;
@@ -415,7 +418,7 @@ begin:blk1
                 dummy                   = 'x; //
                 unused_0                = 'x; //
                 unusedx                 = 'x; //
-                state_nxt               = 'x; //
+                state_nxt               = XX; //
                 tag_ram_rd_addr_nxt     = 'x; //
                 tag_ram_rd_addr         = 'x; //
                 tag_ram_wr_addr         = 'x; //

@@ -64,12 +64,16 @@ module zap_shifter_multiply
 // States
 
 localparam [31:0] NUMBER_OF_STATES = 6;
-localparam [$clog2(NUMBER_OF_STATES)-1:0] IDLE          = 3'd0;
-localparam [$clog2(NUMBER_OF_STATES)-1:0] S1            = 3'd1;
-localparam [$clog2(NUMBER_OF_STATES)-1:0] S2            = 3'd2;
-localparam [$clog2(NUMBER_OF_STATES)-1:0] S3            = 3'd3;
-localparam [$clog2(NUMBER_OF_STATES)-1:0] S4            = 3'd4;
-localparam [$clog2(NUMBER_OF_STATES)-1:0] POST_IDLE     = 3'd5;
+
+typedef enum logic [NUMBER_OF_STATES-1:0] {
+        IDLE          = 6'b000_001,
+        POST_IDLE     = 6'b000_010,
+        S1            = 6'b000_100,
+        S2            = 6'b001_000,
+        S3            = 6'b010_000,
+        S4            = 6'b100_000,
+        `ZAP_DEFAULT_XX
+} t_state;
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -107,7 +111,7 @@ logic               take_upper; // NOT WHAT IT LOOKS LIKE. NOT TO TAKE UPPER
                                 // 16 BIT OF 48-BIT PRODUCT.
 
 // State
-logic [$clog2(NUMBER_OF_STATES)-1:0] state_ff, state_nxt;
+t_state state_ff, state_nxt;
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -373,7 +377,7 @@ begin
                         o_nozero       = 'x; //
                         o_busy         = 'x; //
                         o_rd           = 'x; //
-                        state_nxt      = 'x; //
+                        state_nxt      = XX; //
                         x_nxt          = 'x; //
                         o_sat          = 'x; //
                         tmp_sat        = 'x; //

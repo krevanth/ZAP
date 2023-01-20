@@ -18,19 +18,13 @@
 #
 
 # Target 170MHz clock speed.
-create_clock -period 5.000 -name i_clk -waveform {0.000 2.500} [get_ports i_clk]
+create_clock -period 5.88 -name i_clk -waveform {0.0 2.94} [get_ports i_clk]
 
 # Inputs are directly driven from FF.
 set_input_delay -clock [get_clocks i_clk] -add_delay 1.000 [get_ports {i_wb_dat[*]}]
 set_input_delay -clock [get_clocks i_clk] -add_delay 1.000 [get_ports i_reset]
 set_input_delay -clock [get_clocks i_clk] -add_delay 1.000 [get_ports i_wb_ack]
 set_input_delay -clock [get_clocks i_clk] -add_delay 1.000 [get_ports i_wb_err]
-
-#
-# False path. Design ensures it is silent when MMU setting changes. The through
-# syntax is not preferable, but need it to work around a Vivado bug.
-#
-set_false_path -through [get_pins l_generate_with_cache_mmu.u_data_cache/u_zap_tlb/u_zap_tlb_fsm/i_mmu_en]
 
 # Design has double flop synchronizer.
 set_false_path -from [get_ports i_fiq]
