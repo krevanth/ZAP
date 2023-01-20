@@ -101,7 +101,7 @@ Most of the time, the pipeline is able to process 1 instruction per clock cycle.
 * Two back to back instructions that require non-zero shift and the second instruction's operand overlaps with the first instruction's destination.
 * When a previous instruction modifies the flags and the current instruction requires a non-trivial shift operation. Note that `LSL #0` is considered a trivial shift operation.
 * The pipeline is executing any multiply/MAC instruction:
-  * Introduces a 3 cycle bubble into the pipeline if a single register is written out. (+1 if two registers are written out)
+  * Introduces a 4 cycle bubble into the pipeline if a single register is written out. (+1 if two registers are written out)
   * An instruction that uses a register that is/are destination(s) for multiply/MAC adds +1 to the multiply/MAC operation's latency.
 * `B` is executed as it adds a 3 cycle bubble due to branch prediction. Takes +1 cycle if link bit is set.
 * `MOV`/`ADD` instructions with `pc/r15` as destination are executed. They will insert a 3 cycle bubble in the pipeline.
