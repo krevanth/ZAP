@@ -570,6 +570,10 @@ endfunction
                 end
                 else if ( i_und )
                 begin
+                        assert(1'd0) else
+                        $display("Error: Undefined instruction detected at address=%x CPSR=%x",
+                        i_pc_plus_8_buf_ff - 8, i_flags);
+
                         $sformat(msg_nxt, "%x:<UND>", i_pc_plus_8_buf_ff - 8);
                 end
                 else if ( i_copro_reg_en  )
