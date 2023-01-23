@@ -20,20 +20,21 @@
 // instruction format that is understood by downstream logic.
 //
 
-
-
 module zap_decode_main #(
         // Number of architectural registers.
         parameter [31:0] ARCH_REGS = 32'd32,
 
         // Number of arithm. opcodes
-        parameter [31:0] ALU_OPS   = 32,
+        parameter [31:0] ALU_OPS   = 32'd32,
 
         // Total shift operations supported.
-        parameter [31:0] SHIFT_OPS = 6,
+        parameter [31:0] SHIFT_OPS = 32'd6,
 
         // Number of physical registers.
-        parameter [31:0] PHY_REGS = 46
+        parameter [31:0] PHY_REGS = 32'd46,
+
+        // CPSR mode.
+        parameter [31:0] CPSR_MODE = 32'd4
 )
 (
         output logic  [64*8-1:0]                  o_decompile, // For debug purposes.
@@ -78,7 +79,7 @@ module zap_decode_main #(
         input logic  [31:0]                      i_pc_plus_8_ff,
 
         // CPU mode. Taken from CPSR.
-        input   logic    [ZAP_CPSR_MODE:0]        i_cpsr_ff_mode, // Mode.
+        input   logic    [CPSR_MODE:0]            i_cpsr_ff_mode, // Mode.
 
         // Instruction input.
         input     logic  [35:0]                  i_instruction,

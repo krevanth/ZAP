@@ -26,7 +26,8 @@ module zap_tlb_check #(
         parameter logic [31:0] LPAGE_TLB_ENTRIES   = 32'd8,
         parameter logic [31:0] SPAGE_TLB_ENTRIES   = 32'd8,
         parameter logic [31:0] SECTION_TLB_ENTRIES = 32'd8,
-        parameter logic [31:0] FPAGE_TLB_ENTRIES   = 32'd8
+        parameter logic [31:0] FPAGE_TLB_ENTRIES   = 32'd8,
+        parameter logic [31:0] CPSR_MODE           = 32'd4
 
 )
 (
@@ -39,7 +40,7 @@ input logic [31:0]                       i_va,           // Virtual address.
 input logic                              i_rd,           // Read request.
 input logic                              i_wr,           // Write request.
 
-input logic [ZAP_CPSR_MODE:0]             i_cpsr,         // CPSR.
+input logic [CPSR_MODE:0]                i_cpsr,         // CPSR.
 input logic [1:0]                        i_sr,           // Status Register.
 input logic [31:0]                       i_dac_reg,      // Domain Access Control Register.
 

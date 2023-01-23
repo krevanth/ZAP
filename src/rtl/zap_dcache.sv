@@ -29,7 +29,8 @@ parameter logic [31:0] LPAGE_TLB_ENTRIES      = 32'd8,
 parameter logic [31:0] SECTION_TLB_ENTRIES    = 32'd8,
 parameter logic [31:0] FPAGE_TLB_ENTRIES      = 32'd8,
 parameter logic [31:0] CACHE_LINE             = 32'd8,
-parameter logic        BE_32_ENABLE           = 1'd0
+parameter logic        BE_32_ENABLE           = 1'd0,
+parameter logic [31:0] CPSR_MODE              = 32'd4
 
 )
 (
@@ -77,7 +78,7 @@ input   logic            i_cache_clean_req,
 output logic             o_cache_inv_done,
 output  logic            o_cache_clean_done,
 
-input   logic [ZAP_CPSR_MODE:0] i_cpsr,
+input   logic [CPSR_MODE:0]    i_cpsr,
 input   logic [1:0]            i_sr,
 input   logic [31:0]           i_baddr,
 input   logic [31:0]           i_dac_reg,

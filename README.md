@@ -12,13 +12,13 @@ You should have received a copy of the GNU General Public License along with thi
 
 ## 1. Introduction
 
-The ZAP is intended to be used in FPGA projects that need a high performance application class soft processor core. Most aspects of the processor can be configured through HDL parameters.  The processor can be synthesized  with 0 slack at 170MHz on Artix-7 series SG-3 devices in the slow-slow (SS) corner. 
+The ZAP is intended to be used in FPGA projects that need a high performance application class soft processor core. Most aspects of the processor can be configured through HDL parameters.  The processor can be synthesized  with 0 slack at 167MHz on Artix-7 series SG-3 devices in the slow-slow (SS) corner. 
 
 The default processor specification is as follows (The table below is based on default parameters):
 
 | **Property**              | **Value**                                                                                                                                                                                                                  |
 | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Performance               | Synthesized at 170MHz @ xc7a75tcsg324-3 Artix-7 FPGA with 0 slack. Synthesis scripts are provided. <br/>**Cache must be enabled, and utilized effectively, for peak performance.**                                         |
+| Performance               | Synthesized at 167MHz @ xc7a75tcsg324-3 Artix-7 FPGA with 0 slack. Synthesis scripts are provided. <br/>**Cache must be enabled, and utilized effectively, for peak performance.**                                         |
 | Clock and Reset           | Purely synchronous reset scheme. Purely rising edge clock driven design.                                                                                                                                                   |
 | IRQ                       | Supported. Level sensitive interrupt signal. CPU uses a dual rank synchronizer to sample this and make it synchronous to the rising edge of clock.                                                                         |
 | FIQ                       | Supported. Level sensitive interrupt signal. CPU uses a dual rank synchronizer to sample this and make it synchronous to the rising edge of clock.                                                                         |

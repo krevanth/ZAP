@@ -45,7 +45,10 @@ module zap_core #(
         parameter logic [31:0] FIFO_DEPTH       = 32'd4,
 
         // RAS depth.
-        parameter logic [31:0] RAS_DEPTH        = 32'd4
+        parameter logic [31:0] RAS_DEPTH        = 32'd4,
+
+        // CPSR mode.
+        parameter logic [31:0] CPSR_MODE        = 32'd4
 )
 (
 
@@ -116,7 +119,7 @@ output logic     [31:0]                  o_instr_wb_adr_nxt,
 output logic    [31:0]                   o_instr_wb_adr_check,
 
 // Determines user or supervisory mode. Cache must use this for VM.
-output logic      [ZAP_CPSR_MODE:0]       o_cpsr,
+output logic      [CPSR_MODE:0]           o_cpsr,
 
 // -----------------------------------------------------
 // For MMU/cache connectivity.
@@ -765,7 +768,8 @@ zap_decode_main #(
         .ARCH_REGS(ARCH_REGS),
         .PHY_REGS(PHY_REGS),
         .SHIFT_OPS(SHIFT_OPS),
-        .ALU_OPS(ALU_OPS)
+        .ALU_OPS(ALU_OPS),
+        .CPSR_MODE(ZAP_CPSR_MODE)
 )
 u_zap_decode_main (
         .o_decompile                    (decode_decompile),

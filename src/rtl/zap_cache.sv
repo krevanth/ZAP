@@ -22,12 +22,13 @@
 
 module zap_cache #(
 
-parameter [31:0] CACHE_SIZE             = 1024,
-parameter [31:0] SPAGE_TLB_ENTRIES      = 8,
-parameter [31:0] LPAGE_TLB_ENTRIES      = 8,
-parameter [31:0] SECTION_TLB_ENTRIES    = 8,
-parameter [31:0] FPAGE_TLB_ENTRIES      = 8,
-parameter [31:0] CACHE_LINE             = 8
+parameter [31:0] CACHE_SIZE             = 32'd1024,
+parameter [31:0] SPAGE_TLB_ENTRIES      = 32'd8,
+parameter [31:0] LPAGE_TLB_ENTRIES      = 32'd8,
+parameter [31:0] SECTION_TLB_ENTRIES    = 32'd8,
+parameter [31:0] FPAGE_TLB_ENTRIES      = 32'd8,
+parameter [31:0] CACHE_LINE             = 32'd8,
+parameter [31:0] CPSR_MODE              = 32'd4
 
 )
 (
@@ -70,7 +71,7 @@ input   logic            i_cache_clean_req,
 output logic             o_cache_inv_done,
 output  logic            o_cache_clean_done,
 
-input   logic [ZAP_CPSR_MODE:0] i_cpsr,
+input   logic [CPSR_MODE:0]    i_cpsr,
 input   logic [1:0]            i_sr,
 input   logic [31:0]           i_baddr,
 input   logic [31:0]           i_dac_reg,
@@ -246,7 +247,8 @@ zap_tlb #(
         .LPAGE_TLB_ENTRIES      (LPAGE_TLB_ENTRIES),
         .SPAGE_TLB_ENTRIES      (SPAGE_TLB_ENTRIES),
         .SECTION_TLB_ENTRIES    (SECTION_TLB_ENTRIES),
-        .FPAGE_TLB_ENTRIES      (FPAGE_TLB_ENTRIES)
+        .FPAGE_TLB_ENTRIES      (FPAGE_TLB_ENTRIES),
+        .CPSR_MODE              (ZAP_CPSR_MODE)
 )
 u_zap_tlb (
         .i_clk          (i_clk),

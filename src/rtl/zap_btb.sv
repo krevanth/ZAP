@@ -27,6 +27,9 @@ module zap_btb #(
         //
         parameter logic [31:0] BP_ENTRIES = 32'd1024,
 
+        // Tag width.
+        localparam [31:0] TAG_WDT = 32 - $clog2(BP_ENTRIES) - 1,
+
         //
         // Address breakup. We use direct mapped addressing. We have a
         // 1-bit offset since address LSB = 0. Index is used to index
@@ -93,7 +96,6 @@ module zap_btb #(
 `include "zap_localparams.svh"
 `include "zap_functions.svh"
 
-localparam [31:0] TAG_WDT = 32 - $clog2(BP_ENTRIES) - 1;
 localparam [31:0] MAX_WDT = 32 + 2 + TAG_WDT;
 
 logic unused;

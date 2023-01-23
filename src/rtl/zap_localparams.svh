@@ -68,106 +68,106 @@ parameter [3:0] TERMINAL_EXCEPTION              = 4'b0010;
 
 // Standard opcodes.
 // These map to the opcode map in the spec.
-localparam [3:0] AND   = 0;
-localparam [3:0] EOR   = 1;
-localparam [3:0] SUB   = 2;
-localparam [3:0] RSB   = 3;
-localparam [3:0] ADD   = 4;
-localparam [3:0] ADC   = 5;
-localparam [3:0] SBC   = 6;
-localparam [3:0] RSC   = 7;
-localparam [3:0] TST   = 8;
-localparam [3:0] TEQ   = 9;
-localparam [3:0] CMP   = 10;
-localparam [3:0] CMN   = 11;
-localparam [3:0] ORR   = 12;
-localparam [3:0] MOV   = 13;
-localparam [3:0] BIC   = 14;
-localparam [3:0] MVN   = 15;
+localparam [3:0] AND   = 4'd0;
+localparam [3:0] EOR   = 4'd1;
+localparam [3:0] SUB   = 4'd2;
+localparam [3:0] RSB   = 4'd3;
+localparam [3:0] ADD   = 4'd4;
+localparam [3:0] ADC   = 4'd5;
+localparam [3:0] SBC   = 4'd6;
+localparam [3:0] RSC   = 4'd7;
+localparam [3:0] TST   = 4'd8;
+localparam [3:0] TEQ   = 4'd9;
+localparam [3:0] CMP   = 4'd10;
+localparam [3:0] CMN   = 4'd11;
+localparam [3:0] ORR   = 4'd12;
+localparam [3:0] MOV   = 4'd13;
+localparam [3:0] BIC   = 4'd14;
+localparam [3:0] MVN   = 4'd15;
 
 // Internal opcodes used to
 // implement some instructions.
-localparam [4:0] MUL   = 16; // Multiply ( 32 x 32 = 32 ) -> Translated to MAC.
-localparam [4:0] MLA   = 17; // Multiply-Accumulate ( 32 x 32 + 32 = 32 ).
+localparam [4:0] MUL   = 5'd16; // Multiply ( 32 x 32 = 32 ) -> Translated to MAC.
+localparam [4:0] MLA   = 5'd17; // Multiply-Accumulate ( 32 x 32 + 32 = 32 ).
 
 // Flag MOV. Will write upper 4-bits to flags if mask bit [3] is set to 1.
 // Also writes to target register similarly.
 // Mask bit comes from non-shift operand.
-localparam [4:0] FMOV  = 18;
+localparam [4:0] FMOV  = 5'd18;
 
 // Same as FMOV but does not touch the flags in the ALU. This is MASK MOV.
 // Set to 1 will update, 0 will not
 // (0000 -> No updates, 0001 -> [7:0] update) and so on.
-localparam [4:0] MMOV  = 19;
+localparam [4:0] MMOV  = 5'd19;
 
-localparam [4:0] UMLALL = 20; // Unsigned multiply accumulate (Write lower reg).
-localparam [4:0] UMLALH = 21;
+localparam [4:0] UMLALL = 5'd20; // Unsigned multiply accumulate (Write lower reg).
+localparam [4:0] UMLALH = 5'd21;
 
-localparam [4:0] SMLALL = 22; // Signed multiply accumulate (Write lower reg).
-localparam [4:0] SMLALH = 23;
+localparam [4:0] SMLALL = 5'd22; // Signed multiply accumulate (Write lower reg).
+localparam [4:0] SMLALH = 5'd23;
 
-localparam [4:0] CLZ    = 24; // Count Leading zeros.
+localparam [4:0] CLZ    = 5'd24; // Count Leading zeros.
 
 // Saturating addition/subtraction.
-localparam [4:0] OP_QADD   = 25;
-localparam [4:0] OP_QSUB   = 26;
-localparam [4:0] OP_QDADD  = 27;
-localparam [4:0] OP_QDSUB  = 28;
+localparam [4:0] OP_QADD   = 5'd25;
+localparam [4:0] OP_QSUB   = 5'd26;
+localparam [4:0] OP_QDADD  = 5'd27;
+localparam [4:0] OP_QDSUB  = 5'd28;
 
 // Multiplication (DSP).
-localparam [5:0] SMULW0  = 30;
-localparam [5:0] SMULW1  = 32;
-localparam [5:0] SMUL00  = 34;
-localparam [5:0] SMUL01  = 36;
-localparam [5:0] SMUL10  = 38;
-localparam [5:0] SMUL11  = 40;
+localparam [5:0] SMULW0  = 6'd30;
+localparam [5:0] SMULW1  = 6'd32;
+localparam [5:0] SMUL00  = 6'd34;
+localparam [5:0] SMUL01  = 6'd36;
+localparam [5:0] SMUL10  = 6'd38;
+localparam [5:0] SMUL11  = 6'd40;
 
 // MAC (DSP)
-localparam [5:0] SMLA00   = 42;
-localparam [5:0] SMLA01   = 44;
-localparam [5:0] SMLA10   = 46;
-localparam [5:0] SMLA11   = 48;
-localparam [5:0] SMLAW0   = 50;
-localparam [5:0] SMLAW1   = 52;
+localparam [5:0] SMLA00   = 6'd42;
+localparam [5:0] SMLA01   = 6'd44;
+localparam [5:0] SMLA10   = 6'd46;
+localparam [5:0] SMLA11   = 6'd48;
+localparam [5:0] SMLAW0   = 6'd50;
+localparam [5:0] SMLAW1   = 6'd52;
 
 // MAC(DSP) - Long.
-localparam [5:0] SMLAL00L = 54;
-localparam [5:0] SMLAL00H = 55;
-localparam [5:0] SMLAL01L = 56;
-localparam [5:0] SMLAL01H = 57;
-localparam [5:0] SMLAL10L = 58;
-localparam [5:0] SMLAL10H = 59;
-localparam [5:0] SMLAL11L = 60;
-localparam [5:0] SMLAL11H = 61;
+localparam [5:0] SMLAL00L = 6'd54;
+localparam [5:0] SMLAL00H = 6'd55;
+localparam [5:0] SMLAL01L = 6'd56;
+localparam [5:0] SMLAL01H = 6'd57;
+localparam [5:0] SMLAL10L = 6'd58;
+localparam [5:0] SMLAL10H = 6'd59;
+localparam [5:0] SMLAL11L = 6'd60;
+localparam [5:0] SMLAL11H = 6'd61;
 
 // FADD - Directly access flags.
-localparam [5:0] FADD     = 62;
+localparam [5:0] FADD     = 6'd62;
 
 // Alias
-localparam [5:0] OP_SMULW0   = 30;
-localparam [5:0] OP_SMULW1   = 32;
-localparam [5:0] OP_SMUL00   = 34;
-localparam [5:0] OP_SMUL01   = 36;
-localparam [5:0] OP_SMUL10   = 38;
-localparam [5:0] OP_SMUL11   = 40;
-localparam [5:0] OP_SMLA00   = 42;
-localparam [5:0] OP_SMLA01   = 44;
-localparam [5:0] OP_SMLA10   = 46;
-localparam [5:0] OP_SMLA11   = 48;
-localparam [5:0] OP_SMLAW0   = 50;
-localparam [5:0] OP_SMLAW1   = 52;
-localparam [5:0] OP_SMLAL00L = 54;
-localparam [5:0] OP_SMLAL00H = 55;
-localparam [5:0] OP_SMLAL01L = 56;
-localparam [5:0] OP_SMLAL01H = 57;
-localparam [5:0] OP_SMLAL10L = 58;
-localparam [5:0] OP_SMLAL10H = 59;
-localparam [5:0] OP_SMLAL11L = 60;
-localparam [5:0] OP_SMLAL11H = 61;
+localparam [5:0] OP_SMULW0   = 6'd30;
+localparam [5:0] OP_SMULW1   = 6'd32;
+localparam [5:0] OP_SMUL00   = 6'd34;
+localparam [5:0] OP_SMUL01   = 6'd36;
+localparam [5:0] OP_SMUL10   = 6'd38;
+localparam [5:0] OP_SMUL11   = 6'd40;
+localparam [5:0] OP_SMLA00   = 6'd42;
+localparam [5:0] OP_SMLA01   = 6'd44;
+localparam [5:0] OP_SMLA10   = 6'd46;
+localparam [5:0] OP_SMLA11   = 6'd48;
+localparam [5:0] OP_SMLAW0   = 6'd50;
+localparam [5:0] OP_SMLAW1   = 6'd52;
+localparam [5:0] OP_SMLAL00L = 6'd54;
+localparam [5:0] OP_SMLAL00H = 6'd55;
+localparam [5:0] OP_SMLAL01L = 6'd56;
+localparam [5:0] OP_SMLAL01H = 6'd57;
+localparam [5:0] OP_SMLAL10L = 6'd58;
+localparam [5:0] OP_SMLAL10H = 6'd59;
+localparam [5:0] OP_SMLAL11L = 6'd60;
+localparam [5:0] OP_SMLAL11H = 6'd61;
 
 
 // MOV only with SAT. Doesn't touch other flags. SAT comes from multiplier.
-localparam [5:0] SAT_MOV   = 49;
+localparam [5:0] SAT_MOV   = 6'd49;
 
 // Conditionals defined as per v5T spec.
 localparam [3:0] EQ =  4'h0;
@@ -188,15 +188,15 @@ localparam [3:0] AL =  4'hE;
 localparam [3:0] NV =  4'hF; // NeVer execute!
 
 // CPSR flags.
-localparam [31:0] N             = 31;
-localparam [31:0] Z             = 30;
-localparam [31:0] C             = 29;
-localparam [31:0] V             = 28;
-localparam [31:0] Q             = 27;
-localparam [31:0] I             = 7;
-localparam [31:0] F             = 6;
-localparam [31:0] T             = 5;
-localparam [31:0] ZAP_CPSR_MODE = 4;
+localparam [31:0] N             = 32'd31;
+localparam [31:0] Z             = 32'd30;
+localparam [31:0] C             = 32'd29;
+localparam [31:0] V             = 32'd28;
+localparam [31:0] Q             = 32'd27;
+localparam [31:0] I             = 32'd7;
+localparam [31:0] F             = 32'd6;
+localparam [31:0] T             = 32'd5;
+localparam [31:0] ZAP_CPSR_MODE = 32'd4;
 
 // For transferring indices/immediates across stages.
 localparam [0:0] INDEX_EN = 1'd0;
@@ -216,143 +216,143 @@ localparam [4:0] UND = 5'b11_011;
 
 // DSP multiplication accumulate (DSP)
 
-localparam      [31:0]  SMLAxy                                          =                                       32'b????_00010_00_0_????_????_????_1_??_0_????;
-localparam      [31:0]  SMLAWy                                          =                                       32'b????_00010_01_0_????_????_????_1_?0_0_????;
-localparam      [31:0]  SMLALxy                                         =                                       32'b????_00010_10_0_????_????_????_1_??_0_????;
+localparam      [31:0]  SMLAxy                                          =  32'b????_00010_00_0_????_????_????_1_??_0_????;
+localparam      [31:0]  SMLAWy                                          =  32'b????_00010_01_0_????_????_????_1_?0_0_????;
+localparam      [31:0]  SMLALxy                                         =  32'b????_00010_10_0_????_????_????_1_??_0_????;
 
 // DSP multiply (16-bit).
-localparam      [31:0]  SMULWy                                          =                                       32'b????_00010_01_0_????_0000_????_1_?1_0_????;
-localparam      [31:0]  SMULxy                                          =                                       32'b????_00010_11_0_????_0000_????_1_??_0_????;
+localparam      [31:0]  SMULWy                                          =  32'b????_00010_01_0_????_0000_????_1_?1_0_????;
+localparam      [31:0]  SMULxy                                          =  32'b????_00010_11_0_????_0000_????_1_??_0_????;
 
 // CLZ
-localparam      [31:0]  CLZ_INSTRUCTION                                 =                                       32'b????_00010_11_0_1111_????_1111_0_00_1_????;
+localparam      [31:0]  CLZ_INSTRUCTION                                 =  32'b????_00010_11_0_1111_????_1111_0_00_1_????;
 
 // Saturating add.
-localparam      [31:0]  QADD                                            =                                       32'b????_00010_00_0_????_????_0000_0101_????;
-localparam      [31:0]  QSUB                                            =                                       32'b????_00010_01_0_????_????_0000_0101_????;
-localparam      [31:0]  QDADD                                           =                                       32'b????_00010_10_0_????_????_0000_0101_????;
-localparam      [31:0]  QDSUB                                           =                                       32'b????_00010_11_0_????_????_0000_0101_????;
+localparam      [31:0]  QADD                                            =  32'b????_00010_00_0_????_????_0000_0101_????;
+localparam      [31:0]  QSUB                                            =  32'b????_00010_01_0_????_????_0000_0101_????;
+localparam      [31:0]  QDADD                                           =  32'b????_00010_10_0_????_????_0000_0101_????;
+localparam      [31:0]  QDSUB                                           =  32'b????_00010_11_0_????_????_0000_0101_????;
 
 // PLD (NOP)
-localparam      [31:0]  PLD                                             =                                       32'b1111_01?1?101_????_1111_????????????;
+localparam      [31:0]  PLD                                             =  32'b1111_01?1?101_????_1111_????????????;
 
 // Data processing.
-localparam      [31:0]  DATA_PROCESSING_IMMEDIATE                       =                                       32'b????_00_1_????_?_????_????_????????????;
-localparam      [31:0]  DATA_PROCESSING_REGISTER_SPECIFIED_SHIFT        =                                       32'b????_00_0_????_?_????_????_????0??1????;
-localparam      [31:0]  DATA_PROCESSING_INSTRUCTION_SPECIFIED_SHIFT     =                                       32'b????_00_0_????_?_????_????_???????0????;
+localparam      [31:0]  DATA_PROCESSING_IMMEDIATE                       =  32'b????_00_1_????_?_????_????_????????????;
+localparam      [31:0]  DATA_PROCESSING_REGISTER_SPECIFIED_SHIFT        =  32'b????_00_0_????_?_????_????_????0??1????;
+localparam      [31:0]  DATA_PROCESSING_INSTRUCTION_SPECIFIED_SHIFT     =  32'b????_00_0_????_?_????_????_???????0????;
 
 // BL never reaches the unit.
-localparam      [31:0]  BRANCH_INSTRUCTION                              =                                       32'b????_101?_????_????_????_????_????_????;
+localparam      [31:0]  BRANCH_INSTRUCTION                              =  32'b????_101?_????_????_????_????_????_????;
 
-localparam      [31:0]  MRS                                             =                                       32'b????_00010_?_001111_????_????_????_????;
-localparam      [31:0]  MSR_IMMEDIATE                                   =                                       32'b????_00_1_10?10_????_1111_????_????_????;
+localparam      [31:0]  MRS                                             =  32'b????_00010_?_001111_????_????_????_????;
+localparam      [31:0]  MSR_IMMEDIATE                                   =  32'b????_00_1_10?10_????_1111_????_????_????;
 
-localparam      [31:0]  MSR                                             =                                       32'b????_00_0_10?10_????_1111_????_????_????;
+localparam      [31:0]  MSR                                             =  32'b????_00_0_10?10_????_1111_????_????_????;
 
-localparam      [31:0]  LS_INSTRUCTION_SPECIFIED_SHIFT                  =                                       32'b????_01_1_?????_????_????_????_????_????;
-localparam      [31:0]  LS_IMMEDIATE                                    =                                       32'b????_01_0_?????_????_????_????_????_????;
+localparam      [31:0]  LS_INSTRUCTION_SPECIFIED_SHIFT                  =  32'b????_01_1_?????_????_????_????_????_????;
+localparam      [31:0]  LS_IMMEDIATE                                    =  32'b????_01_0_?????_????_????_????_????_????;
 
-localparam      [31:0]  BX_INST                                         =                                       32'b????_0001_0010_1111_1111_1111_0001_????;
+localparam      [31:0]  BX_INST                                         =  32'b????_0001_0010_1111_1111_1111_0001_????;
 
-localparam      [31:0]  MULT_INST                                       =                                       32'b????_0000_00?_?_????_????_????_1001_????;
+localparam      [31:0]  MULT_INST                                       =  32'b????_0000_00?_?_????_????_????_1001_????;
 
 // M MULT INST - UMULL, UMLAL, SMULL, SMLAL.
-localparam      [31:0]  LMULT_INST                                      =                                       32'b????_0000_1??_?_????_????_????_1001_????;
+localparam      [31:0]  LMULT_INST                                      =  32'b????_0000_1??_?_????_????_????_1001_????;
 
 // Halfword memory.
-localparam      [31:0]  HALFWORD_LS                                     =                                       32'b????_000_?????_????_????_????_1??1_????;
+localparam      [31:0]  HALFWORD_LS                                     =  32'b????_000_?????_????_????_????_1??1_????;
 
 // Software interrupt.
-localparam      [31:0]  SOFTWARE_INTERRUPT                              =                                       32'b????_1111_????_????_????_????_????_????;
+localparam      [31:0]  SOFTWARE_INTERRUPT                              =  32'b????_1111_????_????_????_????_????_????;
 
 // Swap.
-localparam      [31:0]  SWAP                                            =                                       32'b????_00010_?_00_????_????_00001001_????;
+localparam      [31:0]  SWAP                                            =  32'b????_00010_?_00_????_????_00001001_????;
 
 // Write to coprocessor.
-localparam      [31:0]  MCR                                             =                                       32'b????_1110_???_0_????_????_1111_???_1_????;
-localparam      [31:0]  MCR2                                            =                                       32'b1111_1110???0_????????????_???1_????;
+localparam      [31:0]  MCR                                             =  32'b????_1110_???_0_????_????_1111_???_1_????;
+localparam      [31:0]  MCR2                                            =  32'b1111_1110???0_????????????_???1_????;
 
 // Read from coprocessor.
-localparam      [31:0]  MRC                                             =                                       32'b????_1110_???_1_????_????_1111_???_1_????;
-localparam      [31:0]  MRC2                                            =                                       32'b1111_1110???1_????????????_???1_????;
+localparam      [31:0]  MRC                                             =  32'b????_1110_???_1_????_????_1111_???_1_????;
+localparam      [31:0]  MRC2                                            =  32'b1111_1110???1_????????????_???1_????;
 
 // LDC, STC
-localparam      [31:0]  LDC                                             =                                       32'b????_110_????1_????_????_????_????????;
-localparam      [31:0]  STC                                             =                                       32'b????_110_????0_????_????_????_????????;
+localparam      [31:0]  LDC                                             =  32'b????_110_????1_????_????_????_????????;
+localparam      [31:0]  STC                                             =  32'b????_110_????0_????_????_????_????????;
 
 // LDC2, STC2
-localparam      [31:0]  LDC2                                            =                                       32'b1111_110????1_????????????_????_????;
-localparam      [31:0]  STC2                                            =                                       32'b1111_110????0_????????????_????_????;
+localparam      [31:0]  LDC2                                            =  32'b1111_110????1_????????????_????_????;
+localparam      [31:0]  STC2                                            =  32'b1111_110????0_????????????_????_????;
 
 // CDP
-localparam      [31:0]  CDP                                             =                                       32'b????_1110_????????_????????_????????;
+localparam      [31:0]  CDP                                             =  32'b????_1110_????????_????????_????????;
 
 // BLX(1)
-localparam      [31:0] BLX1                                             =                                       32'b1111_101_?_????????_????????_????????;
+localparam      [31:0] BLX1                                             =  32'b1111_101_?_????????_????????_????????;
 
 // BLX(2)
-localparam      [31:0] BLX2                                             =                                       32'b????_00010010_1111_1111_1111_0011_????;
+localparam      [31:0] BLX2                                             =  32'b????_00010010_1111_1111_1111_0011_????;
 
 // BKPT
-localparam      [31:0] BKPT                                             =                                       32'b1110_00010010_????_????_????_0111_????;
+localparam      [31:0] BKPT                                             =  32'b1110_00010010_????_????_????_0111_????;
 
 // 16-bit ISA
 
 //B
-localparam      [15:0]  T_BRANCH_COND                                   =                                       16'b1101_????_????????; // Overlaps with SWI.
-localparam      [15:0]  T_BRANCH_NOCOND                                 =                                       16'b11100_???????????;
-localparam      [15:0]  T_BL                                            =                                       16'b1111_?_???????????;
-localparam      [15:0]  T_BLX1                                          =                                       16'b11101_???????????;
-localparam      [15:0]  T_BLX2                                          =                                       16'b010001111_?_???_000;
-localparam      [15:0]  T_BX                                            =                                       16'b010001110_?_???_000;
+localparam      [15:0]  T_BRANCH_COND                                   =  16'b1101_????_????????; // Overlaps with SWI.
+localparam      [15:0]  T_BRANCH_NOCOND                                 =  16'b11100_???????????;
+localparam      [15:0]  T_BL                                            =  16'b1111_?_???????????;
+localparam      [15:0]  T_BLX1                                          =  16'b11101_???????????;
+localparam      [15:0]  T_BLX2                                          =  16'b010001111_?_???_000;
+localparam      [15:0]  T_BX                                            =  16'b010001110_?_???_000;
 
 // SWI
-localparam      [15:0]  T_SWI                                           =                                       16'b1101_1111_????????;
+localparam      [15:0]  T_SWI                                           =  16'b1101_1111_????????;
 
 // Shifts.
-localparam      [15:0]  T_SHIFT                                         =                                       16'b000_??_?????_???_???;
+localparam      [15:0]  T_SHIFT                                         =  16'b000_??_?????_???_???;
 
 // Add sub LO.
-localparam      [15:0]  T_ADD_SUB_LO                                    =                                       16'b00011_?_?_???_???_???;
+localparam      [15:0]  T_ADD_SUB_LO                                    =  16'b00011_?_?_???_???_???;
 
 // MCAS Imm.
-localparam      [15:0]  T_MCAS_IMM                                      =                                       16'b001_??_???_????????;
+localparam      [15:0]  T_MCAS_IMM                                      =  16'b001_??_???_????????;
 
 // ALU Lo.
-localparam      [15:0]  T_ALU_LO                                        =                                       16'b010000_????_???_???;
+localparam      [15:0]  T_ALU_LO                                        =  16'b010000_????_???_???;
 
 // ALU hi.
-localparam      [15:0]  T_ALU_HI                                        =                                       16'b010001_??_?_?_???_???;
+localparam      [15:0]  T_ALU_HI                                        =  16'b010001_??_?_?_???_???;
 
 // Get address.
-localparam      [15:0]  T_GET_ADDR                                      =                                       16'b1010_?_???_????????;
+localparam      [15:0]  T_GET_ADDR                                      =  16'b1010_?_???_????????;
 
 // Add offset to SP.
-localparam      [15:0]  T_MOD_SP                                        =                                       16'b10110000_?_????_???;
+localparam      [15:0]  T_MOD_SP                                        =  16'b10110000_?_????_???;
 
 // PC relative load.
-localparam      [15:0]  T_PC_REL_LOAD                                   =                                       16'b01001_???_????????;
+localparam      [15:0]  T_PC_REL_LOAD                                   =  16'b01001_???_????????;
 
 // LDR_STR_5BIT_OFF
-localparam      [15:0] T_LDR_STR_5BIT_OFF                               =                                       16'b011_?_?_?????_???_???;
+localparam      [15:0] T_LDR_STR_5BIT_OFF                               =  16'b011_?_?_?????_???_???;
 
 // LDRH_STRH_5BIT_OFF
-localparam      [15:0] T_LDRH_STRH_5BIT_OFF                             =                                       16'b1000_?_?????_???_???;
+localparam      [15:0] T_LDRH_STRH_5BIT_OFF                             =  16'b1000_?_?????_???_???;
 
 // Signed LDR/STR
-localparam      [15:0]  T_LDRH_STRH_REG                                 =                                       16'b0101_???_???_???_???;
+localparam      [15:0]  T_LDRH_STRH_REG                                 =  16'b0101_???_???_???_???;
 
 // SP relative LDR/STR
-localparam      [15:0]  T_SP_REL_LDR_STR                                =                                       16'b1001_?_???_????????;
+localparam      [15:0]  T_SP_REL_LDR_STR                                =  16'b1001_?_???_????????;
 
 // LDMIA/STMIA
-localparam      [15:0]  T_LDMIA_STMIA                                   =                                       16'b1100_?_???_????????;
+localparam      [15:0]  T_LDMIA_STMIA                                   =  16'b1100_?_???_????????;
 
 // PUSH POP
-localparam      [15:0]  T_POP_PUSH                                      =                                       16'b1011_?_10_?_????????;
+localparam      [15:0]  T_POP_PUSH                                      =  16'b1011_?_10_?_????????;
 
 // BKPT
-localparam      [15:0]  T_BKPT                                          =                                       16'b10111110_????????;
+localparam      [15:0]  T_BKPT                                          =  16'b10111110_????????;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -457,12 +457,12 @@ localparam  [1:0]    WT      =       2'b10; // Weakly Taken.
 localparam  [1:0]    ST      =       2'b11; // Strongly Taken.
 
 // Extension field bits.
-localparam [31:0] ZAP_SRCDEST_EXTEND =  32 ;     // Data Src/Dest extend register for MEMOPS.
-localparam [31:0] ZAP_DP_RB_EXTEND   =  32 ;     // Shift source extend.
-localparam [31:0] ZAP_BASE_EXTEND    =  33 ;     // Base address register for MEMOPS.
-localparam [31:0] ZAP_DP_RD_EXTEND   =  33 ;     // Destination source extend.
-localparam [31:0] ZAP_DP_RA_EXTEND   =  34 ;     // ALU source extend. DDI0100E rn.
-localparam [31:0] ZAP_OPCODE_EXTEND  =  35 ;     // To differentiate lower and higher for multiplication
+localparam [31:0] ZAP_SRCDEST_EXTEND =  32'd32 ;     // Data Src/Dest extend register for MEMOPS.
+localparam [31:0] ZAP_DP_RB_EXTEND   =  32'd32 ;     // Shift source extend.
+localparam [31:0] ZAP_BASE_EXTEND    =  32'd33 ;     // Base address register for MEMOPS.
+localparam [31:0] ZAP_DP_RD_EXTEND   =  32'd33 ;     // Destination source extend.
+localparam [31:0] ZAP_DP_RA_EXTEND   =  32'd34 ;     // ALU source extend. DDI0100E rn.
+localparam [31:0] ZAP_OPCODE_EXTEND  =  32'd35 ;     // To differentiate lower and higher for multiplication
 
 /* verilator lint_on UNUSED */
 

@@ -26,7 +26,8 @@ module zap_tlb #(
 parameter logic [31:0] LPAGE_TLB_ENTRIES   = 32'd8,
 parameter logic [31:0] SPAGE_TLB_ENTRIES   = 32'd8,
 parameter logic [31:0] SECTION_TLB_ENTRIES = 32'd8,
-parameter logic [31:0] FPAGE_TLB_ENTRIES   = 32'd8
+parameter logic [31:0] FPAGE_TLB_ENTRIES   = 32'd8,
+parameter logic [31:0] CPSR_MODE           = 32'd4
 
 ) (
 
@@ -45,7 +46,7 @@ input   logic    [31:0]  i_address_nxt,
 input   logic            i_hold,
 
 // CPSR, SR, DAC register.
-input   logic    [ZAP_CPSR_MODE:0] i_cpsr,
+input   logic    [CPSR_MODE:0] i_cpsr,
 input   logic    [1:0]   i_sr,
 input   logic    [31:0]  i_dac_reg,
 input   logic    [31:0]  i_baddr,
@@ -317,7 +318,8 @@ zap_tlb_check #(
 .LPAGE_TLB_ENTRIES(LPAGE_TLB_ENTRIES),
 .SPAGE_TLB_ENTRIES(SPAGE_TLB_ENTRIES),
 .SECTION_TLB_ENTRIES(SECTION_TLB_ENTRIES),
-.FPAGE_TLB_ENTRIES(FPAGE_TLB_ENTRIES)
+.FPAGE_TLB_ENTRIES(FPAGE_TLB_ENTRIES),
+.CPSR_MODE(ZAP_CPSR_MODE)
 )
 u_zap_tlb_check (
 .i_clk          (i_clk),
