@@ -544,12 +544,12 @@ Note that all parameters should be 2^n. Cache size should be multiple of line si
 | DATA\_LPAGE\_TLB\_ENTRIES   | 8                                  | Large page TLB entries (Data).                                                            |
 | DATA\_SPAGE\_TLB\_ENTRIES   | 16                                 | Small page TLB entries (Data).                                                            |
 | DATA\_FPAGE\_TLB\_ENTRIES   | 32                                 | Tiny page TLB entries (Data).                                                             |
-| DATA\_CACHE\_SIZE           | 8192                               | Cache size in bytes. Should be at least 16 x line size. Cannot exceed 64KB.               |
+| DATA\_CACHE\_SIZE           | 8192                               | Cache size in bytes. Should be at least 32 x line size. Cannot exceed 64KB.               |
 | CODE\_SECTION\_TLB\_ENTRIES | 4                                  | Section TLB entries.                                                                      |
 | CODE\_LPAGE\_TLB\_ENTRIES   | 8                                  | Large page TLB entries.                                                                   |
 | CODE\_SPAGE\_TLB\_ENTRIES   | 16                                 | Small page TLB entries.                                                                   |
 | CODE\_FPAGE\_TLB\_ENTRIES   | 32                                 | Tiny page TLB entries.                                                                    |
-| CODE\_CACHE\_SIZE           | 8192                               | Cache size in bytes. Should be at least 16 x line size. Cannot exceed 64KB.               |
+| CODE\_CACHE\_SIZE           | 8192                               | Cache size in bytes. Should be at least 32 x line size. Cannot exceed 64KB.               |
 | DATA\_CACHE\_LINE           | 64                                 | Cache Line for Data (Byte). Keep > 8                                                      |
 | CODE\_CACHE\_LINE           | 64                                 | Cache Line for Code (Byte). Keep > 8                                                      |
 | RAS\_DEPTH                  | 4                                  | Depth of Return Address Stack                                                             |
