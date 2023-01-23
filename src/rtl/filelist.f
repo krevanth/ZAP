@@ -11,14 +11,10 @@ $ZAP_ROOT/src/rtl/zap_dcache.sv
 $ZAP_ROOT/src/rtl/zap_decode_main.sv
 $ZAP_ROOT/src/rtl/zap_decode.sv
 $ZAP_ROOT/src/rtl/zap_decompile.sv
-$ZAP_ROOT/src/rtl/zap_decompile.svh
-$ZAP_ROOT/src/rtl/zap_defines.svh
 $ZAP_ROOT/src/rtl/zap_dual_rank_synchronizer.sv
 $ZAP_ROOT/src/rtl/zap_fetch_main.sv
 $ZAP_ROOT/src/rtl/zap_fifo.sv
-$ZAP_ROOT/src/rtl/zap_functions.svh
 $ZAP_ROOT/src/rtl/zap_issue_main.sv
-$ZAP_ROOT/src/rtl/zap_localparams.svh
 $ZAP_ROOT/src/rtl/zap_mem_inv_block.sv
 $ZAP_ROOT/src/rtl/zap_memory_main.sv
 $ZAP_ROOT/src/rtl/zap_mode16_decoder_main.sv
