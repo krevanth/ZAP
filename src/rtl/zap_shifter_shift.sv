@@ -70,7 +70,7 @@ begin
                 {1'd0, ASR}:
                 begin
                         asr_res     = {i_source, i_carry};
-                        asr_res_fin = $signed(asr_res) >>> i_amount;
+                        asr_res_fin = asr_res >>> i_amount;
                         {o_result, o_carry} = asr_res_fin;
                 end
 
