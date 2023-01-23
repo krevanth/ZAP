@@ -322,7 +322,7 @@ Please refer to the v5TE specification for CP15 CSR architectural requirements. 
 | 0   | 0x1: MMU Enable<br/>0x0: MMU Disable<br/>When **ONLY_CORE=0x1**, this bit always reads 0.        |
 | 1   | RO, RAZ. 0x0: Alignment fault never checked.                                                     |
 | 2   | 0x1: DCache Enable<br/>0x0: DCache Disable<br/>When **ONLY_CORE=0x1**, this bit always reads 0.  |
-| 3   | RAZ. No write buffer.                                                                            |
+| 3   | RAO. Writeback cache.                                                                            |
 | 4   | RAO. No 26-bit compatibility.                                                                    |
 | 5   | RAO. No 26-bit compatibility.                                                                    |
 | 6   | RAO. Base updated abort model. ZAP only supports the base updated restore model.                 |
