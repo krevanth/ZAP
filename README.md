@@ -12,31 +12,26 @@ You should have received a copy of the GNU General Public License along with thi
 
 ## 1. Introduction
 
-The ZAP is intended to be used in FPGA projects that need a high performance application class soft processor core. Most aspects of the processor can be configured through HDL parameters.  The processor can be synthesized  with 0 slack at 167MHz on Artix-7 series SG-3 devices in the slow-slow (SS) corner. 
-
 The default processor specification is as follows (The table below is based on default parameters):
 
-| **Property**              | **Value**                                                                                                                                                                                                                  |
-| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Performance               | Synthesized at 167MHz @ xc7a75tcsg324-3 Artix-7 FPGA with 0 slack. Synthesis scripts are provided. <br/>**Cache must be enabled, and utilized effectively, for peak performance.**                                         |
-| Clock and Reset           | Purely synchronous reset scheme. Purely rising edge clock driven design.                                                                                                                                                   |
-| IRQ                       | Supported. Level sensitive interrupt signal. CPU uses a dual rank synchronizer to sample this and make it synchronous to the rising edge of clock.                                                                         |
-| FIQ                       | Supported. Level sensitive interrupt signal. CPU uses a dual rank synchronizer to sample this and make it synchronous to the rising edge of clock.                                                                         |
-| Pipeline Depth            | 17                                                                                                                                                                                                                         |
-| Issue and Execution Width | Single issue, in order, scalar core, with very limited out-of-order completion for some loads/stores that miss in cache.                                                                                                   |
-| Data Width                | 32                                                                                                                                                                                                                         |
-| Address Width             | 32                                                                                                                                                                                                                         |
-| Virtual Address Width     | 32                                                                                                                                                                                                                         |
-| Instruction Set Versions  | V5TE (1999) without FPU                                                                                                                                                                                                    |
-| L1 I-Cache                | 8KB Direct Mapped VIVT Cache.<br/>64 Byte Cache Line                                                                                                                                                                       |
-| L1 D-Cache                | 8KB Direct Mapped VIVT Cache<br>64 Byte Cache Line                                                                                                                                                                         |
-| I-TLB Structure           | 4 x Direct mapped, one direct mapped TLB per page size. 4 entries for 1MB pages, 8 entries for 64KB pages, 16 entries for 4KB pages and 32 entries for 1KB pages. Each page size has a unique hardware buffer.             |
-| D-TLB Structure           | 4 x Direct mapped, one direct mapped TLB per page size. 4 entries for 1MB pages, 8 entries for 64KB pages, 16 entries for 4KB pages and 32 entries for 1KB pages. Each page size has a unique hardware buffer.             |
-| Branch Prediction         | Direct Mapped Bimodal Predictor. <br/>Direct Mapped BTB.<br>512 entries in T state (16-bit instructions).<br>256 entries in 32-bit instruction state.                                                                      |
-| RAS Depth                 | 4 deep return address stack.                                                                                                                                                                                               |
-| Branch latency            | 12 cycles (wrong prediction or unrecognized branch)<br>3 cycles (taken, correctly predicted)<br>1 cycle (not-taken, correctly predicted)<br>12 cycles (32-bit/16-bit switch)<br>18 cycles (Exception/Interrupt Entry/Exit) |
-| Fetch Buffer              | FIFO, 16 x 32-bit.                                                                                                                                                                                                         |
-| Bus Interface             | Unified 32-Bit Wishbone B3 bus with CTI and BTE signals.<br/>BTE and CTI signals are used only when cache is enabled.                                                                                                      |
+| **Property**                            | **Value**                                                                                                                                                                                                                  |
+| --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Max. Operating Frequency @ Artix-7 FPGA | ~120MHz @ xc7a75tcsg324-1<br/>~145MHz @ xc7a75tcsg324-2<br/>~170MHz @ xc7a75tcsg324-3<br/>                                                                                                                           |
+| Pipeline Depth                          | 17                                                                                                                                                                                                                         |
+| Issue and Execution Width               | Single issue, in order, scalar core, with very limited out-of-order completion for some loads/stores that miss in cache.                                                                                                   |
+| Data Width                              | 32                                                                                                                                                                                                                         |
+| Address Width                           | 32                                                                                                                                                                                                                         |
+| Virtual Address Width                   | 32                                                                                                                                                                                                                         |
+| Instruction Set Versions                | V5TE (1999) without FPU                                                                                                                                                                                                    |
+| L1 I-Cache                              | 8KB Direct Mapped VIVT Cache.<br/>64 Byte Cache Line<br/>**Cache must be enabled, and utilized effectively, for peak performance.**                                                                                        |
+| L1 D-Cache                              | 8KB Direct Mapped VIVT Cache<br>64 Byte Cache Line<br/>**Cache must be enabled, and utilized effectively, for peak performance.**                                                                                          |
+| I-TLB Structure                         | 4 x Direct mapped, one direct mapped TLB per page size. 4 entries for 1MB pages, 8 entries for 64KB pages, 16 entries for 4KB pages and 32 entries for 1KB pages. Each page size has a unique hardware buffer.             |
+| D-TLB Structure                         | 4 x Direct mapped, one direct mapped TLB per page size. 4 entries for 1MB pages, 8 entries for 64KB pages, 16 entries for 4KB pages and 32 entries for 1KB pages. Each page size has a unique hardware buffer.             |
+| Branch Prediction                       | Direct Mapped Bimodal Predictor. <br/>Direct Mapped BTB.<br>512 entries in T state (16-bit instructions).<br>256 entries in 32-bit instruction state.                                                                      |
+| RAS Depth                               | 4 deep return address stack.                                                                                                                                                                                               |
+| Branch latency                          | 12 cycles (wrong prediction or unrecognized branch)<br>3 cycles (taken, correctly predicted)<br>1 cycle (not-taken, correctly predicted)<br>12 cycles (32-bit/16-bit switch)<br>18 cycles (Exception/Interrupt Entry/Exit) |
+| Fetch Buffer                            | FIFO, 16 x 32-bit.                                                                                                                                                                                                         |
+| Bus Interface                           | Unified 32-Bit Wishbone B3 bus with CTI and BTE signals.<br/>BTE and CTI signals are used only when cache is enabled.                                                                                                      |
 
 A simplified block diagram of the ZAP pipeline is shown below. Note that ZAP is mostly a single issue scalar processor.
 
@@ -52,7 +47,7 @@ ZAP includes several microarchitectural enhancements to improve instruction thro
 * A 4 deep return address stack that stores the predicted return address of branch and link instructions function return. When a `BX LR`, `MOV PC,LR` or a block load with PC in register list, the processor pops off the return address. Note that switching between A (32-bit) and T state (16-bit) has a penalty of 12 cycles.
 * The ability to execute most 32-bit instructions in a single clock cycle. The only instructions that take multiple cycles include branch-and-link, 64-bit loads and stores, block loads and stores, swap instructions and `BLX/BLX2`.
 * A highly efficient superpipeline with dual feedback networks to minimize pipeline stalls as much as possible while allowing for high clock frequencies. A deep 17 stage superpipelined architecture that allows the CPU to run at relatively high FPGA speeds.
-* Multiplication/MAC operations takes 3 cycles per operation (+1 is result is immediately used). Note that the multiplier inside the ZAP processor is not pipelined.
+* Multiplication/MAC operations takes 4 cycles per operation (+1 is result is immediately used). Note that the multiplier inside the ZAP processor is not pipelined.
 * The abort model is base restored. This allows for the implementation of a demand based paging system if supporting software is available.
 
 ### 1.1. Superpipelined Microarchitecture
@@ -637,6 +632,8 @@ The recommended project environment requires Docker to be installed at your site
 
 If your site has the latest EDA tools and other tools required (Verilator, GTKWave, GCC Cross Compiler, Xterm, Make, Perl, Bash, Cargo) installed, and if you do not wish to use Docker, then you should not pass the `DOCKER=1` argument when invoking `make`, hence the argument is shown as optional in the examples below.  The `SEED` arguments allows passing of specific seed and enabling waveform logging. When switching from passing no seed to passing a seed, please run the `clean` make target first. 
 
+> It is recommended that your simulator support assertions.
+
 ### 3.1. Running TCs
 
 To run all/a specific TC, do:
@@ -723,13 +720,15 @@ To run RTL lint with svlint (no Docker support, install with `cargo install svli
 
 ### 3.4. Running Xilinx Vivado Synthesis
 
-**IMPORTANT NOTE: Do NOT define DEBUG_EN when performig synthesis.**
+**IMPORTANT NOTE: Do NOT define DEBUG_EN when performing synthesis.**
 
 Synthesis scripts can be found here: `src/syn/`
 
 Assuming you have Vivado installed, please do (in project root directory):
 
 > `make syn`
+
+The synthesis script assumes a -3 speed grade part.
 
 Timing report will be available in `obj/syn/syn_timing.rpt`
 
