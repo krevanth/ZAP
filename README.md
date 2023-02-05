@@ -2,8 +2,6 @@
 
 **By**[ **Revanth Kamaraj** ](https://github.com/krevanth)**<**[**revanth91kamaraj@gmail.com**](mailto:revanth91kamaraj@gmail.com)**>**
 
-***This project is no longer actively supported by me and has been archived.***
-
 Copyright (C) 2016-2022 Revanth Kamaraj
 
 This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 3 of the License, or (at your option) any later version.
