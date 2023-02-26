@@ -1,8 +1,6 @@
 # The ZAP Processor
 
-**By**[ **Revanth Kamaraj** ](https://github.com/krevanth)**<**[**revanth91kamaraj@gmail.com**](mailto:revanth91kamaraj@gmail.com)**>**
-
-Copyright (C) 2016-2022 Revanth Kamaraj
+Copyright (C) 2016-2022 Revanth Kamaraj <revanth91kamaraj@gmail.com>
 
 This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 3 of the License, or (at your option) any later version.
 
@@ -580,7 +578,7 @@ Note that all parameters should be 2^n. Cache size should be multiple of line si
   
   * Get the project files:
     
-    > `git clone https://github.com/krevanth/ZAP.git`
+    > `git clone https://gitlab.com/norisc/zap.git`
   
   * Add all the files in `src/rtl/*.sv` to your project.
   
