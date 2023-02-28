@@ -22,44 +22,44 @@ create_project project_1 -part xc7a75tcsg324-3
 
 # Add RTL files and includes for synthesis.
 add_files -scan_for_includes {
-../../src/rtl/zap_predecode_uop_sequencer.sv \
-../../src/rtl/zap_wb_merger.sv \
-../../src/rtl/zap_shifter_shift.sv \
-../../src/rtl/zap_cache_fsm.sv \
-../../src/rtl/zap_alu_main.sv \
-../../src/rtl/zap_sync_fifo.sv \
-../../src/rtl/zap_register_file.sv \
-../../src/rtl/zap_core.sv \
-../../src/rtl/zap_dual_rank_synchronizer.sv \
-../../src/rtl/zap_mode16_decoder_main.sv \
-../../src/rtl/zap_shifter_multiply.sv \
-../../src/rtl/zap_decode.sv \
-../../src/rtl/zap_decode_main.sv \
-../../src/rtl/zap_ram_simple.sv \
-../../src/rtl/zap_tlb.sv \
-../../src/rtl/zap_tlb_fsm.sv \
-../../src/rtl/zap_mem_inv_block.sv \
-../../src/rtl/zap_predecode_coproc.sv \
-../../src/rtl/zap_writeback.sv \
-../../src/rtl/zap_fetch_main.sv \
-../../src/rtl/zap_postalu_main.sv \
-../../src/rtl/zap_decompile.sv \
-../../src/rtl/zap_fifo.sv \
-../../src/rtl/zap_predecode_main.sv \
-../../src/rtl/zap_tlb_check.sv \
-../../src/rtl/zap_shifter_main.sv \
-../../src/rtl/zap_top.sv \
-../../src/rtl/zap_cache.sv \
-../../src/rtl/zap_cp15_cb.sv \
-../../src/rtl/zap_memory_main.sv \
-../../src/rtl/zap_ram_simple_nopipe.sv \
-../../src/rtl/zap_mode16_decoder.sv \
-../../src/rtl/zap_issue_main.sv \
-../../src/rtl/zap_cache_tag_ram.sv \
-../../src/rtl/zap_dcache_fsm.sv \
-../../src/rtl/zap_dcache.sv \
-../../src/rtl/zap_btb.sv \
-../../src/rtl/zap_ram_simple_ben.sv\
+../../src/rtl/zrisc_predecode_uop_sequencer.sv \
+../../src/rtl/zrisc_wb_merger.sv \
+../../src/rtl/zrisc_shifter_shift.sv \
+../../src/rtl/zrisc_cache_fsm.sv \
+../../src/rtl/zrisc_alu_main.sv \
+../../src/rtl/zrisc_sync_fifo.sv \
+../../src/rtl/zrisc_register_file.sv \
+../../src/rtl/zrisc_core.sv \
+../../src/rtl/zrisc_dual_rank_synchronizer.sv \
+../../src/rtl/zrisc_mode16_decoder_main.sv \
+../../src/rtl/zrisc_shifter_multiply.sv \
+../../src/rtl/zrisc_decode.sv \
+../../src/rtl/zrisc_decode_main.sv \
+../../src/rtl/zrisc_ram_simple.sv \
+../../src/rtl/zrisc_tlb.sv \
+../../src/rtl/zrisc_tlb_fsm.sv \
+../../src/rtl/zrisc_mem_inv_block.sv \
+../../src/rtl/zrisc_predecode_coproc.sv \
+../../src/rtl/zrisc_writeback.sv \
+../../src/rtl/zrisc_fetch_main.sv \
+../../src/rtl/zrisc_postalu_main.sv \
+../../src/rtl/zrisc_decompile.sv \
+../../src/rtl/zrisc_fifo.sv \
+../../src/rtl/zrisc_predecode_main.sv \
+../../src/rtl/zrisc_tlb_check.sv \
+../../src/rtl/zrisc_shifter_main.sv \
+../../src/rtl/zrisc_top.sv \
+../../src/rtl/zrisc_cache.sv \
+../../src/rtl/zrisc_cp15_cb.sv \
+../../src/rtl/zrisc_memory_main.sv \
+../../src/rtl/zrisc_ram_simple_nopipe.sv \
+../../src/rtl/zrisc_mode16_decoder.sv \
+../../src/rtl/zrisc_issue_main.sv \
+../../src/rtl/zrisc_cache_tag_ram.sv \
+../../src/rtl/zrisc_dcache_fsm.sv \
+../../src/rtl/zrisc_dcache.sv \
+../../src/rtl/zrisc_btb.sv \
+../../src/rtl/zrisc_ram_simple_ben.sv\
 }
 
 # Create a sources_1 fileset.
@@ -74,7 +74,7 @@ add_files -fileset constrs_1 -norecurse ../../src/syn/syn.xdc
 # the GUI.
 #
 synth_design \
--top zap_top \
+-top zrisc_top \
 -part xc7a75tcsg324-3 \
 -gated_clock_conversion auto \
 -directive PerformanceOptimized \
@@ -101,7 +101,7 @@ report_timing_summary \
 # Generate a DCP file that can be loaded for further runs to integrate
 # the design into an SOC.
 #
-write_checkpoint zap.dcp
+write_checkpoint zrisc.dcp
 
 ###############################################################################
 # EOF

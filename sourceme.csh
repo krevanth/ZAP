@@ -17,4 +17,4 @@
 # 02110-1301, USA.                                                        
 #                                           
 
-setenv ZAP_ROOT `pwd`
+setenv ZRISC_ROOT `pwd`

@@ -31,7 +31,7 @@
 ////  Created:        2001/05/12                                  ////
 ////  Last Updated:   2001/05/17                                  ////
 ////                  (See log for the revision history)          ////
-///// Modified for use in the ZAP project by Revanth Kamaraj      ////
+///// Modified for use in the ZRISC project by Revanth Kamaraj    ////
 ///                                                               ////
 ////                                                              ////
 //////////////////////////////////////////////////////////////////////
@@ -280,7 +280,7 @@
 ////  Last Updated:   2002/07/22                                  ////
 ////                  (See log for the revision history)          ////
 ////                                                              ////
-//// Modified for use in the ZAP project by Revanth Kamaraj       ////
+//// Modified for use in the ZRISC project by Revanth Kamaraj     ////
 ////                                                              ////
 //////////////////////////////////////////////////////////////////////
 ////                                                              ////
@@ -384,7 +384,7 @@ endmodule
 ////                                                              ////
 ////  Created:        2001/12/02                                  ////
 ////                  (See log for the revision history)          ////
-//// Modified for use in the ZAP project by Revanth Kamaraj       ////
+//// Modified for use in the ZRISC project by Revanth Kamaraj     ////
 ////                                                              ////
 //////////////////////////////////////////////////////////////////////
 ////                                                              ////
@@ -515,7 +515,7 @@ endmodule // uart_debug_if
 ////  Last Updated:   2001/05/17                                  ////
 ////                  (See log for the revision history)          ////
 ////                                                              ////
-//// Modified for use in the ZAP project by Revanth Kamaraj       ////
+//// Modified for use in the ZRISC project by Revanth Kamaraj     ////
 ////                                                              ////
 //////////////////////////////////////////////////////////////////////
 ////                                                              ////
@@ -671,8 +671,8 @@ endmodule // uart_debug_if
 // Initial revision
 //
 //
-//// Modified for use in the ZAP project by Revanth Kamaraj       ////
-
+// Modified for use in the ZRISC project by Revanth Kamaraj       
+//
 
 
 module uart_receiver (clk, wb_rst_i, lcr, rf_pop, srx_pad_i, enable, 
@@ -992,7 +992,7 @@ endmodule
 ////                                                              ////
 ////  Created:        2001/05/12                                  ////
 ////  Last Updated:   (See log for the revision history           ////
-//// Modified for use in the ZAP project by Revanth Kamaraj       ////
+//// Modified for use in the ZRISC project by Revanth Kamaraj     ////
 ////                                                              ////
 ////                                                              ////
 //////////////////////////////////////////////////////////////////////
@@ -1180,7 +1180,7 @@ endmodule
 // Initial revision
 //
 //
-//// Modified for use in the ZAP project by Revanth Kamaraj       ////
+//// Modified for use in the ZRISC project by Revanth Kamaraj       ////
 
 
 
@@ -1881,7 +1881,7 @@ endmodule
 ////  Last Updated:   2002/07/22                                  ////
 ////                  (See log for the revision history)          ////
 ////                                                              ////
-//// Modified for use in the ZAP project by Revanth Kamaraj       ////
+//// Modified for use in the ZRISC project by Revanth Kamaraj       ////
 ////                                                              ////
 //////////////////////////////////////////////////////////////////////
 ////                                                              ////
@@ -2198,7 +2198,7 @@ endmodule
 ////  Created:        2004/05/20                                  ////
 ////  Last Updated:   2004/05/20                                  ////
 ////                  (See log for the revision history)          ////
-//// Modified for use in the ZAP project by Revanth Kamaraj       ////
+//// Modified for use in the ZRISC project by Revanth Kamaraj       ////
 ////                                                              ////
 ////                                                              ////
 //////////////////////////////////////////////////////////////////////
@@ -2318,7 +2318,7 @@ endmodule
 ////  Created:        2001/05/12                                  ////
 ////  Last Updated:   2002/07/22                                  ////
 ////                  (See log for the revision history)          ////
-//// Modified for use in the ZAP project by Revanth Kamaraj       ////
+//// Modified for use in the ZRISC project by Revanth Kamaraj       ////
 ////                                                              ////
 ////                                                              ////
 //////////////////////////////////////////////////////////////////////
@@ -2563,7 +2563,7 @@ endmodule
 ////  Last Updated:   2001/05/17                                  ////
 ////                  (See log for the revision history)          ////
 ////                                                              ////
-//// Modified for use in the ZAP project by Revanth Kamaraj       ////
+//// Modified for use in the ZRISC project by Revanth Kamaraj       ////
 ////                                                              ////
 //////////////////////////////////////////////////////////////////////
 ////                                                              ////
@@ -2899,7 +2899,7 @@ endmodule
 ////  Last Updated:   2001/05/17                                  ////
 ////                  (See log for the revision history)          ////
 ////                                                              ////
-//// Modified for use in the ZAP project by Revanth Kamaraj       ////
+//// Modified for use in the ZRISC project by Revanth Kamaraj     ////
 ////                                                              ////
 //////////////////////////////////////////////////////////////////////
 ////                                                              ////
