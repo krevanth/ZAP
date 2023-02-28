@@ -39,7 +39,7 @@ my $DATA_SPAGE_TLB_ENTRIES      = $Config{'DATA_SPAGE_TLB_ENTRIES'};
 my $DATA_LPAGE_TLB_ENTRIES      = $Config{'DATA_LPAGE_TLB_ENTRIES'};
 my $BP                          = $Config{'BP_DEPTH'};
 my $FIFO                        = $Config{'INSTR_FIFO_DEPTH'};
-my $REG_HIER                    = "u_chip_top.u_zrisc_top.u_zrisc_core.u_zrisc_writeback.u_zrisc_register_file";
+my $REG_HIER                    = "u_chip_top.u_zap_top.u_zap_core.u_zap_writeback.u_zap_register_file";
 
 my $IVL_OPTIONS  = " -Isrc/rtl ";
    $IVL_OPTIONS .= "   src/rtl/*.sv ";
@@ -67,9 +67,9 @@ if ( @ARGV==3 ) {
         print "Enabling trace...\n";
 }
 
-open(HH, ">obj/ts/$TEST/zrisc_check.vh") or die "Could not write to obj/ts/$TEST/zrisc_check.vh";
+open(HH, ">obj/ts/$TEST/zap_check.vh") or die "Could not write to obj/ts/$TEST/zap_check.vh";
 
-my $RAM_HIER = "zrisc_test.mem";
+my $RAM_HIER = "zap_test.mem";
 my $X = $Config{'FINAL_CHECK'};
 
 foreach(keys (%$X)) {
@@ -120,7 +120,7 @@ if ( $HT == 1 )
 }
 
 my $cmd =
-"verilator -O3 $HT -Wno-lint --cc --exe --assert  --build ../../../src/testbench/zrisc_test.cpp --Mdir obj/ts/$TEST --top zrisc_test $IVL_OPTIONS --x-assign unique --x-initial unique --error-limit 1 ";
+"verilator -O3 $HT -Wno-lint --cc --exe --assert  --build ../../../src/testbench/zap_test.cpp --Mdir obj/ts/$TEST --top zap_test $IVL_OPTIONS --x-assign unique --x-initial unique --error-limit 1 ";
 
 print "$cmd\n";
 die "Error: Failed to build executable." if system("$cmd");

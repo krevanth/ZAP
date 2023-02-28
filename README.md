@@ -1,6 +1,6 @@
-# The ZRISC Processor
+# The ZAP Processor
 
-## Copyright (C) 2016-2022 Revanth Kamaraj \<<revanth91kamaraj@gmail.com>\>
+Copyright (C) 2016-2022 Revanth Kamaraj \<<revanth91kamaraj@gmail.com>\>
 
 This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 3 of the License, or (at your option) any later version.
 
@@ -14,13 +14,13 @@ The default processor specification is as follows (The table below is based on d
 
 | **Property**                            | **Value**                                                                                                                                                                                                                  |
 | --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Max. Operating Frequency @ Artix-7 FPGA | ~120MHz @ xc7a75tcsg324-1<br/>~145MHz @ xc7a75tcsg324-2<br/>~170MHz @ xc7a75tcsg324-3<br/>                                                                                                                                 |
+| Max. Operating Frequency @ Artix-7 FPGA | ~120MHz @ xc7a75tcsg324-1<br/>~145MHz @ xc7a75tcsg324-2<br/>~170MHz @ xc7a75tcsg324-3<br/>                                                                                                                           |
 | Pipeline Depth                          | 17                                                                                                                                                                                                                         |
 | Issue and Execution Width               | Single issue, in order, scalar core, with very limited out-of-order completion for some loads/stores that miss in cache.                                                                                                   |
 | Data Width                              | 32                                                                                                                                                                                                                         |
 | Address Width                           | 32                                                                                                                                                                                                                         |
 | Virtual Address Width                   | 32                                                                                                                                                                                                                         |
-| Instruction Set Versions                | V5TE inspired (without FPU)                                                                                                                                                                                                |
+| Instruction Set Versions                | V5TE (1999) without FPU                                                                                                                                                                                                    |
 | L1 I-Cache                              | 8KB Direct Mapped VIVT Cache.<br/>64 Byte Cache Line<br/>**Cache must be enabled, and utilized effectively, for peak performance.**                                                                                        |
 | L1 D-Cache                              | 8KB Direct Mapped VIVT Cache<br>64 Byte Cache Line<br/>**Cache must be enabled, and utilized effectively, for peak performance.**                                                                                          |
 | I-TLB Structure                         | 4 x Direct mapped, one direct mapped TLB per page size. 4 entries for 1MB pages, 8 entries for 64KB pages, 16 entries for 4KB pages and 32 entries for 1KB pages. Each page size has a unique hardware buffer.             |
@@ -31,26 +31,26 @@ The default processor specification is as follows (The table below is based on d
 | Fetch Buffer                            | FIFO, 16 x 32-bit.                                                                                                                                                                                                         |
 | Bus Interface                           | Unified 32-Bit Wishbone B3 bus with CTI and BTE signals.<br/>BTE and CTI signals are used only when cache is enabled.                                                                                                      |
 
-A simplified block diagram of the ZRISC pipeline is shown below. Note that ZRISC is mostly a single issue scalar processor.
+A simplified block diagram of the ZAP pipeline is shown below. Note that ZAP is mostly a single issue scalar processor.
 
 ![Pipeline](./Pipeline.drawio.svg)
 
-ZRISC includes several microarchitectural enhancements to improve instruction throughput, hide external bus and memory latency and boost performance:
+ZAP includes several microarchitectural enhancements to improve instruction throughput, hide external bus and memory latency and boost performance:
 
 * The ability to continue instruction execution even when the data cache is being filled. The data cache features hit under miss capability. The processor stalls when an instruction that depends on the cache access is decoded.
 * Direct mapped instruction and data caches. These caches are virtually indexed and virtually tagged. Individual caches allow code and data to be accessed at the same time. The sizes of these caches can be set during synthesis. Cache size is parameterizable. Cache line width may be set as well.
 * The D-cache also stores the physical address of the cache line on write as this allows subsequent cache clean operations to avoid having to walk the page table again. This feature does increase resource usage but can significantly reduce cache clean latency.
 * Direct mapped instruction and data memory TLBs. Having separate translation buffers allows data and code translation to happen in parallel. The sizes of these TLBs can be set during synthesis. Six different TLB memories are provides, each providing direct mapped buffering for sections, large page and small page, each for instruction and data (3 x 2 = 6). The sizes of these 6 memories is parameterizable.
-* A 4-state bimodal branch predictor that predicts the outcome of immediate branches and branch-and-link instructions. ZRISC employs a BTB (Branch Target Buffer) to predict branch outcomes early.
+* A 4-state bimodal branch predictor that predicts the outcome of immediate branches and branch-and-link instructions. ZAP employs a BTB (Branch Target Buffer) to predict branch outcomes early.
 * A 4 deep return address stack that stores the predicted return address of branch and link instructions function return. When a `BX LR`, `MOV PC,LR` or a block load with PC in register list, the processor pops off the return address. Note that switching between A (32-bit) and T state (16-bit) has a penalty of 12 cycles.
 * The ability to execute most 32-bit instructions in a single clock cycle. The only instructions that take multiple cycles include branch-and-link, 64-bit loads and stores, block loads and stores, swap instructions and `BLX/BLX2`.
 * A highly efficient superpipeline with dual feedback networks to minimize pipeline stalls as much as possible while allowing for high clock frequencies. A deep 17 stage superpipelined architecture that allows the CPU to run at relatively high FPGA speeds.
-* Multiplication/MAC operations takes 4 cycles per operation (+1 is result is immediately used). Note that the multiplier inside the ZRISC processor is not pipelined.
+* Multiplication/MAC operations takes 4 cycles per operation (+1 is result is immediately used). Note that the multiplier inside the ZAP processor is not pipelined.
 * The abort model is base restored. This allows for the implementation of a demand based paging system if supporting software is available.
 
 ### 1.1. Superpipelined Microarchitecture
 
-ZRISC uses a 17 stage execution pipeline to increase the throughput of instructions to the processor. The 17 stage pipeline consists of Address Generator, TLB Check, Cache Access, Memory, Fetch, Instruction Buffer, T Decoder, Pre-Decoder, Decoder, Issue, Shift, Execute, TLB Check, Cache Access, Memory and Writeback.
+ZAP uses a 17 stage execution pipeline to increase the throughput of instructions to the processor. The 17 stage pipeline consists of Address Generator, TLB Check, Cache Access, Memory, Fetch, Instruction Buffer, T Decoder, Pre-Decoder, Decoder, Issue, Shift, Execute, TLB Check, Cache Access, Memory and Writeback.
 
 > To maintain compatibility with the V5TE standard, reading the program counter (PC) will return PC + 8 when read.
 
@@ -82,11 +82,11 @@ During normal operation:
 * The instruction before that is accessing the cache/TLB RAM.
 * The instruction before that is accessing the cache/TLB RAM.
 
-The deep pipeline, although uses more resources, allows the ZRISC to run at higher clock speeds.
+The deep pipeline, although uses more resources, allows the ZAP to run at higher clock speeds.
 
 #### 1.1.1. Automatic Dual Forwarding Network
 
-The ZRISC pipeline has an efficient automatic dual forwarding network with interlock detection hardware. This is done automatically and no software intervention is required. This complex feedback logic guarantees that almost all micro-ops/instructions execute at a rate of 1 every cycle.
+The ZAP pipeline has an efficient automatic dual forwarding network with interlock detection hardware. This is done automatically and no software intervention is required. This complex feedback logic guarantees that almost all micro-ops/instructions execute at a rate of 1 every cycle.
 
 Most of the time, the pipeline is able to process 1 instruction per clock cycle. The only times a pipeline stalls (bubbles inserted) is when (assume 100% cache hit rate and 100% branch prediction rate):
 
@@ -125,11 +125,11 @@ This snippet of 32-bit instruction code takes only 5 cycles (Possible because of
 
 #### 1.1.2. Single Cycle Load with Writeback
 
-The ZRISC can execute `LDR`/`STR` with writeback in a single cycle. It will perform a parallel write to the register file with the pointer register and the data register in the same cycle.
+The ZAP can execute `LDR`/`STR` with writeback in a single cycle. It will perform a parallel write to the register file with the pointer register and the data register in the same cycle.
 
 #### 1.1.3. Hit Under Miss/Execute Under Miss
 
-Data cache accesses that are performing line fills will not block subsequent instructions from executing. In addition, the data cache supports hit under miss functionality i.e., the cache can service the next memory access (hit) while handing the current line fill (miss). Thus, the ZRISC can change the order of completion of memory accesses with respect to other instructions, when possible, in a relatively simple way.
+Data cache accesses that are performing line fills will not block subsequent instructions from executing. In addition, the data cache supports hit under miss functionality i.e., the cache can service the next memory access (hit) while handing the current line fill (miss). Thus, the ZAP can change the order of completion of memory accesses with respect to other instructions, when possible, in a relatively simple way.
 
 If a store misses and is in the process of a line fill, a subsequent load at the same address will report as a hit during the line fill.
 
@@ -167,7 +167,7 @@ ADD R3, R2, R1
 
 #### 1.1.4. Multi Port Register File
 
-ZRISC implements the register file in flip-flops. The register file provides 4 read ports and 3 write ports (A, B and C). The operation is as follows:
+ZAP implements the register file in flip-flops. The register file provides 4 read ports and 3 write ports (A, B and C). The operation is as follows:
 
 | Operation           | Port A | Port B | Port C                               |
 | ------------------- | ------ | ------ | ------------------------------------ |
@@ -176,7 +176,7 @@ ZRISC implements the register file in flip-flops. The register file provides 4 r
 
 #### 1.1.5. Branch Predictor and Return Address Stack
 
-To improve performance, the ZRISC processor uses a bimodal branch predictor. A branch memory is maintained which stores the state of each branch and the target address and branch tag. Note that the predictor can only predict the listed 32-bit instructions (and equivalent 16-bit instructions in T state):
+To improve performance, the ZAP processor uses a bimodal branch predictor. A branch memory is maintained which stores the state of each branch and the target address and branch tag. Note that the predictor can only predict the listed 32-bit instructions (and equivalent 16-bit instructions in T state):
 
 `Bcc[L]`
 
@@ -215,11 +215,11 @@ Returns that result in change from 32 to 16-bit instruction state or vice versa 
 
 ### 1.2. Wishbone Bus Interface
 
-ZRISC features a common 32-bit Wishbone B3 bus to access external resources (like DRAM/SRAM/IO etc). The processor can generate byte, halfword or word accesses. The processor uses CTI and BTE for efficient bus transfers. Note that multiprocessing is not readily supported and hence, `SWAP/SWAPB` instructions do not **actually** perform locked transfers.
+ZAP features a common 32-bit Wishbone B3 bus to access external resources (like DRAM/SRAM/IO etc). The processor can generate byte, halfword or word accesses. The processor uses CTI and BTE for efficient bus transfers. Note that multiprocessing is not readily supported and hence, `SWAP/SWAPB` instructions do not **actually** perform locked transfers.
 
 The 32-bit standard Wishbone bus makes it easy to interface to other components over a typical 32-bit FPGA SoC bus, without the need for up/down converters. A future enhancement may be to add wider busses.
 
-ZRISC can issue three kinds of transactions:
+ZAP can issue three kinds of transactions:
 
 - Wishbone BURST Cycles.
 
@@ -277,7 +277,7 @@ When **ONLY_CORE = 0x0**, the following types of accesses can result in mostly W
 
 - The external bus latency for CLASSIC/BLOCK cycles it typically higher than burst cycles, because block cycles do not provide a hint if the next address is consecutive or not. 
 
-- ZRISC will freely intermix instruction and data accesses within BLOCK cycles. 
+- ZAP will freely intermix instruction and data accesses within BLOCK cycles. 
 
 - The processor can issue a BLOCK Wishbone access every cycle.
 
@@ -285,7 +285,7 @@ When **ONLY_CORE = 0x0**, the following types of accesses can result in mostly W
 
 ### 1.3. System Control
 
-Please refer to the v5TE specification for CP15 CSR architectural requirements. The ZRISC implements the following software accessible registers within its CP15 coprocessor.  
+Please refer to the v5TE specification for CP15 CSR architectural requirements. The ZAP implements the following software accessible registers within its CP15 coprocessor.  
 
 > `MCR/MRC/LDC/STC` act as fence instructions, and ensure all instructions before them have executed before executing.
 
@@ -318,10 +318,10 @@ Please refer to the v5TE specification for CP15 CSR architectural requirements. 
 | 3   | RAO. Writeback cache.                                                                            |
 | 4   | RAO. No 26-bit compatibility.                                                                    |
 | 5   | RAO. No 26-bit compatibility.                                                                    |
-| 6   | RAO. Base updated abort model. ZRISC only supports the base updated restore model.                 |
+| 6   | RAO. Base updated abort model. ZAP only supports the base updated restore model.                 |
 | 7   | Big Endian Enable. Reflects BE_32_ENABLE parameter. RO.                                          |
-| 8   | S Bit. Used by the ZRISC MMU. Has an impact only when **ONLY_CORE=0x0**.                           |
-| 9   | R Bit. Used by the ZRISC MMU. Has an impact only when **ONLY_CORE=0x0**.                           |
+| 8   | S Bit. Used by the ZAP MMU. Has an impact only when **ONLY_CORE=0x0**.                           |
+| 9   | R Bit. Used by the ZAP MMU. Has an impact only when **ONLY_CORE=0x0**.                           |
 | 10  | RESERVED                                                                                         |
 | 11  | RAO. Branch predictor enabled. Always enabled.                                                   |
 | 12  | 0x1: ICache Enable.<br/>0x0: ICache Disable<br/>When **ONLY_CORE=0x1**, this bit always reads 0. |
@@ -370,8 +370,8 @@ Provide a 16KB aligned translation base address here.
 #### 1.3.9. Register 7: **Cache functions**.
 
 - The arch spec allows for a subset of the functions to be implemented for register 7. 
-- These below are valid value supported in ZRISC for register 7. Using other operations will result in UNDEFINED operation.
-- A more efficient way to clean the cache is to load another block into it. Since ZRISC offers direct mapped caches, this can easily be done. In fact, triggering loading a new block into cache (using an `LDR`) is the recommended way to clean the cache.
+- These below are valid value supported in ZAP for register 7. Using other operations will result in UNDEFINED operation.
+- A more efficient way to clean the cache is to load another block into it. Since ZAP offers direct mapped caches, this can easily be done. In fact, triggering loading a new block into cache (using an `LDR`) is the recommended way to clean the cache.
 
 | Cache Operation                                      | Opcode2 | CRM    |
 | ---------------------------------------------------- | ------- | ------ |
@@ -391,23 +391,23 @@ Provide a 16KB aligned translation base address here.
 
 ### 1.4. Implementation Options
 
-ZRISC implements the integer instruction set specified in the v5TE specification. T refers to the 16-bit instruction set and E refers to the enhanced DSP extensions. ZRISC does not implement the optional floating point extension specified in Part C of v5TE specification.
+ZAP implements the integer instruction set specified in the v5TE specification. T refers to the 16-bit instruction set and E refers to the enhanced DSP extensions. ZAP does not implement the optional floating point extension specified in Part C of v5TE specification.
 
 #### 1.4.1. Big and Little Endian
 
-ZRISC supports little endian byte ordering or BE-32 big endian byte ordering. The endianness is fixed by a parameter. The appropriate bit in CP15 that indicates endianness is read-only, and reflects the parameter set during synthesis.
+ZAP supports little endian byte ordering or BE-32 big endian byte ordering. The endianness is fixed by a parameter. The appropriate bit in CP15 that indicates endianness is read-only, and reflects the parameter set during synthesis.
 
 #### 1.4.2. 26-Bit Architecture
 
-ZRISC does not support the legacy 26-bit mode.
+ZAP does not support the legacy 26-bit mode.
 
 #### 1.4.3. 16-bit Compressed Support
 
-ZRISC has support for the 16-bit V5T compressed instruction set. A backward compatibility bit is available in CP15 register 1 to set the compressed instruction set version to v4T. This is in accordance with the architecture specification.
+ZAP has support for the 16-bit V5T compressed instruction set. A backward compatibility bit is available in CP15 register 1 to set the compressed instruction set version to v4T. This is in accordance with the architecture specification.
 
 #### 1.4.4. DSP Enhanced Instruction Set
 
-The ZRISC implements the DSP-enhanced instruction set (V5E). There are new multiply instructions that operate on 16-bit data values and new saturation instructions. Some of the new instructions are:
+The ZAP implements the DSP-enhanced instruction set (V5E). There are new multiply instructions that operate on 16-bit data values and new saturation instructions. Some of the new instructions are:
 
 * `SMLAxy` 32<=16x16+32
 * `SMLAWy` 32<=32x16+32
@@ -419,12 +419,12 @@ The ZRISC implements the DSP-enhanced instruction set (V5E). There are new multi
 * `QSUB` subtracts two registers and saturates the result if an overflow occurred.
 * `QDSUB` doubles and saturates one of the input registers then subtract and saturate.
 
-**NOTE:** All of the multiplication and MAC operations in ZRISC take a fixed 3 clock cycles (irrespective of 32x32=32, 32x32=64, 16x16+32 etc). Additional latency of 1 cycle is incurred if the result is required in the immediate next instruction. A further additional latency of 1 cycle is incurred if two registers must be updated (long multiply/MAC operations).
+**NOTE:** All of the multiplication and MAC operations in ZAP take a fixed 3 clock cycles (irrespective of 32x32=32, 32x32=64, 16x16+32 etc). Additional latency of 1 cycle is incurred if the result is required in the immediate next instruction. A further additional latency of 1 cycle is incurred if two registers must be updated (long multiply/MAC operations).
 
-The ZRISC also implements `LDRD`, `STRD` and `PLD` instructions with the following implementation notes:
+The ZAP also implements `LDRD`, `STRD` and `PLD` instructions with the following implementation notes:
 
 * `PLD` is interpreted as a `NOP`.
-* `MCRR` and `MRRC` are not intended to be used on coprocessor 15 (see v5TE specification). Since ZRISC does not have an external coprocessor bus, these instructions should not be used.
+* `MCRR` and `MRRC` are not intended to be used on coprocessor 15 (see v5TE specification). Since ZAP does not have an external coprocessor bus, these instructions should not be used.
 
 #### 1.4.5. Base Register Update
 
@@ -432,29 +432,29 @@ If a data abort is signaled on a memory instruction that specifies writeback, th
 
 #### 1.4.6. Cache and TLB Lockdown
 
-ZRISC does not support lockdown of cache and TLB entries.
+ZAP does not support lockdown of cache and TLB entries.
 
 #### 1.4.7. TLB Flush
 
-ZRISC implements global TLB flushing. If software tries to invalidate selective TLB entries, the entire TLB will be invalidated. This behavior is acceptable as per the architecture specification.
+ZAP implements global TLB flushing. If software tries to invalidate selective TLB entries, the entire TLB will be invalidated. This behavior is acceptable as per the architecture specification.
 
 #### 1.4.8. Cache Clean and Flush
 
-ZRISC implements global cache cleaning and flushing. Cleaning and/or flushing specific cache lines/VA is not supported.
+ZAP implements global cache cleaning and flushing. Cleaning and/or flushing specific cache lines/VA is not supported.
 
 #### 1.4.9. Cache and TLB Structure
 
-ZRISC implements a direct mapped cache and TLB. Separate caches and TLBs exist for instruction and data paths. Each MMU (I and D) has 4 TLBs, one each for sections, large pages, small pages and tiny pages. Each one is direct mapped.
+ZAP implements a direct mapped cache and TLB. Separate caches and TLBs exist for instruction and data paths. Each MMU (I and D) has 4 TLBs, one each for sections, large pages, small pages and tiny pages. Each one is direct mapped.
 
 Thus, each cache uses 2 block RAMs (Tag and Data) and each MMU uses 4 RAMs. Functionally, the processor's memory subsystem requires 12 block RAMs. In practice, FPGA synthesis implements this using groups of smaller block RAMs (same overall function) so the BRAM count would be higher.
 
 #### 1.4.10. FCSE
 
-ZRISC implements the FCSE.
+ZAP implements the FCSE.
 
 #### 1.4.11. Cache/MMU Enabling
 
-ZRISC allows the cache and MMU to have these combinations:
+ZAP allows the cache and MMU to have these combinations:
 
 | MMU | Cache | Behavior                                                   |
 | --- | ----- | ---------------------------------------------------------- |
@@ -465,11 +465,11 @@ ZRISC allows the cache and MMU to have these combinations:
 
 #### 1.4.12. Coprocessor Interface
 
-ZRISC internally implements an internal CP15 coprocessor using its internal bus mechanism. The coprocessor interface is internal to the ZRISC processor and is not exposed. Thus, ZRISC only has access to its internal coprocessor 15. External coprocessors cannot be attached to the processor.
+ZAP internally implements an internal CP15 coprocessor using its internal bus mechanism. The coprocessor interface is internal to the ZAP processor and is not exposed. Thus, ZAP only has access to its internal coprocessor 15. External coprocessors cannot be attached to the processor.
 
 ### 1.5. Implementation Specific Behaviors
 
-The V5TE specification leaves several behaviors of the ISA to be UNPREDICTABLE. Listed below are the implementation specific behaviors of ZRISC:
+The V5TE specification leaves several behaviors of the ISA to be UNPREDICTABLE. Listed below are the implementation specific behaviors of ZAP:
 
 Using `r15/pc` as a pointer register for `STR/STM` will result in it reading as 8 bytes ahead. 
 
@@ -495,13 +495,13 @@ External aborts on uncacheable accesses (MMIO) will result in a TERMINAL ABORT.
 
 ### 1.6. External Aborts
 
-ZRISC provides an external abort pin `I_WB_ERR`, but it must be used with great care. In particular, the following scenarios should be carefully considered.
+ZAP provides an external abort pin `I_WB_ERR`, but it must be used with great care. In particular, the following scenarios should be carefully considered.
 
 - Cacheable memory accesses that are validated by the TLB cannot be externally aborted. This applies to cache cleaning operations as well.
 
 ### 1.7. Multiprocessing
 
-Because `SWAP` and `SWAPB` do not lock the bus during their individual memory accesses, ZRISC cannot be used in a multiprocessing system that requires semaphores.
+Because `SWAP` and `SWAPB` do not lock the bus during their individual memory accesses, ZAP cannot be used in a multiprocessing system that requires semaphores.
 
 ### 1.8. Performance
 
@@ -574,20 +574,20 @@ Note that all parameters should be 2^n. Cache size should be multiple of line si
 
 ### 2.3. Integration
 
-* To use the ZRISC processor in your project:
+* To use the ZAP processor in your project:
   
   * Get the project files:
     
-    > `git clone https://gitlab.com/norisc/ZRISC.git`
+    > `git clone https://gitlab.com/norisc/zap.git`
   
   * Add all the files in `src/rtl/*.sv` to your project.
   
   * Add `src/rtl/` to your tool's search path to allow it to pick up SV headers.
   
-  * Instantiate the ZRISC processor in your project using this template:
+  * Instantiate the ZAP processor in your project using this template:
 
 ```
-       ZRISC_top #(.CP15_L4_DEFAULT         (),
+       zap_top #(.CP15_L4_DEFAULT         (),
                  .BE_32_ENABLE            (),
                  .CPSR_INIT               (),
                  .RESET_VECTOR            (),
@@ -602,7 +602,7 @@ Note that all parameters should be 2^n. Cache size should be multiple of line si
                  .CODE_LPAGE_TLB_ENTRIES  (),
                  .CODE_SPAGE_TLB_ENTRIES  (),
                  .CODE_FPAGE_TLB_ENTRIES  (),
-                 .CODE_CACHE_SIZE         ()) u_ZRISC_top (
+                 .CODE_CACHE_SIZE         ()) u_zap_top (
                  .i_clk                   (),
                  .i_reset                 (),
                  .i_irq                   (),
@@ -656,13 +656,13 @@ To remove existing object/simulation/synthesis files, do:
   
   * See `src/testbench/testbench.v` for more information.
 
-* Tests will produce wave files in the `obj/src/ts/<test_name>/ZRISC.vcd`.
+* Tests will produce wave files in the `obj/src/ts/<test_name>/zap.vcd`.
 
 * Add a C file (.c), an assembly file (.s) and a linker script (.ld).
 
 * Create a `Config.cfg`. This is a Perl hash that must be edited to meet requirements. Note that the registers in the `REG_CHECK` are indexed registers. To find those, please do:
   
-  > `cat src/rtl/ZRISC_localparams.svh | grep PHY`
+  > `cat src/rtl/zap_localparams.svh | grep PHY`
   
   For example, if a check requires a certain value of R13 in IRQ mode, the hash will mention the register number as r25.
 
@@ -730,13 +730,27 @@ The synthesis script assumes a -3 speed grade part.
 
 Timing report will be available in `obj/syn/syn_timing.rpt`
 
-DCP file will be available in `obj/syn/ZRISC.dcp` 
+DCP file will be available in `obj/syn/zap.dcp` 
 
 #### 3.4.1. XDC Setup (Vivado FPGA Synthesis)
 
 * The XDC assumes a 200MHz clock for an Artix 7 FPGA part with -3 speed grade.
 * All timing valid inputs are given an input delay of 1 ns, which is typical for an FPGA flip-flop.
 * Outputs assume they are driving flip-flops with Tsu = 2ns Th=1ns, typical for an FPGA flip-flop.
+
+## 4. Acknowledgements
+
+Thanks to [Erez Binyamin](https://github.com/ErezBinyamin) for adding Docker infrastructure support.
+
+Thanks to [ElectronAsh](https://github.com/electronash/sim_3do) for working on a 3DO video game project based around the ZAP core.
+
+Thanks to [Bharath Mulagondla](https://github.com/bharathmulagondla) and [Akhil Raj Baranwal](https://github.com/arbaranwal) for pointing out bugs in the design.
+
+The testbench UART core in `src/testbench/uart.v` is based on the [UART-16550 core](https://github.com/freecores/uart16550) project.
+
+Testbench assembly code in `src/ts/mode32_test*/` is based on Jonathan Masur's and Xavier Jimenez's work that can be found [here](https://opencores.org/users/Bregalad/profile)
+
+Testbench assembly code in `src/ts/mode16_test*/` is based on Julian Smolka's work [here](https://github.com/jsmolka/gba-tests)
 
 ## 5. License
 

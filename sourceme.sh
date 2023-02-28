@@ -17,4 +17,4 @@
 # 02110-1301, USA.                                                        
 #                                           
 
-export ZRISC_ROOT=$(pwd)
+export ZAP_ROOT=$(pwd)
