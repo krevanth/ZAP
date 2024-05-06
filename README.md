@@ -626,9 +626,9 @@ Note that all parameters should be 2^n. Cache size should be multiple of line si
 
 ## 3. Project Environment
 
-The recommended project environment requires Docker to be installed at your site. Click [here](https://docs.docker.com/engine/install/) for instructions on how to install Docker. The steps here assume that the user is a part of the `docker` group.
+The project environment requires Docker to be installed at your site. Click [here](https://docs.docker.com/engine/install/) for instructions on how to install Docker. The steps here assume that the user is a part of the `docker` group.
 
-If your site has the latest EDA tools and other tools required (Verilator, GTKWave, GCC Cross Compiler, Xterm, Make, Perl, Bash, Cargo) installed, and if you do not wish to use Docker, then you should not pass the `DOCKER=1` argument when invoking `make`, hence the argument is shown as optional in the examples below.  The `SEED` arguments allows passing of specific seed and enabling waveform logging. When switching from passing no seed to passing a seed, please run the `clean` make target first. 
+The `SEED` arguments allows passing of specific seed and enabling waveform logging. When switching from passing no seed to passing a seed, please run the `clean` make target first. 
 
 > It is recommended that your simulator support assertions.
 
@@ -636,7 +636,7 @@ If your site has the latest EDA tools and other tools required (Verilator, GTKWa
 
 To run all/a specific TC, do:
 
-> `make [DOCKER=1] [XTERM=1] [SEED=<Seed>] [TC=test_name]`
+> `make [XTERM=1] [SEED=<Seed>] [TC=test_name]`
 
 See `src/ts` for a list of test names. Not providing a test name will run all tests.
 
@@ -646,7 +646,7 @@ Else, the TC will run on the command line. In this mode, the TCs are executed se
 
 To remove existing object/simulation/synthesis files, do:
 
-> `make [DOCKER=1] clean`
+> `make clean`
 
 ### 3.2. Adding TCs
 
@@ -710,7 +710,7 @@ To remove existing object/simulation/synthesis files, do:
 
 To run RTL lint with Verilator, simply do:
 
-> `make [DOCKER=1] lint`
+> `make lint`
 
 To run RTL lint with svlint (no Docker support, install with `cargo install svlint`):
 
