@@ -156,14 +156,14 @@ logic    [CACHE_LINE*8-1:0]               cache_line;
 logic  [`ZAP_CACHE_TAG_WDT-1:0]           cache_tag; // Tag
 logic    [31:0]                           phy_addr;
 
-logic                                     UNUSED_1B, UNUSED_2B, unused;
+logic                                     unused;
 
 // ----------------------------------------------------------------------------
 // Logic
 // ----------------------------------------------------------------------------
 
 // Unused
-always_comb unused = |{rhit, whit, UNUSED_1B, UNUSED_2B, phy_addr[$clog2(CACHE_LINE)-1:0]};
+always_comb unused = |{rhit, whit, phy_addr[$clog2(CACHE_LINE)-1:0]};
 
 // Tie flops to the output
 always_comb o_cache_clean_req = cache_clean_req_ff; // Tie req flop to output.
@@ -240,9 +240,6 @@ always_comb
 begin:blk1
        logic [$clog2(CACHE_LINE/4)-1:0] a;
 
-       UNUSED_1B = '0;
-       UNUSED_2B = '0;
-
         // Default values
         a                       = {($clog2(CACHE_LINE/4)){1'd0}};
         state_nxt               = state_ff;
@@ -295,7 +292,7 @@ begin:blk1
 
         IDLE:
         begin
-                kill_access ();
+                `zap_kill_access;
 
                 if ( i_cache_inv )
                 begin
@@ -451,7 +448,7 @@ begin:blk1
                         o_err           = i_wb_err;
                         o_fsr[3:0]      = TERMINAL_EXCEPTION;
 
-                        kill_access ();
+                        `zap_kill_access;
                 end
         end
 
@@ -467,20 +464,19 @@ begin:blk1
                 if ( {{ADR_PAD{1'd0}}, adr_ctr_nxt} <= ((CACHE_LINE/4) - 1) )
                 begin
                         // Sync up with memory. Use PA in cache tag itself.
-                        wb_prpr_write( clean_single_d (cache_line, adr_ctr_nxt),
-
-                                      {cache_tag[`ZAP_CACHE_TAG__PA], {$clog2(CACHE_LINE){1'd0}}} +
-                                        ({{ADR_PAD_MINUS_2{1'd0}}, adr_ctr_nxt, 2'd0}),
-
-                                      {{ADR_PAD{1'd0}},adr_ctr_nxt} != ((CACHE_LINE/4) - 1) ?
-                                        CTI_BURST : CTI_EOB,
-
-                                        4'b1111);
+                        o_wb_cyc_nxt = 1'd1;
+                        o_wb_stb_nxt = 1'd1;
+                        o_wb_wen_nxt = 1'd1;
+                        o_wb_dat_nxt = clean_single_d(cache_line, adr_ctr_nxt);
+                        o_wb_adr_nxt = {cache_tag[`ZAP_CACHE_TAG__PA], {$clog2(CACHE_LINE){1'd0}}} + 
+                                       ({{ADR_PAD_MINUS_2{1'd0}}, adr_ctr_nxt, 2'd0});
+                        o_wb_cti_nxt = {{ADR_PAD{1'd0}},adr_ctr_nxt} != ((CACHE_LINE/4) - 1) ? CTI_BURST : CTI_EOB;
+                        o_wb_sel_nxt = 4'b1111;
                 end
                 else
                 begin
                         // Move to wait state
-                        kill_access ();
+                        `zap_kill_access;
                         state_nxt = IDLE;
 
                         // Update tag. Remove dirty bit.
@@ -520,7 +516,7 @@ begin:blk1
                 begin
 
                         // Fetch line from memory
-                        wb_prpr_read(
+                        `zap_wb_prpr_read(
                                      {phy_addr[31:$clog2(CACHE_LINE)], {$clog2(CACHE_LINE){1'd0}}} + (adr_ctr_nxt * (32/8)),
                                      ({{ADR_PAD{1'd0}}, adr_ctr_nxt} != CACHE_LINE/4 - 1) ? CTI_BURST : CTI_EOB);
                 end
@@ -545,7 +541,7 @@ begin:blk1
                         o_cache_tag_dirty                       = !wr ? 1'd0 : 1'd1; // BUG FIX.
 
                         // Move to idle state
-                        kill_access ();
+                        `zap_kill_access;
                         state_nxt = IDLE;
                 end
         end
@@ -632,7 +628,6 @@ logic [W-1:0]        shamt;
 begin
         shamt                     = {shift, 5'd0};
         {dummy, adapt_cache_data} =  data >> shamt;
-        UNUSED_1B                 = |{dummy};
 end
 endfunction
 
@@ -657,54 +652,6 @@ logic [CACHE_LINE*8-32-1:0] dummy;
 begin
         shamt                   = {sh, 5'd0};
         {dummy, clean_single_d} = cl >> shamt; // Select specific 32-bit.
-        UNUSED_2B               = |{dummy};
-end
-endfunction
-
-// Task to generate Wishbone read signals.
-function automatic void wb_prpr_read (
-        input [31:0] Address,
-        input [2:0]  cti
-);
-begin
-        o_wb_cyc_nxt = 1'd1;
-        o_wb_stb_nxt = 1'd1;
-        o_wb_wen_nxt = 1'd0;
-        o_wb_sel_nxt = 4'b1111;
-        o_wb_adr_nxt = Address;
-        o_wb_cti_nxt = cti;
-        o_wb_dat_nxt = 0;
-end
-endfunction
-
-// Function to generate Wishbone write signals
-function automatic void wb_prpr_write (
-        input   [31:0]  data,
-        input   [31:0]  Address,
-        input   [2:0]   cti,
-        input   [3:0]   Ben
-);
-begin
-        o_wb_cyc_nxt = 1'd1;
-        o_wb_stb_nxt = 1'd1;
-        o_wb_wen_nxt = 1'd1;
-        o_wb_sel_nxt = Ben;
-        o_wb_adr_nxt = Address;
-        o_wb_cti_nxt = cti;
-        o_wb_dat_nxt = data;
-end
-endfunction
-
-// Disables Wishbone
-function automatic void kill_access ();
-begin
-        o_wb_cyc_nxt = 0;
-        o_wb_stb_nxt = 0;
-        o_wb_wen_nxt = 0;
-        o_wb_adr_nxt = 0;
-        o_wb_dat_nxt = 0;
-        o_wb_sel_nxt = 0;
-        o_wb_cti_nxt = CTI_EOB;
 end
 endfunction
 

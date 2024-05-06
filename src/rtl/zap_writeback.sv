@@ -211,6 +211,9 @@ zap_register_file u_zap_register_file
 always_comb
 begin: pc_control_tree
 
+        logic [31:0] new_pc;
+
+        new_pc                   = 'd0;
         shelve_nxt               = shelve_ff;
         pc_shelve_nxt            = pc_shelve_ff;
         pc_nxt                   = pc_ff;
@@ -222,50 +225,49 @@ begin: pc_control_tree
         if ( i_data_abt[1] )
         begin
                 // Return do the same instruction.
-                pc_shelve ( mode32 ? i_pc_plus_8_buf_ff - 8 :
-                                       i_pc_plus_8_buf_ff - 4 );
+                `zap_pc_shelve( mode32 ? i_pc_plus_8_buf_ff - 8 : i_pc_plus_8_buf_ff - 4 );
         end
         else if ( i_data_abt[0] )
         begin
                 // Returns do LR - 8 to get back to the same instruction.
-                pc_shelve( DABT_VECTOR );
+                `zap_pc_shelve( DABT_VECTOR );
         end
         else if ( i_fiq )
         begin
                 // Returns do LR - 4 to get back to the same instruction.
-                pc_shelve ( FIQ_VECTOR );
+                `zap_pc_shelve ( FIQ_VECTOR );
         end
         else if ( i_irq  )
         begin
                 // Returns do LR - 4 to get back to the same instruction.
-                pc_shelve ( IRQ_VECTOR );
+                `zap_pc_shelve ( IRQ_VECTOR );
         end
         else if ( i_instr_abt )
         begin
                 // Returns do LR - 4 to get back to the same instruction.
-                pc_shelve ( PABT_VECTOR );
+                `zap_pc_shelve ( PABT_VECTOR );
         end
         else if ( i_swi )
         begin
                 // Returns to LR to return next instruction.
-                pc_shelve (SWI_VECTOR);
+                `zap_pc_shelve (SWI_VECTOR);
         end
         else if ( i_und )
         begin
                 // Returns do LR to return to the next instruction.
-                pc_shelve(UND_VECTOR);
+                `zap_pc_shelve(UND_VECTOR);
         end
         else if ( i_valid && i_mem_load_ff && i_wr_index_1 == {2'd0, ARCH_PC} )
         begin
-                pc_shelve(i_wr_data_1);
+                `zap_pc_shelve(i_wr_data_1);
         end
         else if ( i_clear_from_alu )
         begin
-                pc_shelve(i_pc_from_alu);
+                `zap_pc_shelve(i_pc_from_alu);
         end
         else if ( i_clear_from_decode )
         begin
-                pc_shelve(i_pc_from_decode);
+                `zap_pc_shelve(i_pc_from_decode);
         end
         else if ( i_code_stall )
         begin
@@ -284,11 +286,11 @@ begin: pc_control_tree
         end
         else if ( i_clear_from_icache )
         begin
-                pc_shelve (pc_del3_ff[31:0]);
+                `zap_pc_shelve (pc_del3_ff[31:0]);
         end
         else if ( clear_from_btb && pc_del3_ff[32] )
         begin
-                pc_shelve (pc_from_btb);
+                `zap_pc_shelve (pc_from_btb);
                 o_pred = {1'd1, pc_from_btb};
         end
         else
@@ -339,7 +341,7 @@ begin: register_file_write
                 // Disable IRQ interrupts when entering exception.
                 // Go to 32-bit mode.
                 //
-                chmod ();
+                `zap_chmod;
         end
         else if ( i_fiq )
         begin
@@ -351,7 +353,7 @@ begin: register_file_write
                 cpsr_nxt[ZAP_CPSR_MODE:0] = FIQ;
                 cpsr_nxt[F]             = 1'd1; // Mask FIQ interrupts.
 
-                chmod ();
+                `zap_chmod;
         end
         else if ( i_irq )
         begin
@@ -362,7 +364,7 @@ begin: register_file_write
                 wdata2                  = cpsr_ff;
                 cpsr_nxt[ZAP_CPSR_MODE:0] = IRQ;
 
-                chmod ();
+                `zap_chmod;
         end
         else if ( i_instr_abt )
         begin
@@ -373,7 +375,7 @@ begin: register_file_write
                 wdata2 = cpsr_ff;
                 cpsr_nxt[ZAP_CPSR_MODE:0]  = ABT;
 
-                chmod ();
+                `zap_chmod;
         end
         else if ( i_swi )
         begin
@@ -384,7 +386,7 @@ begin: register_file_write
                 wdata2                  = cpsr_ff;
                 cpsr_nxt[ZAP_CPSR_MODE:0] = SVC;
 
-                chmod ();
+                `zap_chmod;
         end
         else if ( i_und )
         begin
@@ -395,7 +397,7 @@ begin: register_file_write
                 wdata2                  = cpsr_ff;
                 cpsr_nxt[ZAP_CPSR_MODE:0] = UND;
 
-                chmod ();
+                `zap_chmod;
         end
         else if ( i_copro_reg_en )
         begin
@@ -491,42 +493,6 @@ zap_btb #(.BP_ENTRIES(BP_ENTRIES)) u_zap_btb (
         .o_pc_from_btb(pc_from_btb),
         .o_branch_state(o_taken)
 );
-
-// ----------------------------------------------------------------------------
-// Tasks
-// ----------------------------------------------------------------------------
-
-function automatic void pc_shelve (input [31:0] new_pc);
-begin
-        if (!i_code_stall )
-        begin
-                // Jump instruction basically.
-                pc_nxt        = {1'd1, new_pc};
-                pc_del_nxt    = {1'd0, pc_ff[31:0]};
-                pc_del2_nxt   = {1'd0, pc_del_ff[31:0]};
-                pc_del3_nxt   = {1'd0, pc_del2_ff[31:0]};
-                shelve_nxt    = 1'd0;
-        end
-        else
-        begin
-                shelve_nxt    = 1'd1;
-                pc_shelve_nxt = new_pc;
-
-                pc_nxt        = pc_ff;
-                pc_del_nxt    = pc_del_ff;
-                pc_del2_nxt   = pc_del2_ff;
-                pc_del3_nxt   = pc_del3_ff;
-        end
-end
-endfunction
-
-function automatic void chmod;
-begin
-        o_clear_from_writeback  = 1'd1;
-        cpsr_nxt[I]             = 1'd1; // Mask IRQ interrupt.
-        cpsr_nxt[T]             = 1'd0; // Go to mode32 mode.
-end
-endfunction
 
 `ifdef DEBUG_EN
 

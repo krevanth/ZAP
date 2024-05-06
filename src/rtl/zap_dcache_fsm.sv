@@ -164,14 +164,14 @@ logic    [31:0]                           phy_addr;
 logic    [63:0]                           reg_idx;
 logic    [63:0]                           lock_nxt, lock_ff;
 
-logic                                     UNUSED_1B, UNUSED_2B, unused;
+logic                                     unused;
 
 // ----------------------------------------------------------------------------
 // Logic
 // ----------------------------------------------------------------------------
 
 // Unused
-always_comb unused = |{UNUSED_1B, UNUSED_2B, phy_addr[$clog2(CACHE_LINE)-1:0]};
+always_comb unused = |{phy_addr[$clog2(CACHE_LINE)-1:0]};
 
 // Tie flops to the output
 always_comb o_cache_clean_req = cache_clean_req_ff; // Tie req flop to output.
@@ -273,9 +273,6 @@ always_comb
 begin:blk1
        logic [$clog2(CACHE_LINE/4)-1:0] a;
 
-       UNUSED_1B = '0;
-       UNUSED_2B = '0;
-
         // Default values
         a                       = {($clog2(CACHE_LINE/4)){1'd0}};
         state_nxt               = state_ff;
@@ -322,7 +319,7 @@ begin:blk1
 
         state_ff[IDLE]:
         begin
-                kill_access ();
+                `zap_kill_access
 
                 if ( i_cache_inv )
                 begin
@@ -532,13 +529,13 @@ begin:blk1
                         o_err           = i_wb_err;
                         o_fsr[3:0]      = TERMINAL_EXCEPTION;
 
-                        kill_access ();
+                        `zap_kill_access;
                 end
         end
 
         state_ff[CLEAN_SINGLE]: // Clean single cache line
         begin
-                hit_under_miss();
+                `zap_hit_under_miss;
 
                 if(!rhit && !whit)
                 begin
@@ -553,19 +550,19 @@ begin:blk1
                 if ( {{ADR_PAD{1'd0}}, adr_ctr_nxt} <= ((CACHE_LINE/4) - 1) )
                 begin
                         // Sync up with memory. Use PA in cache tag itself.
-                        wb_prpr_write( clean_single_d (cache_line, adr_ctr_nxt),
-
-                                      {cache_tag[`ZAP_CACHE_TAG__PA], {$clog2(CACHE_LINE){1'd0}}} +
-                                        ({{ADR_PAD_MINUS_2{1'd0}}, adr_ctr_nxt, 2'd0}),
-
-                                      {{ADR_PAD{1'd0}},adr_ctr_nxt} != ((CACHE_LINE/4) - 1) ?
-                                        CTI_BURST : CTI_EOB,
-                                        4'b1111);
+                        o_wb_cyc_nxt = 1'd1;
+                        o_wb_stb_nxt = 1'd1;
+                        o_wb_wen_nxt = 1'd1;
+                        o_wb_dat_nxt = clean_single_d (cache_line, adr_ctr_nxt);
+                        o_wb_adr_nxt = {cache_tag[`ZAP_CACHE_TAG__PA], {$clog2(CACHE_LINE){1'd0}}} +
+                                       ({{ADR_PAD_MINUS_2{1'd0}}, adr_ctr_nxt, 2'd0});
+                       o_wb_cti_nxt =  {{ADR_PAD{1'd0}},adr_ctr_nxt} != ((CACHE_LINE/4) - 1) ? CTI_BURST : CTI_EOB;
+                       o_wb_sel_nxt =  4'b1111;
                 end
                 else
                 begin
                         // Move to wait state
-                        kill_access ();
+                        `zap_kill_access;
 
                         adr_ctr_nxt = 0;
 
@@ -582,7 +579,7 @@ begin:blk1
 
         state_ff[FETCH_SINGLE]: // Fetch a single cache line
         begin
-                hit_under_miss();
+                `zap_hit_under_miss;
 
                 if(!rhit && !whit)
                 begin
@@ -614,7 +611,7 @@ begin:blk1
                 begin
 
                         // Fetch line from memory
-                        wb_prpr_read(
+                        `zap_wb_prpr_read(
                                      {phy_addr[31:$clog2(CACHE_LINE)], {$clog2(CACHE_LINE){1'd0}}} + (adr_ctr_nxt * (32/8)),
                                      ({{ADR_PAD{1'd0}}, adr_ctr_nxt} != CACHE_LINE/4 - 1) ? CTI_BURST : CTI_EOB);
                 end
@@ -638,7 +635,7 @@ begin:blk1
                         o_cache_tag_dirty                       = !wr ? 1'd0 : 1'd1; // BUG FIX.
 
                         // Move to idle state
-                        kill_access ();
+                        `zap_kill_access;
 
                         state_nxt[FETCH_SINGLE] = 1'd0;
                         state_nxt[UNLOCK_REG]   = 1'd1;
@@ -647,7 +644,7 @@ begin:blk1
 
         state_ff[UNLOCK_REG]: // Load data into the register if required.
         begin
-                hit_under_miss();
+                `zap_hit_under_miss;
 
                 if(!rhit && !whit)
                 begin
@@ -787,7 +784,6 @@ logic [W-1:0]        shamt;
 begin
         shamt                     = {shift, 5'd0};
         {dummy, adapt_cache_data} =  data >> shamt;
-        UNUSED_1B                 = |{dummy};
 end
 endfunction
 
@@ -812,101 +808,6 @@ logic [CACHE_LINE*8-32-1:0] dummy;
 begin
         shamt                   = {sh, 5'd0};
         {dummy, clean_single_d} = cl >> shamt; // Select specific 32-bit.
-        UNUSED_2B               = |{dummy};
-end
-endfunction
-
-// Task to generate Wishbone read signals.
-function automatic void wb_prpr_read (
-        input [31:0] Address,
-        input [2:0]  cti
-);
-begin
-        o_wb_cyc_nxt = 1'd1;
-        o_wb_stb_nxt = 1'd1;
-        o_wb_wen_nxt = 1'd0;
-        o_wb_sel_nxt = 4'b1111;
-        o_wb_adr_nxt = Address;
-        o_wb_cti_nxt = cti;
-        o_wb_dat_nxt = 0;
-end
-endfunction
-
-// Function to generate Wishbone write signals
-function automatic void wb_prpr_write (
-        input   [31:0]  data,
-        input   [31:0]  Address,
-        input   [2:0]   cti,
-        input   [3:0]   Ben
-);
-begin
-        o_wb_cyc_nxt = 1'd1;
-        o_wb_stb_nxt = 1'd1;
-        o_wb_wen_nxt = 1'd1;
-        o_wb_sel_nxt = Ben;
-        o_wb_adr_nxt = Address;
-        o_wb_cti_nxt = cti;
-        o_wb_dat_nxt = data;
-end
-endfunction
-
-// Disables Wishbone
-function automatic void kill_access ();
-begin
-        o_wb_cyc_nxt = 0;
-        o_wb_stb_nxt = 0;
-        o_wb_wen_nxt = 0;
-        o_wb_adr_nxt = 0;
-        o_wb_dat_nxt = 0;
-        o_wb_sel_nxt = 0;
-        o_wb_cti_nxt = CTI_EOB;
-end
-endfunction
-
-// Allow hit under miss.
-function automatic void hit_under_miss ();
-begin
-        rhit = 1'd0;
-        whit = 1'd0;
-
-        if (!i_busy && !i_fault && (i_rd || i_wr) && !i_cache_en && i_cacheable
-           && cache_cmp && i_cache_tag_valid)
-        begin
-                if ( i_rd ) // Read request.
-                begin
-                        rhit    = 1'd1;
-                        o_ack   = 1'd1;
-
-                        // Coherent to ongoing write
-                        if ( i_address == address && wr )
-                        begin
-                                if(i_ben[0])   o_dat[7:0] = din[7:0];
-                                if(i_ben[1])  o_dat[15:8] = din[15:8];
-                                if(i_ben[2]) o_dat[23:16] = din[23:16];
-                                if(i_ben[3]) o_dat[31:24] = din[31:24];
-                        end
-                end
-                else if ( i_wr ) // Write request
-                begin
-                        o_ack        = 1'd1;
-                        whit         = 1'd1;
-
-                        o_cache_line =
-                        {(CACHE_LINE/4){i_din}};
-
-                        o_cache_line_ben  = ben_comp (
-                                i_address[$clog2(CACHE_LINE)-1:2],
-                                i_ben );
-
-                        // Write to tag and also write out physical address.
-                        o_cache_tag_wr_en                = 1'd1;
-                        o_cache_tag[`ZAP_CACHE_TAG__TAG] = i_address[`ZAP_VA__CACHE_TAG];
-                        o_cache_tag_dirty                = 1'd1;
-                        o_cache_tag[`ZAP_CACHE_TAG__PA]  = i_phy_addr[31 :
-                                                           $clog2(CACHE_LINE)];
-                        o_address                        = i_address;
-                end
-        end
 end
 endfunction
 

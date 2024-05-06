@@ -133,6 +133,10 @@ logic                                unused;
 
 // ----------------------------------------------------------------------------
 
+wire [31:0] addr0 = {i_baddr[`ZAP_VA__TRANSLATION_BASE],address[`ZAP_VA__TABLE_INDEX], 2'd0};
+wire [31:0] addr1 = {dff[`ZAP_L1_PAGE__PTBR],address[`ZAP_VA__L2_TABLE_INDEX], 2'd0};
+wire [31:0] addr2 = {dff[`ZAP_L1_FINE__PTBR],address[`ZAP_VA__L2_TABLE_INDEX], 2'd0};
+ 
 assign o_wb_cyc         = wb_cyc_ff;
 assign o_wb_stb         = wb_stb_ff;
 assign o_wb_adr         = wb_adr_ff;
@@ -214,8 +218,10 @@ begin: blk1
                 // We need to page walk to get the page table.
                 // Call for access to L1 level page table.
                 //
-                tsk_prpr_wb_rd({i_baddr[`ZAP_VA__TRANSLATION_BASE],
-                                address[`ZAP_VA__TABLE_INDEX], 2'd0});
+                wb_stb_nxt      = 1'd1; 
+                wb_cyc_nxt      = 1'd1; 
+                wb_adr_nxt      = addr0; 
+                wb_sel_nxt[3:0] = 4'b1111; 
         end
 
         state_ff[FETCH_L1_DESC_0]:
@@ -242,7 +248,10 @@ begin: blk1
                 end
                 else
                 begin
-                        tsk_hold_wb_access ();
+                    wb_stb_nxt = wb_stb_ff;
+                    wb_cyc_nxt = wb_cyc_ff;
+                    wb_adr_nxt = wb_adr_ff;
+                    wb_sel_nxt = wb_sel_ff;
                 end
         end
 
@@ -304,8 +313,10 @@ begin: blk1
                         state_nxt[FETCH_L1_DESC]   = 1'd0;
                         state_nxt[FETCH_L2_DESC_0] = 1'd1;
 
-                        tsk_prpr_wb_rd({dff[`ZAP_L1_PAGE__PTBR],
-                                          address[`ZAP_VA__L2_TABLE_INDEX], 2'd0});
+                        wb_stb_nxt      = 1'd1; 
+                        wb_cyc_nxt      = 1'd1; 
+                        wb_adr_nxt      = addr1; 
+                        wb_sel_nxt[3:0] = 4'b1111; 
                 end
 
                 FINE_ID:
@@ -316,8 +327,10 @@ begin: blk1
                         state_nxt[FETCH_L1_DESC]   = 1'd0;
                         state_nxt[FETCH_L2_DESC_0] = 1'd1;
 
-                        tsk_prpr_wb_rd({dff[`ZAP_L1_FINE__PTBR],
-                                         address[`ZAP_VA__L2_TABLE_INDEX], 2'd0});
+                        wb_stb_nxt      = 1'd1; 
+                        wb_cyc_nxt      = 1'd1; 
+                        wb_adr_nxt      = addr2; 
+                        wb_sel_nxt[3:0] = 4'b1111; 
                 end
 
                 endcase
@@ -347,7 +360,10 @@ begin: blk1
                         end
                         else
                         begin
-                                tsk_hold_wb_access ();
+                                wb_stb_nxt = wb_stb_ff;
+                                wb_cyc_nxt = wb_cyc_ff;
+                                wb_adr_nxt = wb_adr_ff;
+                                wb_sel_nxt = wb_sel_ff;
                         end
         end
 
@@ -473,24 +489,6 @@ begin
                 dff             <=      dnxt;
         end
 end
-
-function automatic void tsk_hold_wb_access ();
-begin
-        wb_stb_nxt = wb_stb_ff;
-        wb_cyc_nxt = wb_cyc_ff;
-        wb_adr_nxt = wb_adr_ff;
-        wb_sel_nxt = wb_sel_ff;
-end
-endfunction
-
-function automatic void tsk_prpr_wb_rd ( input [31:0] adr );
-begin
-        wb_stb_nxt      = 1'd1;
-        wb_cyc_nxt      = 1'd1;
-        wb_adr_nxt      = adr;
-        wb_sel_nxt[3:0] = 4'b1111;
-end
-endfunction
 
 endmodule
 

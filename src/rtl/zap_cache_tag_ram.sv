@@ -50,9 +50,16 @@ output  logic    [`ZAP_CACHE_TAG_WDT-1:0] o_cache_tag,
 output  logic                             o_cache_tag_valid,
 output  logic                             o_cache_tag_dirty,
 input   logic                             i_cache_clean_req,
+
+/* verilator lint_off UNOPTFLAT */
 output  logic                             o_cache_clean_done,
+/* verilator lint_on UNOPTFLAT */
+
 input   logic                             i_cache_inv_req,
+
+/* verilator lint_off UNOPTFLAT */
 output  logic                             o_cache_inv_done,
+/* verilator lint_on UNOPTFLAT */
 
 //
 // Cache clean operations occur through these ports.
@@ -115,16 +122,14 @@ logic                                      cache_clean_done_nxt, cache_clean_don
 logic                                      unused;
 logic [BLK_CTR_PAD-1:0]                    dummy;
 logic [CACHE_LINE*8-32-1:0]                line_dummy;
-logic                                      unused_0;
 logic                                      cache_unused0;
 logic                                      cache_unused1;
 logic [CACHE_LINE*8-1:0]                   w_dummy;
 logic [`ZAP_CACHE_TAG_WDT-1:0]             w_dummy_1;
-logic [(CACHE_SIZE/CACHE_LINE) - 16 - 1:0] unusedx;
 
 always_comb cache_unused0 = |{i_address[31: $clog2(CACHE_LINE)+$clog2(CACHE_SIZE/CACHE_LINE)], i_address[$clog2(CACHE_LINE)-1:0]};
 always_comb cache_unused1 = |{i_address_nxt[31: $clog2(CACHE_LINE)+$clog2(CACHE_SIZE/CACHE_LINE)], i_address_nxt[$clog2(CACHE_LINE)-1:0]};
-always_comb        unused = |{dummy, line_dummy, i_wb_dat, unused_0, cache_unused0, cache_unused1, w_dummy, w_dummy_1};
+always_comb        unused = |{dummy, line_dummy, i_wb_dat, cache_unused0, cache_unused1, w_dummy, w_dummy_1};
 
 zap_ram_simple_ben #(.WIDTH(CACHE_LINE*8), .DEPTH(CACHE_SIZE/CACHE_LINE)) u_zap_ram_simple_data_ram (
         .i_clk(i_clk),
@@ -265,8 +270,6 @@ begin:blk1
         pa         = 0;
 
         dummy      = '0;
-        unused_0   = '0;
-        unusedx    = '0;
 
         // Defaults.
         state_nxt = state_ff;
@@ -305,7 +308,7 @@ begin:blk1
 
         IDLE:
         begin
-                kill_access ();
+                `zap_kill_access;
 
                 tag_ram_wr_addr = i_address     [`ZAP_VA__CACHE_INDEX];
                 tag_ram_wr_en   = i_cache_tag_wr_en;
@@ -377,7 +380,7 @@ begin:blk1
                         tag_ram_clean = 1;
 
                         // Kill access.
-                        kill_access ();
+                        `zap_kill_access;
 
                         // Go to new state.
                         state_nxt = CACHE_CLEAN_GET_ADDRESS;
@@ -390,15 +393,17 @@ begin:blk1
                         pa    = {o_cache_tag[`ZAP_CACHE_TAG__PA],
                                 {$clog2(CACHE_LINE){1'd0}}};
 
+                        o_wb_cyc_nxt = 1'd1;
+                        o_wb_stb_nxt = 1'd1;
+                        o_wb_wen_nxt = 1'd1;
+
                         // Perform a Wishbone write using Physical Address.
                         // Uses WB burst protocol for higher efficency.
-                        wb_prpr_write(
-                        data,
-                        pa + ({{(ADR_CTR_PAD-2){1'd0}}, adr_ctr_nxt, 2'd0}),
-                        ({{ADR_CTR_PAD{1'd0}},adr_ctr_nxt} != (CACHE_LINE/4)-1) ?
-                        CTI_BURST : CTI_EOB,
-                        4'b1111
-                        );
+                        o_wb_dat_nxt = data;
+                        o_wb_adr_nxt = pa + ({{(ADR_CTR_PAD-2){1'd0}}, adr_ctr_nxt, 2'd0});
+                        o_wb_cti_nxt = ({{ADR_CTR_PAD{1'd0}},adr_ctr_nxt} != (CACHE_LINE/4)-1) ?
+                        CTI_BURST : CTI_EOB;
+                        o_wb_sel_nxt = 4'b1111;
                 end
         end
 
@@ -416,8 +421,6 @@ begin:blk1
                 data                    = 'x; //
                 pa                      = 'x; //
                 dummy                   = 'x; //
-                unused_0                = 'x; //
-                unusedx                 = 'x; //
                 state_nxt               = XX; //
                 tag_ram_rd_addr_nxt     = 'x; //
                 tag_ram_rd_addr         = 'x; //
@@ -475,67 +478,16 @@ logic [15:0]                      dirty_new;
 logic [4:0]                       enc;
 logic [W-1:0]                     shamt;
 logic [31:0]                      sum;
+logic [(CACHE_SIZE/CACHE_LINE) - 16 - 1:0] unusedx;
+logic unused_0;
 begin
         sum                 = 32'd0;
         shamt               = {blk_ctr, 4'd0};
         {unusedx,dirty_new} = Dirty >> shamt;
         enc                 = pri_enc_1(dirty_new[15:0]);
         sum[W:0]            = {1'd0, shamt[W-1:0]} + {1'd0, {{(W-5){1'd0}}, enc}};
-        get_tag_ram_rd_addr = sum[$clog2(CACHE_SIZE/CACHE_LINE)-1:0];
         unused_0            = |{sum[31:$clog2(CACHE_SIZE/CACHE_LINE)]};
-end
-endfunction
-
-// ----------------------------------------------------------------------------
-
-// Function to generate Wishbone read signals.
-function automatic void wb_prpr_read (
-        input [31:0] address,
-        input [2:0]  cti
-);
-begin
-        o_wb_cyc_nxt = 1'd1;
-        o_wb_stb_nxt = 1'd1;
-        o_wb_wen_nxt = 1'd0;
-        o_wb_sel_nxt = 4'b1111;
-        o_wb_adr_nxt = address;
-        o_wb_cti_nxt = cti;
-        o_wb_dat_nxt = 0;
-end
-endfunction
-
-// ----------------------------------------------------------------------------
-
-// Function to generate Wishbone write signals
-function automatic void wb_prpr_write (
-        input   [31:0]  data,
-        input   [31:0]  address,
-        input   [2:0]   cti,
-        input   [3:0]   ben
-);
-begin
-        o_wb_cyc_nxt = 1'd1;
-        o_wb_stb_nxt = 1'd1;
-        o_wb_wen_nxt = 1'd1;
-        o_wb_sel_nxt = ben;
-        o_wb_adr_nxt = address;
-        o_wb_cti_nxt = cti;
-        o_wb_dat_nxt = data;
-end
-endfunction
-
-// ----------------------------------------------------------------------------
-
-// Disables Wishbone
-function automatic void  kill_access ();
-begin
-        o_wb_cyc_nxt = 0;
-        o_wb_stb_nxt = 0;
-        o_wb_wen_nxt = 0;
-        o_wb_adr_nxt = 0;
-        o_wb_dat_nxt = 0;
-        o_wb_sel_nxt = 0;
-        o_wb_cti_nxt = CTI_EOB;
+        get_tag_ram_rd_addr = sum[$clog2(CACHE_SIZE/CACHE_LINE)-1:0];
 end
 endfunction
 
@@ -547,6 +499,7 @@ function automatic [4:0] baggage (
 );
 logic [CACHE_SIZE/CACHE_LINE-1:0] w_dirty;
 logic [15:0] val;
+logic [(CACHE_SIZE/CACHE_LINE) - 16 - 1:0] unusedx;
 begin
         w_dirty        = Dirty >> {blk_ctr, 4'd0};
         {unusedx, val} = w_dirty;
@@ -556,8 +509,6 @@ end
 endfunction
 
 endmodule // zap_cache_tag_ram.v
-
-
 
 // ----------------------------------------------------------------------------
 // END OF FILE

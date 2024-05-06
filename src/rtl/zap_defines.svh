@@ -125,4 +125,172 @@
 // Misc.
 `define ZAP_DEFAULT_XX            XX = 'X
 
+// Common decoding macros.
+
+// Process Immediate Decoding
+
+`define zap_process_immediate(X) \
+begin \
+        logic [11:0] xinstruction; \
+\
+        xinstruction = X; \
+\
+        o_shift_length[31:0]    = {27'd0, xinstruction[11:8], 1'd0}; \
+        o_shift_length[32]      = IMMED_EN; \
+\
+        o_shift_source[31:0]    = {24'd0, xinstruction[7:0]}; \
+        o_shift_source[32]      = IMMED_EN; \
+\
+        o_shift_operation       = RORI; \
+\
+        if ( o_shift_length[31:0] == 0 && o_shift_length[32] == IMMED_EN ) \
+        begin \
+                o_shift_operation    = {1'd0, LSL}; \
+\
+                o_shift_length[31:0] = '0; \
+                o_shift_length[32]   = IMMED_EN; \
+\
+                o_shift_source[31:0] = {24'd0, xinstruction[7:0]}; \
+                o_shift_source[32]   = IMMED_EN; \
+        end \
+end 
+
+//
+// The shifter source is a register but the
+// amount to shift is in the instruction itself.
+//
+// ROR #0 = RRC, ASR #0 = ASR #32, LSL #0 = LSL #0, LSR #0 = LSR #32
+// ROR #n = ROR_1 #n ( n > 0 )
+//
+
+`define zap_process_instruction_specified_shift(X) \
+begin \
+        logic [32:0] xinstruction; \
+        xinstruction = X; \
+        o_shift_length          = {28'd0, xinstruction[11:7]}; \
+        o_shift_length[32]      = IMMED_EN; \
+        o_shift_source          = {28'd0, xinstruction[ZAP_DP_RB_EXTEND],xinstruction[`ZAP_DP_RB]}; \
+        o_shift_source[32]      = INDEX_EN; \
+        o_shift_operation       = {1'd0, xinstruction[6:5]}; \
+\
+        case ( o_shift_operation[1:0] ) \
+                LSR: if ( o_shift_length[31:0] == 32'd0 ) o_shift_length[31:0] = 32; \
+                ASR: if ( o_shift_length[31:0] == 32'd0 ) o_shift_length[31:0] = 32; \
+                ROR: \
+                begin \
+                        if ( o_shift_length[31:0] == 32'd0 ) \
+                        begin \
+                                o_shift_operation    = RRC; \
+                        end \
+                        else \
+                        begin \
+                                o_shift_operation    = ROR_1; \
+                        end \
+                end \
+                default:; \
+        endcase \
+\
+        o_shift_length[32] = IMMED_EN; \
+end
+
+// First branch is jump instruction basically.
+`define zap_pc_shelve(X) \
+begin \
+        new_pc = X; \
+\
+        if (!i_code_stall ) \
+        begin \
+                pc_nxt        = {1'd1, new_pc}; \
+                pc_del_nxt    = {1'd0, pc_ff[31:0]}; \
+                pc_del2_nxt   = {1'd0, pc_del_ff[31:0]}; \
+                pc_del3_nxt   = {1'd0, pc_del2_ff[31:0]}; \
+                shelve_nxt    = 1'd0; \
+        end \
+        else \
+        begin \
+                shelve_nxt    = 1'd1; \
+                pc_shelve_nxt = new_pc; \
+                pc_nxt        = pc_ff; \
+                pc_del_nxt    = pc_del_ff; \
+                pc_del2_nxt   = pc_del2_ff; \
+                pc_del3_nxt   = pc_del3_ff; \
+        end \
+end
+
+// Mask IRQ and go to mode 32.
+`define zap_chmod \
+begin \
+        o_clear_from_writeback  = 1'd1; \
+        cpsr_nxt[I]             = 1'd1; \
+        cpsr_nxt[T]             = 1'd0; \
+end 
+
+// Allow hit under miss. At end, write to tag and also write out physical
+// address. In i_rd, i_wr, we check read or write coherent conditions.
+`define zap_hit_under_miss \
+begin \
+        rhit = 1'd0; \
+        whit = 1'd0; \
+\
+        if (!i_busy && !i_fault && (i_rd || i_wr) && !i_cache_en && i_cacheable \
+           && cache_cmp && i_cache_tag_valid) \
+        begin \
+                if ( i_rd ) \
+                begin \
+                        rhit    = 1'd1; \
+                        o_ack   = 1'd1; \
+\
+                        if ( i_address == address && wr ) \
+                        begin \
+                                if(i_ben[0])   o_dat[7:0] = din[7:0]; \
+                                if(i_ben[1])  o_dat[15:8] = din[15:8]; \
+                                if(i_ben[2]) o_dat[23:16] = din[23:16]; \
+                                if(i_ben[3]) o_dat[31:24] = din[31:24]; \
+                        end \
+                end \
+                else if ( i_wr ) \
+                begin \
+                        o_ack        = 1'd1; \
+                        whit         = 1'd1; \
+\
+                        o_cache_line = {(CACHE_LINE/4){i_din}}; \
+\
+                        o_cache_line_ben  = ben_comp ( \
+                                i_address[$clog2(CACHE_LINE)-1:2], \
+                                i_ben ); \
+\
+                        o_cache_tag_wr_en                = 1'd1; \
+                        o_cache_tag[`ZAP_CACHE_TAG__TAG] = i_address[`ZAP_VA__CACHE_TAG]; \
+                        o_cache_tag_dirty                = 1'd1; \
+                        o_cache_tag[`ZAP_CACHE_TAG__PA]  = i_phy_addr[31 : \
+                                                           $clog2(CACHE_LINE)]; \
+                        o_address                        = i_address; \
+                end \
+        end \
+end
+
+// Task to generate Wishbone read signals.
+`define zap_wb_prpr_read(Address,cti) \
+begin \
+        o_wb_cyc_nxt = 1'd1; \
+        o_wb_stb_nxt = 1'd1; \
+        o_wb_wen_nxt = 1'd0; \
+        o_wb_sel_nxt = 4'b1111; \
+        o_wb_adr_nxt = Address; \
+        o_wb_cti_nxt = cti; \
+        o_wb_dat_nxt = 0; \
+end 
+
+// Disables Wishbone
+`define zap_kill_access \
+begin \
+        o_wb_cyc_nxt = 0; \
+        o_wb_stb_nxt = 0; \
+        o_wb_wen_nxt = 0; \
+        o_wb_adr_nxt = 0; \
+        o_wb_dat_nxt = 0; \
+        o_wb_sel_nxt = 0; \
+        o_wb_cti_nxt = CTI_EOB; \
+end
+
 `endif
