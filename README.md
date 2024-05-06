@@ -3,7 +3,7 @@
 Copyright (C) 2016-2022 Revanth Kamaraj \<<revanth91kamaraj@gmail.com>\>
 
 ## Notice
-This repo was originally a public repo that was temporarily made private. During the time it was private, it was detached from its forks in accordance with GitHub forking rules. Note that this repo is the original definitive ZAP parent source for the orphaned forks and their sub-forks.
+This repo *is* the original, definitive and authoritative ZAP parent source code for all the orphaned forks and their sub-forks. It was detached from its forks (as an unintended consequence) when the repo was made temporarily private. 
 
 ## License
 
