@@ -646,13 +646,9 @@ The `SEED` arguments allows passing of specific seed and enabling waveform loggi
 
 To run all/a specific TC, do:
 
-> `make [XTERM=1] [SEED=<Seed>] [TC=test_name]`
+> `make [SEED=<Seed>] [TC=test_name]`
 
 See `src/ts` for a list of test names. Not providing a test name will run all tests.
-
-If `XTERM=1` is passed to `make`, the test will fork an XTERM window (per TC). The window will auto close on success, but will remain open with an error message on failure. In this mode, the TCs are executed in parallel.
-
-Else, the TC will run on the command line. In this mode, the TCs are executed sequentially.
 
 To remove existing object/simulation/synthesis files, do:
 
