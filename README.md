@@ -3,7 +3,12 @@
 Copyright (C) 2016-2024 Revanth Kamaraj \<<revanth91kamaraj@gmail.com>\>
 
 ## Notice
+
 This repo *is* the original, definitive and authoritative ZAP parent source code for all the orphaned forks and their sub-forks. It was detached from its forks (as an unintended consequence) when it was made temporarily private. Those who have forked the repo before it was made private are encouraged to make a new fork. Apologies for the inconvenience caused.
+
+## Compatibility
+
+Note that well written ARMV5, ARMV4 and ARMV3 code that does not depend on specific legacy hardware behaviors (especially when the spec declares the case to be UNDEFINED or IMPLEMENTATION DEFINED) will work on ZAP as well. If the code depends on a specific legacy hardware behavior, then ZAP cannot run that code correctly. For a significant amount of legacy code out there, the latter is true.
 
 ## License
 
