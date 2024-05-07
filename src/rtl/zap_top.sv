@@ -137,7 +137,7 @@ always_comb o_wb_bte = 2'b00; // Linear Burst.
 `include "zap_functions.svh"
 
 // Assertion.
-always@(posedge i_clk)
+always@(posedge i_clk) // Assertion.
 begin
         if (!i_reset && o_wb_cyc)
         begin

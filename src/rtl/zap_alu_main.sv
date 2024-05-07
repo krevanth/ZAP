@@ -955,7 +955,7 @@ begin
 end
 
 // Assertion.
-always @ ( posedge i_clk )
+always @ ( posedge i_clk ) // Assertion.
 begin
         if ( opcode == {1'd0, MMOV} && o_dav_nxt && !i_reset )
         begin

@@ -38,7 +38,7 @@ module zap_decompile #(parameter [31:0] INS_WDT = 32'd36) (
 
                         initial $display("DEBUG_EN defined in ZAP decompile. Use only for Sim.");
 
-                        always @*
+                        always @* // For simulation only / Assertion.
                         begin
                                         if ( !i_dav )
                                         begin

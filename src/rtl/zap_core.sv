@@ -1622,7 +1622,7 @@ default: CPU_MODE = "???";
 endcase
 
 // Assertion to catch if CPU is in a bad mode.
-always @ ( posedge i_clk )
+always @ ( posedge i_clk ) // Assertion.
 begin
         if ( !i_reset )
         begin

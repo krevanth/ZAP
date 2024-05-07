@@ -118,7 +118,7 @@ end
 // If write and read target the same address, there is a conflict.
 assign conflict_st1 = i_raddr == i_waddr && i_wen;
 
-always @ ( posedge i_clk )
+always_ff @ ( posedge i_clk )
 begin
         if ( i_reset )
         begin

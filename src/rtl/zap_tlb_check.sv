@@ -69,6 +69,10 @@ localparam logic APSR_BAD = 1'd0;
 localparam logic APSR_OK  = 1'd1;
 
 logic [3:0] match;
+logic dummy;
+logic unused;
+
+assign unused = |dummy;
 
 // 0: Small Page
 assign  match[0] = (i_sptlb_rdata[`ZAP_SPAGE_TLB__TAG] == i_va[`ZAP_VA__SPAGE_TAG]) && i_sptlb_rdav;
@@ -86,9 +90,6 @@ always @ ( posedge i_clk )
 begin
         if ( i_clkena )
         begin : tlb_match_logic
-
-                logic dummy;
-                logic unused;
 
                 dummy  <= 1'd0;
                 unused <= |dummy;
@@ -255,7 +256,10 @@ input [19:0]            tlb                            // TLB entry.
 
 logic [3:0]  apsr; // Concat of AP and SR.
 logic [1:0]  dac;  // DAC bits.
+
+/* verilator lint_off VARHIDDEN */
 logic        unused;
+/* verilator lint_on VARHIDDEN */
 
 begin
         unused = |{tlb[19:12], tlb[9], tlb[4], tlb[`ZAP_SECTION_TLB__CB]};
@@ -358,10 +362,9 @@ input [15:0]            tlb                            // TLB entry.
 
 logic [3:0]  apsr; // Concat of AP and SR.
 logic [1:0]  dac;  // DAC bits.
-logic [5:0]  dummy;// 30-bit dummy variable. UNUSED.
-
 
 /* verilator lint_off VARHIDDEN */
+logic [5:0]  dummy;// 30-bit dummy variable. UNUSED.
 logic        unused;
 /* verilator lint_on VARHIDDEN */
 

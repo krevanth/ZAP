@@ -993,7 +993,7 @@ begin: priEncFn
 end
 endfunction
 
-always @ ( posedge i_clk )
+always @ ( posedge i_clk ) // Assertion.
 begin
         if ( state_ff == IDLE && state_nxt == MEMOP && !i_reset )
         begin

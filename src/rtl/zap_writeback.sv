@@ -501,7 +501,7 @@ zap_btb #(.BP_ENTRIES(BP_ENTRIES)) u_zap_btb (
         logic          trace_uop_last_nxt;
         logic          trace_valid_nxt;
 
-        always @*
+        always @* // For simulation only / Assertion.
         begin
                 msg_nxt            = o_trace;
                 trace_uop_last_nxt = 0;
@@ -567,14 +567,14 @@ zap_btb #(.BP_ENTRIES(BP_ENTRIES)) u_zap_btb (
         end
 
         // Happens on the same edge as register update.
-        always @ ( posedge i_clk )
+        always @ ( posedge i_clk ) // For simulation only / Assertion.
         begin
                 o_trace          <= msg_nxt;
                 o_trace_uop_last <= trace_uop_last_nxt;
                 o_trace_valid    <= trace_valid_nxt;
         end
 
-        always_comb
+        always@* // For simulation only / Assertion
         begin
                 trace_valid_nxt = 0;
 
