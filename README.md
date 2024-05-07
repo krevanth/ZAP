@@ -8,7 +8,7 @@ This repo *is* the original, definitive and authoritative ZAP parent source code
 
 ## Compatibility
 
-Well written ARMV5TE code that does not depend on out-of-spec legacy hardware defined behavior (marked in the V5TE spec as UNDEFINED) is the intended use case for the ZAP processor. Any code that depends on such legacy hardware behavior must be modified accordingly. In some cases, the ARMV5TE specification leaves certain features to be IMPLEMENTATION DEFINED. These are discussed later in this document. Code relying on such features must be checked to ensure that the expectation from the hardware meets the ZAP implementation.
+Well written ARMV5TE code that does not depend on out-of-spec legacy hardware defined behavior (marked in the V5TE spec as UNDEFINED/UNPREDICTABLE/IMPLEMENTATION DEFINED) is the intended use case for the ZAP processor. Any code that depends on such legacy hardware behavior must be modified accordingly. In some cases, the ARMV5TE specification leaves certain features to be IMPLEMENTATION DEFINED. These are discussed later in this document. Code relying on such features must be checked to ensure that the expectation from the hardware meets the ZAP implementation.
 
 ## License
 
