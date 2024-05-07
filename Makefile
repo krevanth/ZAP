@@ -248,21 +248,10 @@ runlint:
 # Rule to execute command.
 runsim: dirs obj/ts/$(TC)/Vzap_test
 ifdef TC
-	$(info ******************************)
-	$(info RUNNING SIMULATION            )
-	$(info ******************************)       
 ifdef SEED 
-ifdef XTERM
-	cd obj/ts/$(TC) && xterm -e "./Vzap_test $(TC).bin $(TC) $(SEED) || read" &
-else
 	cd obj/ts/$(TC) && ./Vzap_test $(TC).bin $(TC) $(SEED) 
-endif
-else
-ifdef XTERM
-	cd obj/ts/$(TC) && xterm -e "./Vzap_test $(TC).bin $(TC) || read" &
 else
 	cd obj/ts/$(TC) && ./Vzap_test $(TC).bin $(TC)
-endif
 endif
 	echo "Generated waveform file 'obj/ts/$(TC)/zap.vcd'"
 else

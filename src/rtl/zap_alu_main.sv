@@ -310,6 +310,7 @@ module zap_alu_main #(
 localparam [1:0] _N  = 2'd3;
 localparam [1:0] _Z  = 2'd2;
 localparam [1:0] _C  = 2'd1;
+localparam [1:0] _V  = 2'd0;
 
 // ----------------------------------------------------------------------------
 // Variables
@@ -322,7 +323,7 @@ logic [31:0]                     mem_srcdest_value_nxt;
 logic [3:0]                      ben_nxt;
 
 // Address about to be output. Used to drive tag RAMs etc.
-logic [31:0]                      mem_address_nxt;
+logic [31:0]                      mem_address_nxt, mad;
 
 //
 //  Sleep flop. When 1 unit sleeps i.e., does not produce any output except on
@@ -753,34 +754,32 @@ end
 
 always_comb
 begin:pre_post_index_address_generator
-        //
+
         // Memory address output based on pre or post index.
         // For post-index, update is done after memory access.
         // For pre-index, update is done before memory access.
         //
         if ( i_mem_pre_index_ff == 0 )
         begin
-                mem_address_nxt = rn;               // Postindex;
+                mad = rn;               // Postindex;
         end
         else if ( i_alu_operation_ff == {2'd0, ADD} )
         begin
-                mem_address_nxt = quick_sum[31:0];        // Preindex.
+                mad = quick_sum[31:0];        // Preindex.
         end
         else if ( i_alu_operation_ff == {2'd0, SUB} )
         begin
-                mem_address_nxt = quick_diff[31:0];
+                mad = quick_diff[31:0];
         end
         else
         begin
-                mem_address_nxt = 'x;
-        end
-
-        // FCSE.
-        if ( mem_address_nxt[31:25] == 0 )
-        begin
-                mem_address_nxt[31:25] = i_cpu_pid;
+                mad = 'x;
         end
 end
+
+// Setting I_CPU_PID == 0 disables FCSE.
+assign mem_address_nxt[31:25] = mad[31:25] == 0 ? i_cpu_pid : mad[31:25];
+assign mem_address_nxt[24:0]  = mad[24:0];
 
 // -----------------------------------------------------------------------------
 // Used to generate ALU result + Flags
@@ -1103,13 +1102,8 @@ function automatic [35:0] process_logical_instructions
                 input                           nozero,
                 input                           shift_carry
 );
-begin: blk2
         logic [31:0] rd;
         logic [3:0] flags_out;
-
-        // Avoid accidental latch inference.
-        rd        = 0;
-        flags_out = 0;
 
         case(op)
         {2'd0, AND}: rd = RN &   RM;
@@ -1121,39 +1115,24 @@ begin: blk2
         {2'd0, ORR}: rd = RN |   RM;
         {2'd0, TST}: rd = RN &   RM; // Target is not written.
         {2'd0, TEQ}: rd = RN ^   RM; // Target is not written.
-        default:
-        begin
-                rd = 'x;
-        end
+        default:     rd = 'x;
         endcase
-
-        // Suppose flags are not going to change at ALL.
-        flags_out = flags;
 
         // Assign values to the flags only if an update is requested. Note that V
         // is not touched even if change is requested.
         if ( flag_upd ) // 0x0 for SAT_MOV.
         begin
-                // V is preserved since flags_out = flags
-
                 flags_out[_C] = shift_carry;
-
-                if ( nozero )
-                begin
-                        // This specifically states that we must NOT set the
-                        // ZERO flag under any circumstance.
-                        flags_out[_Z] = 1'd0;
-                end
-                else
-                begin
-                        flags_out[_Z] = (rd == 0);
-                end
-
+                flags_out[_Z] = nozero ? 1'd0 : (rd == 0);
                 flags_out[_N] = rd[31];
+                flags_out[_V] = flags[_V];
+        end
+        else
+        begin
+            flags_out = flags;
         end
 
-        process_logical_instructions = {flags_out, rd};
-end
+        return {flags_out, rd};
 endfunction
 
 //
@@ -1174,8 +1153,8 @@ function automatic [31:0] duplicate (
                                 input uh, // Unsigned halfword.
                                 input sh, // Signed halfword.
                                 input [31:0] val        );
-logic [31:0] x;
-begin
+        logic [31:0] x;
+
         if ( ub || sb)
         begin
                 // Byte.
@@ -1191,8 +1170,7 @@ begin
                 x = val;
         end
 
-        duplicate = x;
-end
+        return x;
 endfunction
 
 //
@@ -1214,8 +1192,8 @@ function automatic [3:0] generate_ben (
                                 input uh, // Unsigned halfword.
                                 input sh, // Signed halfword.
                                 input [1:0] addr       );
-logic [3:0] x;
-begin
+        logic [3:0] x;
+
         if ( ub || sb ) // Byte oriented.
         begin
                 case ( addr[1:0] ) // Based on address lower 2-bits.
@@ -1239,8 +1217,7 @@ begin
                 x = 4'b1111; // Word oriented.
         end
 
-        generate_ben = x;
-end
+        return x;
 endfunction // generate_ben
 
 endmodule

@@ -532,7 +532,7 @@ For the performance numbers below:
 
 ### 2.1. Parameters
 
-Note that all parameters should be 2^n. Cache size should be multiple of line size and at least 16 x line width. Caches/TLBs consume majority of the resources so should be tuned as required. The default parameters give you quite large caches. 
+Note that all parameters should be 2^n. Cache size should be multiple of line size and at least 32 x line width. Caches/TLBs consume majority of the resources so should be tuned as required. The default parameters give you large caches, and these large cache sizes are recommended because they are direct mapped. 
 
 | Parameter                   | Default                            | Description                                                                               |
 | --------------------------- | ---------------------------------- | ----------------------------------------------------------------------------------------- |
