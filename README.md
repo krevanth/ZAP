@@ -1,6 +1,6 @@
 # The ZAP Processor
 
-Copyright (C) 2016-2022 Revanth Kamaraj \<<revanth91kamaraj@gmail.com>\>
+Copyright (C) 2016-2024 Revanth Kamaraj \<<revanth91kamaraj@gmail.com>\>
 
 ## Notice
 This repo *is* the original, definitive and authoritative ZAP parent source code for all the orphaned forks and their sub-forks. It was detached from its forks (as an unintended consequence) when the repo was made temporarily private. 
@@ -713,21 +713,17 @@ To remove existing object/simulation/synthesis files, do:
 
 ### 3.3. Running RTL Lint
 
-To run RTL lint with Verilator, simply do:
+To run RTL lint with Verilator and SVLint, simply do:
 
 > `make lint`
 
-To run RTL lint with svlint (no Docker support, install with `cargo install svlint`):
-
-> `make svlint`
-
 ### 3.4. Running Xilinx Vivado Synthesis
 
-**IMPORTANT NOTE: Do NOT define DEBUG_EN when performing synthesis.**
+**IMPORTANT NOTE: Do NOT define DEBUG_EN when performing synthesis. Synthesis is intended to be run locally i.e., without Docker.**
 
 Synthesis scripts can be found here: `src/syn/`
 
-Assuming you have Vivado installed, please do (in project root directory):
+Assuming you have Vivado installed locally, please do (in project root directory):
 
 > `make syn`
 
@@ -759,7 +755,7 @@ Testbench assembly code in `src/ts/mode16_test*/` is based on Julian Smolka's wo
 
 ## 5. License
 
-Copyright (C) 2016-2022 Revanth Kamaraj
+Copyright (C) 2016-2024 Revanth Kamaraj
 
 This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 3 of the License, or (at your option) any later version.
 

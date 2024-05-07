@@ -1,5 +1,5 @@
 #                                                                         
-#  (C) 2016-2022 Revanth Kamaraj (krevanth)                    
+#  (C) 2016-2024 Revanth Kamaraj (krevanth)                    
 #                                                                         
 # This program is free software; you can redistribute it and/or           
 # modify it under the terms of the GNU General Public License             
@@ -17,7 +17,7 @@
 # 02110-1301, USA.                                                        
 #                                                                         
 
-.PHONY: test clean reset lint runlint c2asm dirs runsim syn
+.PHONY: test clean reset lint runlint runsvlint c2asm dirs runsim syn
 
 PWD          := $(shell pwd)
 TAG          := archlinux/zap
@@ -41,8 +41,14 @@ SYN_SCRIPTS  := $(wildcard src/syn/*)
 TB_FILES     := $(wildcard src/testbench/*)
 SCRIPT_FILES := $(wildcard scripts/*)
 TEST         := $(shell find src/ts/* -type d -exec basename {} \; | xargs echo)
-DLOAD        := "FROM archlinux:latest\nRUN  pacman -Syyu --noconfirm arm-none-eabi-gcc arm-none-eabi-binutils gcc \
-                 make perl verilator xterm cargo"
+
+DLOAD        := "FROM archlinux:latest\n\
+				 RUN pacman -Syyu --noconfirm cargo xterm perl make\n\
+				 RUN pacman -Syyu --noconfirm arm-none-eabi-gcc arm-none-eabi-binutils gcc verilator\n\
+				 RUN cargo install svlint"
+
+DOCKER		 := docker run --interactive --tty --volume $(PWD):$(PWD) --workdir $(PWD) $(TAG)
+LOAD_DOCKER  := docker image ls | grep $(TAG) || echo -e $(DLOAD) | docker build --no-cache --rm --tag $(TAG) -
 
 ########################################## User Accessible Targets ####################################################
 
@@ -52,39 +58,30 @@ DLOAD        := "FROM archlinux:latest\nRUN  pacman -Syyu --noconfirm arm-none-e
 
 # Run all tests. Default goal.
 test:
-	docker info
-	mkdir -p obj/syn
-	docker image ls | grep $(TAG) || echo -e $(DLOAD) | docker build --no-cache --rm --tag $(TAG) -
+	$(LOAD_DOCKER)
 ifndef TC
 	for var in $(TEST); do $(MAKE) test TC=$$var HT=1 || exit 10 ; done; 
 else
-	docker run --interactive --tty --volume `pwd`:`pwd` --workdir `pwd` $(TAG) $(MAKE) runsim TC=$(TC) HT=1 || exit 10
+	$(DOCKER) $(MAKE) runsim TC=$(TC) HT=1 || exit 10
 endif
 
-# Remove runsim objects
+# Remove runsim objects.
 clean: 
-	docker info
-	docker image ls | grep $(TAG) && docker run --interactive --tty --volume `pwd`:`pwd` --workdir `pwd` $(TAG) \
-        rm -rfv obj/
-
-# Remove docker image.
-reset: clean
-	docker info 
-	docker image ls | grep $(TAG) && docker image rmi --force $(TAG)
+	$(LOAD_DOCKER)
+	$(DOCKER) rm -rfv obj_dir/ obj/ || exit 10
 
 # Lint
 lint:
-	docker info
-	docker image ls | grep $(TAG) || echo -e $(DLOAD) | docker build --no-cache --rm --tag $(TAG) -
-	docker run --interactive --tty --volume `pwd`:`pwd` --workdir `pwd` $(TAG) $(MAKE) runlint || exit 10
+	$(LOAD_DOCKER)
+	$(DOCKER) $(MAKE) runlint || exit 10
 
-# Synthesis
+# Remove docker image.
+reset: clean
+	docker image ls | grep $(TAG) && docker image rmi --force $(TAG)
+
+# Synthesis (Vivado, no Docker Support)
 syn: obj/syn/syn_timing.rpt
 	vi obj/syn/syn_timing.rpt
-
-# SVlint
-svlint:
-	svlint --include src/rtl/ src/rtl/*.sv --verbose
 
 ############################################ Internal Targets #########################################################
 
@@ -120,6 +117,7 @@ endif
 
 # Rule to lint.
 runlint:
+	/root/.cargo/bin/svlint --include src/rtl/ src/rtl/*.sv --verbose
 	verilator --assert --lint-only -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
         -Wwarn-IMPERFECTSCH --report-unoptflat --clk i_clk --top-module zap_top src/rtl/*.sv -Isrc/rtl/           \
         -GONLY_CORE=1\'d1 && echo "Lint OK"

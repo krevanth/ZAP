@@ -1,5 +1,5 @@
 #                                                                        
-# (C) 2016-2022 Revanth Kamaraj (krevanth)              
+# (C) 2016-2024 Revanth Kamaraj (krevanth)              
 #                                                                        
 # This program is free software; you can redistribute it and/or          
 # modify it under the terms of the GNU General Public License            
@@ -34,9 +34,9 @@ inout_with_tri = false
 input_with_var = false
 interface_port_with_modport = false
 legacy_always = false
-level_sensitive_always = true
+general_always_no_edge = true
 loop_variable_declaration = true
-non_ansi_module = true
+module_nonansi_forbidden = true
 output_with_var = false
 parameter_in_package = false
 keyword_forbidden_priority = true

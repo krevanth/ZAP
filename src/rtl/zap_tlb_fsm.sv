@@ -1,5 +1,5 @@
 //
-// (C) 2016-2022 Revanth Kamaraj (krevanth)
+// (C)2016-2024 Revanth Kamaraj (krevanth)
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -130,12 +130,13 @@ logic [3:0]                          wb_sel_nxt, wb_sel_ff;
 logic [31:0]                         dff, dnxt;
 logic                                err_ff, err_nxt;
 logic                                unused;
+logic [31:0]                         addr0, addr1, addr2;
 
 // ----------------------------------------------------------------------------
 
-wire [31:0] addr0 = {i_baddr[`ZAP_VA__TRANSLATION_BASE],address[`ZAP_VA__TABLE_INDEX], 2'd0};
-wire [31:0] addr1 = {dff[`ZAP_L1_PAGE__PTBR],address[`ZAP_VA__L2_TABLE_INDEX], 2'd0};
-wire [31:0] addr2 = {dff[`ZAP_L1_FINE__PTBR],address[`ZAP_VA__L2_TABLE_INDEX], 2'd0};
+assign addr0 = {i_baddr[`ZAP_VA__TRANSLATION_BASE],address[`ZAP_VA__TABLE_INDEX], 2'd0};
+assign addr1 = {dff[`ZAP_L1_PAGE__PTBR],address[`ZAP_VA__L2_TABLE_INDEX], 2'd0};
+assign addr2 = {dff[`ZAP_L1_FINE__PTBR],address[`ZAP_VA__L2_TABLE_INDEX], 2'd0};
  
 assign o_wb_cyc         = wb_cyc_ff;
 assign o_wb_stb         = wb_stb_ff;

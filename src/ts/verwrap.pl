@@ -1,5 +1,5 @@
 #
-# (C) 2016-2022 Revanth Kamaraj (krevanth)
+# (C) 2016-2024 Revanth Kamaraj (krevanth)
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -83,6 +83,7 @@ foreach(keys (%$X)) {
          end
          else
          begin
+                $display("OK: Memory values matched. PTR = %d EXP = %x REC = %x", ', $string , ' );
          end'
         ,
         "\n";
@@ -101,6 +102,7 @@ foreach(keys (%$X)) {
          end
          else
          begin
+                $display("OK: Register values matched. PTR = %s EXP = %x REC = %x", ', $string , ' );
          end'
          ,
          "\n";

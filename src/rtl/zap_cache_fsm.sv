@@ -1,5 +1,5 @@
 //
-//  (C) 2016-2022 Revanth Kamaraj (krevanth)
+//  (C)2016-2024 Revanth Kamaraj (krevanth)
 //
 //  This program is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU General Public License
@@ -623,7 +623,11 @@ function automatic [31:0] adapt_cache_data (
         input [CACHE_LINE*8-1:0]         data
 );
 localparam [31:0] W = $clog2(CACHE_LINE) + 3;
+
+/* verilator lint_off UNUSEDSIGNAL */
 logic [LINE_PAD-1:0] dummy;
+/* verilator lint_on UNUSEDSIGNAL */
+
 logic [W-1:0]        shamt;
 begin
         shamt                     = {shift, 5'd0};
@@ -648,7 +652,11 @@ function automatic [31:0] clean_single_d (
         input [$clog2(CACHE_LINE/4):0]  sh
 );
 logic [$clog2(CACHE_LINE/4) + 5:0] shamt;
+
+/* verilator lint_off UNUSEDSIGNAL */
 logic [CACHE_LINE*8-32-1:0] dummy;
+/* verilator lint_on UNUSEDSIGNAL */
+
 begin
         shamt                   = {sh, 5'd0};
         {dummy, clean_single_d} = cl >> shamt; // Select specific 32-bit.

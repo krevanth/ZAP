@@ -4,8 +4,8 @@
 // 
 //  Test program which uses all the instruction set to be assembled with GCC assembler
 // 
-//  Written By -  Jonathan Masur and Xavier Jimenez (2013)
-//                Revanth Kamaraj                   (2016-2022)
+//  Written By  - Jonathan Masur and Xavier Jimenez (2013)
+//  Modified By - Revanth Kamaraj                   (2016-2024)
 // 
 //  This program is free software; you can redistribute it and/or modify it
 //  under the terms of the GNU General Public License as published by the
