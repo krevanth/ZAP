@@ -4,7 +4,7 @@ Copyright (C) 2016-2024 Revanth Kamaraj \<<revanth91kamaraj@gmail.com>\>
 
 ## Notice
 
-This repo *is* the original, definitive and authoritative ZAP parent source code for all the orphaned forks and their sub-forks. It was detached from its forks (as an unintended consequence) when it was made temporarily private. Those who have forked the repo before it was made private are encouraged to make a new fork. Apologies for the inconvenience caused.
+This repo *is* the official, definitive and authoritative ZAP processor repository. It was detached from its forks (as an unintended consequence) when the repo was made private and was then deleted from GitHub. The repo has now been restored and those who have forked the repo before are encouraged to make a new fork. Apologies for the inconvenience caused.
 
 ## Compatibility
 
@@ -646,13 +646,9 @@ The `SEED` arguments allows passing of specific seed and enabling waveform loggi
 
 To run all/a specific TC, do:
 
-> `make [XTERM=1] [SEED=<Seed>] [TC=test_name]`
+> `make [SEED=<Seed>] [TC=test_name]`
 
 See `src/ts` for a list of test names. Not providing a test name will run all tests.
-
-If `XTERM=1` is passed to `make`, the test will fork an XTERM window (per TC). The window will auto close on success, but will remain open with an error message on failure. In this mode, the TCs are executed in parallel.
-
-Else, the TC will run on the command line. In this mode, the TCs are executed sequentially.
 
 To remove existing object/simulation/synthesis files, do:
 
