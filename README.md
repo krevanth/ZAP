@@ -4,7 +4,7 @@ Copyright (C) 2016-2024 Revanth Kamaraj \<<revanth91kamaraj@gmail.com>\>
 
 ## Notice
 
-The repo \<<https://github.com/krevanth/ZAP>\> *is* the official, definitive and authoritative ZAP processor repository. It was detached from its forks (as an unintended consequence) when the repo was made private and was then deleted from GitHub. The repo has now been restored and those who have forked the repo before are encouraged to make a new fork. Apologies for the inconvenience caused.
+The repo <https://github.com/krevanth/ZAP> *is* the official, definitive and authoritative ZAP processor repository. It was detached from its forks (as an unintended consequence) when the repo was made private and was then deleted from GitHub. The repo has now been restored and those who have forked the repo before are encouraged to make a new fork. Apologies for the inconvenience caused.
 
 ## Compatibility
 
