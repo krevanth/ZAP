@@ -8,7 +8,7 @@ The repo <https://github.com/krevanth/ZAP> *is* the official, definitive and aut
 
 ### What happened to the repo's forks and its issue history ?
 
-The repo <https://github.com/krevanth/ZAP> was detached from its forks (as an unintended consequence) when the repo was made private and was then deleted from GitHub. The repo has now been almost fully restored at the same URL as before i.e., <https://github.com/krevanth/ZAP> and those who have forked the repo before are encouraged to make a new fork based on <https://github.com/krevanth/ZAP>. Apologies for the inconvenience caused. 
+The repo <https://github.com/krevanth/ZAP> was detached from its forks (as an unintended consequence) when the repo was made private and was then deleted from GitHub. The repo has now been restored at the same URL as before i.e., <https://github.com/krevanth/ZAP> and those who have forked the repo before are encouraged to make a new fork based on <https://github.com/krevanth/ZAP>. Apologies for the inconvenience caused. 
 
 Unfortunately, the issue history and the list of the repo's forks could not be restored.
 
