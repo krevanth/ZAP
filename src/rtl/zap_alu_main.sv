@@ -399,6 +399,7 @@ logic                            o_uop_last_nxt;
 logic                            arith_overflow;
 logic                            load_to_pc;
 logic                            branch_instruction;
+logic [31:0]                     exp_mask;
 
 // ----------------------------------------------------------------------------
 // Aliases
@@ -716,17 +717,11 @@ end
 
 always_comb
 begin
-        // Preserve values.
-        o_data_wb_cyc_nxt = o_data_wb_cyc_ff;
-        o_data_wb_stb_nxt = o_data_wb_stb_ff;
-        o_data_wb_we_nxt  = o_data_wb_we_ff;
-        o_data_wb_dat_nxt = o_data_wb_dat_ff;
-        o_data_wb_sel_nxt = o_data_wb_sel_ff;
-
         if ( i_clear_from_writeback )
         begin
                 o_data_wb_cyc_nxt = 0;
                 o_data_wb_stb_nxt = 0;
+                o_data_wb_we_nxt  = o_data_wb_we_ff;
         end
         else if
         (
@@ -743,8 +738,39 @@ begin
                 o_data_wb_cyc_nxt = o_dav_nxt & (i_mem_load_ff | i_mem_store_ff);
                 o_data_wb_stb_nxt = o_dav_nxt & (i_mem_load_ff | i_mem_store_ff);
                 o_data_wb_we_nxt  = o_dav_nxt & i_mem_store_ff;
-                o_data_wb_dat_nxt = mem_srcdest_value_nxt;
-                o_data_wb_sel_nxt = ben_nxt;
+        end
+        else
+        begin
+               o_data_wb_cyc_nxt = o_data_wb_cyc_ff;
+               o_data_wb_stb_nxt = o_data_wb_stb_ff;
+               o_data_wb_we_nxt  = o_data_wb_we_ff;
+        end
+end
+
+always_comb
+begin
+        if ( i_clear_from_writeback )
+        begin
+            o_data_wb_dat_nxt = o_data_wb_dat_ff;
+            o_data_wb_sel_nxt = o_data_wb_sel_ff;
+        end
+        else if
+        (
+            (!i_data_stall) & (i_data_mem_fault | sleep_ff | o_clear_from_alu )
+        )
+        begin
+            o_data_wb_dat_nxt = o_data_wb_dat_ff;
+            o_data_wb_sel_nxt = o_data_wb_sel_ff;
+        end
+        else if ( !i_data_stall )
+        begin
+           o_data_wb_dat_nxt = mem_srcdest_value_nxt;
+           o_data_wb_sel_nxt = ben_nxt;
+        end
+        else
+        begin
+            o_data_wb_dat_nxt = o_data_wb_dat_ff;
+            o_data_wb_sel_nxt = o_data_wb_sel_ff;
         end
 end
 
@@ -785,18 +811,10 @@ assign mem_address_nxt[24:0]  = mad[24:0];
 // Used to generate ALU result + Flags
 // ----------------------------------------------------------------------------
 
+assign exp_mask  =  {{8{rn[3]}},{8{rn[2]}},{8{rn[1]}},{8{rn[0]}}};
+
 always_comb
 begin: alu_result
-
-        logic [$clog2 (ALU_OPS)-1:0] op;
-        logic n,z,c,v;
-        logic [31:0] exp_mask;
-
-        // Default values.
-        op        = 0;
-        {n,z,c,v} = 0;
-        exp_mask  = 0;
-        tmp_flags = flags_ff;
 
         // If it is a logical instruction.
         if
@@ -824,12 +842,15 @@ begin: alu_result
 
                 //
                 // If SAT_MOV = 0x1
-                // Set only Q flag from shift stage. Don't touch other Flags.
+                // Set only Q flag (27) from shift stage. Don't touch other Flags.
                 //
                 if ( opcode == SAT_MOV )
                 begin
-                        tmp_flags      = flags_ff;
-                        tmp_flags[27]  = tmp_flags[27] | i_shift_sat_ff; // Sticky.
+                    tmp_flags[27:0] = {flags_ff[27] | i_shift_sat_ff, flags_ff[26:0]}; // Sticky 27.
+                end
+                else
+                begin
+                    tmp_flags[27:0] = flags_ff[27:0];
                 end
         end
 
@@ -840,50 +861,53 @@ begin: alu_result
         //
         else if ( opcode == {1'd0, FMOV} || opcode == {1'd0, MMOV} )
         begin
-                exp_mask  =  {{8{rn[3]}},{8{rn[2]}},{8{rn[1]}},{8{rn[0]}}};
-                tmp_sum   =  {32{1'dx}};
-
                 for(int i=0;i<32;i++)
                 begin
                         case ( opcode )
-                        {1'd0, FMOV}: tmp_flags[i] = exp_mask[i] ? rm[i] : flags_ff[i];
-                        {1'd0, MMOV}: tmp_sum[i]   = exp_mask[i] ? rm[i] : i_mem_srcdest_value_ff[i];
-                        default     : {tmp_flags, tmp_sum} = {64{1'dx}}; // Never happens !
+                            {1'd0, FMOV}: 
+                            begin
+                                tmp_flags[i] = exp_mask[i] ? rm[i] : flags_ff[i];
+                                tmp_sum[i]   = 1'dx;
+                            end
+                            {1'd0, MMOV}: 
+                            begin
+                                tmp_sum[i]   = exp_mask[i] ? rm[i] : i_mem_srcdest_value_ff[i];
+                                tmp_flags[i] = flags_ff[i];
+                            end
+                            default: 
+                            begin
+                                {tmp_flags[i], tmp_sum[i]} = {2{1'bx}}; // Never happens.
+                            end
                         endcase
                 end
         end
         else if ( opcode == FADD )
         begin
-                tmp_sum = flags_ff;
+                tmp_sum   = flags_ff;
+                tmp_flags = flags_ff;
         end
         else
         begin
-                op         = opcode;
-
-                // Assign output of adder to flags after some minimal logic.
-                c = sum[32];
-                z = (sum[31:0] == 0);
-                n = sum[31];
-                v = arith_overflow;
-
-                //
-                // If you choose not to update flags, do not change the flags.
-                // Otherwise, they will contain their newly computed values.
-                //
                 if ( i_flag_update_ff )
                 begin
-                        if ( op == {1'd0, OP_QADD } ||
-                             op == {1'd0, OP_QSUB } ||
-                             op == {1'd0, OP_QDADD} ||
-                             op == {1'd0, OP_QDSUB})
+                        tmp_flags[31:28] = {sum[31],~|sum[31:0],sum[32],arith_overflow};
+                        tmp_flags[26:0]  = flags_ff[26:0];
+
+                        if ( opcode == {1'd0, OP_QADD } ||
+                             opcode == {1'd0, OP_QSUB } ||
+                             opcode == {1'd0, OP_QDADD} ||
+                             opcode == {1'd0, OP_QDSUB})
                         begin
-                                tmp_flags[27] = (v || i_shift_sat_ff ||
-                                                 tmp_flags[27]) ? 1'd1 : 1'd0;
+                            tmp_flags[27] = (arith_overflow || i_shift_sat_ff || flags_ff[27]); // Sticky.
                         end
                         else
                         begin
-                                tmp_flags[31:28] = {n,z,c,v};
+                            tmp_flags[27] = flags_ff[27];
                         end
+                end
+                else
+                begin
+                    tmp_flags = flags_ff;
                 end
 
                 tmp_sum = sum[31:0];
@@ -989,10 +1013,8 @@ assign branch_instruction = i_destination_index_ff == {2'd0, ARCH_PC} &&
 always_comb
 begin: flags_bp_feedback
 
-        w_clear_from_alu         = CONTINUE;
-        flags_nxt                = tmp_flags;
-        o_destination_index_nxt  = i_destination_index_ff;
-        w_confirm_from_alu       = 1'd0;
+        // Default values.
+        flags_nxt = tmp_flags;
 
         if ( (opcode == {1'd0, FMOV}) && o_dav_nxt ) // Writes to CPSR...
         begin
@@ -1009,6 +1031,8 @@ begin: flags_bp_feedback
                         w_clear_from_alu        = CONTINUE;
                 end
 
+                w_confirm_from_alu = 1'd0;
+
                 // USR cannot change 7:0 of CPSR. Will silently fail.
                 flags_nxt[7:0]   =
                 (
@@ -1019,6 +1043,7 @@ begin: flags_bp_feedback
         end
         else if ( branch_instruction )
         begin: branch_block
+
                 o_destination_index_nxt = PHY_RAZ_REGISTER;
 
                 if ( i_flag_update_ff && o_dav_nxt )
@@ -1085,6 +1110,14 @@ begin: flags_bp_feedback
                 w_confirm_from_alu = ( w_clear_from_alu == CONTINUE );
 
         end: branch_block
+        else
+        begin : nbranch_block
+
+            w_clear_from_alu         = CONTINUE;
+            w_confirm_from_alu       = 1'd0;
+            o_destination_index_nxt  = i_destination_index_ff;
+
+        end : nbranch_block
 end
 
 // ----------------------------------------------------------------------------
@@ -1122,6 +1155,8 @@ function automatic [35:0] process_logical_instructions
         // is not touched even if change is requested.
         if ( flag_upd ) // 0x0 for SAT_MOV.
         begin
+                assert(op != SAT_MOV) else $fatal(2, "Flag upd SBZ for SAT_MOV.");
+
                 flags_out[_C] = shift_carry;
                 flags_out[_Z] = nozero ? 1'd0 : (rd == 0);
                 flags_out[_N] = rd[31];
