@@ -1,7 +1,5 @@
-# The ZAP Processor
-#### An ARM Compliant Soft Core for FPGA
-
-Copyright (C) 2016-2024 Revanth Kamaraj \<<revanth91kamaraj@gmail.com>\>
+# The ZAP Processor : An ARM Compliant Soft Core for FPGA
+### Copyright (C) 2016-2024 Revanth Kamaraj \<<revanth91kamaraj@gmail.com>\>
 
 ## Notice
 
