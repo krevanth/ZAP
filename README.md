@@ -14,7 +14,7 @@ Unfortunately, the issue history and the list of the repo's forks could not be r
 
 ## Compatibility
 
-The ARMV5TE specification leaves certain features to be IMPLEMENTATION DEFINED or UNPREDICTABLE. These are discussed later in this document. Code relying on such features must be checked to ensure that the expectation from the hardware meets the ZAP implementation.
+The V5TE specification leaves certain features to be IMPLEMENTATION DEFINED or UNPREDICTABLE. These are discussed later in this document. Code relying on such features must be checked to ensure that the expectation from the hardware meets the ZAP implementation.
 
 ## License
 
