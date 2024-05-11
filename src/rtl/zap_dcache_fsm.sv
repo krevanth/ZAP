@@ -268,13 +268,18 @@ begin
         o_idle <= state_nxt[IDLE];
 end
 
-// Combo block
+// Output data.
+assign o_dat = state_ff[UNCACHEABLE] ?
+                      ( BE_32_ENABLE ? be_32(i_wb_dat, o_wb_sel_ff) : i_wb_dat ) :
+                adapt_cache_data(i_address[$clog2(CACHE_LINE)-1:2], i_cache_line);
+
+// STATE MACHINE (Next State Logic)
 always_comb
 begin:blk1
-       logic [$clog2(CACHE_LINE/4)-1:0] a;
+       logic [$clog2(CACHE_LINE/4)-1:0] tmp;
 
-        // Default values
-        a                       = {($clog2(CACHE_LINE/4)){1'd0}};
+        // Default values to avoid latches.
+        tmp                     = {($clog2(CACHE_LINE/4)){1'd0}};
         state_nxt               = state_ff;
         adr_ctr_nxt             = adr_ctr_ff;
         o_wb_cyc_nxt            = o_wb_cyc_ff;
@@ -300,8 +305,6 @@ begin:blk1
         o_hold                  = 1'd0;
         o_reg_dat               = 32'd0;
         o_reg_idx               = 64'd0;
-        o_dat                   = adapt_cache_data(i_address[$clog2(CACHE_LINE)-1:2],
-                                                   i_cache_line);
         o_ack                   = 0;
         o_err                   = 0;
         o_err2                  = 0;
@@ -312,8 +315,8 @@ begin:blk1
                 buf_nxt[i] = buf_ff[i];
         end
 
-        rhit                     = 1'd0;
-        whit                     = 1'd0;
+        rhit = 1'd0;
+        whit = 1'd0;
 
         case(1'd1)
 
@@ -501,15 +504,6 @@ begin:blk1
 
         state_ff[UNCACHEABLE]: // Uncacheable reads and writes definitely go through this.
         begin
-                if ( BE_32_ENABLE )
-                begin
-                        o_dat = be_32(i_wb_dat, o_wb_sel_ff);
-                end
-                else
-                begin
-                        o_dat = i_wb_dat;
-                end
-
                 o_ack  = 1'd0;
                 o_hold = 1'd1;
 
@@ -599,12 +593,12 @@ begin:blk1
                 // Manipulate buffer as needed
                 if ( wr )
                 begin
-                        a = address[$clog2(CACHE_LINE/4)+1:2]; // Use value of X/4.
+                        tmp = address[$clog2(CACHE_LINE/4)+1:2]; // Use value of X/4.
 
-                        buf_nxt[a][7:0]   = ben[0] ? din[7:0]   : buf_nxt[a][7:0];
-                        buf_nxt[a][15:8]  = ben[1] ? din[15:8]  : buf_nxt[a][15:8];
-                        buf_nxt[a][23:16] = ben[2] ? din[23:16] : buf_nxt[a][23:16];
-                        buf_nxt[a][31:24] = ben[3] ? din[31:24] : buf_nxt[a][31:24];
+                        buf_nxt[tmp][7:0]   = ben[0] ? din[7:0]   : buf_nxt[tmp][7:0];
+                        buf_nxt[tmp][15:8]  = ben[1] ? din[15:8]  : buf_nxt[tmp][15:8];
+                        buf_nxt[tmp][23:16] = ben[2] ? din[23:16] : buf_nxt[tmp][23:16];
+                        buf_nxt[tmp][31:24] = ben[3] ? din[31:24] : buf_nxt[tmp][31:24];
                 end
 
                 if ( {{ADR_PAD{1'd0}}, adr_ctr_nxt} <= (CACHE_LINE/4) - 1 )
@@ -726,8 +720,7 @@ begin:blk1
 
         default:
         begin
-                state_nxt               = 'x; //
-                a                       = 'x; //
+                tmp                     = 'x; //
                 state_nxt               = 'x; //
                 adr_ctr_nxt             = 'x; //
                 o_wb_cyc_nxt            = 'x; //
@@ -753,7 +746,6 @@ begin:blk1
                 o_hold                  = 'x; //
                 o_reg_dat               = 'x; //
                 o_reg_idx               = 'x; //
-                o_dat                   = 'x; //
                 o_ack                   = 'x; //
                 o_err                   = 'x; //
                 o_err2                  = 'x; //

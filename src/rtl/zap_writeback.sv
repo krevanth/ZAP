@@ -154,7 +154,7 @@ logic                             wen;
 
 logic                             shelve_ff, shelve_nxt;
 logic [31:0]                      pc_shelve_ff, pc_shelve_nxt;
-logic [32:0]                      pc_ff, pc_nxt;
+logic [32:0]                      pc_ff, pc_nxt, pc_nxt_tmp;
 logic [32:0]                      pc_del_ff, pc_del_nxt;
 logic [32:0]                      pc_del2_ff, pc_del2_nxt;
 logic [32:0]                      pc_del3_ff, pc_del3_nxt;
@@ -216,6 +216,7 @@ begin: pc_control_tree
         new_pc                   = 'd0;
         shelve_nxt               = shelve_ff;
         pc_shelve_nxt            = pc_shelve_ff;
+        pc_nxt_tmp               = pc_ff;
         pc_nxt                   = pc_ff;
         pc_del_nxt               = pc_del_ff;
         pc_del2_nxt              = pc_del2_ff;
@@ -271,14 +272,14 @@ begin: pc_control_tree
         end
         else if ( i_code_stall )
         begin
-                pc_nxt      = pc_ff;
+                pc_nxt_tmp  = pc_ff;
                 pc_del_nxt  = pc_del_ff;
                 pc_del2_nxt = pc_del2_ff;
                 pc_del3_nxt = pc_del3_ff;
         end
         else if ( shelve_ff )
         begin
-                pc_nxt      = {1'd1, pc_shelve_ff[31:0]};
+                pc_nxt_tmp  = {1'd1, pc_shelve_ff[31:0]};
                 pc_del_nxt  = 33'd0;
                 pc_del2_nxt = 33'd0;
                 pc_del3_nxt = 33'd0;
@@ -295,18 +296,27 @@ begin: pc_control_tree
         end
         else
         begin
-                pc_nxt[31:0] = pc_ff[31:0] + (i_mode16 ? 32'd2 : 32'd4);
-                pc_del_nxt   = pc_ff;
-                pc_del2_nxt  = pc_del_ff;
-                pc_del3_nxt  = pc_del2_ff;
+                pc_nxt_tmp[31:0] = pc_ff[31:0] + (i_mode16 ? 32'd2 : 32'd4);
+                pc_del_nxt       = pc_ff;
+                pc_del2_nxt      = pc_del_ff;
+                pc_del3_nxt      = pc_del2_ff;
         end
+
+        // Shelve bit.
+        pc_nxt[32] = pc_nxt_tmp[32];
 
         // FCSE
-        if ( pc_nxt[31:25] == 0 ) begin
-                pc_nxt[31:25] = i_cpu_pid;
+        if ( pc_nxt_tmp[31:25] == 0 )
+        begin
+                pc_nxt[31:25] = i_cpu_pid[6:0];
+        end
+        else
+        begin
+                pc_nxt[31:25] = pc_nxt_tmp[31:25];
         end
 
-        pc_nxt[0] = 1'd0; // Lower bit of PC is always 0x0.
+        // Lower bit of PC is always zero.
+        pc_nxt[24:0] = {pc_nxt_tmp[24:1], 1'd0};
 
 end: pc_control_tree
 
@@ -328,14 +338,14 @@ begin: register_file_write
         end
         else if ( i_data_abt[0] )
         begin
-                wen                     = 1;
-                wdata1                  = mode32 ?
-                                          i_pc_plus_8_buf_ff :
-                                          i_pc_plus_8_buf_ff + 4;
-                wa1                     = PHY_ABT_R14;
-                wa2                     = PHY_ABT_SPSR;
-                wdata2                  = cpsr_ff;
-                cpsr_nxt[ZAP_CPSR_MODE:0] = ABT;
+                wen                         = 1;
+                wdata1                      = mode32 ?
+                                              i_pc_plus_8_buf_ff :
+                                              i_pc_plus_8_buf_ff + 4;
+                wa1                         = PHY_ABT_R14;
+                wa2                         = PHY_ABT_SPSR;
+                wdata2                      = cpsr_ff;
+                cpsr_nxt[ZAP_CPSR_MODE:0]   = ABT;
 
                 //
                 // Disable IRQ interrupts when entering exception.
@@ -368,33 +378,33 @@ begin: register_file_write
         end
         else if ( i_instr_abt )
         begin
-                wen    = 1;
-                wdata1 = mode32 ? i_wr_data : i_pc_plus_8_buf_ff ;
-                wa1    = PHY_ABT_R14;
-                wa2    = PHY_ABT_SPSR;
-                wdata2 = cpsr_ff;
+                wen                        = 1;
+                wdata1                     = mode32 ? i_wr_data : i_pc_plus_8_buf_ff ;
+                wa1                        = PHY_ABT_R14;
+                wa2                        = PHY_ABT_SPSR;
+                wdata2                     = cpsr_ff;
                 cpsr_nxt[ZAP_CPSR_MODE:0]  = ABT;
 
                 `zap_chmod;
         end
         else if ( i_swi )
         begin
-                wen                     = 1;
-                wdata1                  = mode32 ? i_wr_data : i_pc_plus_8_buf_ff - 32'd4;
-                wa1                     = PHY_SVC_R14;
-                wa2                     = PHY_SVC_SPSR;
-                wdata2                  = cpsr_ff;
+                wen                       = 1;
+                wdata1                    = mode32 ? i_wr_data : i_pc_plus_8_buf_ff - 32'd4;
+                wa1                       = PHY_SVC_R14;
+                wa2                       = PHY_SVC_SPSR;
+                wdata2                    = cpsr_ff;
                 cpsr_nxt[ZAP_CPSR_MODE:0] = SVC;
 
                 `zap_chmod;
         end
         else if ( i_und )
         begin
-                wen                     = 1;
-                wdata1                  = mode32 ? i_wr_data : i_pc_plus_8_buf_ff - 32'd4;
-                wa1                     = PHY_UND_R14;
-                wa2                     = PHY_UND_SPSR;
-                wdata2                  = cpsr_ff;
+                wen                       = 1;
+                wdata1                    = mode32 ? i_wr_data : i_pc_plus_8_buf_ff - 32'd4;
+                wa1                       = PHY_UND_R14;
+                wa2                       = PHY_UND_SPSR;
+                wdata2                    = cpsr_ff;
                 cpsr_nxt[ZAP_CPSR_MODE:0] = UND;
 
                 `zap_chmod;
@@ -409,10 +419,10 @@ begin: register_file_write
         else if ( i_valid ) // If valid,
         begin
                 // Only then execute the instruction at hand...
-                cpsr_nxt                =   i_flags;
+                cpsr_nxt = i_flags;
 
                 // Dual write port.
-                wen    = 1;
+                wen = 1;
 
                 // Port from arithmetic side
                 wa1    = i_wr_index;
@@ -433,7 +443,7 @@ begin: register_file_write
                                 cpsr_nxt[T] = i_wr_data_1[0];
                         end
                 end
-        end
+        end // else not required because defaults are assigned.
 
 end: register_file_write
 
@@ -474,7 +484,7 @@ begin
 end
 
 // ----------------------------------------------------------------------------
-// Instantiationss
+// Instantiations
 // ----------------------------------------------------------------------------
 
 zap_btb #(.BP_ENTRIES(BP_ENTRIES)) u_zap_btb (
@@ -495,6 +505,8 @@ zap_btb #(.BP_ENTRIES(BP_ENTRIES)) u_zap_btb (
 );
 
 `ifdef DEBUG_EN
+
+        // synopsys translate_off
 
         // For simulation only
         logic [1023:0] msg_nxt;
@@ -625,6 +637,8 @@ zap_btb #(.BP_ENTRIES(BP_ENTRIES)) u_zap_btb (
         end
 
         // Above block is for simulation only
+
+        // synopsys translate_on
 `else
 
 // Tie off trace to 0.
@@ -633,8 +647,7 @@ assign o_trace_valid   = '0;
 assign o_trace_uop_last= '0;
 
 logic unused;
-
-assign unused          = |{i_decompile_valid, i_uop_last};
+assign unused = |{i_decompile_valid, i_uop_last, pc_nxt_tmp[0]};
 
 `endif
 

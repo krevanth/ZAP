@@ -71,9 +71,6 @@ input logic             i_wb_err
 `include "zap_defines.svh"
 `include "zap_localparams.svh"
 
-localparam logic CODE = 1'd0;
-localparam logic DATA = 1'd1;
-
 ////////////////////////////////////
 // FSM
 ////////////////////////////////////
@@ -84,18 +81,23 @@ localparam logic DATA = 1'd1;
 //
 
 // State variable.
-logic sel_ff, sel_nxt;
+enum logic {CODE = 1'd0, DATA = 1'd1, DEFAULT_XX = 'x} sel_ff, sel_nxt;
+
+// Alias
+logic switch;
+
+assign switch = (i_wb_ack|i_wb_err) && (o_wb_cti == CTI_EOB);
 
 always_comb
 begin
-        sel_nxt = sel_ff;
+        // There is no need to assign default values in this case.
 
         case(sel_ff)
 
         CODE:
         begin
                 // Switch over if EOB and data STB exists.
-                if ( (i_wb_ack|i_wb_err) && (o_wb_cti == CTI_EOB) && i_d_wb_stb )
+                if ( switch && i_d_wb_stb )
                 begin
                         sel_nxt = DATA;
                 end
@@ -113,7 +115,7 @@ begin
         DATA:
         begin
                 // Switch over if EOB and code STB exists.
-                if ( (i_wb_ack|i_wb_err) && (o_wb_cti == CTI_EOB) && i_c_wb_stb )
+                if ( switch && i_c_wb_stb )
                 begin
                         sel_nxt = CODE;
                 end
@@ -130,7 +132,7 @@ begin
 
         default: // Propagate X.
         begin
-                sel_nxt = 'x;
+                sel_nxt = DEFAULT_XX;
         end
 
         endcase

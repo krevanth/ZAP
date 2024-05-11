@@ -864,17 +864,17 @@ begin: alu_result
                 for(int i=0;i<32;i++)
                 begin
                         case ( opcode )
-                            {1'd0, FMOV}: 
+                            {1'd0, FMOV}:
                             begin
                                 tmp_flags[i] = exp_mask[i] ? rm[i] : flags_ff[i];
                                 tmp_sum[i]   = 1'dx;
                             end
-                            {1'd0, MMOV}: 
+                            {1'd0, MMOV}:
                             begin
                                 tmp_sum[i]   = exp_mask[i] ? rm[i] : i_mem_srcdest_value_ff[i];
                                 tmp_flags[i] = flags_ff[i];
                             end
-                            default: 
+                            default:
                             begin
                                 {tmp_flags[i], tmp_sum[i]} = {2{1'bx}}; // Never happens.
                             end
@@ -921,9 +921,6 @@ end
 //
 always_comb
 begin
-        valid_x   = 2'd0;
-        tmp_sum_x = '0;
-
         if ( opcode == {1'd0, CLZ} )
         begin
                 tmp_sum_x = {26'd0, clz_rm};
@@ -941,6 +938,11 @@ begin
                 tmp_sum_x =  opcode == {1'd0, OP_QADD } ||
                              opcode == {1'd0, OP_QDADD} ?
                              {31'd0, rm[31]} : {31'd0, rn[31]};
+        end
+        else
+        begin
+            valid_x   = 2'd0;
+            tmp_sum_x = '0;
         end
 end
 
@@ -978,6 +980,8 @@ begin
         end
 end
 
+// synopsys translate_off
+
 // Assertion.
 always @ ( posedge i_clk ) // Assertion.
 begin
@@ -1006,6 +1010,8 @@ begin
                 else $info("Warning: Attempting to read SPSR in USR/SYS mode for context restore.");
         end
 end
+
+// synopsys translate_on
 
 assign branch_instruction = i_destination_index_ff == {2'd0, ARCH_PC} &&
                            (i_condition_code_ff != NV);

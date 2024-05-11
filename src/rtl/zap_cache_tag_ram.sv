@@ -260,22 +260,23 @@ end
 
 // ----------------------------------------------------------------------------
 
+assign tag_ram_rd_addr = state_ff == IDLE ?
+                         i_address_nxt [`ZAP_VA__CACHE_INDEX] :
+                         tag_ram_rd_addr_ff;
+
 always_comb
 begin:blk1
         logic [31:0] shamt, data, pa;
 
-        line_dummy = {(CACHE_LINE*8-32){1'd0}};
-        shamt      = 0;
-        data       = 0;
-        pa         = 0;
-
-        dummy      = '0;
-
-        // Defaults.
-        state_nxt = state_ff;
+        // Defaults to avoid latch.
+        line_dummy              = {(CACHE_LINE*8-32){1'd0}};
+        shamt                   = '0;
+        data                    = '0;
+        pa                      = '0;
+        dummy                   = '0;
+        state_nxt               = state_ff;
         tag_ram_rd_addr_nxt     = get_tag_ram_rd_addr (blk_ctr_ff, dirty);
-        tag_ram_rd_addr         = 0;
-        tag_ram_wr_addr         = i_address     [`ZAP_VA__CACHE_INDEX];
+        tag_ram_wr_addr         = i_address[`ZAP_VA__CACHE_INDEX];
         tag_ram_wr_en           = 0;
         tag_ram_clear           = 0;
         tag_ram_clean           = 0;
@@ -294,15 +295,6 @@ begin:blk1
 
         // Cache clean done.
         o_cache_clean_done      = cache_clean_done_ff;
-
-        if ( state_ff == IDLE )
-        begin
-                tag_ram_rd_addr = i_address_nxt [`ZAP_VA__CACHE_INDEX];
-        end
-        else
-        begin
-                tag_ram_rd_addr = tag_ram_rd_addr_ff;
-        end
 
         case ( state_ff )
 
@@ -416,32 +408,32 @@ begin:blk1
 
         default: // Cannot happen.
         begin
-                line_dummy              = 'x; //
-                shamt                   = 'x; //
-                data                    = 'x; //
-                pa                      = 'x; //
-                dummy                   = 'x; //
-                state_nxt               = XX; //
-                tag_ram_rd_addr_nxt     = 'x; //
-                tag_ram_rd_addr         = 'x; //
-                tag_ram_wr_addr         = 'x; //
-                tag_ram_wr_en           = 'x; //
-                tag_ram_clear           = 'x; //
-                tag_ram_clean           = 'x; //
-                adr_ctr_nxt             = 'x; //
-                blk_ctr_nxt             = 'x; //
-                cache_clean_done_nxt    = 'x; //
-                o_cache_inv_done        = 'x; //
-                o_wb_cyc_nxt            = 'x; //
-                o_wb_stb_nxt            = 'x; //
-                o_wb_adr_nxt            = 'x; //
-                o_wb_dat_nxt            = 'x; //
-                o_wb_sel_nxt            = 'x; //
-                o_wb_wen_nxt            = 'x; //
-                o_wb_cti_nxt            = 'x; //
-                tag_ram_wr_data         = 'x; //
-                o_cache_clean_done      = 'x; //
-                tag_ram_rd_addr         = 'x; //
+                // Assigning X here can simplify synthesis.
+
+                line_dummy              = 'x;
+                shamt                   = 'x;
+                data                    = 'x;
+                pa                      = 'x;
+                dummy                   = 'x;
+                state_nxt               = XX;
+                tag_ram_rd_addr_nxt     = 'x;
+                tag_ram_wr_addr         = 'x;
+                tag_ram_wr_en           = 'x;
+                tag_ram_clear           = 'x;
+                tag_ram_clean           = 'x;
+                adr_ctr_nxt             = 'x;
+                blk_ctr_nxt             = 'x;
+                cache_clean_done_nxt    = 'x;
+                o_cache_inv_done        = 'x;
+                o_wb_cyc_nxt            = 'x;
+                o_wb_stb_nxt            = 'x;
+                o_wb_adr_nxt            = 'x;
+                o_wb_dat_nxt            = 'x;
+                o_wb_sel_nxt            = 'x;
+                o_wb_wen_nxt            = 'x;
+                o_wb_cti_nxt            = 'x;
+                tag_ram_wr_data         = 'x;
+                o_cache_clean_done      = 'x;
         end
 
         endcase

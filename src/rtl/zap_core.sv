@@ -1342,8 +1342,8 @@ zap_postalu_main #(
          .i_clear_from_writeback           (clear_from_writeback),
          .i_data_mem_fault                 (i_data_wb_err | i_dcache_err2),
 
-        .i_uop_last                        (postalu1_uop_last),
-        .o_uop_last                        (postalu_uop_last),
+         .i_uop_last                        (postalu1_uop_last),
+         .o_uop_last                        (postalu_uop_last),
 
          .i_decompile                      (postalu1_decompile),
          .i_decompile_valid                (postalu1_decompile_valid),
@@ -1609,6 +1609,9 @@ zap_cp15_cb #(
 );
 
 // Readout of CPU mode. Useful for debugging.
+
+// synopsys translate_off
+
 always_comb
 case(o_cpsr[ZAP_CPSR_MODE:0])
 FIQ:     CPU_MODE = "FIQ";
@@ -1620,6 +1623,8 @@ ABT:     CPU_MODE = "ABT";
 SYS:     CPU_MODE = "SYS";
 default: CPU_MODE = "???";
 endcase
+
+// synopsys translate_on
 
 // Assertion to catch if CPU is in a bad mode.
 always @ ( posedge i_clk ) // Assertion.

@@ -310,15 +310,15 @@ begin
         end
 end
 
+
+// synopsys translate_off
+always@* assert(!i_wb_err || i_wb_ack) else $fatal(2, "Error: Err=1 but no ACK.");
+// synopsys translate_on
+
 // Next state logic.
 always_comb
 begin
         state_nxt = state_ff;
-
-        if ( i_wb_err )
-        begin
-                assert(i_wb_ack) else $fatal(2, "Error: Err=1 but no ACK.");
-        end
 
         //
         // Change state only if strobe is inactive or strobe has just completed.

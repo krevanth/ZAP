@@ -235,13 +235,18 @@ begin
         o_idle <= ~(|state_nxt);
 end
 
-// Combo block
+// Output data port.
+assign o_dat = state_ff == UNCACHEABLE ?
+               i_wb_dat :
+               adapt_cache_data(i_address[$clog2(CACHE_LINE)-1:2], i_cache_line);
+
+// STATE MACHINE (Next State Logic)
 always_comb
 begin:blk1
-       logic [$clog2(CACHE_LINE/4)-1:0] a;
+       logic [$clog2(CACHE_LINE/4)-1:0] tmp;
 
         // Default values
-        a                       = {($clog2(CACHE_LINE/4)){1'd0}};
+        tmp                     = {($clog2(CACHE_LINE/4)){1'd0}};
         state_nxt               = state_ff;
         adr_ctr_nxt             = adr_ctr_ff;
         o_wb_cyc_nxt            = o_wb_cyc_ff;
@@ -263,18 +268,6 @@ begin:blk1
         o_cache_line            = 0;
         o_cache_line_ben        = 0;
         o_hold                  = 1'd0;
-
-        // Output data port.
-        if ( state_ff == UNCACHEABLE )
-        begin
-                o_dat           = i_wb_dat;
-        end
-        else
-        begin
-                o_dat           = adapt_cache_data(i_address[$clog2(CACHE_LINE)-1:2],
-                                                   i_cache_line);
-        end
-
         o_ack                   = 0;
         o_err                   = 0;
         o_err2                  = 0;
@@ -363,7 +356,10 @@ begin:blk1
                                                 o_cache_tag_wr_en                = 1'd1;
                                                 o_cache_tag[`ZAP_CACHE_TAG__TAG] = i_address[`ZAP_VA__CACHE_TAG];
                                                 o_cache_tag_dirty                = 1'd1;
-                                                o_cache_tag[`ZAP_CACHE_TAG__PA]  = i_phy_addr[31 : $clog2(CACHE_LINE)];
+
+                                                o_cache_tag[`ZAP_CACHE_TAG__PA]  =
+                                                i_phy_addr[31:$clog2(CACHE_LINE)];
+
                                                 o_address                        = i_address;
                                         end
                                 end
@@ -468,9 +464,10 @@ begin:blk1
                         o_wb_stb_nxt = 1'd1;
                         o_wb_wen_nxt = 1'd1;
                         o_wb_dat_nxt = clean_single_d(cache_line, adr_ctr_nxt);
-                        o_wb_adr_nxt = {cache_tag[`ZAP_CACHE_TAG__PA], {$clog2(CACHE_LINE){1'd0}}} + 
+                        o_wb_adr_nxt = {cache_tag[`ZAP_CACHE_TAG__PA], {$clog2(CACHE_LINE){1'd0}}} +
                                        ({{ADR_PAD_MINUS_2{1'd0}}, adr_ctr_nxt, 2'd0});
-                        o_wb_cti_nxt = {{ADR_PAD{1'd0}},adr_ctr_nxt} != ((CACHE_LINE/4) - 1) ? CTI_BURST : CTI_EOB;
+                        o_wb_cti_nxt = {{ADR_PAD{1'd0}},adr_ctr_nxt} != ((CACHE_LINE/4) - 1) ?
+                                       CTI_BURST : CTI_EOB;
                         o_wb_sel_nxt = 4'b1111;
                 end
                 else
@@ -504,12 +501,12 @@ begin:blk1
                 // Manipulate buffer as needed
                 if ( wr )
                 begin
-                        a = address[$clog2(CACHE_LINE/4)+1:2]; // Use value of X/4.
+                        tmp = address[$clog2(CACHE_LINE/4)+1:2]; // Use value of X/4.
 
-                        buf_nxt[a][7:0]   = ben[0] ? din[7:0]   : buf_nxt[a][7:0];
-                        buf_nxt[a][15:8]  = ben[1] ? din[15:8]  : buf_nxt[a][15:8];
-                        buf_nxt[a][23:16] = ben[2] ? din[23:16] : buf_nxt[a][23:16];
-                        buf_nxt[a][31:24] = ben[3] ? din[31:24] : buf_nxt[a][31:24];
+                        buf_nxt[tmp][7:0]   = ben[0] ? din[7:0]   : buf_nxt[tmp][7:0];
+                        buf_nxt[tmp][15:8]  = ben[1] ? din[15:8]  : buf_nxt[tmp][15:8];
+                        buf_nxt[tmp][23:16] = ben[2] ? din[23:16] : buf_nxt[tmp][23:16];
+                        buf_nxt[tmp][31:24] = ben[3] ? din[31:24] : buf_nxt[tmp][31:24];
                 end
 
                 if ( {{ADR_PAD{1'd0}}, adr_ctr_nxt} <= (CACHE_LINE/4) - 1 )
@@ -517,7 +514,8 @@ begin:blk1
 
                         // Fetch line from memory
                         `zap_wb_prpr_read(
-                                     {phy_addr[31:$clog2(CACHE_LINE)], {$clog2(CACHE_LINE){1'd0}}} + (adr_ctr_nxt * (32/8)),
+                                     {phy_addr[31:$clog2(CACHE_LINE)], {$clog2(CACHE_LINE){1'd0}}} +
+                                     (adr_ctr_nxt * (32/8)),
                                      ({{ADR_PAD{1'd0}}, adr_ctr_nxt} != CACHE_LINE/4 - 1) ? CTI_BURST : CTI_EOB);
                 end
                 else
@@ -574,33 +572,35 @@ begin:blk1
 
         default:
         begin
-                a                       = 'x; //
-                state_nxt               = 'x; //
-                adr_ctr_nxt             = 'x; //
-                o_wb_cyc_nxt            = 'x; //
-                o_wb_stb_nxt            = 'x; //
-                o_wb_adr_nxt            = 'x; //
-                o_wb_dat_nxt            = 'x; //
-                o_wb_cti_nxt            = 'x; //
-                o_wb_wen_nxt            = 'x; //
-                o_wb_sel_nxt            = 'x; //
-                cache_clean_req_nxt     = 'x; //
-                cache_inv_req_nxt       = 'x; //
-                o_fsr                   = 'x; //
-                o_far                   = 'x; //
-                o_cache_tag             = 'x; //
-                o_cache_inv_done        = 'x; //
-                o_cache_clean_done      = 'x; //
-                o_cache_tag_dirty       = 'x; //
-                o_cache_tag_wr_en       = 'x; //
-                o_cache_line            = 'x; //
-                o_cache_line_ben        = 'x; //
-                o_hold                  = 'x; //
-                o_dat                   = 'x; //
-                o_ack                   = 'x; //
-                o_err                   = 'x; //
-                o_err2                  = 'x; //
-                o_address               = 'x; //
+                // Assigning X is OK to do and will result
+                // in better synthesis.
+
+                tmp                     = 'x;
+                state_nxt               = 'x;
+                adr_ctr_nxt             = 'x;
+                o_wb_cyc_nxt            = 'x;
+                o_wb_stb_nxt            = 'x;
+                o_wb_adr_nxt            = 'x;
+                o_wb_dat_nxt            = 'x;
+                o_wb_cti_nxt            = 'x;
+                o_wb_wen_nxt            = 'x;
+                o_wb_sel_nxt            = 'x;
+                cache_clean_req_nxt     = 'x;
+                cache_inv_req_nxt       = 'x;
+                o_fsr                   = 'x;
+                o_far                   = 'x;
+                o_cache_tag             = 'x;
+                o_cache_inv_done        = 'x;
+                o_cache_clean_done      = 'x;
+                o_cache_tag_dirty       = 'x;
+                o_cache_tag_wr_en       = 'x;
+                o_cache_line            = 'x;
+                o_cache_line_ben        = 'x;
+                o_hold                  = 'x;
+                o_ack                   = 'x;
+                o_err                   = 'x;
+                o_err2                  = 'x;
+                o_address               = 'x;
 
                 for(int i=0;i<CACHE_LINE/4;i++)
                 begin

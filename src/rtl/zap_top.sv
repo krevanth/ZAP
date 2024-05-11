@@ -137,6 +137,8 @@ always_comb o_wb_bte = 2'b00; // Linear Burst.
 `include "zap_functions.svh"
 
 // Assertion.
+
+// synopsys translate_off
 always@(posedge i_clk) // Assertion.
 begin
         if (!i_reset && o_wb_cyc)
@@ -144,6 +146,7 @@ begin
                 assert ( |o_wb_cti ) else  $fatal(2, "O_WB_CTI is not EOB.");
         end
 end
+// synopsys translate_on
 
 logic            wb_cyc, wb_stb, wb_we;
 logic [3:0]      wb_sel;

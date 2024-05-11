@@ -79,7 +79,7 @@ begin
         if ( i_cpsr_ff_t && i_instruction_valid ) // compressed mode enable
         begin
                 if ( i_instruction[15:0] ==? T_SWI ) // Software interrupt.
-                        
+
                         begin
                                 // Generate a SWI.
                                 o_instruction[34:0] = {3'd0, 32'b0000_1111_0000_0000_0000_0000_0000_0000};
@@ -89,18 +89,18 @@ begin
 
 
                 else if ( i_instruction[15:0] ==? T_ADD_SUB_LO ) // ADD/SUB Lo.
-                        
+
                         begin: tskDecodeAddSubLo
                                 logic [3:0] rn, rd, rs;
                                 logic [11:0] imm;
-                        
+
                                 o_instruction = 35'd0;
-                        
+
                                 rn = {1'd0, i_instruction[8:6]};
                                 rd = {1'd0, i_instruction[2:0]};
                                 rs = {1'd0, i_instruction[5:3]};
                                 imm = {8'd0, rn};
-                        
+
                                 case({i_instruction[9], i_instruction[10]})
                                 0:
                                 begin
@@ -131,7 +131,7 @@ begin
 
 
                 else if ( i_instruction[15:0] ==? T_BLX2 ) // T_BLX2
-                        
+
                         begin
                                 o_instruction[34:0] = {3'd0, 4'b1110,4'b0001,4'b0010,4'b1111,4'b1111,4'b1111,4'b0011, i_instruction[6:3]};
                                 o_irq         = 1'd0;
@@ -140,7 +140,7 @@ begin
 
 
                 else if ( i_instruction[15:0] ==? T_BX ) // T_BX
-                        
+
                         begin
                                 // Generate a BX Rm.
                                 o_instruction[34:0] = {3'd0, 32'b0000_0001_0010_1111_1111_1111_0001_0000};
@@ -150,7 +150,7 @@ begin
 
 
                 else if ( i_instruction[15:0] ==? T_BKPT ) // T_BKPT
-                        
+
                         begin: decodeBkPt
                                 o_instruction[31:0] = 32'b1110_00010010_0000_0000_0000_0111_0000;
                         end
@@ -159,10 +159,10 @@ begin
                 else
                 begin
                         casez ( i_instruction[15:0] )
-                        T_BLX1                  : 
+                        T_BLX1                  :
                         begin
                                 o_instruction[34:0] = 35'd0; // Default value.
-                        
+
                                 // Generate a BLX1. Subtract 1 to indicate relative to previous one.
                                 o_instruction[31:25] =  7'b1111_101;    // BLX1 identifier.
                                 o_instruction[24]    =  1'd0;           // H - bit.
@@ -173,24 +173,24 @@ begin
                                 o_fiq                =  1'd0;
                         end
 
- 
-                        T_BRANCH_COND           : 
+
+                        T_BRANCH_COND           :
                         begin
                                 // An MSB of 1 indicates a left shift of 1 in the down stages.
                                 o_instruction[34:0]     = {1'd1, 2'b0, i_instruction[11:8], 3'b101, 1'b0, 24'd0};
                                 o_instruction[23:0]     = $signed({{16{i_instruction[7]}}, i_instruction[7:0]});
                         end
 
- 
-                        T_BRANCH_NOCOND         : 
+
+                        T_BRANCH_NOCOND         :
                         begin
                                 // An MSB of 1 indicates a left shift of 1.
                                 o_instruction[34:0]     = {1'd1, 2'b0, AL, 3'b101, 1'b0, 24'd0};
                                 o_instruction[23:0]     = $signed({{13{i_instruction[10]}},i_instruction[10:0]});
                         end
 
- 
-                        T_BL                    : 
+
+                        T_BL                    :
                         begin
                                 case ( i_instruction[11] )
                                         1'd0:
@@ -228,8 +228,8 @@ begin
                                 endcase
                         end
 
- 
-                        T_SHIFT                 : 
+
+                        T_SHIFT                 :
                         begin
                                 // Compressed shift instructions. Decompress to 32-bit with instruction specified shift.
                                 o_instruction[34:0]     = 35'd0;                // Extension -> 0.
@@ -245,19 +245,19 @@ begin
                                 o_instruction[3:0]      = {1'd0, i_instruction[5:3]};   // Shifter source.
                         end
 
- 
-                        T_MCAS_IMM              : 
+
+                        T_MCAS_IMM              :
                         begin: tskDecodeMcasImm
                                 logic [1:0]  op;
                                 logic [3:0]  rd;
                                 logic [11:0] imm;
-                        
+
                                 o_instruction[34:0] = 0;
-                        
+
                                 op = i_instruction[12:11];
                                 rd = {1'd0, i_instruction[10:8]};
                                 imm ={4'd0, i_instruction[7:0]};
-                        
+
                                 case (op)
                                         0:
                                         begin
@@ -286,18 +286,18 @@ begin
                                 endcase
                         end
                         // MOV,CMP,ADD,SUB IMM.
- 
-                        T_ALU_LO                : 
+
+                        T_ALU_LO                :
                         begin: tskDecAluLo
                                 logic [3:0] op;
                                 logic [3:0] rs, rd;
-                        
+
                                 op = i_instruction[9:6];
                                 rs = {1'd0, i_instruction[5:3]};
                                 rd = {1'd0, i_instruction[2:0]};
-                        
+
                                 o_instruction[34:0] = 35'd0;
-                        
+
                                 case(op)
                                 4'd0:      o_instruction[31:0] = {AL, 2'b00, 1'b0, AND, 1'd1, rd, rd, 8'd0, rs};                   // ANDS Rd, Rd, Rs
                                 4'd1:      o_instruction[31:0] = {AL, 2'b00, 1'b0, EOR, 1'd1, rd, rd, 8'd0, rs};                   // EORS Rd, Rd, Rs
@@ -319,20 +319,20 @@ begin
                                 endcase
                         end
 
- 
-                        T_ALU_HI                : 
+
+                        T_ALU_HI                :
                         begin:dcAluHi
                                 // Performs operations on HI registers (atleast some of them).
                                 logic [1:0] op;
                                 logic [3:0] rd;
                                 logic [3:0] rs;
-                        
+
                                 o_instruction[34:0] = 35'd0;
-                        
+
                                 op = i_instruction[9:8];
                                 rd = {i_instruction[7], i_instruction[2:0]};
                                 rs = {i_instruction[6], i_instruction[5:3]};
-                        
+
                                 case(op)
                                 2'd0: o_instruction[31:0] = {AL, 2'b00, 1'b0, ADD, 1'b0, rd, rd, 8'd0, rs}; // ADD Rd, Rd, Rs
                                 2'd1: o_instruction[31:0] = {AL, 2'b00, 1'b0, CMP, 1'b1, rd, rd, 8'd0, rs}; // CMP Rd, Rs
@@ -340,22 +340,22 @@ begin
                                 default:
                                 begin
                                         o_instruction = 'X;
-                        
+
                                         assert(1'd0) else
                                         $fatal(2, "Unexpected case way in decode_alu_hi().");
                                 end
                                 endcase
                         end
 
- 
-                        T_PC_REL_LOAD           : 
+
+                        T_PC_REL_LOAD           :
                         begin: dcPcRelLoad
                                 logic [3:0] rd;
                                 logic [11:0] imm;
-                        
+
                                 rd  = {1'd0, i_instruction[10:8]};
                                 imm = {2'd0, i_instruction[7:0], 2'd0};
-                        
+
                                 o_force32_align = 1'd1;
                                                       // CC                 U       B     0
                                 o_instruction[34:0]   = {3'd0, AL, 3'b010, 1'd1, 1'd1,  1'd0, 1'd0,
@@ -363,17 +363,17 @@ begin
                         end
                         // LDR Rd, [PC, {#imm8,0,0}]
 
-                        T_LDR_STR_5BIT_OFF      : 
+                        T_LDR_STR_5BIT_OFF      :
                         begin: dcLdrStr5BitOff
                                 logic [3:0] rn;
                                 logic [3:0] rd;
                                 logic [11:0] imm;
-                        
+
                                 o_instruction[34:0] = 0;
-                        
+
                                 rn = {1'd0, i_instruction[5:3]};
                                 rd = {1'd0, i_instruction[2:0]};
-                        
+
                                 if ( i_instruction[12] == 1'd0 )
                                 begin
                                         imm[11:0] = {5'd0, i_instruction[10:6], 2'd0};
@@ -382,26 +382,26 @@ begin
                                 begin
                                         imm[11:0] = {7'd0, i_instruction[10:6]};
                                 end
-                        
+
                                                    //  CC                 U          B             0
                                 o_instruction[34:0] = {3'd0, AL, 3'b010, 1'd1, 1'd1, i_instruction[12], 1'd0,
                                                                        i_instruction[11], rn, rd, imm};
                         end
 
- 
-                        T_LDRH_STRH_5BIT_OFF    : 
+
+                        T_LDRH_STRH_5BIT_OFF    :
                         begin: dcdLdrhStrh5BitOff
-                        
+
                                 logic [3:0] rn;
                                 logic [3:0] rd;
                                 logic [7:0] imm;
-                        
+
                                 o_instruction[34:0] = 0;
-                        
+
                                 rn = {1'd0, i_instruction[5:3]};
                                 rd = {1'd0, i_instruction[2:0]};
                                 imm[7:0] = {2'd0, i_instruction[10:6], 1'd0};
-                        
+
                                 // Unsigned halfword transfer
                                 o_instruction[34:0]  = {3'd0,
                                                         AL,                     // 31:28
@@ -417,9 +417,9 @@ begin
                                                         imm[3:0]};              // 3:0
                         end
 
- 
 
-                        T_LDRH_STRH_REG         : 
+
+                        T_LDRH_STRH_REG         :
                         begin
                             // Use different load store format, instead of 3'b010, use 3'b011
 
@@ -460,7 +460,7 @@ begin
 
                         end
 
-                        T_SP_REL_LDR_STR        : 
+                        T_SP_REL_LDR_STR        :
                         begin
                             logic [3:0] srcdest;
                             logic [3:0] base;
@@ -474,7 +474,7 @@ begin
                             base, srcdest, imm};
                         end
 
-                        T_LDMIA_STMIA           : 
+                        T_LDMIA_STMIA           :
                         begin
                             // Implicit IA type i.e., post index up by 4. Make WB = 1.
 
@@ -489,7 +489,7 @@ begin
 
                      end
 
-                        T_POP_PUSH              : 
+                        T_POP_PUSH              :
                         begin
                             //
                             // Uses an FD stack. Thus it is DB type i.e., pre index down by 4.
@@ -524,7 +524,7 @@ begin
                             end
                         end
 
-                        T_GET_ADDR              : 
+                        T_GET_ADDR              :
                         begin
                             logic [11:0] imm;
                             logic [3:0] rd;
@@ -546,7 +546,7 @@ begin
                             end
                         end
 
-                        T_MOD_SP                : 
+                        T_MOD_SP                :
                         begin
                             logic [11:0] imm;
 

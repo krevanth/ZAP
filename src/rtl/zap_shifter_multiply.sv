@@ -137,8 +137,6 @@ end
 
 always_ff @ (posedge i_clk) // {ac} * {bd} = RM x RS
 begin
-        take_upper <= 1'd0;
-
         if ( i_alu_operation_ff == {1'd0, SMLALL} || i_alu_operation_ff == {1'd0, SMLALH} )
         begin
                 // Signed RM x Signed RS
@@ -148,6 +146,8 @@ begin
 
                 b <= $signed({i_rs[31], i_rs[31:16]});
                 d <= $signed({1'd0, i_rs[15:0]});
+
+                take_upper <= 1'd0;
         end
         else if ( i_alu_operation_ff == OP_SMULW0 )
         begin
@@ -183,6 +183,8 @@ begin
 
                 b <= $signed({17{i_rs[15]}});
                 d <= $signed({1'd0, i_rs[15:0]});
+
+                take_upper <= 1'd0;
         end
         else if (  i_alu_operation_ff == OP_SMUL01   || i_alu_operation_ff == OP_SMLA01 ||
                    i_alu_operation_ff == OP_SMLAL01L || i_alu_operation_ff == OP_SMLAL01H )
@@ -198,6 +200,10 @@ begin
                 if ( i_alu_operation_ff == OP_SMLAL01L || i_alu_operation_ff == OP_SMLAL01H )
                 begin
                         take_upper <= 1'd1;
+                end
+                else
+                begin
+                        take_upper <= 1'd0;
                 end
         end
         else if ( i_alu_operation_ff == OP_SMUL10   || i_alu_operation_ff == OP_SMLA10 ||
@@ -215,6 +221,10 @@ begin
                 begin
                         take_upper <= 1'd1;
                 end
+                else
+                begin
+                        take_upper <= 1'd0;
+                end
         end
         else if ( i_alu_operation_ff == OP_SMUL11   || i_alu_operation_ff == OP_SMLA11 ||
                   i_alu_operation_ff == OP_SMLAL11L || i_alu_operation_ff == OP_SMLAL11H)
@@ -226,6 +236,8 @@ begin
 
                 b <= $signed({17{i_rs[31]}});
                 d <= $signed({1'd0, i_rs[31:16]});
+
+                take_upper <= 1'd0;
         end
         else
         begin
@@ -237,11 +249,13 @@ begin
                b <= $signed({1'd0, i_rs[31:16]});
                d <= $signed({1'd0, i_rs[15:0]});
 
+               take_upper <= 1'd0;
         end
 end
 
 ///////////////////////////////////////////////////////////////////////////////
 
+// STATE MACHINE
 always_comb
 begin
         logic tmp_sat;

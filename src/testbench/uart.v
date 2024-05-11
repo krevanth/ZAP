@@ -329,35 +329,35 @@
 //  It's disabled by default. Define UART_HAS_BAUDRATE_OUTPUT to use.
 //
 
-//Following is the Verilog code for a dual-port RAM with asynchronous read. 
-module raminfr   
-        (clk, we, a, dpra, di, dpo); 
+//Following is the Verilog code for a dual-port RAM with asynchronous read.
+module raminfr
+        (clk, we, a, dpra, di, dpo);
 
 parameter addr_width = 4;
 parameter data_width = 8;
 parameter depth = 16;
 
-input clk;   
-input we;   
-input  [addr_width-1:0] a;   
-input  [addr_width-1:0] dpra;   
-input  [data_width-1:0] di;   
-//output [data_width-1:0] spo;   
-output [data_width-1:0] dpo;   
-reg    [data_width-1:0] ram [depth-1:0]; 
+input clk;
+input we;
+input  [addr_width-1:0] a;
+input  [addr_width-1:0] dpra;
+input  [data_width-1:0] di;
+//output [data_width-1:0] spo;
+output [data_width-1:0] dpo;
+reg    [data_width-1:0] ram [depth-1:0];
 
 wire [data_width-1:0] dpo;
-wire  [data_width-1:0] di;   
-wire  [addr_width-1:0] a;   
-wire  [addr_width-1:0] dpra;   
- 
-  always @(posedge clk) begin   
-    if (we)   
-      ram[a] <= di;   
-  end   
-//  assign spo = ram[a];   
-  assign dpo = ram[dpra];   
-endmodule 
+wire  [data_width-1:0] di;
+wire  [addr_width-1:0] a;
+wire  [addr_width-1:0] dpra;
+
+  always @(posedge clk) begin
+    if (we)
+      ram[a] <= di;
+  end
+//  assign spo = ram[a];
+  assign dpo = ram[dpra];
+endmodule
 
 //////////////////////////////////////////////////////////////////////
 ////                                                              ////
@@ -445,9 +445,9 @@ endmodule
 
 module uart_debug_if (/*AUTOARG*/
 // Outputs
-wb_dat32_o, 
+wb_dat32_o,
 // Inputs
-wb_adr_i, ier, iir, fcr, mcr, lcr, msr, 
+wb_adr_i, ier, iir, fcr, mcr, lcr, msr,
 lsr, rf_count, tf_count, tstate, rstate
 ) ;
 
@@ -675,7 +675,7 @@ endmodule // uart_debug_if
 
 
 
-module uart_receiver (clk, wb_rst_i, lcr, rf_pop, srx_pad_i, enable, 
+module uart_receiver (clk, wb_rst_i, lcr, rf_pop, srx_pad_i, enable,
         counter_t, rf_count, rf_data_out, rf_error_bit, rf_overrun, rx_reset, lsr_mask, rstate, rf_push_pulse);
 
 input                           clk;
@@ -720,7 +720,7 @@ wire                            break_error = (counter_b == 0);
 
 // RX FIFO instance
 uart_rfifo #(`UART_FIFO_REC_WIDTH) fifo_rx(
-        .clk(           clk             ), 
+        .clk(           clk             ),
         .wb_rst_i(      wb_rst_i        ),
         .data_in(       rf_data_in      ),
         .data_out(      rf_data_out     ),
@@ -892,7 +892,7 @@ begin
                         rcounter16        <= 4'b1110;
                                 rstate            <= sr_rec_start;
           end
-                      
+
                         end
         default : rstate <= sr_idle;
         endcase
@@ -909,7 +909,7 @@ end
 
 assign rf_push_pulse = rf_push & ~rf_push_q;
 
-  
+
 //
 // Break condition detection.
 // Works in conjuction with the receiver state machine
@@ -956,9 +956,9 @@ begin
                         counter_t <= toc_value;
                 else
                 if (enable && counter_t != 10'b0)  // we don't want to underflow
-                        counter_t <= counter_t - 1;             
+                        counter_t <= counter_t - 1;
 end
-        
+
 endmodule
 //////////////////////////////////////////////////////////////////////
 ////                                                              ////
@@ -1188,7 +1188,7 @@ endmodule
 `define UART_DL2 15:8
 
 module uart_regs (clk,
-        wb_rst_i, wb_addr_i, wb_dat_i, wb_dat_o, wb_we_i, wb_re_i, 
+        wb_rst_i, wb_addr_i, wb_dat_i, wb_dat_o, wb_we_i, wb_re_i,
 
 // additional signals
         modem_inputs,
@@ -1198,7 +1198,7 @@ module uart_regs (clk,
 `else
 // debug interface signals      enabled
 ier, iir, fcr, mcr, lcr, msr, lsr, rf_count, tf_count, tstate, rstate,
-`endif                          
+`endif
         rts_pad_o, dtr_pad_o, int_o
 `ifdef UART_HAS_BAUDRATE_OUTPUT
         , baud_o
@@ -1355,11 +1355,11 @@ wire serial_in = loopback ? serial_out : srx_pad;
 assign stx_pad_o = loopback ? 1'b1 : serial_out;
 
 // Receiver Instance
-uart_receiver receiver(clk, wb_rst_i, lcr, rf_pop, serial_in, enable, 
+uart_receiver receiver(clk, wb_rst_i, lcr, rf_pop, serial_in, enable,
         counter_t, rf_count, rf_data_out, rf_error_bit, rf_overrun, rx_reset, lsr_mask, rstate, rf_push_pulse);
 
 
-// Asynchronous reading here because the outputs are sampled in uart_wb.v file 
+// Asynchronous reading here because the outputs are sampled in uart_wb.v file
 always @(dl or dlab or ier or iir or scratch
                         or lcr or lsr or msr or rf_data_out or wb_addr_i or wb_re_i)   // asynchrounous reading
 begin
@@ -1380,7 +1380,7 @@ end // always @ (dl or dlab or ier or iir or scratch...
 always @(posedge clk or posedge wb_rst_i)
 begin
         if (wb_rst_i)
-                rf_pop <= 0; 
+                rf_pop <= 0;
         else
         if (rf_pop)     // restore the signal to 0 after one clock cycle
                 rf_pop <= 0;
@@ -1458,7 +1458,7 @@ always @(posedge clk or posedge wb_rst_i)
 // FIFO Control Register and rx_reset, tx_reset signals
 always @(posedge clk or posedge wb_rst_i)
         if (wb_rst_i) begin
-                fcr <= 2'b11; 
+                fcr <= 2'b11;
                 rx_reset <= 0;
                 tx_reset <= 0;
         end else
@@ -1474,7 +1474,7 @@ always @(posedge clk or posedge wb_rst_i)
 // Modem Control Register
 always @(posedge clk or posedge wb_rst_i)
         if (wb_rst_i)
-                mcr <= 5'b0; 
+                mcr <= 5'b0;
         else
         if (wb_we_i && wb_addr_i==`UART_REG_MC)
                         mcr <= wb_dat_i[4:0];
@@ -1523,7 +1523,7 @@ always @(fcr)
                 2'b10 : trigger_level = 8;
                 2'b11 : trigger_level = 14;
         endcase // case(fcr[`UART_FC_TL])
-        
+
 //
 //  STATUS REGISTERS  //
 //
@@ -1568,7 +1568,7 @@ always @(posedge clk or posedge wb_rst_i)
 always @(posedge clk or posedge wb_rst_i)
         if (wb_rst_i) lsr0r <= 0;
         else lsr0r <= (rf_count==1 && rf_pop && !rf_push_pulse || rx_reset) ? 0 : // deassert condition
-                                          lsr0r || (lsr0 && ~lsr0_d); // set on rise of lsr0 and keep asserted until deasserted 
+                                          lsr0r || (lsr0 && ~lsr0_d); // set on rise of lsr0 and keep asserted until deasserted
 
 // lsr bit 1 (receiver overrun)
 reg lsr1_d; // delayed
@@ -1648,7 +1648,7 @@ always @(posedge clk or posedge wb_rst_i)
         else lsr7r <= lsr_mask ? 0 : lsr7r || (lsr7 && ~lsr7_d);
 
 // Frequency divider
-always @(posedge clk or posedge wb_rst_i) 
+always @(posedge clk or posedge wb_rst_i)
 begin
         if (wb_rst_i)
                 dlc <= 0;
@@ -1761,37 +1761,37 @@ reg     ti_int_pnd;
 
 // interrupt pending flags assignments
 always  @(posedge clk or posedge wb_rst_i)
-        if (wb_rst_i) rls_int_pnd <= 0; 
-        else 
+        if (wb_rst_i) rls_int_pnd <= 0;
+        else
                 rls_int_pnd <= lsr_mask ? 0 :                                           // reset condition
                                                         rls_int_rise ? 1 :                                              // latch condition
                                                         rls_int_pnd && ier[`UART_IE_RLS];       // default operation: remove if masked
 
 always  @(posedge clk or posedge wb_rst_i)
-        if (wb_rst_i) rda_int_pnd <= 0; 
-        else 
+        if (wb_rst_i) rda_int_pnd <= 0;
+        else
                 rda_int_pnd <= ((rf_count == {1'b0,trigger_level}) && fifo_read) ? 0 :          // reset condition
                                                         rda_int_rise ? 1 :                                              // latch condition
                                                         rda_int_pnd && ier[`UART_IE_RDA];       // default operation: remove if masked
 
 always  @(posedge clk or posedge wb_rst_i)
-        if (wb_rst_i) thre_int_pnd <= 0; 
-        else 
-                thre_int_pnd <= fifo_write || (iir_read & ~iir[`UART_II_IP] & iir[`UART_II_II] == `UART_II_THRE)? 0 : 
+        if (wb_rst_i) thre_int_pnd <= 0;
+        else
+                thre_int_pnd <= fifo_write || (iir_read & ~iir[`UART_II_IP] & iir[`UART_II_II] == `UART_II_THRE)? 0 :
                                                         thre_int_rise ? 1 :
                                                         thre_int_pnd && ier[`UART_IE_THRE];
 
 always  @(posedge clk or posedge wb_rst_i)
-        if (wb_rst_i) ms_int_pnd <= 0; 
-        else 
-                ms_int_pnd <= msr_read ? 0 : 
+        if (wb_rst_i) ms_int_pnd <= 0;
+        else
+                ms_int_pnd <= msr_read ? 0 :
                                                         ms_int_rise ? 1 :
                                                         ms_int_pnd && ier[`UART_IE_MS];
 
 always  @(posedge clk or posedge wb_rst_i)
-        if (wb_rst_i) ti_int_pnd <= 0; 
-        else 
-                ti_int_pnd <= fifo_read ? 0 : 
+        if (wb_rst_i) ti_int_pnd <= 0;
+        else
+                ti_int_pnd <= fifo_read ? 0 :
                                                         ti_int_rise ? 1 :
                                                         ti_int_pnd && ier[`UART_IE_RDA];
 // end of pending flags
@@ -1799,10 +1799,10 @@ always  @(posedge clk or posedge wb_rst_i)
 // INT_O logic
 always @(posedge clk or posedge wb_rst_i)
 begin
-        if (wb_rst_i)   
+        if (wb_rst_i)
                 int_o <= 1'b0;
         else
-                int_o <= 
+                int_o <=
                                         rls_int_pnd             ?       ~lsr_mask                                       :
                                         rda_int_pnd             ? 1                                                             :
                                         ti_int_pnd              ? ~fifo_read                                    :
@@ -1995,7 +1995,7 @@ endmodule
 
 
 
-module uart_rfifo (clk, 
+module uart_rfifo (clk,
         wb_rst_i, data_in, data_out,
 // Control signals
         push, // push strobe, active high
@@ -2042,14 +2042,14 @@ reg                             overrun;
 
 wire [fifo_pointer_w-1:0] top_plus_1 = top + 1'b1;
 
-raminfr #(fifo_pointer_w,8,fifo_depth) rfifo  
-        (.clk(clk), 
-                        .we(push), 
-                        .a(top), 
-                        .dpra(bottom), 
-                        .di(data_in[fifo_width-1:fifo_width-8]), 
+raminfr #(fifo_pointer_w,8,fifo_depth) rfifo
+        (.clk(clk),
+                        .we(push),
+                        .a(top),
+                        .dpra(bottom),
+                        .di(data_in[fifo_width-1:fifo_width-8]),
                         .dpo(data8_out)
-                ); 
+                );
 
 always @(posedge clk or posedge wb_rst_i) // synchronous FIFO
 begin
@@ -2127,7 +2127,7 @@ begin
   if (wb_rst_i)
     overrun   <= 1'b0;
   else
-  if(fifo_reset | reset_status) 
+  if(fifo_reset | reset_status)
     overrun   <= 1'b0;
   else
   if(push & ~pop & (count==fifo_depth))
@@ -2273,7 +2273,7 @@ begin
     if (rst_i)
         flop_0 <= {width{init_value}};
     else
-        flop_0 <= async_dat_i;    
+        flop_0 <= async_dat_i;
 end
 
 // second stage
@@ -2284,7 +2284,7 @@ begin
     else if (stage1_rst_i)
         sync_dat_o <= {width{init_value}};
     else if (stage1_clk_en_i)
-        sync_dat_o <= flop_0;       
+        sync_dat_o <= flop_0;
 end
 
 endmodule
@@ -2428,7 +2428,7 @@ endmodule
 
 
 
-module uart_tfifo (clk, 
+module uart_tfifo (clk,
         wb_rst_i, data_in, data_out,
 // Control signals
         push, // push strobe, active high
@@ -2469,14 +2469,14 @@ reg     [fifo_counter_w-1:0]    count;
 reg                             overrun;
 wire [fifo_pointer_w-1:0] top_plus_1 = top + 1'b1;
 
-raminfr #(fifo_pointer_w,fifo_width,fifo_depth) tfifo  
-        (.clk(clk), 
-                        .we(push), 
-                        .a(top), 
-                        .dpra(bottom), 
-                        .di(data_in), 
+raminfr #(fifo_pointer_w,fifo_width,fifo_depth) tfifo
+        (.clk(clk),
+                        .we(push),
+                        .a(top),
+                        .dpra(bottom),
+                        .di(data_in),
                         .dpo(data_out)
-                ); 
+                );
 
 
 always @(posedge clk or posedge wb_rst_i) // synchronous FIFO
@@ -2520,7 +2520,7 @@ begin
   if (wb_rst_i)
     overrun   <= 1'b0;
   else
-  if(fifo_reset | reset_status) 
+  if(fifo_reset | reset_status)
     overrun   <= 1'b0;
   else
   if(push & (count==fifo_depth))
@@ -2665,8 +2665,8 @@ endmodule
 
 
 module uart_top (
-        wb_clk_i, 
-        
+        wb_clk_i,
+
         // Wishbone signals
         wb_rst_i, wb_adr_i, wb_dat_i, wb_dat_o, wb_we_i, wb_stb_i, wb_cyc_i, wb_ack_o, wb_sel_i,
         int_o, // interrupt request
@@ -2747,7 +2747,7 @@ wire    [7:0] lsr;
 wire    [`UART_FIFO_COUNTER_W-1:0] rf_count;
 wire    [`UART_FIFO_COUNTER_W-1:0] tf_count;
 wire    [2:0] tstate;
-wire    [3:0] rstate; 
+wire    [3:0] rstate;
 `endif
 
 `ifdef DATA_BUS_WIDTH_8
@@ -2759,7 +2759,7 @@ uart_wb         wb_interface(
         .wb_dat_o(wb_dat_o),
         .wb_dat8_i(wb_dat8_i),
         .wb_dat8_o(wb_dat8_o),
-         .wb_dat32_o(32'b0),                                                             
+         .wb_dat32_o(32'b0),
          .wb_sel_i(4'b0),
                 .wb_we_i(       wb_we_i         ),
                 .wb_stb_i(      wb_stb_i        ),
@@ -2779,7 +2779,7 @@ uart_wb         wb_interface(
         .wb_dat8_i(wb_dat8_i),
         .wb_dat8_o(wb_dat8_o),
          .wb_sel_i(wb_sel_i),
-         .wb_dat32_o(wb_dat32_o),                                                                
+         .wb_dat32_o(wb_dat32_o),
                 .wb_we_i(       wb_we_i         ),
                 .wb_stb_i(      wb_stb_i        ),
                 .wb_cyc_i(      wb_cyc_i        ),
@@ -2807,18 +2807,18 @@ uart_regs       regs(
 `ifdef DATA_BUS_WIDTH_8
 `else
 // debug interface signals      enabled
-.ier(ier), 
-.iir(iir), 
-.fcr(fcr), 
-.mcr(mcr), 
-.lcr(lcr), 
-.msr(msr), 
-.lsr(lsr), 
+.ier(ier),
+.iir(iir),
+.fcr(fcr),
+.mcr(mcr),
+.lcr(lcr),
+.msr(msr),
+.lsr(lsr),
 .rf_count(rf_count),
 .tf_count(tf_count),
 .tstate(tstate),
 .rstate(rstate),
-`endif                                    
+`endif
         .rts_pad_o(             rts_pad_o               ),
         .dtr_pad_o(             dtr_pad_o               ),
         .int_o(         int_o           )
@@ -2846,7 +2846,7 @@ uart_debug_if dbg(/*AUTOINST*/
                                                 .tf_count                                (tf_count[`UART_FIFO_COUNTER_W-1:0]),
                                                 .tstate                                  (tstate[2:0]),
                                                 .rstate                                  (rstate[3:0]));
-`endif 
+`endif
 
 initial
 begin
@@ -3050,7 +3050,7 @@ wire [`UART_FIFO_COUNTER_W-1:0]                 tf_count;
 assign                                                                          tf_data_in = wb_dat_i;
 
 uart_tfifo fifo_tx(     // error bit signal is not used in transmitter FIFO
-        .clk(           clk             ), 
+        .clk(           clk             ),
         .wb_rst_i(      wb_rst_i        ),
         .data_in(       tf_data_in      ),
         .data_out(      tf_data_out     ),
@@ -3211,7 +3211,7 @@ begin
 end // transmitter logic
 
 assign stx_pad_o = lcr[`UART_LC_BC] ? 1'b0 : stx_o_tmp;    // Break condition
-        
+
 endmodule
 //////////////////////////////////////////////////////////////////////
 ////                                                              ////
@@ -3342,14 +3342,14 @@ endmodule
 //
 //
 
-// UART core WISHBONE interface 
+// UART core WISHBONE interface
 //
 // Author: Jacob Gorban   (jacob.gorban@flextronicssemi.com)
 // Company: Flextronics Semiconductor
 //
 
- 
-module uart_wb (clk, wb_rst_i, 
+
+module uart_wb (clk, wb_rst_i,
         wb_we_i, wb_stb_i, wb_cyc_i, wb_ack_o, wb_adr_i,
         wb_adr_int, wb_dat_i, wb_dat_o, wb_dat8_i, wb_dat8_o, wb_dat32_o, wb_sel_i,
         we_o, re_o // Write and read enable output for the core
@@ -3357,7 +3357,7 @@ module uart_wb (clk, wb_rst_i,
 
 input             clk;
 
-// WISHBONE interface   
+// WISHBONE interface
 input             wb_rst_i;
 input             wb_we_i;
 input             wb_stb_i;
@@ -3366,13 +3366,13 @@ input [3:0]   wb_sel_i;
 input [`UART_ADDR_WIDTH-1:0]    wb_adr_i; //WISHBONE address line
 
 `ifdef DATA_BUS_WIDTH_8
-input [7:0]  wb_dat_i; //input WISHBONE bus 
+input [7:0]  wb_dat_i; //input WISHBONE bus
 output [7:0] wb_dat_o;
 reg [7:0]        wb_dat_o;
 wire [7:0]       wb_dat_i;
 reg [7:0]        wb_dat_is;
 `else // for 32 data bus mode
-input [31:0]  wb_dat_i; //input WISHBONE bus 
+input [31:0]  wb_dat_i; //input WISHBONE bus
 output [31:0] wb_dat_o;
 reg [31:0]        wb_dat_o;
 wire [31:0]   wb_dat_i;
@@ -3431,8 +3431,8 @@ always  @(posedge clk or posedge wb_rst_i)
                         end
                 endcase
 
-assign we_o =  wb_we_is & wb_stb_is & wb_cyc_is & wre ; //WE for registers      
-assign re_o = ~wb_we_is & wb_stb_is & wb_cyc_is & wre ; //RE for registers      
+assign we_o =  wb_we_is & wb_stb_is & wb_cyc_is & wre ; //WE for registers
+assign re_o = ~wb_we_is & wb_stb_is & wb_cyc_is & wre ; //RE for registers
 
 // Sample input signals
 always  @(posedge clk or posedge wb_rst_i)

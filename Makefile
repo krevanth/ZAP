@@ -117,7 +117,7 @@ endif
 
 # Rule to lint.
 runlint:
-	/root/.cargo/bin/svlint --include src/rtl/ src/rtl/*.sv --verbose
+	/root/.cargo/bin/svlint --include src/rtl/ src/rtl/*.sv 
 	verilator --assert --lint-only -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
         -Wwarn-IMPERFECTSCH --report-unoptflat --clk i_clk --top-module zap_top src/rtl/*.sv -Isrc/rtl/           \
         -GONLY_CORE=1\'d1 && echo "Lint OK"

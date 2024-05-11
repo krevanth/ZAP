@@ -30,6 +30,9 @@ module zap_decompile #(parameter [31:0] INS_WDT = 32'd36) (
         );
 
 `ifdef DEBUG_EN
+
+// synopsys translate_off
+
                         // ONLY IN SIMULATION
 
                         `include "zap_defines.svh"
@@ -530,6 +533,8 @@ module zap_decompile #(parameter [31:0] INS_WDT = 32'd36) (
                                 cond_code = ok;
                         end
                         endfunction
+
+// synopsys translate_on
 
 `else
 

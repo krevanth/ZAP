@@ -153,7 +153,7 @@ begin \
                 o_shift_source[31:0] = {24'd0, xinstruction[7:0]}; \
                 o_shift_source[32]   = IMMED_EN; \
         end \
-end 
+end
 
 //
 // The shifter source is a register but the
@@ -200,7 +200,7 @@ begin \
 \
         if (!i_code_stall ) \
         begin \
-                pc_nxt        = {1'd1, new_pc}; \
+                pc_nxt_tmp    = {1'd1, new_pc}; \
                 pc_del_nxt    = {1'd0, pc_ff[31:0]}; \
                 pc_del2_nxt   = {1'd0, pc_del_ff[31:0]}; \
                 pc_del3_nxt   = {1'd0, pc_del2_ff[31:0]}; \
@@ -210,7 +210,7 @@ begin \
         begin \
                 shelve_nxt    = 1'd1; \
                 pc_shelve_nxt = new_pc; \
-                pc_nxt        = pc_ff; \
+                pc_nxt_tmp    = pc_ff; \
                 pc_del_nxt    = pc_del_ff; \
                 pc_del2_nxt   = pc_del2_ff; \
                 pc_del3_nxt   = pc_del3_ff; \
@@ -223,7 +223,7 @@ begin \
         o_clear_from_writeback  = 1'd1; \
         cpsr_nxt[I]             = 1'd1; \
         cpsr_nxt[T]             = 1'd0; \
-end 
+end
 
 // Allow hit under miss. At end, write to tag and also write out physical
 // address. In i_rd, i_wr, we check read or write coherent conditions.
@@ -279,7 +279,7 @@ begin \
         o_wb_adr_nxt = Address; \
         o_wb_cti_nxt = cti; \
         o_wb_dat_nxt = 0; \
-end 
+end
 
 // Disables Wishbone
 `define zap_kill_access \

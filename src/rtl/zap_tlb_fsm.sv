@@ -137,7 +137,7 @@ logic [31:0]                         addr0, addr1, addr2;
 assign addr0 = {i_baddr[`ZAP_VA__TRANSLATION_BASE],address[`ZAP_VA__TABLE_INDEX], 2'd0};
 assign addr1 = {dff[`ZAP_L1_PAGE__PTBR],address[`ZAP_VA__L2_TABLE_INDEX], 2'd0};
 assign addr2 = {dff[`ZAP_L1_FINE__PTBR],address[`ZAP_VA__L2_TABLE_INDEX], 2'd0};
- 
+
 assign o_wb_cyc         = wb_cyc_ff;
 assign o_wb_stb         = wb_stb_ff;
 assign o_wb_adr         = wb_adr_ff;
@@ -151,13 +151,14 @@ assign o_address        = address;
 assign unused           = |{i_baddr[13:0]};
 
 always_ff @ ( posedge i_clk )
-begin
+begin : addr_del
         if ( state_ff[IDLE] )
         begin
                 address <= i_address;
         end
-end
+end : addr_del
 
+// STATE MACHINE (Next State Logic).
 always_comb
 begin: blk1
 
@@ -219,10 +220,10 @@ begin: blk1
                 // We need to page walk to get the page table.
                 // Call for access to L1 level page table.
                 //
-                wb_stb_nxt      = 1'd1; 
-                wb_cyc_nxt      = 1'd1; 
-                wb_adr_nxt      = addr0; 
-                wb_sel_nxt[3:0] = 4'b1111; 
+                wb_stb_nxt      = 1'd1;
+                wb_cyc_nxt      = 1'd1;
+                wb_adr_nxt      = addr0;
+                wb_sel_nxt[3:0] = 4'b1111;
         end
 
         state_ff[FETCH_L1_DESC_0]:
@@ -314,10 +315,10 @@ begin: blk1
                         state_nxt[FETCH_L1_DESC]   = 1'd0;
                         state_nxt[FETCH_L2_DESC_0] = 1'd1;
 
-                        wb_stb_nxt      = 1'd1; 
-                        wb_cyc_nxt      = 1'd1; 
-                        wb_adr_nxt      = addr1; 
-                        wb_sel_nxt[3:0] = 4'b1111; 
+                        wb_stb_nxt      = 1'd1;
+                        wb_cyc_nxt      = 1'd1;
+                        wb_adr_nxt      = addr1;
+                        wb_sel_nxt[3:0] = 4'b1111;
                 end
 
                 FINE_ID:
@@ -328,10 +329,10 @@ begin: blk1
                         state_nxt[FETCH_L1_DESC]   = 1'd0;
                         state_nxt[FETCH_L2_DESC_0] = 1'd1;
 
-                        wb_stb_nxt      = 1'd1; 
-                        wb_cyc_nxt      = 1'd1; 
-                        wb_adr_nxt      = addr2; 
-                        wb_sel_nxt[3:0] = 4'b1111; 
+                        wb_stb_nxt      = 1'd1;
+                        wb_cyc_nxt      = 1'd1;
+                        wb_adr_nxt      = addr2;
+                        wb_sel_nxt[3:0] = 4'b1111;
                 end
 
                 endcase

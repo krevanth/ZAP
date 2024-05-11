@@ -822,34 +822,28 @@ assign o_uop_last = (((state_ff == IDLE) && (state_nxt == IDLE)) ||
 
 ///////////////////////////////////////////////////////////////////////////////
 
+// map[24] == 0 : post index.
 function automatic [33:0] map ( input [31:0] instr, input [3:0] enc, input [15:0] list );
 begin
-        map = {2'd0, instr};
-        map = map & ~(1<<22); // No byte access.
-        map = map & ~(1<<25); // Constant Offset (of 4).
-        map[23] = 1'd1;       // Hardcoded to increment.
+        logic [33:0] map_tmp;
 
-        map[11:0] = 12'd4;          // Offset
-        map[27:26] = 2'b01;         // Memory instruction.
+        // Default.
+        map     = {2'd0, instr};    // map = instr.
+        map_tmp = '0;
 
-        map[`ZAP_SRCDEST] = enc;
-        {map[ZAP_BASE_EXTEND],map[`ZAP_BASE]} = ARCH_DUMMY_REG0;//Use as base register.
+        // Override various fields.
+        map[22]           =  1'd0;
+        map[25]           =  1'd0;
+        map[23]           =  1'd1;             // Hardcoded to increment.
+        map[11:0]         =  12'd4;            // Offset
+        map[27:26]        =  2'b01;            // Memory instruction.
+        map[`ZAP_SRCDEST] =  enc;
 
-        // If not up, then DA -> IB and DB -> IA.
-        if ( !up ) // DA or DB.
-        begin
-                map[24]   = !map[24];   // Post <---> Pre switch.
-        end
+       {map[ZAP_BASE_EXTEND],
+        map[`ZAP_BASE]}   = ARCH_DUMMY_REG0;  // Use as base register.
 
-        // Since the indexing has swapped (possibly), we must rethink map[21].
-        if ( map[24] == 0 ) // Post index.
-        begin
-                map[21] = 1'd0; // Writeback is implicit.
-        end
-        else // Pre-index - Must specify writeback.
-        begin
-                map[21] = 1'd1;
-        end
+        map[24]          ^= !up;              // If not up, then DA -> IB and DB -> IA.
+        map[21]           = map[24];          // If post index, writeback is implicit (map[21]=0).
 
         if ( list == 0 ) // Catch 0 list here itself...
         begin
@@ -858,18 +852,20 @@ begin
                 begin
                         if ( up ) // Original instruction asked increment.
                         begin
-                                map =
+                                map_tmp =
                                 { 2'd0, cc, 2'b0, 1'b0, MOV, 1'b0, 4'd0,
-                                                base, 8'd0, 4'd0 };
+                                                       base, 8'd0, 4'd0 };
 
-                                {map[ZAP_DP_RB_EXTEND],map[`ZAP_DP_RB]} =
-                                                ARCH_DUMMY_REG0;
+                                {map_tmp[ZAP_DP_RB_EXTEND],map_tmp[`ZAP_DP_RB]} =
+                                 ARCH_DUMMY_REG0;
+
+                                map = map_tmp;
                         end
                         else
-                        begin // Restore.
+                        begin   // Restore.
                                 // SUB BASE, BASE, #OFFSET
                                 map = { 2'd0, cc, 2'b00, 1'b1, SUB,
-                                                1'd0, base, base, oc_offset};
+                                        1'd0, base, base, oc_offset};
                         end
                 end
                 else
@@ -993,6 +989,8 @@ begin: priEncFn
 end
 endfunction
 
+// synopsys translate_off
+
 always @ ( posedge i_clk ) // Assertion.
 begin
         if ( state_ff == IDLE && state_nxt == MEMOP && !i_reset )
@@ -1020,6 +1018,8 @@ begin
                 end
         end
 end
+
+// synopsys translate_on
 
 endmodule
 

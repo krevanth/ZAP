@@ -96,6 +96,8 @@ end
 
 `ifdef DEBUG_EN
 
+// synopsys translate_off
+
 initial $display("DEBUG_EN defined in register file. Use only for Sim.");
 
 wire [31:0] r0   =  mem[0];
@@ -138,6 +140,8 @@ wire [31:0] r36  =  mem[36];
 wire [31:0] r37  =  mem[37];
 wire [31:0] r38  =  mem[38];
 wire [31:0] r39  =  mem[39];
+
+// synopsys translate_on
 
 `endif
 
