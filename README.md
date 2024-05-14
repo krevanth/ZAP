@@ -4,7 +4,7 @@
 
 ### RTL Design
 
-All of ZAP RTL is Copyright (C) 2016-2024 Revanth Kamaraj \<<revanth91kamaraj@gmail.com>\>.
+All of ZAP RTL is Copyright (C) 2016-2024 [Revanth Kamaraj](https://github.com/krevanth) \<<revanth91kamaraj@gmail.com>\>.
 
 ### Verification
 
