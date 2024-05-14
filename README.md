@@ -10,6 +10,8 @@ All of ZAP RTL is Copyright (C) 2016-2024 Revanth Kamaraj \<<revanth91kamaraj@gm
 
 Most of ZAP's test code is Copyright (C) 2016-2024 Revanth Kamaraj \<<revanth91kamaraj@gmail.com>\> except for the cases noted below:
 
+Thanks to [ElectronAsh](https://github.com/electronash/sim_3do) for working on a 3DO video game project based around the ZAP core and helping me debug several issues.
+
 Thanks to [Erez Binyamin](https://github.com/ErezBinyamin) for adding Docker infrastructure support.
 
 The testbench UART core in `src/testbench/uart.v` is based on the [UART-16550 core](https://github.com/freecores/uart16550) project.
@@ -763,8 +765,6 @@ DCP file will be available in `obj/syn/zap.dcp`
 * Outputs assume they are driving flip-flops with Tsu = 2ns Th=1ns, typical for an FPGA flip-flop.
 
 ## 4. Acknowledgements
-
-Thanks to [ElectronAsh](https://github.com/electronash/sim_3do) for working on a 3DO video game project based around the ZAP core.
 
 Thanks to [Bharath Mulagondla](https://github.com/bharathmulagondla) and [Akhil Raj Baranwal](https://github.com/thecurryspice) for pointing out bugs in the design.
 
