@@ -324,8 +324,6 @@ end
 // Next state logic.
 always_comb
 begin
-        state_nxt = state_ff;
-
         if ( i_wb_err )
         begin
                 assert ( i_wb_ack ) else $fatal(2, "Error: ERR=1 but ACK=0.");
@@ -341,13 +339,15 @@ begin
                 default: state_nxt = state_ff;
                 endcase
         end
+        else
+        begin
+            state_nxt = state_ff;
+        end
 end
 
 // Route ACKs to respective masters.
 always_comb
 begin
-        {wb_err, wb_ack} = 6'd0;
-
         case(state_ff)
         SELECT_CCH      : {wb_err[0], wb_ack[0]} = {i_wb_err, i_wb_ack};
         SELECT_TAG      : {wb_err[1], wb_ack[1]} = {i_wb_err, i_wb_ack};

@@ -327,7 +327,10 @@ begin
         end
         else
         begin
-                // Default values.
+                // ====================================
+                // Default values section.
+                // ====================================
+
                 o_itlb_inv      <= 1'd0;
                 o_dtlb_inv      <= 1'd0;
                 o_dcache_inv    <= 1'd0;
@@ -336,6 +339,10 @@ begin
                 o_dcache_clean  <= 1'd0;
                 o_reg_en        <= 1'd0;
                 o_cp_done       <= 1'd0;
+
+                // ===================================
+                // FSM Code
+                // ===================================
 
                 case ( state )
                 IDLE: // Idle state.
@@ -572,6 +579,10 @@ begin
                         end
                 end
 
+                // ======================================
+                // Default Section (For Better Synth)
+                // ======================================
+
                 default: // X propagate
                 begin
                         state          <= 'x; //
@@ -593,7 +604,9 @@ begin
 
                 endcase
 
-                // Constants.
+                // ======================================
+                // Constants Section
+                // ======================================
 
                 r[0][3:0]   <= 4'd0;
                 r[0][15:4]  <= 12'hAAA;
@@ -613,6 +626,8 @@ begin
                 end
         end
 end
+
+// For debugging.
 
 logic [31:0] r0;
 logic [31:0] r1;

@@ -68,6 +68,11 @@ assign  offset_w = i_offset[10:0];
 
 always_comb
 begin
+
+        // ============================================
+        // Default Value Section (Done to avoid combo loops/incomplete assignments)
+        // ============================================
+
         // If you are not in compressed mode, just pass stuff on.
         o_instruction_valid     = i_instruction_valid;
         o_und                   = 1'd0;
@@ -75,6 +80,10 @@ begin
         o_irq                   = i_irq;
         o_fiq                   = i_fiq;
         o_force32_align         = 1'd0;
+
+        // ===========================================
+        // Code Section
+        // ===========================================
 
         if ( i_cpsr_ff_t && i_instruction_valid ) // compressed mode enable
         begin

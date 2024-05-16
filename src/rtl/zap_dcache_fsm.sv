@@ -230,9 +230,11 @@ begin
                 cache_clean_req_ff      <= 0;
                 cache_inv_req_ff        <= 0;
                 adr_ctr_ff              <= 0;
-                state_ff                <= 0;
-                state_ff[IDLE]          <= 1'd1;
                 lock_ff                 <= 64'd0;
+
+                // STATE - Drive state to 000...0001.
+                state_ff                <= 0;       // Rest of bits
+                state_ff[IDLE]          <= 1'd1;    // Override LSB
         end
         else
         begin
@@ -249,8 +251,10 @@ begin
                 cache_clean_req_ff      <= cache_clean_req_nxt;
                 cache_inv_req_ff        <= cache_inv_req_nxt;
                 adr_ctr_ff              <= adr_ctr_nxt;
-                state_ff                <= state_nxt;
                 lock_ff                 <= lock_nxt;
+
+                // STATE
+                state_ff                <= state_nxt;
         end
 end
 
@@ -275,10 +279,17 @@ assign o_dat = state_ff[UNCACHEABLE] ?
 
 // STATE MACHINE (Next State Logic)
 always_comb
-begin:blk1
+begin:next_state_logic
+
+       // ==========================================
+       // Local Vars Section
+       // ==========================================
+
        logic [$clog2(CACHE_LINE/4)-1:0] tmp;
 
-        // Default values to avoid latches.
+        // =========================================
+        // Default values section (done to avoid combo loops/incomplete assignments).
+        // =========================================
         tmp                     = {($clog2(CACHE_LINE/4)){1'd0}};
         state_nxt               = state_ff;
         adr_ctr_nxt             = adr_ctr_ff;
@@ -317,6 +328,10 @@ begin:blk1
 
         rhit = 1'd0;
         whit = 1'd0;
+
+        // ======================================
+        // FSM Code Section
+        // ======================================
 
         case(1'd1)
 
@@ -717,6 +732,10 @@ begin:blk1
                         o_cache_clean_done   = 1'd1;
                 end
         end
+
+        // ==========================================
+        // Default Section (To simplify synth)
+        // ==========================================
 
         default:
         begin

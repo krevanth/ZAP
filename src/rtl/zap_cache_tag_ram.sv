@@ -237,9 +237,11 @@ begin
                 o_wb_adr_ff             <= 'x;
                 adr_ctr_ff              <= 0;
                 blk_ctr_ff              <= 0;
-                state_ff                <= IDLE;
                 cache_clean_done_ff     <= 0;
                 tag_ram_rd_addr_ff      <= 0;
+
+                // STATE
+                state_ff                <= IDLE;
         end
         else
         begin
@@ -252,9 +254,11 @@ begin
                 o_wb_adr_ff             <= o_wb_adr_nxt;
                 adr_ctr_ff              <= adr_ctr_nxt;
                 blk_ctr_ff              <= blk_ctr_nxt;
-                state_ff                <= state_nxt;
                 cache_clean_done_ff     <= cache_clean_done_nxt;
                 tag_ram_rd_addr_ff      <= tag_ram_rd_addr_nxt;
+
+                // STATE
+                state_ff                <= state_nxt;
         end
 end
 
@@ -266,9 +270,17 @@ assign tag_ram_rd_addr = state_ff == IDLE ?
 
 always_comb
 begin:blk1
+
+        // --------------------------------------------------
+        // Local Vars Section
+        // --------------------------------------------------
+
         logic [31:0] shamt, data, pa;
 
-        // Defaults to avoid latch.
+        // --------------------------------------------------
+        // Defaults Value Section (done to avoid combo loops/incomplete assignments).
+        // --------------------------------------------------
+
         line_dummy              = {(CACHE_LINE*8-32){1'd0}};
         shamt                   = '0;
         data                    = '0;
@@ -292,9 +304,11 @@ begin:blk1
         o_wb_wen_nxt            = o_wb_wen_ff;
         o_wb_cti_nxt            = o_wb_cti_ff;
         tag_ram_wr_data         = 0;
-
-        // Cache clean done.
         o_cache_clean_done      = cache_clean_done_ff;
+
+        // --------------------------------------------------
+        // FSM Code Section
+        // --------------------------------------------------
 
         case ( state_ff )
 
@@ -405,6 +419,10 @@ begin:blk1
                 state_nxt        = IDLE;
                 o_cache_inv_done = 1'd1;
         end
+
+        // ------------------------------------------------------
+        // Default Section (To simplify synthesis)
+        // ------------------------------------------------------
 
         default: // Cannot happen.
         begin

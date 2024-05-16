@@ -211,7 +211,15 @@ zap_register_file u_zap_register_file
 always_comb
 begin: pc_control_tree
 
+        // ========================================
+        // Local Var Section
+        // ========================================
+
         logic [31:0] new_pc;
+
+        // =======================================
+        // Default value section (done to avoid combo loops/incomplete assignments)
+        // =======================================
 
         new_pc                   = 'd0;
         shelve_nxt               = shelve_ff;
@@ -222,6 +230,10 @@ begin: pc_control_tree
         pc_del2_nxt              = pc_del2_ff;
         pc_del3_nxt              = pc_del3_ff;
         o_pred                   = 33'd0;
+
+        // ====================================
+        // Code Section
+        // ====================================
 
         if ( i_data_abt[1] )
         begin
@@ -324,6 +336,10 @@ end: pc_control_tree
 always_comb
 begin: register_file_write
 
+        // ================================================
+        // Default Values Section (Done to avoid combo loops and incomplete assignments and incomplete assignments/incomplete assignments)
+        // ================================================
+
         wen                      = 1'd0;
         wa1                      = PHY_RAZ_REGISTER;
         wa2                      = PHY_RAZ_REGISTER;
@@ -331,6 +347,10 @@ begin: register_file_write
         wdata2                   = 32'd0;
         o_clear_from_writeback   = 0;
         cpsr_nxt                 = cpsr_ff;
+
+        // ===============================================
+        // Code Section
+        // ===============================================
 
         if ( i_data_abt[1] )
         begin
@@ -664,7 +684,6 @@ assign unused = |{i_decompile_valid, i_uop_last, pc_nxt_tmp[0]};
 `endif
 
 endmodule // zap_register_file.v
-
 
 // ----------------------------------------------------------------------------
 // END OF FILE

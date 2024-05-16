@@ -48,14 +48,25 @@ module zap_shifter_shift
 
 always_comb
 begin
+        // =========================================
+        // Local variables
+        // =========================================
+
         logic signed [32:0] asr_res, asr_res_fin; // For ASR.
 
-        // Default values.
+        // =========================================
+        // Default values (Done to avoid combo loops/incomplete assignments)
+        // =========================================
+
         asr_res         = 0;
         asr_res_fin     = 0;
         o_result        = i_source;
         o_carry         = 0;
         o_sat           = 0;
+
+        // ========================================
+        // Code Section
+        // ========================================
 
         case ( i_shift_type )
 
@@ -116,6 +127,10 @@ begin
                                 end
                         end
                 end
+
+                // ======================================
+                // Default Section
+                // ======================================
 
                 default:
                 begin

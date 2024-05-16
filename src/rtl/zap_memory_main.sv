@@ -277,8 +277,15 @@ function automatic [31:0] transform (
 begin: transform_function
         logic [31:0] d; // Data shorthand.
 
-        transform = 32'd0;
-        d         = data;
+        // ======================================
+        // Default values section (Done for aliasing)
+        // ======================================
+
+        d = data;
+
+        // =====================================
+        // Function Code Section
+        // =====================================
 
         // If it's a store, don't bother with the output of this.
         if ( mem_load_ff == 1'd0 )

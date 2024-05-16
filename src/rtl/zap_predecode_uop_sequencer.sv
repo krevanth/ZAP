@@ -137,10 +137,19 @@ enum logic [20:0] {
 
 // Next state and output logic.
 always_comb
-begin:blk_a
+begin:next_state_logic_and_output_logic
+
+        // =========================================
+        // Local Vars
+        // =========================================
+
         logic H;
         logic [3:0] pri_enc_out;
         logic [3:0] rd;
+
+        // ========================================
+        // Default Value Section (Done to avoid combo loops/incomplete assignments)
+        // ========================================
 
         const_nxt = const_ff;
 
@@ -155,13 +164,16 @@ begin:blk_a
         // Align zero.
         o_align = 0;
 
-        // Avoid latch inference.
         state_nxt               = state_ff;
         o_instruction           = {5'd0, i_instruction};
         o_instruction_valid     = i_instruction_valid;
         reglist_nxt             = reglist_ff;
         o_stall_from_decode     = 1'd0;
         o_switch                = 0;
+
+        // =========================================
+        // Code Section
+        // =========================================
 
         case ( state_ff )
                 LDR_TO_PC_S0:
@@ -794,6 +806,10 @@ begin:blk_a
                         o_irq = 0;
                         o_fiq = 0;
                 end
+
+                // ========================================
+                // Default Section (To Simplify Synthesis)
+                // ========================================
 
                 default:
                 begin

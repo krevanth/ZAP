@@ -91,6 +91,10 @@ begin
         if ( i_clkena )
         begin : tlb_match_logic
 
+                // ============================================
+                // Default Values Section
+                // ============================================
+
                 dummy  <= 1'd0;
 
                 // Default values. Taken for MMU disabled esp.
@@ -100,6 +104,10 @@ begin
                 o_walk      <= 0;        // Walk disabled.
                 o_cacheable <= 0;        // Uncacheable.
 
+
+                // ==========================================
+                // Code Section
+                // ==========================================
 
                 if ( i_mmu_en && (i_rd || i_wr) ) // MMU enabled and R/W operation.
                 begin
@@ -181,6 +189,10 @@ begin
                                 // No match. Trigger TLB walk.
                                 o_walk <= 1'd1;
                         end
+
+                        // ================================================
+                        // Default Section
+                        // ================================================
 
                         default: // Mimics full case.
                         begin

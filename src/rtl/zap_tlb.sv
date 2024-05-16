@@ -79,7 +79,7 @@ input  logic             i_wb_err
 
 // ----------------------------------------------------------------------------
 
-always_comb o_wb_dat_nxt = 32'd0;
+assign o_wb_dat_nxt = 32'd0;
 
 `include "zap_localparams.svh"
 `include "zap_defines.svh"
@@ -114,47 +114,47 @@ endfunction
 // U0 generation.
 if      ( 10+$clog2(FPAGE_TLB_ENTRIES) == 11 )
 begin: l_two_fp
-        always_comb u0 = i_address_nxt[11];
+        assign u0 = i_address_nxt[11];
 end
 else
 begin: l_more_than_two_fp
-        always_comb u0 = 1'd0;
+        assign u0 = 1'd0;
 end
 
 // U1 generation.
 if      ( 12+$clog2(SPAGE_TLB_ENTRIES) == 13 )
 begin: l_two_sp
-        always_comb u1 = |i_address_nxt[15:13];
+        assign u1 = |i_address_nxt[15:13];
 end
 else if ( 12+$clog2(SPAGE_TLB_ENTRIES) == 14 )
 begin: l_four_sp
-        always_comb u1 = |i_address_nxt[15:14];
+        assign u1 = |i_address_nxt[15:14];
 end
 else if ( 12+$clog2(SPAGE_TLB_ENTRIES) == 15 )
 begin: l_eight_sp
-        always_comb u1 = i_address_nxt[15];
+        assign u1 = i_address_nxt[15];
 end
 else
 begin: l_more_than_eight_sp
-        always_comb u1 = 1'd0;
+        assign u1 = 1'd0;
 end
 
 // U2 generation
 if      ( 16+$clog2(LPAGE_TLB_ENTRIES) == 17 )
 begin: l_two_lp
-        always_comb u2 = |i_address_nxt[19:17];
+        assign u2 = |i_address_nxt[19:17];
 end
 else if ( 16+$clog2(LPAGE_TLB_ENTRIES) == 18 )
 begin: l_four_lp
-        always_comb u2 = |i_address_nxt[19:18];
+        assign u2 = |i_address_nxt[19:18];
 end
 else if ( 16+$clog2(LPAGE_TLB_ENTRIES) == 19 )
 begin: l_eight_lp
-        always_comb u2 = i_address_nxt[19];
+        assign u2 = i_address_nxt[19];
 end
 else
 begin: l_more_than_eight_lp
-        always_comb u2 = 1'd0;
+        assign u2 = 1'd0;
 end
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -162,47 +162,47 @@ end
 // U3 generation.
 if      ( 10+$clog2(FPAGE_TLB_ENTRIES) == 11 )
 begin: l_two_fp_tlb
-        always_comb u3 = tlb_address[11];
+        assign u3 = tlb_address[11];
 end
 else
 begin: l_more_than_two_fp_tlb
-        always_comb u3 = 1'd0;
+        assign u3 = 1'd0;
 end
 
 // U4 generation
 if      ( 12+$clog2(SPAGE_TLB_ENTRIES) == 13 )
 begin: l_two_sp_tlb
-        always_comb u4 = |tlb_address[15:13];
+        assign u4 = |tlb_address[15:13];
 end
 else if ( 12+$clog2(SPAGE_TLB_ENTRIES) == 14 )
 begin: l_four_sp_tlb
-        always_comb u4 = |tlb_address[15:14];
+        assign u4 = |tlb_address[15:14];
 end
 else if ( 12+$clog2(SPAGE_TLB_ENTRIES) == 15 )
 begin: l_eight_sp_tlb
-        always_comb u4 = tlb_address[15];
+        assign u4 = tlb_address[15];
 end
 else
 begin: l_more_than_eight_sp_tlb
-        always_comb u4 = 1'd0;
+        assign u4 = 1'd0;
 end
 
 // U5 generation.
 if      ( 16+$clog2(LPAGE_TLB_ENTRIES) == 17 )
 begin: l_two_lp_tlb
-        always_comb u5 = |tlb_address[19:17];
+        assign u5 = |tlb_address[19:17];
 end
 else if ( 16+$clog2(LPAGE_TLB_ENTRIES) == 18 )
 begin: l_four_lp_tlb
-        always_comb u5 = |tlb_address[19:18];
+        assign u5 = |tlb_address[19:18];
 end
 else if ( 16+$clog2(LPAGE_TLB_ENTRIES) == 19 )
 begin: l_eight_lp_tlb
-        always_comb u5 = tlb_address[19];
+        assign u5 = tlb_address[19];
 end
 else
 begin: l_more_than_eight_lp_tlb
-        always_comb u5 = 1'd0;
+        assign u5 = 1'd0;
 end
 
 // -----------------------------------------------------------------------------
@@ -214,7 +214,7 @@ localparam [31:0] W = max (
         10+$clog2(FPAGE_TLB_ENTRIES)
 );
 
-always_comb unused = |{i_address_nxt[9:0], tlb_address[9:0], i_address_nxt[31:W],
+assign unused = |{i_address_nxt[9:0], tlb_address[9:0], i_address_nxt[31:W],
                        tlb_address[31:W], u0, u1, u2, u3, u4, u5,
                        setlb_rdata, sptlb_rdata, lptlb_rdata, fptlb_rdata,
                        setlb_ren, sptlb_ren, lptlb_ren, fptlb_ren

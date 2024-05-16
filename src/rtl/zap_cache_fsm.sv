@@ -203,6 +203,8 @@ begin
                 cache_clean_req_ff      <= 0;
                 cache_inv_req_ff        <= 0;
                 adr_ctr_ff              <= 0;
+
+                // STATE
                 state_ff                <= IDLE;
         end
         else
@@ -217,6 +219,8 @@ begin
                 cache_clean_req_ff      <= cache_clean_req_nxt;
                 cache_inv_req_ff        <= cache_inv_req_nxt;
                 adr_ctr_ff              <= adr_ctr_nxt;
+
+                // STATE
                 state_ff                <= state_nxt;
         end
 end
@@ -240,12 +244,23 @@ assign o_dat = state_ff == UNCACHEABLE ?
                i_wb_dat :
                adapt_cache_data(i_address[$clog2(CACHE_LINE)-1:2], i_cache_line);
 
+// ==========================================================
 // STATE MACHINE (Next State Logic)
+// ==========================================================
+
 always_comb
 begin:blk1
+
+       // -----------------------------------------
+       // Local Vars Section
+       // ----------------------------------------
+
        logic [$clog2(CACHE_LINE/4)-1:0] tmp;
 
-        // Default values
+        // ---------------------------------------
+        // Default Values Section (Done To Avoid Combo Loops)
+        // ---------------------------------------
+
         tmp                     = {($clog2(CACHE_LINE/4)){1'd0}};
         state_nxt               = state_ff;
         adr_ctr_nxt             = adr_ctr_ff;
@@ -280,6 +295,10 @@ begin:blk1
 
         rhit                     = 0;
         whit                     = 0;
+
+        // --------------------------------------
+        // FSM Code Section
+        // --------------------------------------
 
         case(state_ff)
 
@@ -569,6 +588,10 @@ begin:blk1
                         o_cache_clean_done   = 1'd1;
                 end
         end
+
+        // ------------------------------
+        // Default Section
+        // ------------------------------
 
         default:
         begin

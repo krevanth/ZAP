@@ -77,6 +77,10 @@ begin
 
         instruction                     = i_instruction;
 
+        // ==========================================
+        // Default value section (Done to avoid combo loops/incomplete assignments)
+        // ==========================================
+
         // If an unrecognized instruction enters this, the output
         // signals an NV state i.e., invalid.
         o_condition_code                = NV;
@@ -103,7 +107,10 @@ begin
         o_und                           = 0;
         o_switch                        = 0;
 
-        // Based on our pattern match, call the appropriate task
+        // ========================================================
+        // Based on our pattern match, do the required action.
+        // ========================================================
+
         if ( i_fiq || i_irq || i_abt )
         begin
                 // Generate LR = PC - 4.
