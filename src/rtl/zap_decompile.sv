@@ -20,7 +20,6 @@
 // mode32 instrs to assembler instructions for debug purposes.
 // When running in synthesis mode, the output of this module is tied
 // to a constant since this module really finds use only in debug.
-// Define DEBUG_EN during simulation to help in debugging.
 //
 
 module zap_decompile #(parameter [31:0] INS_WDT = 32'd36) (
@@ -29,17 +28,13 @@ module zap_decompile #(parameter [31:0] INS_WDT = 32'd36) (
                 output logic      [64*8-1:0]     o_decompile     // 1024 bytes max of assembler string.
         );
 
-`ifdef DEBUG_EN
-
-// synopsys translate_off
+`ifndef SYNTHESIS
 
                         // ONLY IN SIMULATION
 
                         `include "zap_defines.svh"
                         `include "zap_localparams.svh"
                         `include "zap_decompile.svh"
-
-                        initial $display("DEBUG_EN defined in ZAP decompile. Use only for Sim.");
 
                         always @* // For simulation only / Assertion.
                         begin
@@ -533,8 +528,6 @@ module zap_decompile #(parameter [31:0] INS_WDT = 32'd36) (
                                 cond_code = ok;
                         end
                         endfunction
-
-// synopsys translate_on
 
 `else
 

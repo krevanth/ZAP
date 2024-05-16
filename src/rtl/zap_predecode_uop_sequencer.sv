@@ -989,8 +989,6 @@ begin: priEncFn
 end
 endfunction
 
-// synopsys translate_off
-
 always @ ( posedge i_clk ) // Assertion.
 begin
         if ( state_ff == IDLE && state_nxt == MEMOP && !i_reset )
@@ -1018,8 +1016,6 @@ begin
                 end
         end
 end
-
-// synopsys translate_on
 
 endmodule
 

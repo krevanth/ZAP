@@ -311,9 +311,10 @@ begin
 end
 
 
-// synopsys translate_off
-always@* assert(!i_wb_err || i_wb_ack) else $fatal(2, "Error: Err=1 but no ACK.");
-// synopsys translate_on
+always @ (posedge i_clk) // Assertion
+begin
+    assert(!i_wb_err || i_wb_ack || i_reset) else $fatal(2, "Error: Err=1 but no ACK.");
+end
 
 // Next state logic.
 always_comb

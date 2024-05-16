@@ -135,7 +135,7 @@ module zap_writeback #(
         output logic                         o_wb_cyc,
 
         // Trace
-        output logic [2047:0]                o_trace,
+        output logic [1023:0]                o_trace,
         output logic                         o_trace_valid,
         output logic                         o_trace_uop_last
 );
@@ -504,12 +504,10 @@ zap_btb #(.BP_ENTRIES(BP_ENTRIES)) u_zap_btb (
         .o_branch_state(o_taken)
 );
 
-`ifdef DEBUG_EN
-
-        // synopsys translate_off
+`ifndef SYNTHESIS
 
         // For simulation only
-        logic [1023:0] msg_nxt;
+        logic [1023:0] msg_nxt, trace_prev;
         logic          trace_uop_last_nxt;
         logic          trace_valid_nxt;
 
@@ -586,6 +584,21 @@ zap_btb #(.BP_ENTRIES(BP_ENTRIES)) u_zap_btb (
                 o_trace_valid    <= trace_valid_nxt;
         end
 
+        initial trace_prev       = "";
+
+        // Display message
+        always @ ( negedge i_clk ) // Assertion.
+        begin
+            if ( o_trace_valid )
+            begin
+                if ( o_trace != trace_prev )
+                begin
+                    $display("%s", o_trace);
+                    trace_prev <= o_trace;
+                end
+            end
+        end
+
         always@* // For simulation only / Assertion
         begin
                 trace_valid_nxt = 0;
@@ -638,7 +651,6 @@ zap_btb #(.BP_ENTRIES(BP_ENTRIES)) u_zap_btb (
 
         // Above block is for simulation only
 
-        // synopsys translate_on
 `else
 
 // Tie off trace to 0.

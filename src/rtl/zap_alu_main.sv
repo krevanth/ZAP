@@ -980,8 +980,6 @@ begin
         end
 end
 
-// synopsys translate_off
-
 // Assertion.
 always @ ( posedge i_clk ) // Assertion.
 begin
@@ -1010,8 +1008,6 @@ begin
                 else $info("Warning: Attempting to read SPSR in USR/SYS mode for context restore.");
         end
 end
-
-// synopsys translate_on
 
 assign branch_instruction = i_destination_index_ff == {2'd0, ARCH_PC} &&
                            (i_condition_code_ff != NV);

@@ -59,9 +59,8 @@ my $IVL_OPTIONS  = " -Isrc/rtl ";
    $IVL_OPTIONS .= " +define+MAX_CLOCK_CYCLES=$MAX_CLOCK_CYCLES ";
    $IVL_OPTIONS .= " +define+IRQ_EN "      if ( $IRQ_EN    );
    $IVL_OPTIONS .= " +define+FIQ_EN "      if ( $FIQ_EN    );
-   $IVL_OPTIONS .= " +define+DEBUG_EN "    if ( @ARGV == 3  );
    $IVL_OPTIONS .= " +define+REG_HIER=$REG_HIER ";
-   $IVL_OPTIONS .= " --trace "    if ( @ARGV == 3  );
+   $IVL_OPTIONS .= " --trace ";;
 
 if ( @ARGV==3 ) {
         print "Enabling trace...\n";

@@ -117,131 +117,131 @@ endif
 
 # Rule to lint.
 runlint:
-	/root/.cargo/bin/svlint --include src/rtl/ src/rtl/*.sv 
-	verilator --assert --lint-only -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
+	/root/.cargo/bin/svlint --include src/rtl/ src/rtl/*.sv --define SYNTHESIS 
+	verilator --assert --lint-only +define+SYNTHESIS -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
         -Wwarn-IMPERFECTSCH --report-unoptflat --clk i_clk --top-module zap_top src/rtl/*.sv -Isrc/rtl/           \
         -GONLY_CORE=1\'d1 && echo "Lint OK"
-	verilator --assert --lint-only -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
+	verilator --assert --lint-only +define+SYNTHESIS -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
         -Wwarn-IMPERFECTSCH --report-unoptflat --clk i_clk --top-module zap_top src/rtl/*.sv -Isrc/rtl/           \
         && echo "Lint OK"
-	verilator --assert --lint-only -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
+	verilator --assert --lint-only +define+SYNTHESIS -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
         -Wwarn-IMPERFECTSCH --report-unoptflat --clk i_clk --top-module zap_top src/rtl/*.sv -Isrc/rtl/           \
         -GCODE_FPAGE_TLB_ENTRIES=2 && echo "Lint OK"
-	verilator --assert --lint-only -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
+	verilator --assert --lint-only +define+SYNTHESIS -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
         -Wwarn-IMPERFECTSCH --report-unoptflat --clk i_clk --top-module zap_top src/rtl/*.sv -Isrc/rtl/           \
         -GCODE_FPAGE_TLB_ENTRIES=4 && echo "Lint OK"
-	verilator --assert --lint-only -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
+	verilator --assert --lint-only +define+SYNTHESIS -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
         -Wwarn-IMPERFECTSCH --report-unoptflat --clk i_clk --top-module zap_top src/rtl/*.sv -Isrc/rtl/           \
         -GCODE_FPAGE_TLB_ENTRIES=8 && echo "Lint OK"
-	verilator --assert --lint-only -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
+	verilator --assert --lint-only +define+SYNTHESIS -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
         -Wwarn-IMPERFECTSCH --report-unoptflat --clk i_clk --top-module zap_top src/rtl/*.sv -Isrc/rtl/           \
         -GCODE_FPAGE_TLB_ENTRIES=16 && echo "Lint OK"
-	verilator --assert --lint-only -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
+	verilator --assert --lint-only +define+SYNTHESIS -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
         -Wwarn-IMPERFECTSCH --report-unoptflat --clk i_clk --top-module zap_top src/rtl/*.sv -Isrc/rtl/           \
         -GCODE_FPAGE_TLB_ENTRIES=32 && echo "Lint OK"
-	verilator --assert --lint-only -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
+	verilator --assert --lint-only +define+SYNTHESIS -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
         -Wwarn-IMPERFECTSCH --report-unoptflat --clk i_clk --top-module zap_top src/rtl/*.sv -Isrc/rtl/           \
         -GDATA_FPAGE_TLB_ENTRIES=2 && echo "Lint OK"
-	verilator --assert --lint-only -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
+	verilator --assert --lint-only +define+SYNTHESIS -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
         -Wwarn-IMPERFECTSCH --report-unoptflat --clk i_clk --top-module zap_top src/rtl/*.sv -Isrc/rtl/           \
         -GDATA_FPAGE_TLB_ENTRIES=4 && echo "Lint OK"
-	verilator --assert --lint-only -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
+	verilator --assert --lint-only +define+SYNTHESIS -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
         -Wwarn-IMPERFECTSCH --report-unoptflat --clk i_clk --top-module zap_top src/rtl/*.sv -Isrc/rtl/           \
         -GDATA_FPAGE_TLB_ENTRIES=8 && echo "Lint OK"
-	verilator --assert --lint-only -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
+	verilator --assert --lint-only +define+SYNTHESIS -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
         -Wwarn-IMPERFECTSCH --report-unoptflat --clk i_clk --top-module zap_top src/rtl/*.sv -Isrc/rtl/           \
         -GDATA_FPAGE_TLB_ENTRIES=16 && echo "Lint OK"
-	verilator --assert --lint-only -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
+	verilator --assert --lint-only +define+SYNTHESIS -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
         -Wwarn-IMPERFECTSCH --report-unoptflat --clk i_clk --top-module zap_top src/rtl/*.sv -Isrc/rtl/           \
         -GDATA_FPAGE_TLB_ENTRIES=32 && echo "Lint OK"
-	verilator --assert --lint-only -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
+	verilator --assert --lint-only +define+SYNTHESIS -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
         -Wwarn-IMPERFECTSCH --report-unoptflat --clk i_clk --top-module zap_top src/rtl/*.sv -Isrc/rtl/           \
         -GCODE_SPAGE_TLB_ENTRIES=2 && echo "Lint OK"
-	verilator --assert --lint-only -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
+	verilator --assert --lint-only +define+SYNTHESIS -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
         -Wwarn-IMPERFECTSCH --report-unoptflat --clk i_clk --top-module zap_top src/rtl/*.sv -Isrc/rtl/           \
         -GCODE_SPAGE_TLB_ENTRIES=4 && echo "Lint OK"
-	verilator --assert --lint-only -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
+	verilator --assert --lint-only +define+SYNTHESIS -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
         -Wwarn-IMPERFECTSCH --report-unoptflat --clk i_clk --top-module zap_top src/rtl/*.sv -Isrc/rtl/           \
         -GCODE_SPAGE_TLB_ENTRIES=8 && echo "Lint OK"
-	verilator --assert --lint-only -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
+	verilator --assert --lint-only +define+SYNTHESIS -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
         -Wwarn-IMPERFECTSCH --report-unoptflat --clk i_clk --top-module zap_top src/rtl/*.sv -Isrc/rtl/           \
         -GCODE_SPAGE_TLB_ENTRIES=16 && echo "Lint OK"
-	verilator --assert --lint-only -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
+	verilator --assert --lint-only +define+SYNTHESIS -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
         -Wwarn-IMPERFECTSCH --report-unoptflat --clk i_clk --top-module zap_top src/rtl/*.sv -Isrc/rtl/           \
         -GCODE_SPAGE_TLB_ENTRIES=32 && echo "Lint OK"
-	verilator --assert --lint-only -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
+	verilator --assert --lint-only +define+SYNTHESIS -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
         -Wwarn-IMPERFECTSCH --report-unoptflat --clk i_clk --top-module zap_top src/rtl/*.sv -Isrc/rtl/           \
         -GDATA_SPAGE_TLB_ENTRIES=2 && echo "Lint OK"
-	verilator --assert --lint-only -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
+	verilator --assert --lint-only +define+SYNTHESIS -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
         -Wwarn-IMPERFECTSCH --report-unoptflat --clk i_clk --top-module zap_top src/rtl/*.sv -Isrc/rtl/           \
         -GDATA_SPAGE_TLB_ENTRIES=4 && echo "Lint OK"
-	verilator --assert --lint-only -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
+	verilator --assert --lint-only +define+SYNTHESIS -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
         -Wwarn-IMPERFECTSCH --report-unoptflat --clk i_clk --top-module zap_top src/rtl/*.sv -Isrc/rtl/           \
         -GDATA_SPAGE_TLB_ENTRIES=8 && echo "Lint OK"
-	verilator --assert --lint-only -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
+	verilator --assert --lint-only +define+SYNTHESIS -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
         -Wwarn-IMPERFECTSCH --report-unoptflat --clk i_clk --top-module zap_top src/rtl/*.sv -Isrc/rtl/           \
         -GDATA_SPAGE_TLB_ENTRIES=16 && echo "Lint OK"
-	verilator --assert --lint-only -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
+	verilator --assert --lint-only +define+SYNTHESIS -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
         -Wwarn-IMPERFECTSCH --report-unoptflat --clk i_clk --top-module zap_top src/rtl/*.sv -Isrc/rtl/           \
         -GDATA_SPAGE_TLB_ENTRIES=32 && echo "Lint OK"
-	verilator --assert --lint-only -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
+	verilator --assert --lint-only +define+SYNTHESIS -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
         -Wwarn-IMPERFECTSCH --report-unoptflat --clk i_clk --top-module zap_top src/rtl/*.sv -Isrc/rtl/           \
         -GCODE_LPAGE_TLB_ENTRIES=2 && echo "Lint OK"
-	verilator --assert --lint-only -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
+	verilator --assert --lint-only +define+SYNTHESIS -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
         -Wwarn-IMPERFECTSCH --report-unoptflat --clk i_clk --top-module zap_top src/rtl/*.sv -Isrc/rtl/           \
         -GCODE_LPAGE_TLB_ENTRIES=4 && echo "Lint OK"
-	verilator --assert --lint-only -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
+	verilator --assert --lint-only +define+SYNTHESIS -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
         -Wwarn-IMPERFECTSCH --report-unoptflat --clk i_clk --top-module zap_top src/rtl/*.sv -Isrc/rtl/           \
         -GCODE_LPAGE_TLB_ENTRIES=8 && echo "Lint OK"
-	verilator --assert --lint-only -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
+	verilator --assert --lint-only +define+SYNTHESIS -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
         -Wwarn-IMPERFECTSCH --report-unoptflat --clk i_clk --top-module zap_top src/rtl/*.sv -Isrc/rtl/           \
         -GCODE_LPAGE_TLB_ENTRIES=16 && echo "Lint OK"
-	verilator --assert --lint-only -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
+	verilator --assert --lint-only +define+SYNTHESIS -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
         -Wwarn-IMPERFECTSCH --report-unoptflat --clk i_clk --top-module zap_top src/rtl/*.sv -Isrc/rtl/           \
         -GCODE_LPAGE_TLB_ENTRIES=32 && echo "Lint OK"
-	verilator --assert --lint-only -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
+	verilator --assert --lint-only +define+SYNTHESIS -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
         -Wwarn-IMPERFECTSCH --report-unoptflat --clk i_clk --top-module zap_top src/rtl/*.sv -Isrc/rtl/           \
         -GDATA_LPAGE_TLB_ENTRIES=2 && echo "Lint OK"
-	verilator --assert --lint-only -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
+	verilator --assert --lint-only +define+SYNTHESIS -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
         -Wwarn-IMPERFECTSCH --report-unoptflat --clk i_clk --top-module zap_top src/rtl/*.sv -Isrc/rtl/           \
         -GDATA_LPAGE_TLB_ENTRIES=4 && echo "Lint OK"
-	verilator --assert --lint-only -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
+	verilator --assert --lint-only +define+SYNTHESIS -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
         -Wwarn-IMPERFECTSCH --report-unoptflat --clk i_clk --top-module zap_top src/rtl/*.sv -Isrc/rtl/           \
         -GDATA_LPAGE_TLB_ENTRIES=8 && echo "Lint OK"
-	verilator --assert --lint-only -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
+	verilator --assert --lint-only +define+SYNTHESIS -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
         -Wwarn-IMPERFECTSCH --report-unoptflat --clk i_clk --top-module zap_top src/rtl/*.sv -Isrc/rtl/           \
         -GDATA_LPAGE_TLB_ENTRIES=16 && echo "Lint OK"
-	verilator --assert --lint-only -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
+	verilator --assert --lint-only +define+SYNTHESIS -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
         -Wwarn-IMPERFECTSCH --report-unoptflat --clk i_clk --top-module zap_top src/rtl/*.sv -Isrc/rtl/           \
         -GDATA_LPAGE_TLB_ENTRIES=32 && echo "Lint OK"
-	verilator --assert --lint-only -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
+	verilator --assert --lint-only +define+SYNTHESIS -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
         -Wwarn-IMPERFECTSCH --report-unoptflat --clk i_clk --top-module zap_top src/rtl/*.sv -Isrc/rtl/           \
         -GCODE_SECTION_TLB_ENTRIES=2 && echo "Lint OK"
-	verilator --assert --lint-only -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
+	verilator --assert --lint-only +define+SYNTHESIS -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
         -Wwarn-IMPERFECTSCH --report-unoptflat --clk i_clk --top-module zap_top src/rtl/*.sv -Isrc/rtl/           \
         -GCODE_SECTION_TLB_ENTRIES=4 && echo "Lint OK"
-	verilator --assert --lint-only -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
+	verilator --assert --lint-only +define+SYNTHESIS -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
         -Wwarn-IMPERFECTSCH --report-unoptflat --clk i_clk --top-module zap_top src/rtl/*.sv -Isrc/rtl/           \
         -GCODE_SECTION_TLB_ENTRIES=8 && echo "Lint OK"
-	verilator --assert --lint-only -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
+	verilator --assert --lint-only +define+SYNTHESIS -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
         -Wwarn-IMPERFECTSCH --report-unoptflat --clk i_clk --top-module zap_top src/rtl/*.sv -Isrc/rtl/           \
         -GCODE_SECTION_TLB_ENTRIES=16 && echo "Lint OK"
-	verilator --assert --lint-only -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
+	verilator --assert --lint-only +define+SYNTHESIS -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
         -Wwarn-IMPERFECTSCH --report-unoptflat --clk i_clk --top-module zap_top src/rtl/*.sv -Isrc/rtl/           \
         -GCODE_SECTION_TLB_ENTRIES=32 && echo "Lint OK"
-	verilator --assert --lint-only -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
+	verilator --assert --lint-only +define+SYNTHESIS -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
         -Wwarn-IMPERFECTSCH --report-unoptflat --clk i_clk --top-module zap_top src/rtl/*.sv -Isrc/rtl/           \
         -GDATA_SECTION_TLB_ENTRIES=2 -GDATA_CACHE_SIZE=16384 -GDATA_CACHE_LINE=16 && echo "Lint OK"
-	verilator --assert --lint-only -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
+	verilator --assert --lint-only +define+SYNTHESIS -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
         -Wwarn-IMPERFECTSCH --report-unoptflat --clk i_clk --top-module zap_top src/rtl/*.sv -Isrc/rtl/           \
         -GDATA_SECTION_TLB_ENTRIES=4 -GCODE_CACHE_SIZE=16384 -GCODE_CACHE_LINE=16 && echo "Lint OK"
-	verilator --assert --lint-only -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
+	verilator --assert --lint-only +define+SYNTHESIS -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
         -Wwarn-IMPERFECTSCH --report-unoptflat --clk i_clk --top-module zap_top src/rtl/*.sv -Isrc/rtl/           \
         -GDATA_SECTION_TLB_ENTRIES=8 -GDATA_CACHE_SIZE=4096 -GCODE_CACHE_LINE=32 && echo "Lint OK"
-	verilator --assert --lint-only -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
+	verilator --assert --lint-only +define+SYNTHESIS -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
         -Wwarn-IMPERFECTSCH --report-unoptflat --clk i_clk --top-module zap_top src/rtl/*.sv -Isrc/rtl/           \
         -GDATA_SECTION_TLB_ENTRIES=16 -GCODE_CACHE_SIZE=4096 -GDATA_CACHE_LINE=64 && echo "Lint OK"
-	verilator --assert --lint-only -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
+	verilator --assert --lint-only +define+SYNTHESIS -sv -error-limit 1 -Wall -Wpedantic -Wwarn-lint -Wwarn-style -Wwarn-MULTIDRIVEN     \
         -Wwarn-IMPERFECTSCH --report-unoptflat --clk i_clk --top-module zap_top src/rtl/*.sv -Isrc/rtl/           \
         -GDATA_SECTION_TLB_ENTRIES=32 && echo "Lint OK"
 

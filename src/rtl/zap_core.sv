@@ -56,7 +56,7 @@ module zap_core #(
 // Trace port
 // ------------------------------------------------
 
-output logic [2047:0]                    o_trace,
+output logic [1023:0]                    o_trace,
 output logic                             o_trace_valid,
 output logic                             o_trace_uop_last,
 
@@ -1610,8 +1610,6 @@ zap_cp15_cb #(
 
 // Readout of CPU mode. Useful for debugging.
 
-// synopsys translate_off
-
 always_comb
 case(o_cpsr[ZAP_CPSR_MODE:0])
 FIQ:     CPU_MODE = "FIQ";
@@ -1623,8 +1621,6 @@ ABT:     CPU_MODE = "ABT";
 SYS:     CPU_MODE = "SYS";
 default: CPU_MODE = "???";
 endcase
-
-// synopsys translate_on
 
 // Assertion to catch if CPU is in a bad mode.
 always @ ( posedge i_clk ) // Assertion.

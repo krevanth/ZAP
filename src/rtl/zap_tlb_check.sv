@@ -92,7 +92,6 @@ begin
         begin : tlb_match_logic
 
                 dummy  <= 1'd0;
-                unused <= |dummy;
 
                 // Default values. Taken for MMU disabled esp.
                 o_fsr       <= 0;        // No fault.

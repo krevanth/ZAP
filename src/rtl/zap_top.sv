@@ -85,13 +85,13 @@ parameter logic [31:0] CODE_CACHE_SIZE          =  32'd8192, // Cache size in by
 parameter logic [31:0] CODE_CACHE_LINE          =  32'd64    // Ccahe line size in bytes.
 
 )(
-        `ifdef DEBUG_EN
+        `ifndef SYNTHESIS
 
         // --------------------------------------
         // Trace. Only for DV. Leave open.
         // --------------------------------------
 
-        output  logic  [2047:0]    o_trace,
+        output  logic  [1023:0]    o_trace,
         output  logic              o_trace_valid,
         output  logic              o_trace_uop_last,
 
@@ -138,7 +138,6 @@ always_comb o_wb_bte = 2'b00; // Linear Burst.
 
 // Assertion.
 
-// synopsys translate_off
 always@(posedge i_clk) // Assertion.
 begin
         if (!i_reset && o_wb_cyc)
@@ -146,7 +145,6 @@ begin
                 assert ( |o_wb_cti ) else  $fatal(2, "O_WB_CTI is not EOB.");
         end
 end
-// synopsys translate_on
 
 logic            wb_cyc, wb_stb, wb_we;
 logic [3:0]      wb_sel;
@@ -210,11 +208,11 @@ zap_dual_rank_synchronizer #(.WIDTH(2)) u_sync (
         .o_sync  ({s_fiq, s_irq})
 );
 
-`ifndef DEBUG_EN
+`ifdef SYNTHESIS
 
 /* verilator lint_off UNUSEDSIGNAL */
 
-logic [2047:0]       o_trace;
+logic [1023:0]       o_trace;
 logic                o_trace_valid;
 logic                o_trace_uop_last;
 
