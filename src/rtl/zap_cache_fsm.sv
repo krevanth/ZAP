@@ -258,7 +258,7 @@ begin:blk1
        logic [$clog2(CACHE_LINE/4)-1:0] tmp;
 
         // ---------------------------------------
-        // Default Values Section (Done To Avoid Combo Loops)
+        // Default Values Section (Done To Avoid Combo Loops/Incomplete Assignments)
         // ---------------------------------------
 
         tmp                     = {($clog2(CACHE_LINE/4)){1'd0}};

@@ -337,7 +337,7 @@ always_comb
 begin: register_file_write
 
         // ================================================
-        // Default Values Section (Done to avoid combo loops and incomplete assignments and incomplete assignments/incomplete assignments)
+        // Default Values Section (Done to avoid combo loops/incomplete assignments)
         // ================================================
 
         wen                      = 1'd0;
