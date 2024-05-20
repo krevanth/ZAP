@@ -136,7 +136,7 @@ logic  [2:0]                     wb_err;
 logic                            unused;
 
 // Selection 2 of Wishbone CTI[2x3] is always on all CPU supported modes.
-always_comb wb_cti[2] = CTI_EOB;
+assign wb_cti[2] = CTI_EOB;
 
 // wb_err[1] is unused.
 assign unused = |{wb_err[1]};
@@ -403,6 +403,8 @@ begin
         endcase
 end
 
-endmodule
+endmodule : zap_dcache
 
-
+// ----------------------------------------------------------------------------
+// END OF FILE
+// ----------------------------------------------------------------------------

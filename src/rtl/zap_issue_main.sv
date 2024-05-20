@@ -478,9 +478,7 @@ begin
 end
 
 // Get values from the feedback network.
-always_comb
-begin
-        o_alu_source_value_nxt  =
+assign  o_alu_source_value_nxt  =
         get_register_value (    skid_alu_source_ff,
                                 2'd0,
                                 i_shifter_destination_index_ff[5:0],
@@ -515,7 +513,7 @@ begin
         );
 
 
-        o_shift_source_value_nxt=
+assign  o_shift_source_value_nxt=
         get_register_value (    skid_shift_source_ff,
                                 2'd1,
                                 i_shifter_destination_index_ff[5:0],
@@ -549,7 +547,7 @@ begin
                                 1'd0
         );
 
-        o_shift_length_value_nxt=
+assign  o_shift_length_value_nxt=
         get_register_value (    skid_shift_length_ff,
                                 2'd2,
                                 i_shifter_destination_index_ff[5:0],
@@ -583,8 +581,8 @@ begin
                                 1'd0
         );
 
-        // Value of a register index, never an immediate.
-        o_mem_srcdest_value_nxt =
+// Value of a register index, never an immediate.
+assign  o_mem_srcdest_value_nxt =
         get_register_value (    {27'd0, skid_mem_srcdest_index_ff},
                                 2'd3,
                                 i_shifter_destination_index_ff[5:0],
@@ -617,8 +615,6 @@ begin
                                 skid_pc_plus_8_ff,
                                 1'd0
         );
-end
-
 
 // Apply index to register file.
 assign o_rd_index_0 = skid_alu_source_ff[5:0];
@@ -919,13 +915,16 @@ assign shift_lock =
 // Functions
 ////////////////////////////////////
 
+// ---------------------------------------------
 // Shifter lock check.
+// ---------------------------------------------
+
 function automatic shifter_lock_check (
         input [32:0]                 index,
         input [$clog2(PHY_REGS)-1:0] destination_index_ff,
         input [3:0]                  condition_code_ff
 );
-begin
+
         logic unused;
         unused = |index[31:6];
 
@@ -945,11 +944,14 @@ begin
         begin
                 shifter_lock_check = 1'd0;
         end
-end
-endfunction
 
-// Load lock. Activated when a read from a register follows a load to that
-// register.
+endfunction : shifter_lock_check
+
+// -----------------------------------------------
+// Load lock. Activated when a read from a register
+// follows a load to that register.
+// -----------------------------------------------
+
 function automatic determine_load_lock (
 input [32:0]                    index,
 input [$clog2(PHY_REGS)-1:0]    mem_srcdest_index_ff,
@@ -976,16 +978,14 @@ input                           memory_dav_ff,
 input  [63:0]                   xlock,
 input                           ext_lock
 );
-begin
         logic unused;
-
-        determine_load_lock = 1'd0;
 
         //
         // Look for that load instruction in the required pipeline stages.
         // If found, we cannot issue the current instruction since old value
         // will be read.
         //
+
         if ( index[32] == IMMED_EN || index[5:0] == PHY_RAZ_REGISTER[5:0] )
         // Lock only occurs for indices.
         begin
@@ -1022,10 +1022,14 @@ begin
         begin
                 determine_load_lock = 1'd1;
         end
+        else
+        begin
+                determine_load_lock = 1'd0;
+        end
 
         unused = |{index[31:6]};
-end
-endfunction
+
+endfunction : determine_load_lock
 
 // ----------------------------------------------------------------------------
 
@@ -1090,9 +1094,8 @@ function automatic [31:0] get_register_value (
         input                           force32_align_ff
 );
 
-logic [31:0] get;
+        logic [31:0] get;
 
-begin
         if   ( index[32] )                 // Catch constant here.
         begin
                 get = index[31:0];
@@ -1157,12 +1160,11 @@ begin
         get_register_value = !skid_mem_load_ff  &&
                              !skid_mem_store_ff &&
                              force32_align_ff   ? (get & 32'hffff_fffc) : get;
-end
-endfunction
 
+endfunction : get_register_value
 
-endmodule // zap_issue_main.v
+endmodule : zap_issue_main
 
 // ----------------------------------------------------------------------------
-// EOF
+// END OF FILE
 // ----------------------------------------------------------------------------

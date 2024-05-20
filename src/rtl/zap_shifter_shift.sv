@@ -46,28 +46,15 @@ module zap_shifter_shift
 `include "zap_defines.svh"
 `include "zap_localparams.svh"
 
+logic signed [32:0] asr_res, asr_res_fin; // For ASR.
+
+assign asr_res     = {i_source, i_carry};
+assign asr_res_fin = asr_res >>> i_amount;
+
+assign o_sat = i_shift_type == LSL_SAT ? (i_source[30] != i_source[31]) : 1'd0;
+
 always_comb
 begin
-        // =========================================
-        // Local variables
-        // =========================================
-
-        logic signed [32:0] asr_res, asr_res_fin; // For ASR.
-
-        // =========================================
-        // Default values (Done to avoid combo loops/incomplete assignments)
-        // =========================================
-
-        asr_res         = 0;
-        asr_res_fin     = 0;
-        o_result        = i_source;
-        o_carry         = 0;
-        o_sat           = 0;
-
-        // ========================================
-        // Code Section
-        // ========================================
-
         case ( i_shift_type )
 
                 // Logical shift left, logical shift right and
@@ -78,12 +65,7 @@ begin
                 {1'd0, LSR}:    {o_result, o_carry} = {i_source, i_carry} >>
                                 i_amount;
 
-                {1'd0, ASR}:
-                begin
-                        asr_res     = {i_source, i_carry};
-                        asr_res_fin = asr_res >>> i_amount;
-                        {o_result, o_carry} = asr_res_fin;
-                end
+                {1'd0, ASR}:    {o_result, o_carry} = asr_res_fin;
 
                 {1'd0, ROR}: // Rotate right.
                 begin
@@ -111,9 +93,7 @@ begin
                 //
                 LSL_SAT:
                 begin
-
-                        o_result = i_source << 1;
-                        o_sat    = ( o_result[31] != i_source[31] );
+                        o_carry = 1'd0;
 
                         if ( o_sat )
                         begin
@@ -126,28 +106,25 @@ begin
                                         o_result = {1'd1, {31{1'd0}}}; // Most -ve
                                 end
                         end
+                        else
+                        begin
+                            o_result = i_source << 1; // Multiply by 2.
+                        end
                 end
-
-                // ======================================
-                // Default Section
-                // ======================================
 
                 default:
                 begin
                         // Should never happen
                         // Synthesis will OPTIMIZE. OK to do for FPGA synthesis.
 
-                       {asr_res,
-                        asr_res_fin,
-                        o_result,
-                        o_carry,
-                        o_sat} = 'x;
+                       {o_result,
+                        o_carry} = 'x;
                 end
         endcase
 end
 
-endmodule
+endmodule : zap_shifter_shift
 
 // ----------------------------------------------------------------------------
-// EOF
+// END OF FILE
 // ----------------------------------------------------------------------------

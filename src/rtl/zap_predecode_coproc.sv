@@ -82,13 +82,8 @@ module zap_predecode_coproc #(
 
 ///////////////////////////////////////////////////////////////////////////////
 
-localparam logic IDLE = 1'd0;
-localparam logic BUSY = 1'd1;
-
-///////////////////////////////////////////////////////////////////////////////
-
 // State register.
-logic state_ff, state_nxt;
+enum logic {IDLE, BUSY} state_ff, state_nxt;
 
 // Output registers.
 logic        cp_dav_ff, cp_dav_nxt;
@@ -98,23 +93,24 @@ logic unused;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-always_comb unused = |{PHY_REGS};
+assign unused = |{PHY_REGS};
 
 ///////////////////////////////////////////////////////////////////////////////
 
 // Connect next state to output.
-always_comb
-begin
-        o_copro_word_nxt = cp_word_nxt;
-        o_copro_dav_nxt  = cp_dav_nxt;
-end
+assign  o_copro_word_nxt = cp_word_nxt;
+assign  o_copro_dav_nxt  = cp_dav_nxt;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-// Next state logic.
+// STATE MACHINE. Next state logic.
 always_comb
 begin
-        // Default values.
+        // -----------------------------------------------------
+        // Default values section
+        // (Done to avoid combo loops/incomplete assignments),
+        // -----------------------------------------------------
+
         cp_dav_nxt              = cp_dav_ff;
         cp_word_nxt             = cp_word_ff;
         o_stall_from_decode     = 1'd0;
@@ -123,6 +119,10 @@ begin
         state_nxt               = state_ff;
         o_irq                   = i_irq;
         o_fiq                   = i_fiq;
+
+        // -----------------------------------------------------
+        // Code Section
+        // -----------------------------------------------------
 
         case ( state_ff )
         IDLE:
@@ -249,10 +249,8 @@ begin
         end
 end
 
-endmodule
-
-
+endmodule : zap_predecode_coproc
 
 // ----------------------------------------------------------------------------
-// EOF
+// END OF FILE
 // ----------------------------------------------------------------------------

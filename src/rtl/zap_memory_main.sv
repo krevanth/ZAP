@@ -238,8 +238,7 @@ begin
         end
 end
 
-always_comb
-        o_mem_rd_data         = transform
+assign  o_mem_rd_data         = transform
                                 (
                                         (
                                                 mem_load_ff2 ?
@@ -275,17 +274,6 @@ function automatic [31:0] transform (
         input           mem_load_ff
 );
 begin: transform_function
-        logic [31:0] d; // Data shorthand.
-
-        // ======================================
-        // Default values section (Done for aliasing)
-        // ======================================
-
-        d = data;
-
-        // =====================================
-        // Function Code Section
-        // =====================================
 
         // If it's a store, don't bother with the output of this.
         if ( mem_load_ff == 1'd0 )
@@ -296,10 +284,10 @@ begin: transform_function
         else if ( ubyte == 1'd1 )
         begin
                 case ( address[1:0] )
-                2'd0: transform = {24'd0, d[7:0]};
-                2'd1: transform = {24'd0, d[15:8]};
-                2'd2: transform = {24'd0, d[23:16]};
-                2'd3: transform = {24'd0, d[31: 24]};
+                2'd0: transform = {24'd0, data[7:0]};
+                2'd1: transform = {24'd0, data[15:8]};
+                2'd2: transform = {24'd0, data[23:16]};
+                2'd3: transform = {24'd0, data[31: 24]};
             default : transform = 'x;
                 endcase
         end
@@ -308,10 +296,10 @@ begin: transform_function
         begin
                 // Take lower byte and sign extend it.
                 case ( address[1:0] )
-                2'd0: transform = {{24{d[7] }},d[7:0]};
-                2'd1: transform = {{24{d[15]}},d[15:8]};
-                2'd2: transform = {{24{d[23]}},d[23:16]};
-                2'd3: transform = {{24{d[31]}},d[31:24]};
+                2'd0: transform = {{24{data[7] }},data[7:0]};
+                2'd1: transform = {{24{data[15]}},data[15:8]};
+                2'd2: transform = {{24{data[23]}},data[23:16]};
+                2'd3: transform = {{24{data[31]}},data[31:24]};
              default: transform = 'x;
                 endcase
         end
@@ -319,8 +307,8 @@ begin: transform_function
         else if ( shalf == 1'd1 )
         begin
                 case ( address[1] )
-                1'd0: transform = {{16{d[15]}},d[15:0]};
-                1'd1: transform = {{16{d[31]}},d[31:16]};
+                1'd0: transform = {{16{data[15]}},data[15:0]};
+                1'd1: transform = {{16{data[31]}},data[31:16]};
              default: transform = 'x;
                 endcase
 
@@ -334,8 +322,8 @@ begin: transform_function
         else if ( uhalf == 1'd1 )
         begin
                 case ( address[1] )
-                1'd0: transform = {16'd0, d[15:0]};
-                1'd1: transform = {16'd0, d[31:16]}; // address[1] = 1'd1
+                1'd0: transform = {16'd0, data[15:0]};
+                1'd1: transform = {16'd0, data[31:16]}; // address[1] = 1'd1
              default: transform = 'x;
                 endcase
 
@@ -360,5 +348,8 @@ begin: transform_function
 end
 endfunction
 
-endmodule
+endmodule : zap_memory_main
 
+// ----------------------------------------------------------------------------
+// END OF FILE
+// ----------------------------------------------------------------------------

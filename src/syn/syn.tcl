@@ -22,6 +22,7 @@ create_project project_1 -part xc7a75tcsg324-3
 
 # Add RTL files and includes for synthesis.
 add_files -scan_for_includes {
+../../src/rtl/zap_ones_counter.sv \
 ../../src/rtl/zap_predecode_uop_sequencer.sv \
 ../../src/rtl/zap_wb_merger.sv \
 ../../src/rtl/zap_shifter_shift.sv \

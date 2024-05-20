@@ -86,13 +86,10 @@ begin
 end
 
 // 4 read ports.
-always_comb
-begin
-        o_rd_data_a = mem [ i_rd_addr_a ];
-        o_rd_data_b = mem [ i_rd_addr_b ];
-        o_rd_data_c = mem [ i_rd_addr_c ];
-        o_rd_data_d = mem [ i_rd_addr_d ];
-end
+assign o_rd_data_a = mem [ i_rd_addr_a ];
+assign o_rd_data_b = mem [ i_rd_addr_b ];
+assign o_rd_data_c = mem [ i_rd_addr_c ];
+assign o_rd_data_d = mem [ i_rd_addr_d ];
 
 `ifndef SYNTHESIS
 

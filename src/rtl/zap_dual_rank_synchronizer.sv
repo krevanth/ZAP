@@ -16,7 +16,8 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 // 02110-1301, USA.
 //
-// This RTL describes a classic dual rank synchronizer.
+// This RTL describes a classic dual rank synchronizer. In general, synth must
+// place these close esp. when using multibit synchros.
 //
 
 module zap_dual_rank_synchronizer
@@ -56,8 +57,8 @@ begin
         end
 end
 
-endmodule
+endmodule : zap_dual_rank_synchronizer
 
 // ----------------------------------------------------------------------------
-// EOF
+// END OF FILE
 // ----------------------------------------------------------------------------

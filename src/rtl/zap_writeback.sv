@@ -218,7 +218,8 @@ begin: pc_control_tree
         logic [31:0] new_pc;
 
         // =======================================
-        // Default value section (done to avoid combo loops/incomplete assignments)
+        // Default value section
+        // (Done to avoid combo loops/incomplete assignments)
         // =======================================
 
         new_pc                   = 'd0;
@@ -527,6 +528,7 @@ zap_btb #(.BP_ENTRIES(BP_ENTRIES)) u_zap_btb (
 `ifndef SYNTHESIS
 
         // For simulation only
+
         logic [1023:0] msg_nxt, trace_prev;
         logic          trace_uop_last_nxt;
         logic          trace_valid_nxt;
@@ -683,7 +685,7 @@ assign unused = |{i_decompile_valid, i_uop_last, pc_nxt_tmp[0]};
 
 `endif
 
-endmodule // zap_register_file.v
+endmodule : zap_writeback
 
 // ----------------------------------------------------------------------------
 // END OF FILE

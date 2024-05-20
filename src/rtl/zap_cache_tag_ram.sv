@@ -127,9 +127,9 @@ logic                                      cache_unused1;
 logic [CACHE_LINE*8-1:0]                   w_dummy;
 logic [`ZAP_CACHE_TAG_WDT-1:0]             w_dummy_1;
 
-always_comb cache_unused0 = |{i_address[31: $clog2(CACHE_LINE)+$clog2(CACHE_SIZE/CACHE_LINE)], i_address[$clog2(CACHE_LINE)-1:0]};
-always_comb cache_unused1 = |{i_address_nxt[31: $clog2(CACHE_LINE)+$clog2(CACHE_SIZE/CACHE_LINE)], i_address_nxt[$clog2(CACHE_LINE)-1:0]};
-always_comb        unused = |{dummy, line_dummy, i_wb_dat, cache_unused0, cache_unused1, w_dummy, w_dummy_1};
+assign cache_unused0 = |{i_address[31: $clog2(CACHE_LINE)+$clog2(CACHE_SIZE/CACHE_LINE)], i_address[$clog2(CACHE_LINE)-1:0]};
+assign cache_unused1 = |{i_address_nxt[31: $clog2(CACHE_LINE)+$clog2(CACHE_SIZE/CACHE_LINE)], i_address_nxt[$clog2(CACHE_LINE)-1:0]};
+assign        unused = |{dummy, line_dummy, i_wb_dat, cache_unused0, cache_unused1, w_dummy, w_dummy_1};
 
 zap_ram_simple_ben #(.WIDTH(CACHE_LINE*8), .DEPTH(CACHE_SIZE/CACHE_LINE)) u_zap_ram_simple_data_ram (
         .i_clk(i_clk),
@@ -278,7 +278,8 @@ begin:blk1
         logic [31:0] shamt, data, pa;
 
         // --------------------------------------------------
-        // Defaults Value Section (done to avoid combo loops/incomplete assignments).
+        // Defaults Value Section
+        // (Done to avoid combo loops/incomplete assignments).
         // --------------------------------------------------
 
         line_dummy              = {(CACHE_LINE*8-32){1'd0}};
@@ -453,27 +454,33 @@ begin:blk1
                 tag_ram_wr_data         = 'x;
                 o_cache_clean_done      = 'x;
         end
-
         endcase
-end
+end:blk1
 
 // -----------------------------------------------------------------------------
 
-// Priority encoder.
-function automatic  [4:0] pri_enc_1 ( input [15:0] in );
-begin: priEncFn
-                pri_enc_1 = 5'b11111;
-
-                // Run a backward loop.
-                for(int j=15;j>=0;j--) // 15 downto 0.
-                begin
-                        if ( in[j] == 1'd1 )
-                        begin
-                                pri_enc_1[4:0] = j[4:0];
-                        end
-                end
-end
-endfunction
+// Priority encoder. Bit 0 is prioritized.
+function automatic  [4:0] pri_enc ( input [15:0] in );
+                casez ( in )
+                16'b???????????????1: return 5'd0;
+                16'b??????????????10: return 5'd1;
+                16'b?????????????100: return 5'd2;
+                16'b????????????1000: return 5'd3;
+                16'b???????????10000: return 5'd4;
+                16'b??????????100000: return 5'd5;
+                16'b?????????1000000: return 5'd6;
+                16'b????????10000000: return 5'd7;
+                16'b???????100000000: return 5'd8;
+                16'b??????1000000000: return 5'd9;
+                16'b?????10000000000: return 5'd10;
+                16'b????100000000000: return 5'd11;
+                16'b???1000000000000: return 5'd12;
+                16'b??10000000000000: return 5'd13;
+                16'b?100000000000000: return 5'd14;
+                16'b1000000000000000: return 5'd15;
+                default             : return 5'b11111;
+                endcase
+endfunction : pri_enc
 
 // -----------------------------------------------------------------------------
 
@@ -482,24 +489,24 @@ input [$clog2(NUMBER_OF_DIRTY_BLOCKS):0]   blk_ctr,
 input [CACHE_SIZE/CACHE_LINE-1:0]          Dirty
 );
 
-localparam [31:0] W = $clog2(NUMBER_OF_DIRTY_BLOCKS) + 5;
+        localparam [31:0] W = $clog2(NUMBER_OF_DIRTY_BLOCKS) + 5;
 
-logic [15:0]                      dirty_new;
-logic [4:0]                       enc;
-logic [W-1:0]                     shamt;
-logic [31:0]                      sum;
-logic [(CACHE_SIZE/CACHE_LINE) - 16 - 1:0] unusedx;
-logic unused_0;
-begin
+        logic [15:0]                               dirty_new;
+        logic [4:0]                                enc;
+        logic [W-1:0]                              shamt;
+        logic [31:0]                               sum;
+        logic [(CACHE_SIZE/CACHE_LINE) - 16 - 1:0] unused1;
+        logic                                      unused0;
+
         sum                 = 32'd0;
         shamt               = {blk_ctr, 4'd0};
-        {unusedx,dirty_new} = Dirty >> shamt;
-        enc                 = pri_enc_1(dirty_new[15:0]);
+        {unused1,dirty_new} = Dirty >> shamt;
+        enc                 = pri_enc(dirty_new[15:0]);
         sum[W:0]            = {1'd0, shamt[W-1:0]} + {1'd0, {{(W-5){1'd0}}, enc}};
-        unused_0            = |{sum[31:$clog2(CACHE_SIZE/CACHE_LINE)]};
+        unused0             = |{sum[31:$clog2(CACHE_SIZE/CACHE_LINE)]};
         get_tag_ram_rd_addr = sum[$clog2(CACHE_SIZE/CACHE_LINE)-1:0];
-end
-endfunction
+
+endfunction : get_tag_ram_rd_addr
 
 // ----------------------------------------------------------------------------
 
@@ -507,18 +514,18 @@ function automatic [4:0] baggage (
         input [CACHE_SIZE/CACHE_LINE-1:0]               Dirty,
         input [$clog2(NUMBER_OF_DIRTY_BLOCKS):0]        blk_ctr
 );
-logic [CACHE_SIZE/CACHE_LINE-1:0] w_dirty;
-logic [15:0] val;
-logic [(CACHE_SIZE/CACHE_LINE) - 16 - 1:0] unusedx;
-begin
+        logic [CACHE_SIZE/CACHE_LINE-1:0] w_dirty;
+        logic [15:0] val;
+        logic [(CACHE_SIZE/CACHE_LINE) - 16 - 1:0] unused1;
+
         w_dirty        = Dirty >> {blk_ctr, 4'd0};
-        {unusedx, val} = w_dirty;
+        {unused1, val} = w_dirty;
 
-        return pri_enc_1(val);
-end
-endfunction
+        return pri_enc(val);
 
-endmodule // zap_cache_tag_ram.v
+endfunction : baggage
+
+endmodule : zap_cache_tag_ram
 
 // ----------------------------------------------------------------------------
 // END OF FILE

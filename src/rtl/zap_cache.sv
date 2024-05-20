@@ -20,7 +20,7 @@
 // This is the instruction cache. Not that i_wr = 0.
 //
 
-module zap_cache #(
+module zap_cache #( // INSTRUCTION CACHE
 
 parameter [31:0] CACHE_SIZE             = 32'd1024,
 parameter [31:0] SPAGE_TLB_ENTRIES      = 32'd8,
@@ -129,7 +129,7 @@ logic [2:0]                      wb_err;
 logic                            unused;
 
 // Selection 2 of Wishbone CTI[2x3] is always on all CPU supported modes.
-always_comb wb_cti[2] = CTI_EOB;
+assign wb_cti[2] = CTI_EOB;
 
 // wb_err[1] is unused.
 assign unused = |{wb_err[1]};
@@ -310,12 +310,6 @@ begin
         end
 end
 
-
-always @ (posedge i_clk) // Assertion
-begin
-    assert(!i_wb_err || i_wb_ack || i_reset) else $fatal(2, "Error: Err=1 but no ACK.");
-end
-
 // Next state logic.
 always_comb
 begin
@@ -345,7 +339,7 @@ begin
         SELECT_CCH: {wb_err[0], wb_ack[0]} = {i_wb_err, i_wb_ack};
         SELECT_TAG: {wb_err[1], wb_ack[1]} = {i_wb_err, i_wb_ack};
         SELECT_TLB: {wb_err[2], wb_ack[2]} = {i_wb_err, i_wb_ack};
-        default:    {wb_err   , wb_ack   } = {6{1'dx}};
+        default:    {wb_err   , wb_ack   } = {6{1'd0}};
         endcase
 end
 
@@ -383,7 +377,7 @@ begin
                 o_wb_sel_nxt = wb_sel[2];
                 o_wb_wen_nxt = wb_wen[2];
         end
-        default:
+        default: // Assigning X will cause synthesis to better optimize.
         begin
                 o_wb_stb_nxt = 'x;
                 o_wb_cyc_nxt = 'x;
@@ -396,6 +390,8 @@ begin
         endcase
 end
 
-endmodule // zap_cache
+endmodule : zap_cache
 
-
+// ----------------------------------------------------------------------------
+// END OF FILE
+// ----------------------------------------------------------------------------

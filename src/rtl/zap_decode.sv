@@ -38,8 +38,10 @@ parameter [31:0] SHIFT_OPS  = 6
 input   logic                             i_irq,
 input   logic                             i_fiq,
 input   logic                             i_abt,
+
 input    logic   [35:0]                   i_instruction,
 input    logic                            i_instruction_valid,
+
 output   logic    [3:0]                   o_condition_code,
 output   logic    [$clog2(ARCH_REGS)-1:0] o_destination_index,
 output   logic    [32:0]                  o_alu_source,
@@ -78,7 +80,8 @@ begin
         instruction                     = i_instruction;
 
         // ==========================================
-        // Default value section (Done to avoid combo loops/incomplete assignments)
+        // Default value section
+        // (Done to avoid combo loops/incomplete assignments)
         // ==========================================
 
         // If an unrecognized instruction enters this, the output
@@ -847,8 +850,8 @@ begin
     end
 end
 
-endmodule // zap_decode.v
+endmodule : zap_decode
 
 // ----------------------------------------------------------------------------
-// EOF
+// END OF FILE
 // ----------------------------------------------------------------------------

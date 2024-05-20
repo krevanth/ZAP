@@ -234,8 +234,7 @@ begin
         end
 end
 
-
-endmodule
+endmodule : zap_postalu_main
 
 // ----------------------------------------------------------------------------
 // END OF FILE

@@ -28,7 +28,7 @@ function automatic [31:0] be_32 (input [31:0] dat, input [3:0] sel);
         4'b0011: return {dat[15:0], 16'd0};
         default: return dat;
         endcase
-endfunction
+endfunction : be_32
 
 // Swap sel based on value
 function automatic [3:0] be_sel_32 (input [3:0] sel);
@@ -42,7 +42,7 @@ function automatic [3:0] be_sel_32 (input [3:0] sel);
         4'b1111: return sel;
         default: return {4{1'dx}}; // Synthesis will OPTIMIZE. OK to do for FPGA synthesis.
         endcase
-endfunction
+endfunction : be_sel_32
 
 //
 // Function to check if condition is satisfied for instruction
@@ -54,8 +54,8 @@ function automatic is_cc_satisfied
         input [3:0] cc,         // 31:28 of the instruction.
         input [3:0] fl          // CPSR flags.
 );
-logic ok,n,z,c,v;
-begin: blk1
+        logic ok,n,z,c,v;
+
         {n,z,c,v} = fl;
 
         case(cc)
@@ -73,16 +73,14 @@ begin: blk1
         LT:     ok = (n != v);
         GT:     ok = (n == v) && !z;
         LE:     ok = (n != v) || z;
-
         AL:     ok = 1'd1; // Always execute.
         NV:     ok = 1'd0; // Never eXecute.
-
         default:ok = 'x;   // Propagate X.
         endcase
 
-        is_cc_satisfied = ok;
-end
-endfunction
+        return ok;
+
+endfunction : is_cc_satisfied
 
 //
 // Translate function.
@@ -98,7 +96,6 @@ function automatic  [5:0] translate (
         input [4:0] cpu_mode    // Current CPU mode.
 
 );
-begin
         // User/System mode map.
         case ( index )
                       0:      translate = PHY_USR_R0;
@@ -228,7 +225,6 @@ begin
                 assert((index == ARCH_USR2_R14 && translate == PHY_USR_R14) || index !=ARCH_USR2_R14)
                 else $fatal(2, "USR loopback fail");
         end
-end
 endfunction
 
 

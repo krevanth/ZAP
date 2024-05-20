@@ -1,7 +1,6 @@
 //
 // (C)2016-2024 Revanth Kamaraj (krevanth)
 //
-//
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
 // as published by the Free Software Foundation; either version 3
@@ -225,7 +224,7 @@ end
 // Function for branch prediction.
 //
 function automatic [1:0] compute ( input [1:0] pred, input nok );
-begin
+
                 // Branch was predicted incorrectly. Go to opposite state.
                 if ( nok )
                 begin
@@ -247,11 +246,11 @@ begin
                    default:  return 'x;  // Propagate X.
                         endcase
                 end
-end
-endfunction
 
-endmodule
+endfunction : compute
+
+endmodule : zap_btb
 
 // ----------------------------------------------------------------------------
-// EOF
+// END OF FILE
 // ----------------------------------------------------------------------------

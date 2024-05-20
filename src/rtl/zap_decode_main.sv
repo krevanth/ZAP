@@ -217,38 +217,38 @@ logic [$clog2(ARCH_REGS)-1:0]    mem_srcdest_index_nxt;
 // ----------------------------------------------------------------------------
 
 // Abort
-always_comb  o_abt_nxt = i_abt && i_instruction_valid;
+assign       o_abt_nxt = i_abt && i_instruction_valid;
 
 // Pass IRQ only when no FIQ and no abort.
-always_comb  o_irq_nxt = !i_fiq && i_irq && !o_abt_nxt;
+assign       o_irq_nxt = !i_fiq && i_irq && !o_abt_nxt;
 
 // Pass FIQ only when no abort.
-always_comb  o_fiq_nxt = i_fiq && !o_abt_nxt;
+assign       o_fiq_nxt = i_fiq && !o_abt_nxt;
 
 //
 // This section translates the indices from the decode stage converts
 // into a physical index. This is needed because the decode.v module extracts
 // architectural register numbers.
 //
-always_comb  o_destination_index_nxt = // Always a register so no need for IMMED_EN.
+assign       o_destination_index_nxt = // Always a register so no need for IMMED_EN.
         translate ( destination_index_nxt, i_cpsr_ff_mode );
 
-always_comb  o_alu_source_nxt =
+assign       o_alu_source_nxt =
         (alu_source_nxt[32] == IMMED_EN ) ? // Constant...?
         alu_source_nxt : // Pass constant on.
         {27'd0, translate ( alu_source_nxt[4:0], i_cpsr_ff_mode )}; // Translate index.
 
-always_comb  o_shift_source_nxt =
+assign       o_shift_source_nxt =
         (shift_source_nxt[32] == IMMED_EN ) ? // Constant...?
         shift_source_nxt : // Pass constant on.
         {27'd0, translate ( shift_source_nxt[4:0], i_cpsr_ff_mode )}; // Translate index.
 
-always_comb  o_shift_length_nxt =
+assign       o_shift_length_nxt =
         (shift_length_nxt[32] == IMMED_EN ) ? // Constant...?
         shift_length_nxt : // Pass constant on.
         {27'd0, translate ( shift_length_nxt[4:0], i_cpsr_ff_mode )}; // Translate index.
 
-always_comb  o_mem_srcdest_index_nxt = // Always a register so no need for IMMED_EN.
+assign       o_mem_srcdest_index_nxt = // Always a register so no need for IMMED_EN.
         translate ( mem_srcdest_index_nxt, i_cpsr_ff_mode );
 
 
@@ -258,8 +258,7 @@ always_comb  o_mem_srcdest_index_nxt = // Always a register so no need for IMMED
 // The actual decision whether or not to execute this is taken in EX stage.
 // At this point, we don't do anything with the SWI except take note.
 //
-always_comb
-        o_swi_nxt = (&i_instruction[27:24]) && !(i_irq || i_fiq || i_abt);
+assign  o_swi_nxt = (&i_instruction[27:24]) && !(i_irq || i_fiq || i_abt);
 
 // ----------------------------------------------------------------------------
 
@@ -270,28 +269,30 @@ always_ff @ ( posedge i_clk )
 begin
         if ( i_reset )
         begin
-                o_destination_index_ff                  <= 'x; //
-                o_alu_source_ff                         <= 'x; //
-                o_alu_operation_ff                      <= 'x; //
-                o_shift_source_ff                       <= 'x; //
-                o_shift_operation_ff                    <= 'x; //
-                o_shift_length_ff                       <= 'x; //
-                o_flag_update_ff                        <= 'x; //
-                o_mem_srcdest_index_ff                  <= 'x; //
-                o_mem_load_ff                           <= 'x; //
-                o_mem_store_ff                          <= 'x; //
-                o_mem_pre_index_ff                      <= 'x; //
-                o_mem_unsigned_byte_enable_ff           <= 'x; //
-                o_mem_signed_byte_enable_ff             <= 'x; //
-                o_mem_signed_halfword_enable_ff         <= 'x; //
-                o_mem_unsigned_halfword_enable_ff       <= 'x; //
-                o_mem_translate_ff                      <= 'x; //
-                o_pc_plus_8_ff                          <= 'x; //
-                o_pc_ff                                 <= 'x; //
-                o_switch_ff                             <= 'x; //
-                o_force32align_ff                       <= 'x; //
-                o_decompile                             <= 'x; //
-                o_ppc_ff                                <= 'x; //
+                // Assigns to X on reset means that these registers should NOT
+                // be reset.
+                o_destination_index_ff                  <= 'x;
+                o_alu_source_ff                         <= 'x;
+                o_alu_operation_ff                      <= 'x;
+                o_shift_source_ff                       <= 'x;
+                o_shift_operation_ff                    <= 'x;
+                o_shift_length_ff                       <= 'x;
+                o_flag_update_ff                        <= 'x;
+                o_mem_srcdest_index_ff                  <= 'x;
+                o_mem_load_ff                           <= 'x;
+                o_mem_store_ff                          <= 'x;
+                o_mem_pre_index_ff                      <= 'x;
+                o_mem_unsigned_byte_enable_ff           <= 'x;
+                o_mem_signed_byte_enable_ff             <= 'x;
+                o_mem_signed_halfword_enable_ff         <= 'x;
+                o_mem_unsigned_halfword_enable_ff       <= 'x;
+                o_mem_translate_ff                      <= 'x;
+                o_pc_plus_8_ff                          <= 'x;
+                o_pc_ff                                 <= 'x;
+                o_switch_ff                             <= 'x;
+                o_force32align_ff                       <= 'x;
+                o_decompile                             <= 'x;
+                o_ppc_ff                                <= 'x;
                 o_irq_ff                                <= 0;
                 o_fiq_ff                                <= 0;
                 o_swi_ff                                <= 0;
@@ -311,28 +312,28 @@ begin
                 o_und_ff                                <= 0;
                 o_taken_ff                              <= 0;
                 o_uop_last                              <= 0;
-               o_destination_index_ff                   <= 'x; //
-                o_alu_source_ff                         <= 'x; //
-                o_alu_operation_ff                      <= 'x; //
-                o_shift_source_ff                       <= 'x; //
-                o_shift_operation_ff                    <= 'x; //
-                o_shift_length_ff                       <= 'x; //
-                o_flag_update_ff                        <= 'x; //
-                o_mem_srcdest_index_ff                  <= 'x; //
-                o_mem_load_ff                           <= 'x; //
-                o_mem_store_ff                          <= 'x; //
-                o_mem_pre_index_ff                      <= 'x; //
-                o_mem_unsigned_byte_enable_ff           <= 'x; //
-                o_mem_signed_byte_enable_ff             <= 'x; //
-                o_mem_signed_halfword_enable_ff         <= 'x; //
-                o_mem_unsigned_halfword_enable_ff       <= 'x; //
-                o_mem_translate_ff                      <= 'x; //
-                o_pc_plus_8_ff                          <= 'x; //
-                o_pc_ff                                 <= 'x; //
-                o_switch_ff                             <= 'x; //
-                o_force32align_ff                       <= 'x; //
-                o_decompile                             <= 'x; //
-                o_ppc_ff                                <= 'x; //
+                o_destination_index_ff                  <= 'x;
+                o_alu_source_ff                         <= 'x;
+                o_alu_operation_ff                      <= 'x;
+                o_shift_source_ff                       <= 'x;
+                o_shift_operation_ff                    <= 'x;
+                o_shift_length_ff                       <= 'x;
+                o_flag_update_ff                        <= 'x;
+                o_mem_srcdest_index_ff                  <= 'x;
+                o_mem_load_ff                           <= 'x;
+                o_mem_store_ff                          <= 'x;
+                o_mem_pre_index_ff                      <= 'x;
+                o_mem_unsigned_byte_enable_ff           <= 'x;
+                o_mem_signed_byte_enable_ff             <= 'x;
+                o_mem_signed_halfword_enable_ff         <= 'x;
+                o_mem_unsigned_halfword_enable_ff       <= 'x;
+                o_mem_translate_ff                      <= 'x;
+                o_pc_plus_8_ff                          <= 'x;
+                o_pc_ff                                 <= 'x;
+                o_switch_ff                             <= 'x;
+                o_force32align_ff                       <= 'x;
+                o_decompile                             <= 'x;
+                o_ppc_ff                                <= 'x;
 
         end
         // If no stall, only then update...
@@ -406,7 +407,7 @@ u_zap_decode (
         .o_switch(o_switch_nxt)
 );
 
-// -------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 
 // Decompile
 
@@ -418,5 +419,8 @@ zap_decompile u_zap_decompile (
 );
 
 
-endmodule // zap_decode_main.v
+endmodule : zap_decode_main
 
+// ----------------------------------------------------------------------------
+// END OF FILE
+// ----------------------------------------------------------------------------

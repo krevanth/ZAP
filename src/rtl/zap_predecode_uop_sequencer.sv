@@ -1,25 +1,25 @@
 //
 // (C) 2016-2024 Revanth Kamaraj (krevanth)
 //
-// his program is free software; you can redistribute it and/or
-// odify it under the terms of the GNU General Public License
-// s published by the Free Software Foundation; either version 3
-// f the License, or (at your option) any later version.
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 3
+// of the License, or (at your option) any later version.
 //
-// his program is distributed in the hope that it will be useful,
-// ut WITHOUT ANY WARRANTY; without even the implied warranty of
-// ERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// NU General Public License for more details.
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
 //
-// ou should have received a copy of the GNU General Public License
-// long with this program; if not, write to the Free Software
-// oundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
-// 2110-1301, USA.
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+// 02110-1301, USA.
 //
-//  This module sequences LDM/STM CISC instructions into simpler RISC
-//  instructions. Basically LDM -> LDRs and STM -> STRs. Supports a base
-//  restored abort model. Start instruction carries interrupt information
-//  so this cannot  block interrupts if there is a sequence of these.
+// This module sequences LDM/STM CISC instructions into simpler RISC
+// instructions. Basically LDM -> LDRs and STM -> STRs. Supports a base
+// restored abort model. Start instruction carries interrupt information
+// so this cannot  block interrupts if there is a sequence of these.
 //
 // Also handles SWAP instruction but without atomicity preserving.
 // The SWAP implementation is meant for SW compatibility and not for MP
@@ -103,7 +103,6 @@ logic  [31:0]  const_ff, const_nxt;        // For BLX - const reg.
 
 assign {cc, id, pre_index, up, s_bit, writeback, load, base, reglist} = i_instruction[31:0];
 assign store = ~load;
-assign oc_offset = ones_counter(i_instruction[15:0]);
 assign unused = |{pre_index};
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -139,23 +138,12 @@ enum logic [20:0] {
 always_comb
 begin:next_state_logic_and_output_logic
 
-        // =========================================
-        // Local Vars
-        // =========================================
-
-        logic H;
-        logic [3:0] pri_enc_out;
-        logic [3:0] rd;
-
         // ========================================
-        // Default Value Section (Done to avoid combo loops/incomplete assignments)
+        // Default Value Section
+        // (Done to avoid combo loops/incomplete assignments)
         // ========================================
 
         const_nxt = const_ff;
-
-        H = 0;
-        pri_enc_out = 0;
-        rd = 0;
 
         // Block interrupts by default.
         o_irq = 0;
@@ -192,12 +180,12 @@ begin:next_state_logic_and_output_logic
                         state_nxt = IDLE;
                 end
 
-                BLX1_STATE_S0: // SCONST = ($signed(constant) << 2) + ( H << 1 ))
+                BLX1_STATE_S0: // SCONST = ($signed(constant) << 2) + ( H(i.e., [24]) << 1 ))
                 begin
                         o_stall_from_decode = 1'd1;
 
-                        H = i_instruction[24];
-                        const_nxt = ( { {8{i_instruction[23]}} , i_instruction[23:0] } << 2 ) + ( {31'd0, H} << 1 );
+                        const_nxt = ( { {8{i_instruction[23]}} , i_instruction[23:0] } << 2 ) +
+                                    ( {31'd0, i_instruction[24]} << 1 );
 
                         // MOV DUMMY0, SCONST[7:0] ror 0
                         o_instruction[31:0] = {AL, 2'b00, 1'b1, MOV, 1'd0, 4'd0, 4'd0, 4'd0, const_nxt[7:0]};
@@ -724,8 +712,6 @@ begin:next_state_logic_and_output_logic
                 SWAP2:
                 begin:SWP2BLK
                         // MOV Rd, DUMMY0
-                        rd = i_instruction[15:12];
-
                         o_stall_from_decode = 1'd0;
                         o_instruction_valid = 1'd1;
 
@@ -733,7 +719,7 @@ begin:next_state_logic_and_output_logic
                         o_fiq = 0;
 
                         o_instruction[31:0] = {cc, 2'b00, 1'd0, MOV, 1'd0, 4'b0000,
-                                         rd, 12'd0}; // ALU src doesn't matter.
+                                         i_instruction[15:12], 12'd0}; // ALU src doesn't matter.
 
                         {o_instruction[ZAP_DP_RB_EXTEND], o_instruction[`ZAP_DP_RB]}
                                         = ARCH_DUMMY_REG0;
@@ -746,15 +732,14 @@ begin:next_state_logic_and_output_logic
 
                         // Memory operations happen here.
 
-                        pri_enc_out = pri_enc(reglist_ff);
-                        reglist_nxt = reglist_ff & ~(16'd1 << pri_enc_out);
+                        reglist_nxt = reglist_ff & ~(16'd1 << pri_enc(reglist_ff));
 
                         o_irq = 0;
                         o_fiq = 0;
 
                         // The map function generates a base restore
                         // instruction if reglist = 0.
-                        o_instruction[33:0] = map ( i_instruction[31:0], pri_enc_out, reglist_ff );
+                        o_instruction[33:0] = map ( i_instruction[31:0], pri_enc(reglist_ff), reglist_ff );
                         o_instruction_valid = 1'd1;
 
                         if ( o_instruction[27:26] == 2'b01 )
@@ -824,9 +809,7 @@ begin:next_state_logic_and_output_logic
                         ,reglist_nxt
                         ,o_switch
                         ,o_align
-                        ,pri_enc_out
-                        ,H
-                        ,rd} = 'x;
+                        } = 'x;
                 end
         endcase
 end
@@ -841,11 +824,8 @@ assign o_uop_last = (((state_ff == IDLE) && (state_nxt == IDLE)) ||
 // map[24] == 0 : post index.
 function automatic [33:0] map ( input [31:0] instr, input [3:0] enc, input [15:0] list );
 begin
-        logic [33:0] map_tmp;
-
         // Default.
         map     = {2'd0, instr};    // map = instr.
-        map_tmp = '0;
 
         // Override various fields.
         map[22]           =  1'd0;
@@ -858,8 +838,8 @@ begin
        {map[ZAP_BASE_EXTEND],
         map[`ZAP_BASE]}   = ARCH_DUMMY_REG0;  // Use as base register.
 
-        map[24]          ^= !up;              // If not up, then DA -> IB and DB -> IA.
-        map[21]           = map[24];          // If post index, writeback is implicit (map[21]=0).
+        map[24] ^= !up;     // If not up, then DA -> IB and DB -> IA.
+        map[21]  = map[24]; // If post index, writeback is implicit (map[21]=0).
 
         if ( list == 0 ) // Catch 0 list here itself...
         begin
@@ -868,14 +848,12 @@ begin
                 begin
                         if ( up ) // Original instruction asked increment.
                         begin
-                                map_tmp =
+                                map =
                                 { 2'd0, cc, 2'b0, 1'b0, MOV, 1'b0, 4'd0,
                                                        base, 8'd0, 4'd0 };
 
-                                {map_tmp[ZAP_DP_RB_EXTEND],map_tmp[`ZAP_DP_RB]} =
+                                {map[ZAP_DP_RB_EXTEND],map[`ZAP_DP_RB]} =
                                  ARCH_DUMMY_REG0;
-
-                                map = map_tmp;
                         end
                         else
                         begin   // Restore.
@@ -918,7 +896,7 @@ begin
                         {map[ZAP_SRCDEST_EXTEND],map[`ZAP_SRCDEST]} = ARCH_DUMMY_REG1;
         end
 end
-endfunction
+endfunction : map
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -950,39 +928,20 @@ begin
 end
 
 ////////////////////
+// Ones Counter
+////////////////////
+
+zap_ones_counter u_zap_ones_counter (
+    .o_ones_counter(oc_offset),
+    .i_word(i_instruction[15:0])
+);
+
+////////////////////
 // Functions
 ////////////////////
 
-// Counts the number of ones and multiplies that by 4 to get final
-// address offset.
-function automatic [11:0] ones_counter (
-        input [15:0]    i_word    // Register list.
-);
-logic [6:0] offset;
-begin
-        offset[6:0] = 7'd0;
-
-        // Counter number of ones. We can have up to 16 ones, 5-bits should be enough to hold 0 to 16.
-        for(int i=0;i<16;i++)
-        begin
-                offset[4:0] = offset[4:0] + {4'd0, i_word[i]};
-        end
-
-        // Since LDM and STM occur only on 4 byte regions, compute the
-        // next offset.
-        offset[6:0] = {offset[4:0], 2'd0}; // Multiply by 4.
-
-        ones_counter = {5'd0, offset[6:0]};
-end
-endfunction
-
-//
-// Function to model a 16-bit priority encoder.
-//
-
-// Priority encoder.
+// Priority encoder. Bit 0 is prioritized.
 function automatic  [3:0] pri_enc ( input [15:0] in );
-begin: priEncFn
                 casez ( in )
                 16'b????_????_????_???1: pri_enc = 4'd0;
                 16'b????_????_????_??10: pri_enc = 4'd1;
@@ -1002,8 +961,11 @@ begin: priEncFn
                 16'b1000_0000_0000_0000: pri_enc = 4'hF;
                 default:                 pri_enc = 4'h0;
                 endcase
-end
-endfunction
+endfunction : pri_enc
+
+///////////////////////
+// Assertions
+///////////////////////
 
 always @ ( posedge i_clk ) // Assertion.
 begin
@@ -1025,7 +987,7 @@ begin
                         begin
                                 // Never: HAVE BASE AS REGLIST && BASE NOT AS FIRST REGISTER.
                                 assert ( ~(reglist_nxt[base] && base != i[3:0]) ) else
-                                        $info("Warning: Specifying base in non-trailing bit is UNPREDICTABLE.");
+                                $info("Warning: Specifying base in non-trailing bit is UNPREDICTABLE.");
 
                                 break;
                         end
@@ -1033,5 +995,8 @@ begin
         end
 end
 
-endmodule
+endmodule : zap_predecode_uop_sequencer
 
+// ----------------------------------------------------------------------------
+// END OF FILE
+// ----------------------------------------------------------------------------

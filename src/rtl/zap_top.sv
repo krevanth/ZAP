@@ -130,7 +130,7 @@ parameter logic [31:0] CODE_CACHE_LINE          =  32'd64    // Ccahe line size 
         input   logic            i_wb_err
 );
 
-always_comb o_wb_bte = 2'b00; // Linear Burst.
+assign o_wb_bte = 2'b00; // Linear Burst.
 
 `include "zap_defines.svh"
 `include "zap_localparams.svh"

@@ -24,14 +24,17 @@
 
 module zap_wb_merger #(
 
-        // If ONLY_CORE=0, use NXT ports from cache, else use FF ports from CPU.
+        //
+        // If ONLY_CORE=0, use NXT ports from cache,
+        // else use FF ports from CPU.
+        //
         parameter logic ONLY_CORE = 1'd0
 )
 (
 
 // Clock and reset
-input logic i_clk,
-input logic i_reset,
+input logic             i_clk,
+input logic             i_reset,
 
 // Wishbone bus 1
 input logic             i_c_wb_stb,
@@ -76,39 +79,42 @@ input logic             i_wb_err
 ////////////////////////////////////
 
 //
-// Channel select state machine. This will select either instruction or
-// data in a round robin fashion. It will not interrupt a burst.
+// Channel select state machine.
+//
+// This will select either instruction or
+// data in a round robin fashion. It will
+// not interrupt a burst.
 //
 
 // State variable.
-enum logic {CODE = 1'd0, DATA = 1'd1, DEFAULT_XX = 'x} sel_ff, sel_nxt;
+enum logic {CODE = 1'd0, DATA = 1'd1, DEFAULT_XX = 'x} state_ff, state_nxt;
 
 // Alias
 logic switch;
 
-assign switch = (i_wb_ack|i_wb_err) && (o_wb_cti == CTI_EOB);
+assign switch = (i_wb_ack | i_wb_err) & (o_wb_cti == CTI_EOB);
 
 always_comb
 begin
         // There is no need to assign default values in this case.
 
-        case(sel_ff)
+        case(state_ff)
 
         CODE:
         begin
                 // Switch over if EOB and data STB exists.
                 if ( switch && i_d_wb_stb )
                 begin
-                        sel_nxt = DATA;
+                        state_nxt = DATA;
                 end
                 // Switch over if code STB == 0 and data STB exists.
                 else if ( !i_c_wb_stb && i_d_wb_stb )
                 begin
-                        sel_nxt = DATA;
+                        state_nxt = DATA;
                 end
                 else
                 begin
-                        sel_nxt = sel_ff;
+                        state_nxt = state_ff;
                 end
         end
 
@@ -117,36 +123,37 @@ begin
                 // Switch over if EOB and code STB exists.
                 if ( switch && i_c_wb_stb )
                 begin
-                        sel_nxt = CODE;
+                        state_nxt = CODE;
                 end
                 // Switch over if data STB == 0 and code STB exists.
                 else if ( i_c_wb_stb && !i_d_wb_stb )
                 begin
-                        sel_nxt = CODE;
+                        state_nxt = CODE;
                 end
                 else
                 begin
-                        sel_nxt = sel_ff;
+                        state_nxt = state_ff;
                 end
         end
 
         default: // Propagate X.
         begin
-                sel_nxt = DEFAULT_XX;
+                state_nxt = DEFAULT_XX;
         end
 
         endcase
 end
 
+// State Updation Logic
 always_ff @ (posedge i_clk)
 begin
         if ( i_reset )
         begin
-                sel_ff <= CODE;
+                state_ff <= CODE;
         end
         else
         begin
-                sel_ff <= sel_nxt;
+                state_ff <= state_nxt;
         end
 end
 
@@ -155,10 +162,10 @@ end
 ////////////////////////////////////
 
 // Based on the current selection, redirect ACK to code or data.
-assign o_c_wb_ack = (sel_ff == CODE) & (i_wb_err | i_wb_ack);
-assign o_d_wb_ack = (sel_ff == DATA) & (i_wb_err | i_wb_ack);
-assign o_c_wb_err = (sel_ff == CODE) & i_wb_err;
-assign o_d_wb_err = (sel_ff == DATA) & i_wb_err;
+assign o_c_wb_ack = (state_ff == CODE) & (i_wb_err | i_wb_ack);
+assign o_d_wb_ack = (state_ff == DATA) & (i_wb_err | i_wb_ack);
+assign o_c_wb_err = (state_ff == CODE) & i_wb_err;
+assign o_d_wb_err = (state_ff == DATA) & i_wb_err;
 
 /////////////////////////////////////
 // WB output generation logic.
@@ -169,7 +176,7 @@ begin: l_genblk1
 
         //
         // We can flop these, because we're using NXT ports.
-        // Use sel_nxt since we are using wishbone NXT ports.
+        // Use state_nxt since we are using wishbone NXT ports.
         //
         always_ff @ (posedge i_clk)
         begin
@@ -183,7 +190,7 @@ begin: l_genblk1
                         o_wb_adr <= 0;
                         o_wb_cti <= CTI_EOB;
                 end
-                else if ( sel_nxt == CODE )
+                else if ( state_nxt == CODE )
                 begin
                         o_wb_cyc <= i_c_wb_cyc;
                         o_wb_stb <= i_c_wb_stb;
@@ -216,7 +223,7 @@ begin: l_genblk2
         //
         always_comb
         begin
-                if ( sel_ff == CODE )
+                if ( state_ff == CODE )
                 begin
                         o_wb_cyc = i_c_wb_cyc;
                         o_wb_stb = i_c_wb_stb;
@@ -237,10 +244,11 @@ begin: l_genblk2
                         o_wb_cti = i_d_wb_cti;
                 end
         end
+
 end: l_genblk2
 
-endmodule
+endmodule : zap_wb_merger
 
 // ----------------------------------------------------------------------------
-// EOF
+// END OF FILE
 // ----------------------------------------------------------------------------

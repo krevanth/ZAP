@@ -22,11 +22,15 @@
 // to a constant since this module really finds use only in debug.
 //
 
+// NOT FOR SYNTHESIS
+
 module zap_decompile #(parameter [31:0] INS_WDT = 32'd36) (
                 input logic      [36-1:0]        i_instruction,  // 36-bit instruction into decode.
                 input logic                      i_dav,          // Instruction valid.
                 output logic      [64*8-1:0]     o_decompile     // 1024 bytes max of assembler string.
         );
+
+// NOT FOR SYNTHESIS
 
 `ifndef SYNTHESIS
 
@@ -532,13 +536,13 @@ module zap_decompile #(parameter [31:0] INS_WDT = 32'd36) (
 `else
 
                         logic  unused;
-                        always_comb unused = |{1'd1, i_instruction, i_dav, INS_WDT};
-                        always_comb o_decompile = {32'd512{unused}}; // In synthesis mode.
+                        assign unused = |{1'd1, i_instruction, i_dav, INS_WDT};
+                        assign o_decompile = {32'd512{unused}}; // In synthesis mode.
 
 `endif
 
-endmodule
+endmodule : zap_decompile
 
 // ----------------------------------------------------------------------------
-// EOF
+// END OF FILE
 // ----------------------------------------------------------------------------

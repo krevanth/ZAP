@@ -583,5 +583,8 @@ zap_predecode_uop_sequencer u_zap_uop_sequencer (
         .o_stall_from_decode(mem_fetch_stall)
 );
 
-endmodule
+endmodule : zap_predecode_main
 
+// ----------------------------------------------------------------------------
+// END OF FILE
+// ----------------------------------------------------------------------------

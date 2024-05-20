@@ -171,15 +171,15 @@ logic                                     unused;
 // ----------------------------------------------------------------------------
 
 // Unused
-always_comb unused = |{phy_addr[$clog2(CACHE_LINE)-1:0]};
+assign      unused = |{phy_addr[$clog2(CACHE_LINE)-1:0]};
 
 // Tie flops to the output
-always_comb o_cache_clean_req = cache_clean_req_ff; // Tie req flop to output.
-always_comb o_cache_inv_req   = cache_inv_req_ff;   // Tie inv flop to output.
+assign      o_cache_clean_req = cache_clean_req_ff; // Tie req flop to output.
+assign      o_cache_inv_req   = cache_inv_req_ff;   // Tie inv flop to output.
 
 // Alias
-always_comb cache_cmp   = (i_cache_tag[`ZAP_CACHE_TAG__TAG] == i_address[`ZAP_VA__CACHE_TAG]);
-always_comb cache_dirty = i_cache_tag_dirty;
+assign      cache_cmp   = (i_cache_tag[`ZAP_CACHE_TAG__TAG] == i_address[`ZAP_VA__CACHE_TAG]);
+assign      cache_dirty = i_cache_tag_dirty;
 
 // Buffers
 always_ff @ ( posedge i_clk )
@@ -522,21 +522,16 @@ begin:next_state_logic
                 o_ack  = 1'd0;
                 o_hold = 1'd1;
 
-                if ( i_wb_ack )
+                if ( i_wb_ack | i_wb_err )
                 begin
-                        if ( i_wb_err )
-                        begin
-                                assert(i_wb_ack) else $fatal(2, "Error: ERR=1 but ACK=0.");
-                        end
-
                         o_ack           = 1'd1;
                         o_hold          = 1'd0;
 
                         state_nxt[UNCACHEABLE] = 1'd0;
                         state_nxt[IDLE]        = 1'd1;
 
-                        o_err           = i_wb_err;
-                        o_fsr[3:0]      = TERMINAL_EXCEPTION;
+                        o_err      = i_wb_err;
+                        o_fsr[3:0] = TERMINAL_EXCEPTION;
 
                         `zap_kill_access;
                 end
@@ -553,7 +548,7 @@ begin:next_state_logic
                 end
 
                 // Generate address
-                adr_ctr_nxt = adr_ctr_ff + ((o_wb_stb_ff && i_wb_ack) ? {{($clog2(CACHE_LINE/4) ){1'd0}}, 1'd1} :
+                adr_ctr_nxt = adr_ctr_ff + ((o_wb_stb_ff && (i_wb_ack|i_wb_err)) ? {{($clog2(CACHE_LINE/4) ){1'd0}}, 1'd1} :
                                                                          {($clog2(CACHE_LINE/4)+1){1'd0}});
 
                 if ( {{ADR_PAD{1'd0}}, adr_ctr_nxt} <= ((CACHE_LINE/4) - 1) )
@@ -597,11 +592,11 @@ begin:next_state_logic
                 end
 
                 // Generate address
-                adr_ctr_nxt = adr_ctr_ff + ((o_wb_stb_ff && i_wb_ack) ? {{($clog2(CACHE_LINE/4) ){1'd0}}, 1'd1} :
+                adr_ctr_nxt = adr_ctr_ff + ((o_wb_stb_ff && (i_wb_ack|i_wb_err)) ? {{($clog2(CACHE_LINE/4) ){1'd0}}, 1'd1} :
                                                                          {($clog2(CACHE_LINE/4)+1){1'd0}}) ;
 
                 // Write to buffer
-                buf_nxt[adr_ctr_ff[$clog2(CACHE_LINE/4)-1:0]] = i_wb_ack ?
+                buf_nxt[adr_ctr_ff[$clog2(CACHE_LINE/4)-1:0]] = (i_wb_ack|i_wb_err) ?
                                                                 i_wb_dat :
                                                                 buf_ff[adr_ctr_ff[$clog2(CACHE_LINE/4)-1:0]];
 
@@ -739,47 +734,46 @@ begin:next_state_logic
 
         default:
         begin
-                tmp                     = 'x; //
-                state_nxt               = 'x; //
-                adr_ctr_nxt             = 'x; //
-                o_wb_cyc_nxt            = 'x; //
-                o_wb_stb_nxt            = 'x; //
-                o_wb_adr_nxt            = 'x; //
-                o_wb_dat_nxt            = 'x; //
-                o_wb_cti_nxt            = 'x; //
-                lock_nxt                = 'x; //
-                o_wb_wen_nxt            = 'x; //
-                o_wb_sel_nxt            = 'x; //
-                cache_clean_req_nxt     = 'x; //
-                cache_inv_req_nxt       = 'x; //
-                o_lock                  = 'x; //
-                o_fsr                   = 'x; //
-                o_far                   = 'x; //
-                o_cache_tag             = 'x; //
-                o_cache_inv_done        = 'x; //
-                o_cache_clean_done      = 'x; //
-                o_cache_tag_dirty       = 'x; //
-                o_cache_tag_wr_en       = 'x; //
-                o_cache_line            = 'x; //
-                o_cache_line_ben        = 'x; //
-                o_hold                  = 'x; //
-                o_reg_dat               = 'x; //
-                o_reg_idx               = 'x; //
-                o_ack                   = 'x; //
-                o_err                   = 'x; //
-                o_err2                  = 'x; //
-                o_address               = 'x; //
-                rhit                    = 'x; //
-                whit                    = 'x; //
+                tmp                     = 'x;
+                state_nxt               = 'x;
+                adr_ctr_nxt             = 'x;
+                o_wb_cyc_nxt            = 'x;
+                o_wb_stb_nxt            = 'x;
+                o_wb_adr_nxt            = 'x;
+                o_wb_dat_nxt            = 'x;
+                o_wb_cti_nxt            = 'x;
+                lock_nxt                = 'x;
+                o_wb_wen_nxt            = 'x;
+                o_wb_sel_nxt            = 'x;
+                cache_clean_req_nxt     = 'x;
+                cache_inv_req_nxt       = 'x;
+                o_lock                  = 'x;
+                o_fsr                   = 'x;
+                o_far                   = 'x;
+                o_cache_tag             = 'x;
+                o_cache_inv_done        = 'x;
+                o_cache_clean_done      = 'x;
+                o_cache_tag_dirty       = 'x;
+                o_cache_tag_wr_en       = 'x;
+                o_cache_line            = 'x;
+                o_cache_line_ben        = 'x;
+                o_hold                  = 'x;
+                o_reg_dat               = 'x;
+                o_reg_idx               = 'x;
+                o_ack                   = 'x;
+                o_err                   = 'x;
+                o_err2                  = 'x;
+                o_address               = 'x;
+                rhit                    = 'x;
+                whit                    = 'x;
 
                 for(int i=0;i<CACHE_LINE/4;i++)
                 begin
-                        buf_nxt[i] = 'x; //
+                        buf_nxt[i] = 'x;
                 end
         end
-
         endcase
-end
+end : next_state_logic
 
 // ----------------------------------------------------------------------------
 // Tasks and functions.
@@ -789,47 +783,47 @@ function automatic [31:0] adapt_cache_data (
         input [$clog2(CACHE_LINE) - 3:0] shift,
         input [CACHE_LINE*8-1:0]         data
 );
-localparam [31:0] W = $clog2(CACHE_LINE) + 3;
-/* verilator lint_off UNUSEDSIGNAL */
-logic [LINE_PAD-1:0] dummy;
-/* verilator lint_on UNUSEDSIGNAL */
+        localparam [31:0] W = $clog2(CACHE_LINE) + 3;
 
-logic [W-1:0]        shamt;
-begin
+        /* verilator lint_off UNUSEDSIGNAL */
+        logic [LINE_PAD-1:0] dummy;
+        /* verilator lint_on UNUSEDSIGNAL */
+
+        logic [W-1:0]        shamt;
         shamt                     = {shift, 5'd0};
         {dummy, adapt_cache_data} =  data >> shamt;
-end
-endfunction
+
+endfunction : adapt_cache_data
 
 function automatic [CACHE_LINE-1:0] ben_comp (
         input [$clog2(CACHE_LINE) - 3:0] shift,
         input [3:0]                      bv
 );
-localparam [31:0] W = $clog2(CACHE_LINE);
-logic [W-1:0] shamt;
-begin
+
+        localparam [31:0] W = $clog2(CACHE_LINE);
+        logic [W-1:0] shamt;
+
         shamt    = {shift, 2'd0};
         ben_comp = {{(CACHE_LINE - 32'd4){1'd0}}, bv} << shamt;
-end
-endfunction
+
+endfunction : ben_comp
 
 function automatic [31:0] clean_single_d (
         input [CACHE_LINE*8-1:0]        cl,
         input [$clog2(CACHE_LINE/4):0]  sh
 );
-logic [$clog2(CACHE_LINE/4) + 5:0] shamt;
+        logic [$clog2(CACHE_LINE/4) + 5:0] shamt;
 
-/* verilator lint_off UNUSEDSIGNAL */
-logic [CACHE_LINE*8-32-1:0] dummy;
-/* verilator lint_on UNUSEDSIGNAL */
+        /* verilator lint_off UNUSEDSIGNAL */
+        logic [CACHE_LINE*8-32-1:0] dummy;
+        /* verilator lint_on UNUSEDSIGNAL */
 
-begin
         shamt                   = {sh, 5'd0};
         {dummy, clean_single_d} = cl >> shamt; // Select specific 32-bit.
-end
-endfunction
 
-endmodule // zap_cache_fsm
+endfunction : clean_single_d
+
+endmodule : zap_dcache_fsm
 
 // ----------------------------------------------------------------------------
 // END OF FILE

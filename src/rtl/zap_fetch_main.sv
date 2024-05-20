@@ -24,6 +24,7 @@
 
 module zap_fetch_main
 (
+
 // Clock and reset.
 input logic i_clk,          // ZAP clock.
 input logic i_reset,        // Active high synchronous reset.
@@ -94,7 +95,7 @@ begin
                 o_valid         <= 1'd0;
                 o_instr_abort   <= 1'd0;
                 sleep_ff        <= 1'd0;
-                o_pred          <= 'x;
+                o_pred          <= 'x; // No need to reset this - hence X.
         end
         else if(( i_clear_from_writeback )
         ||      ( i_clear_from_alu )
@@ -179,8 +180,8 @@ zap_decompile u_zap_decompile (
 
 );
 
-endmodule
+endmodule : zap_fetch_main
 
 // ----------------------------------------------------------------------------
-// EOF
+// END OF FILE
 // ----------------------------------------------------------------------------

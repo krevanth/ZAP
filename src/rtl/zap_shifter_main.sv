@@ -187,7 +187,7 @@ logic shifter_enabled;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-always_comb shifter_enabled = ~i_disable_shifter_ff;
+assign shifter_enabled = ~i_disable_shifter_ff;
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -384,12 +384,9 @@ U_SHIFT
 ///////////////////////////////////////////////////////////////////////////////
 
 // Resolve conflict for ALU source value (rn)
-always_comb
-begin
- rn = resolve_conflict ( i_alu_source_ff, i_alu_source_value_ff,
+assign rn = resolve_conflict ( i_alu_source_ff, i_alu_source_value_ff,
                          o_destination_index_ff, i_alu_value_nxt, i_alu_dav_nxt,
                          i_force32align_ff ); // Needed to pass force32align.
-end
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -476,7 +473,6 @@ function automatic [31:0] resolve_conflict (
         input                            result_from_alu_valid,  // Result from ALU is VALID.
         input                            align32                 // Force 32-bit align on PC read
 );
-begin
         if ( index_from_issue[32] == IMMED_EN )
         begin
                 resolve_conflict = index_from_issue[31:0];
@@ -500,10 +496,9 @@ begin
         begin
                 resolve_conflict[1:0] = 2'b00;
         end
-end
-endfunction
+endfunction : resolve_conflict
 
-endmodule
+endmodule : zap_shifter_main
 
 // ----------------------------------------------------------------------------
 // EOF

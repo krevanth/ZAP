@@ -70,7 +70,8 @@ always_comb
 begin
 
         // ============================================
-        // Default Value Section (Done to avoid combo loops/incomplete assignments)
+        // Default Value Section
+        // (Done to avoid combo loops/incomplete assignments)
         // ============================================
 
         // If you are not in compressed mode, just pass stuff on.

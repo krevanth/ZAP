@@ -163,15 +163,15 @@ logic                                     unused;
 // ----------------------------------------------------------------------------
 
 // Unused
-always_comb unused = |{rhit, whit, phy_addr[$clog2(CACHE_LINE)-1:0]};
+assign unused = |{rhit, whit, phy_addr[$clog2(CACHE_LINE)-1:0]};
 
 // Tie flops to the output
-always_comb o_cache_clean_req = cache_clean_req_ff; // Tie req flop to output.
-always_comb o_cache_inv_req   = cache_inv_req_ff;   // Tie inv flop to output.
+assign o_cache_clean_req = cache_clean_req_ff; // Tie req flop to output.
+assign o_cache_inv_req   = cache_inv_req_ff;   // Tie inv flop to output.
 
 // Alias
-always_comb cache_cmp   = (i_cache_tag[`ZAP_CACHE_TAG__TAG] == i_address[`ZAP_VA__CACHE_TAG]);
-always_comb cache_dirty = i_cache_tag_dirty;
+assign cache_cmp   = (i_cache_tag[`ZAP_CACHE_TAG__TAG] == i_address[`ZAP_VA__CACHE_TAG]);
+assign cache_dirty = i_cache_tag_dirty;
 
 // Buffers
 always_ff @ ( posedge i_clk )
@@ -193,6 +193,10 @@ always_ff @ ( posedge i_clk )
 begin
         if ( i_reset )
         begin
+                // Things that are assigned to 'x on
+                // reset indicates that they do not
+                // actually need to be reset.
+
                 o_wb_cyc_ff             <= 0;
                 o_wb_stb_ff             <= 0;
                 o_wb_wen_ff             <= 'x;
@@ -258,7 +262,8 @@ begin:blk1
        logic [$clog2(CACHE_LINE/4)-1:0] tmp;
 
         // ---------------------------------------
-        // Default Values Section (Done To Avoid Combo Loops/Incomplete Assignments)
+        // Default Values Section
+        // (Done To Avoid Combo Loops/Incomplete Assignments)
         // ---------------------------------------
 
         tmp                     = {($clog2(CACHE_LINE/4)){1'd0}};
@@ -447,16 +452,8 @@ begin:blk1
         UNCACHEABLE:
         // Uncacheable reads and writes definitely go through this.
         begin
-                o_ack  = 1'd0;
-                o_hold = 1'd1;
-
-                if ( i_wb_ack )
+                if ( i_wb_ack | i_wb_err )
                 begin
-                        if ( i_wb_err )
-                        begin
-                                assert ( i_wb_ack) else $fatal(2, "Error: ERR=1 but ACK=0");
-                        end
-
                         o_ack           = 1'd1;
                         o_hold          = 1'd0;
                         state_nxt       = IDLE;
@@ -464,6 +461,11 @@ begin:blk1
                         o_fsr[3:0]      = TERMINAL_EXCEPTION;
 
                         `zap_kill_access;
+                end
+                else
+                begin
+                        o_ack  = 1'd0;
+                        o_hold = 1'd1;
                 end
         end
 
@@ -473,7 +475,7 @@ begin:blk1
                 o_err2 = i_rd || i_wr ? 1'd1 : 1'd0;
 
                 // Generate address
-                adr_ctr_nxt = adr_ctr_ff + ((o_wb_stb_ff && i_wb_ack) ? {{($clog2(CACHE_LINE/4) ){1'd0}}, 1'd1} :
+                adr_ctr_nxt = adr_ctr_ff + ((o_wb_stb_ff && (i_wb_ack|i_wb_err)) ? {{($clog2(CACHE_LINE/4) ){1'd0}}, 1'd1} :
                                                                          {($clog2(CACHE_LINE/4)+1){1'd0}});
 
                 if ( {{ADR_PAD{1'd0}}, adr_ctr_nxt} <= ((CACHE_LINE/4) - 1) )
@@ -509,11 +511,11 @@ begin:blk1
                 o_err2 = i_rd || i_wr ? 1'd1 : 1'd0;
 
                 // Generate address
-                adr_ctr_nxt = adr_ctr_ff + ((o_wb_stb_ff && i_wb_ack) ? {{($clog2(CACHE_LINE/4) ){1'd0}}, 1'd1} :
+                adr_ctr_nxt = adr_ctr_ff + ((o_wb_stb_ff && (i_wb_ack|i_wb_err)) ? {{($clog2(CACHE_LINE/4) ){1'd0}}, 1'd1} :
                                                                          {($clog2(CACHE_LINE/4)+1){1'd0}}) ;
 
                 // Write to buffer
-                buf_nxt[adr_ctr_ff[$clog2(CACHE_LINE/4)-1:0]] = i_wb_ack ?
+                buf_nxt[adr_ctr_ff[$clog2(CACHE_LINE/4)-1:0]] = (i_wb_ack|i_wb_err) ?
                                                                 i_wb_dat :
                                                                 buf_ff[adr_ctr_ff[$clog2(CACHE_LINE/4)-1:0]];
 
@@ -633,9 +635,8 @@ begin:blk1
                 rhit                     = 'x;
                 whit                     = 'x;
         end
-
         endcase
-end
+end:blk1
 
 // ----------------------------------------------------------------------------
 // Tasks and functions.
@@ -645,30 +646,30 @@ function automatic [31:0] adapt_cache_data (
         input [$clog2(CACHE_LINE) - 3:0] shift,
         input [CACHE_LINE*8-1:0]         data
 );
-localparam [31:0] W = $clog2(CACHE_LINE) + 3;
+        localparam [31:0] W = $clog2(CACHE_LINE) + 3;
 
-/* verilator lint_off UNUSEDSIGNAL */
-logic [LINE_PAD-1:0] dummy;
-/* verilator lint_on UNUSEDSIGNAL */
+        /* verilator lint_off UNUSEDSIGNAL */
+        logic [LINE_PAD-1:0] dummy;
+        /* verilator lint_on UNUSEDSIGNAL */
 
-logic [W-1:0]        shamt;
-begin
+        logic [W-1:0] shamt;
+
         shamt                     = {shift, 5'd0};
         {dummy, adapt_cache_data} =  data >> shamt;
-end
-endfunction
+
+endfunction : adapt_cache_data
 
 function automatic [CACHE_LINE-1:0] ben_comp (
         input [$clog2(CACHE_LINE) - 3:0] shift,
         input [3:0]                      bv
 );
 localparam [31:0] W = $clog2(CACHE_LINE);
-logic [W-1:0] shamt;
-begin
+        logic [W-1:0] shamt;
+
         shamt    = {shift, 2'd0};
         ben_comp = {{(CACHE_LINE - 32'd4){1'd0}}, bv} << shamt;
-end
-endfunction
+
+endfunction : ben_comp
 
 function automatic [31:0] clean_single_d (
         input [CACHE_LINE*8-1:0]        cl,
@@ -680,15 +681,12 @@ logic [$clog2(CACHE_LINE/4) + 5:0] shamt;
 logic [CACHE_LINE*8-32-1:0] dummy;
 /* verilator lint_on UNUSEDSIGNAL */
 
-begin
         shamt                   = {sh, 5'd0};
         {dummy, clean_single_d} = cl >> shamt; // Select specific 32-bit.
-end
-endfunction
 
-endmodule // zap_cache_fsm
+endfunction : clean_single_d
 
-
+endmodule : zap_cache_fsm
 
 // ----------------------------------------------------------------------------
 // END OF FILE

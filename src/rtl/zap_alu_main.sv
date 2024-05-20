@@ -422,14 +422,14 @@ assign  o_flags_nxt = o_dav_nxt ? flags_nxt : flags_ff;
 // by examining access type inputs.Same for loads too.
 // If there is neither a load or a store, the old value is preserved.
 //
-always_comb ben_nxt =                generate_ben (
+assign      ben_nxt =                generate_ben (
                                                  i_mem_unsigned_byte_enable_ff,
                                                  i_mem_signed_byte_enable_ff,
                                                  i_mem_unsigned_halfword_enable_ff,
                                                  i_mem_unsigned_halfword_enable_ff,
                                                  mem_address_nxt[1:0]);
 
-always_comb mem_srcdest_value_nxt =  duplicate (
+assign      mem_srcdest_value_nxt =  duplicate (
                                                  i_mem_unsigned_byte_enable_ff,
                                                  i_mem_signed_byte_enable_ff,
                                                  i_mem_unsigned_halfword_enable_ff,
@@ -1170,7 +1170,8 @@ function automatic [35:0] process_logical_instructions
         end
 
         return {flags_out, rd};
-endfunction
+
+endfunction : process_logical_instructions
 
 //
 // The reason we use the duplicate function is to copy value over the memory
@@ -1208,7 +1209,7 @@ function automatic [31:0] duplicate (
         end
 
         return x;
-endfunction
+endfunction : duplicate
 
 //
 // Generate byte enables based on access mode.
@@ -1255,9 +1256,9 @@ function automatic [3:0] generate_ben (
         end
 
         return x;
-endfunction // generate_ben
+endfunction : generate_ben
 
-endmodule
+endmodule : zap_alu_main
 
 // ----------------------------------------------------------------------------
 // END OF FILE

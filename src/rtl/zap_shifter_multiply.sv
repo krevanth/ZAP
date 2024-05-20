@@ -81,10 +81,10 @@ logic         old_nozero_nxt, old_nozero_ff;
 logic         higher;
 logic         unused;
 
-always_comb unused = |{PHY_REGS};
+assign unused = |{PHY_REGS};
 
 // Set 1 to take upper 32-bit. See this instead of TAKE_UPPER.
-always_comb higher =
+assign higher =
                          i_alu_operation_ff[0] ||
                 i_alu_operation_ff == SMLAL00H ||
                 i_alu_operation_ff == SMLAL01H ||
@@ -127,13 +127,11 @@ end
 
 ///////////////////////////////////////////////////////////////////////////////
 
-always_comb // Sign extend.
-begin
-        prod_ab = $signed({{30{xprod_ab[33]}},xprod_ab[33:0]});
-        prod_bc = $signed({{30{xprod_bc[33]}},xprod_bc[33:0]});
-        prod_cd = $signed({{30{xprod_cd[33]}},xprod_cd[33:0]});
-        prod_ad = $signed({{30{xprod_ad[33]}},xprod_ad[33:0]});
-end
+// Sign Extend
+assign prod_ab = $signed({{30{xprod_ab[33]}},xprod_ab[33:0]});
+assign prod_bc = $signed({{30{xprod_bc[33]}},xprod_bc[33:0]});
+assign prod_cd = $signed({{30{xprod_cd[33]}},xprod_cd[33:0]});
+assign prod_ad = $signed({{30{xprod_ad[33]}},xprod_ad[33:0]});
 
 always_ff @ (posedge i_clk) // {ac} * {bd} = RM x RS
 begin
@@ -255,10 +253,20 @@ end
 
 ///////////////////////////////////////////////////////////////////////////////
 
-// STATE MACHINE
+// STATE MACHINE ( Next State Logic )
 always_comb
 begin
+
+        // --------------------------------------------------
+        // Local Variable Section
+        // --------------------------------------------------
+
         logic tmp_sat;
+
+        // --------------------------------------------------
+        // Default Values Section
+        // (Done to avoid combo loops/incomplete assignments
+        // --------------------------------------------------
 
         old_nozero_nxt = old_nozero_ff;
         o_nozero       = 1'd0;
@@ -268,6 +276,10 @@ begin
         x_nxt          = x_ff;
         o_sat          = 1'd0;
         tmp_sat        = 1'd0;
+
+        // --------------------------------------------------
+        // Main FSM code
+        // --------------------------------------------------
 
         case ( state_ff )
                 IDLE:
@@ -385,16 +397,20 @@ begin
                         end
                 end
 
+                // ------------------------------------------
+                // Default Section - Improves synth results.
+                // ------------------------------------------
+
                 default:
                 begin
-                        old_nozero_nxt = 'x; //
-                        o_nozero       = 'x; //
-                        o_busy         = 'x; //
-                        o_rd           = 'x; //
-                        state_nxt      = XX; //
-                        x_nxt          = 'x; //
-                        o_sat          = 'x; //
-                        tmp_sat        = 'x; //
+                        old_nozero_nxt = 'x;
+                        o_nozero       = 'x;
+                        o_busy         = 'x;
+                        o_rd           = 'x;
+                        state_nxt      = XX;
+                        x_nxt          = 'x;
+                        o_sat          = 'x;
+                        tmp_sat        = 'x;
                 end
         endcase
 end
@@ -429,10 +445,8 @@ end
 
 ///////////////////////////////////////////////////////////////////////////////
 
-endmodule // zap_multiply.v
-
-
+endmodule : zap_shifter_multiply
 
 // ----------------------------------------------------------------------------
-// EOF
+// END OF FILE
 // ----------------------------------------------------------------------------

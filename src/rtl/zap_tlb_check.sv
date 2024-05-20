@@ -223,14 +223,13 @@ input [15:0][1:0]       dac_reg,                   // DAC register.
 input [9:0]             tlb                        // TLB entry.
 );
 
-logic [3:0]  apsr; // Concat of AP and SR.
-logic [1:0]  dac;  // DAC bits.
+          logic [3:0]  apsr; // Concat of AP and SR.
+          logic [1:0]  dac;  // DAC bits.
 
-/* verilator lint_off VARHIDDEN */
-logic        unused;
-/* verilator lint_on VARHIDDEN */
+          /* verilator lint_off VARHIDDEN */
+          logic        unused;
+          /* verilator lint_on VARHIDDEN */
 
-begin
          unused = |{tlb[1:0], tlb[`ZAP_FPAGE_TLB__CB]};
 
          apsr[3:2] = tlb [ `ZAP_FPAGE_TLB__AP ];
@@ -254,9 +253,7 @@ begin
         default: return {tlb[`ZAP_FPAGE_TLB__DAC_SEL],   FSR_PAGE_DOMAIN_FAULT   };
 
         endcase
-end
-
-endfunction
+endfunction : get_fsr_fpage
 
 function automatic [7:0] get_fsr_section (             // Return 0 means OK to access else is a valid FSR.
 input                   user, rd, wr,                  // Access properties.
@@ -265,14 +262,13 @@ input [15:0][1:0]       dac_reg,                       // DAC register.
 input [19:0]            tlb                            // TLB entry.
 );
 
-logic [3:0]  apsr; // Concat of AP and SR.
-logic [1:0]  dac;  // DAC bits.
+         logic [3:0]  apsr; // Concat of AP and SR.
+         logic [1:0]  dac;  // DAC bits.
 
-/* verilator lint_off VARHIDDEN */
-logic        unused;
-/* verilator lint_on VARHIDDEN */
+         /* verilator lint_off VARHIDDEN */
+         logic        unused;
+         /* verilator lint_on VARHIDDEN */
 
-begin
         unused = |{tlb[19:12], tlb[9], tlb[4], tlb[`ZAP_SECTION_TLB__CB]};
 
         // Get AP and DAC.
@@ -305,9 +301,8 @@ begin
                 default: return {tlb[`ZAP_SECTION_TLB__DAC_SEL], FSR_SECTION_DOMAIN_FAULT};
                 endcase
         end
-end
 
-endfunction
+endfunction : get_fsr_section
 
 function automatic [7:0] get_fsr_spage (               // Return 0 means OK to access else is a valid FSR.
 input   [1:0]           ap_sel,                        // AP sel bits. dont care for sections or fine pages.
@@ -317,14 +312,13 @@ input [15:0][1:0]       dac_reg,                       // DAC register.
 input [15:0]            tlb                            // TLB entry.
 );
 
-logic [3:0]  apsr; // Concat of AP and SR.
-logic [1:0]  dac;  // DAC bits.
+         logic [3:0]  apsr; // Concat of AP and SR.
+         logic [1:0]  dac;  // DAC bits.
 
-/* verilator lint_off VARHIDDEN */
-logic  [5:0] unused;
-/* verilator lint_on VARHIDDEN */
+         /* verilator lint_off VARHIDDEN */
+         logic  [5:0] unused;
+         /* verilator lint_on VARHIDDEN */
 
-begin
         // Get AP and DAC.
         {unused, apsr[3:2]}     = (tlb  [ `ZAP_SPAGE_TLB__AP ]) >> ({30'd0, ap_sel} << 32'd1);
         dac[1:0]                = dac_reg [tlb[ `ZAP_SPAGE_TLB__DAC_SEL ]];
@@ -332,7 +326,7 @@ begin
 
         unused[1:0]            |= tlb[`ZAP_SPAGE_TLB__CB];
 
-        if ( tlb[1:0] == 2'b00 )
+        if ( tlb[1:0] == 2'b00 ) // Check needed only for section and small page.
         begin
                 return {tlb[`ZAP_L1_PAGE__DAC_SEL], FSR_PAGE_TRANSLATION_FAULT};
         end
@@ -360,8 +354,7 @@ begin
 
                 endcase
         end
-end
-endfunction
+endfunction : get_fsr_spage
 
 function automatic [7:0] get_fsr_lpage (               // Return 0 means OK to access else is a valid FSR.
 input   [1:0]           ap_sel,                        // AP sel bits. dont care for sections or fine pages.
@@ -371,15 +364,14 @@ input [15:0][1:0]       dac_reg,                       // DAC register.
 input [15:0]            tlb                            // TLB entry.
 );
 
-logic [3:0]  apsr; // Concat of AP and SR.
-logic [1:0]  dac;  // DAC bits.
+         logic [3:0]  apsr; // Concat of AP and SR.
+         logic [1:0]  dac;  // DAC bits.
 
-/* verilator lint_off VARHIDDEN */
-logic [5:0]  dummy;// 30-bit dummy variable. UNUSED.
-logic        unused;
-/* verilator lint_on VARHIDDEN */
+         /* verilator lint_off VARHIDDEN */
+         logic [5:0]  dummy;// 30-bit dummy variable. UNUSED.
+         logic        unused;
+         /* verilator lint_on VARHIDDEN */
 
-begin
         unused = |{dummy, tlb[1:0], tlb[`ZAP_LPAGE_TLB__CB]};
 
         // Get AP and DAC.
@@ -405,9 +397,8 @@ begin
         default:return {tlb[`ZAP_LPAGE_TLB__DAC_SEL],   FSR_PAGE_DOMAIN_FAULT   };
 
         endcase
-end
 
-endfunction
+endfunction : get_fsr_lpage
 
 //
 // Function to check APSR bits.
@@ -417,27 +408,19 @@ endfunction
 //
 
 function automatic is_apsr_ok ( input user, input rd, input wr, input [3:0] apsr);
-logic x;
-begin
-        x = APSR_BAD; // Assume fail.
-
         casez (apsr)
-                APSR_NA_NA: x = APSR_BAD;               // No access.
-                APSR_RO_RO: x = !wr;                    // Reads allowed for all.
-                APSR_RO_NA: x = !user && rd;            // Only kernel reads.
-                APSR_RW_NA: x = !user;                  // Only kernel access.
-                APSR_RW_RO: x = !user | (user && rd);   // User RO, Kernel RW.
-                APSR_RW_RW: x = APSR_OK;                // Grant all the time.
-                default   : x = APSR_BAD;               // Deny all the time.
+                APSR_NA_NA: return APSR_BAD;               // No access.
+                APSR_RO_RO: return !wr;                    // Reads allowed for all.
+                APSR_RO_NA: return !user && rd;            // Only kernel reads.
+                APSR_RW_NA: return !user;                  // Only kernel access.
+                APSR_RW_RO: return !user | (user && rd);   // User RO, Kernel RW.
+                APSR_RW_RW: return APSR_OK;                // Grant all the time.
+                default   : return APSR_BAD;               // Deny all the time.
         endcase
+endfunction : is_apsr_ok
 
-        // Assign to function. Return.
-        is_apsr_ok = x;
-end
-endfunction
-
-endmodule
+endmodule : zap_tlb_check
 
 // ----------------------------------------------------------------------------
-// EOF
+// END OF FILE
 // ----------------------------------------------------------------------------
