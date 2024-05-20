@@ -1335,7 +1335,7 @@ zap_postalu_main #(
 zap_postalu_main #(
         .PHY_REGS(PHY_REGS),
         .FLAG_WDT(FLAG_WDT)
-) u_zap_postalu_main (
+) u_zap_postalu2_main (
          .i_clk                            (i_clk),
          .i_reset                          (i_reset),
          .i_data_stall                     (data_stall),
