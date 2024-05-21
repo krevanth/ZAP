@@ -151,7 +151,7 @@ logic                                     cache_clean_req_nxt,
 logic                                     cache_inv_req_nxt,
                                           cache_inv_req_ff;
 logic [$clog2(CACHE_LINE/4):0]            adr_ctr_ff, adr_ctr_nxt; // Needs to take on 0,1,2,3, ... CACHE_LINE/4
-logic                                     rhit, whit;              // For debug only.
+logic                                     rhit, whit;
 
 // From/to processor
 logic    [31:0]                           address;
@@ -174,12 +174,12 @@ logic                                     unused;
 assign      unused = |{phy_addr[$clog2(CACHE_LINE)-1:0]};
 
 // Tie flops to the output
-assign      o_cache_clean_req = cache_clean_req_ff; // Tie req flop to output.
-assign      o_cache_inv_req   = cache_inv_req_ff;   // Tie inv flop to output.
+assign o_cache_clean_req = cache_clean_req_ff; // Tie req flop to output.
+assign o_cache_inv_req   = cache_inv_req_ff;   // Tie inv flop to output.
 
 // Alias
-assign      cache_cmp   = (i_cache_tag[`ZAP_CACHE_TAG__TAG] == i_address[`ZAP_VA__CACHE_TAG]);
-assign      cache_dirty = i_cache_tag_dirty;
+assign cache_cmp   = (i_cache_tag[`ZAP_CACHE_TAG__TAG] == i_address[`ZAP_VA__CACHE_TAG]);
+assign cache_dirty = i_cache_tag_dirty;
 
 // Buffers
 always_ff @ ( posedge i_clk )
@@ -274,22 +274,24 @@ end
 
 // Output data.
 assign o_dat = state_ff[UNCACHEABLE] ?
-                      ( BE_32_ENABLE ? be_32(i_wb_dat, o_wb_sel_ff) : i_wb_dat ) :
-                adapt_cache_data(i_address[$clog2(CACHE_LINE)-1:2], i_cache_line);
+               ( BE_32_ENABLE ? be_32(i_wb_dat, o_wb_sel_ff) : i_wb_dat ) :
+               adapt_cache_data(i_address[$clog2(CACHE_LINE)-1:2], i_cache_line);
 
 // STATE MACHINE (Next State Logic)
 always_comb
 begin:next_state_logic
 
-       // ==========================================
+       // =======================================================
        // Local Vars Section
-       // ==========================================
+       // =======================================================
 
        logic [$clog2(CACHE_LINE/4)-1:0] tmp;
 
-        // =========================================
-        // Default values section (done to avoid combo loops/incomplete assignments).
-        // =========================================
+        // =====================================================
+        // Default values section
+        // (Done to avoid combo loops/incomplete assignments).
+        // =====================================================
+
         tmp                     = {($clog2(CACHE_LINE/4)){1'd0}};
         state_nxt               = state_ff;
         adr_ctr_nxt             = adr_ctr_ff;
@@ -329,9 +331,9 @@ begin:next_state_logic
         rhit = 1'd0;
         whit = 1'd0;
 
-        // ======================================
+        // ====================================================
         // FSM Code Section
-        // ======================================
+        // ====================================================
 
         case(1'd1)
 
@@ -365,7 +367,7 @@ begin:next_state_logic
                 end
                 else if ( i_busy )
                 begin
-                        // Wait it out
+                        // Wait it out - this is what err2 is for.
                         o_err2 = 1'd1;
                         o_ack  = 1'd1;
                 end

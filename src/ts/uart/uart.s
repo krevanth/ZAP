@@ -88,6 +88,7 @@ ldr r0, =VIC_BASE_ADDRESS // VIC base address.
 add r0, r0, #4            // Move to INT_MASK
 mov r1, #0                // Prepare mask value
 str r1, [r0]              // Unmask all interrupt sources.
+ldr r1, [r0]              // No change to R1 value.
 
 /*
  * Then call the main function. The main function

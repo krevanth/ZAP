@@ -294,6 +294,12 @@ bl main
 // Do SWI 0x0
 swi #0x00
 
+// Do back2back store and load
+mov r0, #20
+mov r1, #30
+str r1, [r0]
+ldr r1, [r0]
+
 // Loop forever
 here: b here
 

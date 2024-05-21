@@ -332,32 +332,32 @@ begin
                 o_flag_update_ff                  <= 0;
                 o_stall_from_issue                <= 0;
 
-                o_destination_index_ff            <= 'x; //
-                o_alu_operation_ff                <= 'x; //
-                o_shift_operation_ff              <= 'x; //
-                o_mem_srcdest_index_ff            <= 'x; //
-                o_mem_load_ff                     <= 'x; //
-                o_mem_store_ff                    <= 'x; //
-                o_mem_pre_index_ff                <= 'x; //
-                o_mem_unsigned_byte_enable_ff     <= 'x; //
-                o_mem_signed_byte_enable_ff       <= 'x; //
-                o_mem_signed_halfword_enable_ff   <= 'x; //
-                o_mem_unsigned_halfword_enable_ff <= 'x; //
-                o_mem_translate_ff                <= 'x; //
-                o_pc_plus_8_ff                    <= 'x; //
-                o_shifter_disable_ff              <= 'x; //
-                o_alu_source_ff                   <= 'x; //
-                o_shift_source_ff                 <= 'x; //
-                o_alu_source_value_ff             <= 'x; //
-                o_shift_source_value_ff           <= 'x; //
-                o_shift_length_value_ff           <= 'x; //
-                o_mem_srcdest_value_ff            <= 'x; //
-                o_switch_ff                       <= 'x; //
-                o_force32align_ff                 <= 'x; //
-                o_taken_ff                        <= 'x; //
-                o_pc_ff                           <= 'x; //
-                o_decompile                       <= 'x; //
-                o_ppc_ff                          <= 'x; //
+                o_destination_index_ff            <= 'x;
+                o_alu_operation_ff                <= 'x;
+                o_shift_operation_ff              <= 'x;
+                o_mem_srcdest_index_ff            <= 'x;
+                o_mem_load_ff                     <= 'x;
+                o_mem_store_ff                    <= 'x;
+                o_mem_pre_index_ff                <= 'x;
+                o_mem_unsigned_byte_enable_ff     <= 'x;
+                o_mem_signed_byte_enable_ff       <= 'x;
+                o_mem_signed_halfword_enable_ff   <= 'x;
+                o_mem_unsigned_halfword_enable_ff <= 'x;
+                o_mem_translate_ff                <= 'x;
+                o_pc_plus_8_ff                    <= 'x;
+                o_shifter_disable_ff              <= 'x;
+                o_alu_source_ff                   <= 'x;
+                o_shift_source_ff                 <= 'x;
+                o_alu_source_value_ff             <= 'x;
+                o_shift_source_value_ff           <= 'x;
+                o_shift_length_value_ff           <= 'x;
+                o_mem_srcdest_value_ff            <= 'x;
+                o_switch_ff                       <= 'x;
+                o_force32align_ff                 <= 'x;
+                o_taken_ff                        <= 'x;
+                o_pc_ff                           <= 'x;
+                o_decompile                       <= 'x;
+                o_ppc_ff                          <= 'x;
         end
         else if ( clear )
         begin
@@ -370,32 +370,32 @@ begin
                 o_flag_update_ff     <= 0;
                 o_stall_from_issue   <= 0;
 
-                o_destination_index_ff            <= 'x; //
-                o_alu_operation_ff                <= 'x; //
-                o_shift_operation_ff              <= 'x; //
-                o_mem_srcdest_index_ff            <= 'x; //
-                o_mem_load_ff                     <= 'x; //
-                o_mem_store_ff                    <= 'x; //
-                o_mem_pre_index_ff                <= 'x; //
-                o_mem_unsigned_byte_enable_ff     <= 'x; //
-                o_mem_signed_byte_enable_ff       <= 'x; //
-                o_mem_signed_halfword_enable_ff   <= 'x; //
-                o_mem_unsigned_halfword_enable_ff <= 'x; //
-                o_mem_translate_ff                <= 'x; //
-                o_pc_plus_8_ff                    <= 'x; //
-                o_shifter_disable_ff              <= 'x; //
-                o_alu_source_ff                   <= 'x; //
-                o_shift_source_ff                 <= 'x; //
-                o_alu_source_value_ff             <= 'x; //
-                o_shift_source_value_ff           <= 'x; //
-                o_shift_length_value_ff           <= 'x; //
-                o_mem_srcdest_value_ff            <= 'x; //
-                o_switch_ff                       <= 'x; //
-                o_force32align_ff                 <= 'x; //
-                o_taken_ff                        <= 'x; //
-                o_pc_ff                           <= 'x; //
-                o_decompile                       <= 'x; //
-                o_ppc_ff                          <= 'x; //
+                o_destination_index_ff            <= 'x;
+                o_alu_operation_ff                <= 'x;
+                o_shift_operation_ff              <= 'x;
+                o_mem_srcdest_index_ff            <= 'x;
+                o_mem_load_ff                     <= 'x;
+                o_mem_store_ff                    <= 'x;
+                o_mem_pre_index_ff                <= 'x;
+                o_mem_unsigned_byte_enable_ff     <= 'x;
+                o_mem_signed_byte_enable_ff       <= 'x;
+                o_mem_signed_halfword_enable_ff   <= 'x;
+                o_mem_unsigned_halfword_enable_ff <= 'x;
+                o_mem_translate_ff                <= 'x;
+                o_pc_plus_8_ff                    <= 'x;
+                o_shifter_disable_ff              <= 'x;
+                o_alu_source_ff                   <= 'x;
+                o_shift_source_ff                 <= 'x;
+                o_alu_source_value_ff             <= 'x;
+                o_shift_source_value_ff           <= 'x;
+                o_shift_length_value_ff           <= 'x;
+                o_mem_srcdest_value_ff            <= 'x;
+                o_switch_ff                       <= 'x;
+                o_force32align_ff                 <= 'x;
+                o_taken_ff                        <= 'x;
+                o_pc_ff                           <= 'x;
+                o_decompile                       <= 'x;
+                o_ppc_ff                          <= 'x;
         end
         else if ( ~stall )
         begin
@@ -1098,25 +1098,25 @@ function automatic [31:0] get_register_value (
 
         if   ( index[32] )                 // Catch constant here.
         begin
-                get = index[31:0];
+                        get = index[31:0];
         end
         else if ( index[5:0] == PHY_RAZ_REGISTER[5:0] )   // Catch RAZ here.
         begin
-               // Return 0.
-                get = 32'd0;
+                        // Return 0.
+                        get = 32'd0;
         end
         else if   ( index[5:0] == {2'd0, ARCH_PC[3:0]} )
         // Catch PC here. ARCH index = PHY index so no problem.
         begin
-                get = pc_plus_8_ff;
+                        get = pc_plus_8_ff;
         end
         else if ( index[5:0] == PHY_CPSR[5:0] )   // Catch CPSR here.
         begin
-                get = cpu_mode[31:0];
+                        get = cpu_mode[31:0];
         end
         // Match in ALU stage.
         else if   ( index[5:0] == shifter_destination_index_ff[5:0] && alu_dav_nxt  )
-        begin   // ALU effectively never changes destination so no need to look at _nxt.
+        begin           // ALU effectively never changes destination so no need to look at _nxt.
                         get =  alu_destination_value_nxt;
         end
         // Match in output of ALU stage.

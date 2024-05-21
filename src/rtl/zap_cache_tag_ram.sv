@@ -514,6 +514,7 @@ function automatic [4:0] baggage (
         input [CACHE_SIZE/CACHE_LINE-1:0]               Dirty,
         input [$clog2(NUMBER_OF_DIRTY_BLOCKS):0]        blk_ctr
 );
+
         logic [CACHE_SIZE/CACHE_LINE-1:0] w_dirty;
         logic [15:0] val;
         logic [(CACHE_SIZE/CACHE_LINE) - 16 - 1:0] unused1;
@@ -524,6 +525,8 @@ function automatic [4:0] baggage (
         return pri_enc(val);
 
 endfunction : baggage
+
+// ----------------------------------------------------------------------------
 
 endmodule : zap_cache_tag_ram
 
