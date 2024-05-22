@@ -654,7 +654,7 @@ Note that all parameters should be 2^n. Cache size should be multiple of line si
 
 ## 3. Project Environment
 
-The project environment requires Docker to be installed at your site. Click [here](https://docs.docker.com/engine/install/) for instructions on how to install Docker. The steps here assume that the user is a part of the `docker` group.
+The project environment assumes a Linux based machine and additionally requires Docker to be installed at your site. Click [here](https://docs.docker.com/engine/install/) for instructions on how to install Docker. The steps here assume that the user is a part of the `docker` group. 
 
 The `SEED` arguments allows passing of specific seed and enabling waveform logging. When switching from passing no seed to passing a seed, please run the `clean` make target first. 
 
