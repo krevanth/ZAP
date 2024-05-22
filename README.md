@@ -14,12 +14,6 @@ Thanks to [ElectronAsh](https://github.com/electronash/sim_3do) for working on a
 
 Thanks to [Erez Binyamin](https://github.com/ErezBinyamin) for adding Docker infrastructure support.
 
-The testbench UART core in `src/testbench/uart.v` is based on the [UART-16550 core](https://github.com/freecores/uart16550) project.
-
-Testbench assembly code in `src/ts/mode32_test*/` is based on Jonathan Masur's and Xavier Jimenez's work that can be found [here](https://opencores.org/users/Bregalad/profile)
-
-Testbench assembly code in `src/ts/mode16_test*/` is based on Julian Smolka's work [here](https://github.com/jsmolka/gba-tests)
-
 ## Notice
 
 The repo <https://github.com/krevanth/ZAP> *is* the official, definitive and authoritative ZAP processor repository. 
@@ -767,6 +761,12 @@ DCP file will be available in `obj/syn/zap.dcp`
 ## 4. Acknowledgements
 
 Thanks to [Bharath Mulagondla](https://github.com/bharathmulagondla) and [Akhil Raj Baranwal](https://github.com/thecurryspice) for pointing out bugs in the design.
+
+The testbench UART core in `src/testbench/uart.v` is based on the [UART-16550 core](https://github.com/freecores/uart16550) project.
+
+Testbench assembly code in `src/ts/mode32_test*/` is based on Jonathan Masur's and Xavier Jimenez's work that can be found [here](https://opencores.org/users/Bregalad/profile)
+
+Testbench assembly code in `src/ts/mode16_test*/` is based on Julian Smolka's work [here](https://github.com/jsmolka/gba-tests)
 
 ## 5. License
 
