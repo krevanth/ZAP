@@ -134,7 +134,7 @@ assign wb_cti[2] = CTI_EOB;
 // wb_err[1] is unused.
 assign unused = |{wb_err[1]};
 
-// Basic cache FSM - serves as Master 0.
+// Basic cache FSM - serves as manager 0.
 zap_cache_fsm #(.CACHE_SIZE(CACHE_SIZE), .CACHE_LINE(CACHE_LINE)) u_zap_cache_fsm (
         .i_clk                  (i_clk),
         .i_reset                (i_reset),
@@ -199,7 +199,7 @@ zap_cache_fsm #(.CACHE_SIZE(CACHE_SIZE), .CACHE_LINE(CACHE_LINE)) u_zap_cache_fs
         .i_wb_err               (wb_err[0])
 );
 
-// Cache Tag RAM - As a master - this performs cache clean - Master 1.
+// Cache Tag RAM - As a manager - this performs cache clean - manager 1.
 zap_cache_tag_ram #(.CACHE_SIZE(CACHE_SIZE), .CACHE_LINE(CACHE_LINE)) u_zap_cache_tag_ram     (
         .i_clk                  (i_clk),
         .i_reset                (i_reset),
@@ -242,7 +242,7 @@ zap_cache_tag_ram #(.CACHE_SIZE(CACHE_SIZE), .CACHE_LINE(CACHE_LINE)) u_zap_cach
         .i_wb_ack               (wb_ack[1])
 );
 
-// ZAP TLB control module. Includes TLB RAM inside - Master 2.
+// ZAP TLB control module. Includes TLB RAM inside - manager 2.
 zap_tlb #(
         .LPAGE_TLB_ENTRIES      (LPAGE_TLB_ENTRIES),
         .SPAGE_TLB_ENTRIES      (SPAGE_TLB_ENTRIES),
@@ -332,7 +332,7 @@ begin
         end
 end
 
-// Route ERRs and ACKs to respective masters.
+// Route ERRs and ACKs to respective managers.
 always_comb
 begin
         case(state_ff)
