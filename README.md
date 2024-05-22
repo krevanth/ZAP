@@ -4,11 +4,11 @@
 
 ### RTL Design
 
-All of ZAP RTL is Copyright (C) 2016-2024 [Revanth Kamaraj](https://github.com/krevanth) \<<revanth91kamaraj@gmail.com>\>.
+All of ZAP RTL is **Copyright (C) 2016-2024 [Revanth Kamaraj](https://github.com/krevanth) \<<revanth91kamaraj@gmail.com>\>**.
 
 ### Verification
 
-Most of ZAP's test code is Copyright (C) 2016-2024 Revanth Kamaraj \<<revanth91kamaraj@gmail.com>\> except for the cases noted below:
+Most of ZAP's test code is **Copyright (C) 2016-2024 [Revanth Kamaraj](https://github.com/krevanth) \<<revanth91kamaraj@gmail.com>\>** except for the cases noted below:
 
 Thanks to [ElectronAsh](https://github.com/electronash/sim_3do) for working on a 3DO video game project based around the ZAP core and helping me debug several issues.
 
