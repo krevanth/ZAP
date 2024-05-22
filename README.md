@@ -1,4 +1,4 @@
-# The ZAP Processor : An ARM Compliant Soft Core for FPGA
+# The ZAP Processor : An ARM V5TE Compliant Soft Core for FPGA with Cache and MMU
 
 ## Authors
 
