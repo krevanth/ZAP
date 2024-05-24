@@ -1,25 +1,22 @@
-// -----------------------------------------------------------------------------
-// --                                                                         --
-// --                   (C)2016-2024 Revanth Kamaraj (krevanth)              --
-// --                                                                         -- 
-// -- --------------------------------------------------------------------------
-// --                                                                         --
-// -- This program is free software; you can redistribute it and/or           --
-// -- modify it under the terms of the GNU General Public License             --
-// -- as published by the Free Software Foundation; either version 3          --
-// -- of the License, or (at your option) any later version.                  --
-// --                                                                         --
-// -- This program is distributed in the hope that it will be useful,         --
-// -- but WITHOUT ANY WARRANTY; without even the implied warranty of          --
-// -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           --
-// -- GNU General Public License for more details.                            --
-// --                                                                         --
-// -- You should have received a copy of the GNU General Public License       --
-// -- along with this program; if not, write to the Free Software             --
-// -- Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA           --
-// -- 02110-1301, USA.                                                        --
-// --                                                                         --
-// -----------------------------------------------------------------------------
+//
+// (C) 2016-2024 Revanth Kamaraj (krevanth) <revanth91kamaraj@gmail.com>
+//
+//  This program is free software; you can redistribute it and/or
+//  modify it under the terms of the GNU General Public License
+//  as published by the Free Software Foundation; either version 3
+//  of the License, or (at your option) any later version.
+//
+//  This program is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//  GNU General Public License for more details.
+//
+//  You should have received a copy of the GNU General Public License
+//  along with this program; if not, write to the Free Software
+//  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+//  02110-1301, USA.
+//
+
 
 //
 // Startup file for factorial.
@@ -35,7 +32,7 @@ _Pabt    : b __pabt
 _Dabt    : b __dabt
 reserved : b _Reset
 irq      : b IRQ
-fiq      : b FIQ  
+fiq      : b FIQ
 
 UNDEF:
 
@@ -93,8 +90,8 @@ str r1, [r0]                  // Restart the timer.
 
 # Clear interrupt in VIC.
 ldr r0, =VIC_BASE_ADDRESS   // VIC base address
-add r0, r0, #8  
-ldr r1, =CLEAR_ALL_PENDING    
+add r0, r0, #8
+ldr r1, =CLEAR_ALL_PENDING
 str r1, [r0]                // Clear all interrupt pending status
 
 # Restore
@@ -135,8 +132,8 @@ str r1, [r0]                  // Restart the timer.
 
 # Clear interrupt in VIC.
 ldr r0, =VIC_BASE_ADDRESS   // VIC base address
-add r0, r0, #8  
-ldr r1, =CLEAR_ALL_PENDING    
+add r0, r0, #8
+ldr r1, =CLEAR_ALL_PENDING
 str r1, [r0]                // Clear all interrupt pending status
 
 # Restore corrupted registers. Restore PC from stack.
@@ -178,7 +175,7 @@ there:
 // Switch to IRQ mode.
 mrs r2, cpsr
 bic r2, r2, #31
-orr r2, r2, #18 
+orr r2, r2, #18
 msr cpsr_c, r2
 
 .set IRQ_SP_VALUE, 3000
@@ -277,7 +274,7 @@ str r1, [r0]                    // Enable timer
 add r0, r0, #4
 
 mov r1, #512                     // Program to N=512 CC
-str r1, [r0]                    
+str r1, [r0]
 
 add r0, r0, #8
 mov r1, #0x1
