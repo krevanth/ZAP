@@ -115,7 +115,7 @@ int main(int argc, char** argv, char** env) {
                         }
                         else
                         {
-                                printf("%s\nError: Ending simulation due to error. Pass seed manually to get waves.\n%s", KRED, KNRM);
+                                printf("%s\nError: Ending simulation due to error. Pass seed=%d manually to get waves.\n%s", KRED, seed, KNRM);
                         }
 
                         zap_test->final();

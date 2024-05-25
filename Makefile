@@ -43,14 +43,16 @@ SCRIPT_FILES := $(wildcard scripts/*)
 TEST         := $(shell find src/ts/* -type d -exec basename {} \; | xargs echo)
 
 DLOAD        := "FROM archlinux:latest\n\
-				 RUN pacman -Syyu --noconfirm cargo xterm perl make\n\
+				 RUN pacman -Syyu --noconfirm cargo perl make\n\
 				 RUN pacman -Syyu --noconfirm arm-none-eabi-gcc arm-none-eabi-binutils gcc verilator\n\
 				 RUN cargo install svlint"
 
 DOCKER		 := docker run --interactive --tty --volume $(PWD):$(PWD) --workdir $(PWD) $(TAG)
 LOAD_DOCKER  := docker image ls | grep $(TAG) || echo -e $(DLOAD) | docker build --no-cache --rm --tag $(TAG) -
 
-########################################## User Accessible Targets ####################################################
+##########################################
+# User Accessible Targets
+##########################################
 
 # Thanks to Erez Binyamin for Docker support patches.
 
@@ -62,7 +64,11 @@ test:
 ifndef TC
 	for var in $(TEST); do $(MAKE) test TC=$$var HT=1 || exit 10 ; done; 
 else
+ifndef SEED
 	$(DOCKER) $(MAKE) runsim TC=$(TC) HT=1 || exit 10
+else
+	$(DOCKER) $(MAKE) runsim TC=$(TC) SEED=$(SEED) HT=1 || exit 10
+endif
 endif
 
 # Remove runsim objects.
@@ -83,7 +89,9 @@ reset: clean
 syn: obj/syn/syn_timing.rpt
 	vi obj/syn/syn_timing.rpt
 
-############################################ Internal Targets #########################################################
+############################################
+# Internal Targets
+############################################
 
 obj/syn/syn_timing.rpt: $(CPU_FILES) $(SYN_SCRIPTS)
 	mkdir -p obj/syn
