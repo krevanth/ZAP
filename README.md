@@ -4,7 +4,7 @@
 
 **IMPORTANT: PLEASE VERIFY THAT YOU ARE VIEWING THE ORIGINAL REPO AT [https://github.com/krevanth/ZAP](https://github.com/krevanth/ZAP) TO AVOID ACCIDENTIALLY LOOKING AT FORKS/DETACHED FORKS/UNCONTROLLED COPIES.**
 
-**IMPORTANT: Note that [https://github.com/krevanth/ZAP](https://github.com/krevanth/ZAP) was unintentionally deleted but has now been restored from backups on 23/11/2023. Sadly, the fork list, issues, stars and watchers couldn't be restored.**
+**IMPORTANT: Note that [https://github.com/krevanth/ZAP](https://github.com/krevanth/ZAP) was unintentionally deleted but has now been restored from backups on 23/11/2023. Sadly, the fork list, issues, stars and watchers couldn't be restored. DUE TO THESE ISSUES, ALL PREVIOUS FORKS OF https://github.com/krevanth/ZAP HAVE BEEN DETACHED FROM IT.**
 
 This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 3 of the License, or (at your option) any later version.
 
