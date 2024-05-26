@@ -34,7 +34,7 @@ The repo <https://github.com/krevanth/ZAP> *is* the official, definitive and aut
 
 The repo <https://github.com/krevanth/ZAP> was detached from its forks (as an unintended consequence) when the repo was made private and was then deleted from GitHub. The repo has now been restored at the same URL as before i.e., <https://github.com/krevanth/ZAP> from a combination of local backups. Those who have forked the repo before are encouraged to make a new fork based on <https://github.com/krevanth/ZAP>. Apologies for the inconvenience caused. 
 
-Unfortunately, the issue history, starts, watchers list and the list of the repo's forks could not be restored.
+Unfortunately, the issue history, start, watchers list and the list of the repo's forks could not be restored.
 
 ## Compatibility
 
