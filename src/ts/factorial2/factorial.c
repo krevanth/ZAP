@@ -19,6 +19,8 @@
 
 /* Computes factorial and stores 3.14 in 2004 memory location. */
 
+int fact (int);
+
 void main (void)
 {
         char *x = (char *)2000;
