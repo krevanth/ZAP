@@ -1,6 +1,6 @@
 # The ZAP Processor : An ARM V5TE Compliant Soft Core for FPGA with Cache and MMU (https://github.com/krevanth/ZAP)
 
-**Copyright (C) 2016-2024 [Revanth Kamaraj](https://github.com/krevanth) \<<revanth91kamaraj@gmail.com>\>**.
+**Copyright (C) 2016-2024 [Revanth Kamaraj](https://github.com/krevanth) (krevanth) \<<revanth91kamaraj@gmail.com>\>**.
 
 **IMPORTANT: PLEASE VERIFY THAT YOU ARE VIEWING THE ORIGINAL REPO AT [https://github.com/krevanth/ZAP](https://github.com/krevanth/ZAP) TO AVOID ACCIDENTIALLY LOOKING AT FORKS/DETACHED FORKS/UNCONTROLLED COPIES.**
 
@@ -16,11 +16,11 @@ You should have received a copy of the GNU General Public License along with thi
 
 ### RTL Design
 
-All of ZAP RTL is **Copyright (C) 2016-2024 [Revanth Kamaraj](https://github.com/krevanth) \<<revanth91kamaraj@gmail.com>\>**.
+All of ZAP RTL is **Copyright (C) 2016-2024 [Revanth Kamaraj](https://github.com/krevanth) (krevanth) \<<revanth91kamaraj@gmail.com>\>**.
 
 ### Verification
 
-Most of ZAP's test code is **Copyright (C) 2016-2024 [Revanth Kamaraj](https://github.com/krevanth) \<<revanth91kamaraj@gmail.com>\>** except for the cases noted below:
+Most of ZAP's test code is **Copyright (C) 2016-2024 [Revanth Kamaraj](https://github.com/krevanth) (krevanth) \<<revanth91kamaraj@gmail.com>\>** except for the cases noted below:
 
 Thanks to [ElectronAsh](https://github.com/electronash/sim_3do) for working on a 3DO video game project based around the ZAP core and helping me debug several issues.
 
