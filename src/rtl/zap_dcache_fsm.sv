@@ -272,11 +272,6 @@ begin
         o_idle <= state_nxt[IDLE];
 end
 
-// Output data.
-assign o_dat = state_ff[UNCACHEABLE] ?
-               ( BE_32_ENABLE ? be_32(i_wb_dat, o_wb_sel_ff) : i_wb_dat ) :
-               adapt_cache_data(i_address[$clog2(CACHE_LINE)-1:2], i_cache_line);
-
 // STATE MACHINE (Next State Logic)
 always_comb
 begin:next_state_logic
@@ -330,6 +325,27 @@ begin:next_state_logic
 
         rhit = 1'd0;
         whit = 1'd0;
+
+        // ======================================================
+        // Generate output data.
+        // ======================================================
+
+        if(state_ff[UNCACHEABLE])
+        begin
+            if ( BE_32_ENABLE )
+            begin
+                o_dat = be_32(i_wb_dat, o_wb_sel_ff);
+            end
+            else
+            begin
+                o_dat = i_wb_dat;
+            end
+        end
+        else
+        begin
+            o_dat = adapt_cache_data(i_address[$clog2(CACHE_LINE)-1:2], i_cache_line);
+        end
+
 
         // ====================================================
         // FSM Code Section
@@ -791,7 +807,7 @@ function automatic [31:0] adapt_cache_data (
         logic [LINE_PAD-1:0] dummy;
         /* verilator lint_on UNUSEDSIGNAL */
 
-        logic [W-1:0]        shamt;
+        logic [W-1:0] shamt;
         shamt                     = {shift, 5'd0};
         {dummy, adapt_cache_data} =  data >> shamt;
 
