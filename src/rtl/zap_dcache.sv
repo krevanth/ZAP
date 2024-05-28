@@ -347,7 +347,7 @@ begin
         SELECT_CCH      : {wb_err, wb_ack} = {2'd0, i_wb_err, 2'd0, i_wb_ack};
         SELECT_TAG      : {wb_err, wb_ack} = {1'd0, i_wb_err, 2'd0, i_wb_ack, 1'd0};
         SELECT_TLB      : {wb_err, wb_ack} = {i_wb_err, 2'd0, i_wb_ack, 2'd0};
-        default         : {wb_err wb_ack } = {6{1'dx}};
+        default         : {wb_err, wb_ack } = {6{1'dx}};
         endcase
 end
 
