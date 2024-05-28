@@ -2,17 +2,20 @@
 
 **Copyright (C) 2016-2024 [Revanth Kamaraj](https://github.com/krevanth) (krevanth) \<<revanth91kamaraj@gmail.com>\>**.
 
-**IMPORTANT: PLEASE VERIFY THAT YOU ARE VIEWING THE ORIGINAL REPO AT [https://github.com/krevanth/ZAP](https://github.com/krevanth/ZAP) TO AVOID ACCIDENTIALLY LOOKING AT FORKS/DETACHED FORKS/UNCONTROLLED COPIES.**
+**IMPORTANT: 
 
-**IMPORTANT: Note that [https://github.com/krevanth/ZAP](https://github.com/krevanth/ZAP) was unintentionally deleted but has now been restored to the same URL from backups on 23/11/2023. Sadly, the fork list, issues, stars and watchers couldn't be restored. DUE TO THESE ISSUES, ALL PREVIOUS FORKS OF https://github.com/krevanth/ZAP HAVE BEEN DETACHED FROM IT.**
+- Note that [https://github.com/krevanth/ZAP](https://github.com/krevanth/ZAP) was unintentionally deleted but has now been restored to the same URL from backups on 23/11/2023. Sadly, the fork list, issues, stars and watchers couldn't be restored. 
+- DUE TO THE ABOVE, ALL PREVIOUS FORKS OF https://github.com/krevanth/ZAP HAVE BEEN DETACHED FROM IT.
+- DUE TO THE ABOVE, PLEASE VERIFY THAT YOU ARE VIEWING THE ORIGINAL REPO AT [https://github.com/krevanth/ZAP](https://github.com/krevanth/ZAP) TO AVOID ACCIDENTIALLY LOOKING AT FORKS/DETACHED FORKS/UNCONTROLLED COPIES.
 
-**DATE OF FIRST COMMIT: AUG 29 2016. [View First Commit](https://github.com/krevanth/ZAP/commit/222f6751b88e98d88ec831fc87e2d919ba8b2419)**
 
-This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 3 of the License, or (at your option) any later version.
+**REPO CREATION DATE / FIRST COMMIT DATE : AUG 29 2016. [View First Commit](https://github.com/krevanth/ZAP/commit/222f6751b88e98d88ec831fc87e2d919ba8b2419) (Author=REVANTH KAMARAJ (KREVANTH) Hash=222f6751b88e98d88ec831fc87e2d919ba8b2419)**
 
-This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+## License
 
-You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+**Copyright (C) 2016-2024 [Revanth Kamaraj](https://github.com/krevanth) (krevanth) \<<revanth91kamaraj@gmail.com>\>**.
+
+This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ## Authors
 
