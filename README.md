@@ -2,7 +2,7 @@
 
 **Copyright (C) 2016-2024 [Revanth Kamaraj](https://github.com/krevanth) (krevanth) \<<revanth91kamaraj@gmail.com>\>**.
 
-**IMPORTANT: 
+**IMPORTANT:**
 
 - Note that [https://github.com/krevanth/ZAP](https://github.com/krevanth/ZAP) was unintentionally deleted but has now been restored to the same URL from backups on 23/11/2023. Sadly, the fork list, issues, stars and watchers couldn't be restored. 
 - DUE TO THE ABOVE, ALL PREVIOUS FORKS OF https://github.com/krevanth/ZAP HAVE BEEN DETACHED FROM IT.
