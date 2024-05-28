@@ -324,13 +324,8 @@ end
 // Next state logic.
 always_comb
 begin
-        if ( i_wb_err )
-        begin
-                assert ( i_wb_ack ) else $fatal(2, "Error: ERR=1 but ACK=0.");
-        end
-
         // Change state only if strobe is inactive or strobe has just completed.
-        if ( !o_wb_stb || (o_wb_stb && i_wb_ack) )
+        if ( !o_wb_stb || (o_wb_stb && (i_wb_ack || i_wb_err)) )
         begin
                 casez({wb_cyc[2],wb_cyc[1],wb_cyc[0]})
                 3'b1?? : state_nxt = SELECT_TLB; // TLB.
@@ -349,10 +344,10 @@ end
 always_comb
 begin
         case(state_ff)
-        SELECT_CCH      : {wb_err[0], wb_ack[0]} = {i_wb_err, i_wb_ack};
-        SELECT_TAG      : {wb_err[1], wb_ack[1]} = {i_wb_err, i_wb_ack};
-        SELECT_TLB      : {wb_err[2], wb_ack[2]} = {i_wb_err, i_wb_ack};
-        default         : {wb_err   , wb_ack   } = {6{1'dx}};
+        SELECT_CCH      : {wb_err, wb_ack} = {2'd0, i_wb_err, 2'd0, i_wb_ack};
+        SELECT_TAG      : {wb_err, wb_ack} = {1'd0, i_wb_err, 2'd0, i_wb_ack, 1'd0};
+        SELECT_TLB      : {wb_err, wb_ack} = {i_wb_err, 2'd0, i_wb_ack, 2'd0};
+        default         : {wb_err wb_ack } = {6{1'dx}};
         endcase
 end
 

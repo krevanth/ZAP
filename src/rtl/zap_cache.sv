@@ -336,10 +336,10 @@ end
 always_comb
 begin
         case(state_ff)
-        SELECT_CCH: {wb_err[0], wb_ack[0]} = {i_wb_err, i_wb_ack};
-        SELECT_TAG: {wb_err[1], wb_ack[1]} = {i_wb_err, i_wb_ack};
-        SELECT_TLB: {wb_err[2], wb_ack[2]} = {i_wb_err, i_wb_ack};
-        default:    {wb_err   , wb_ack   } = {6{1'd0}};
+        SELECT_CCH: {wb_err, wb_ack} = {2'd0, i_wb_err, 2'd0, i_wb_ack};
+        SELECT_TAG: {wb_err, wb_ack} = {1'd0, i_wb_err, 2'd0, i_wb_ack, 1'd0};
+        SELECT_TLB: {wb_err, wb_ack} = {i_wb_err, 2'd0, i_wb_ack, 2'd0};
+        default:    {wb_err, wb_ack} = {6{1'dx}};
         endcase
 end
 
