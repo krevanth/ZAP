@@ -890,7 +890,10 @@ begin: alu_result
         begin
                 if ( i_flag_update_ff )
                 begin
-                        tmp_flags[31:28] = {sum[31],~|sum[31:0],sum[32],arith_overflow};
+                        // QADD preserves NZCV while updating sticky Q.
+                        tmp_flags[31:28] = opcode == {1'd0, OP_QADD} ?
+                                           flags_ff[31:28] :
+                                           {sum[31],~|sum[31:0],sum[32],arith_overflow};
                         tmp_flags[26:0]  = flags_ff[26:0];
 
                         if ( opcode == {1'd0, OP_QADD } ||
