@@ -403,6 +403,52 @@ test_sat:
 
         ///////////////////////////////////////////////////////////////////////////////
 
+        @ Tests 15-18 - saturating arithmetic must preserve NZCV without
+        @ saturation. Keep Q clear and check the result as well as NZCVQ.
+        mov r1, #5
+        mov r5, #0
+        mov r7, #0x60000000
+
+        msr cpsr_flg, r7
+        qadd r2, r1, r5
+        mrs r3, cpsr
+        and r3, r3, #0xf8000000
+        teq r3, r7
+        bne fail
+        teq r2, #5
+        bne fail
+        add r0, r0, #1
+
+        msr cpsr_flg, r7
+        qsub r2, r1, r5
+        mrs r3, cpsr
+        and r3, r3, #0xf8000000
+        teq r3, r7
+        bne fail
+        teq r2, #5
+        bne fail
+        add r0, r0, #1
+
+        msr cpsr_flg, r7
+        qdadd r2, r1, r5
+        mrs r3, cpsr
+        and r3, r3, #0xf8000000
+        teq r3, r7
+        bne fail
+        teq r2, #5
+        bne fail
+        add r0, r0, #1
+
+        msr cpsr_flg, r7
+        qdsub r2, r1, r5
+        mrs r3, cpsr
+        and r3, r3, #0xf8000000
+        teq r3, r7
+        bne fail
+        teq r2, #5
+        bne fail
+        add r0, r0, #1
+
         mov r0, #0
         msr cpsr_flg, r0        // Clear out flags to keep in sync with the rest of the test program.
 
