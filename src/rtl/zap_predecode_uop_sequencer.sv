@@ -284,7 +284,17 @@ begin:next_state_logic_and_output_logic
 
                         // If writeback was specified, generate LDR Rdata, [Raddress, #4] for the next load.
                         // Make it pre-indexing without writeback in this case.
-                        if ( i_instruction[21] )
+                        if ( !pre_index && i_instruction[6:5] == 2'b11 )
+                        begin
+                                // Store the second word before updating the base.
+                                o_instruction[25] = 1'd0;
+                                o_instruction[24:23] = 2'b11;
+                                o_instruction[21] = 1'd0;
+                                o_instruction[11:0] = 12'd4;
+                                o_stall_from_decode = 1'd1;
+                                state_nxt = LDRD_STRD_S1;
+                        end
+                        else if ( i_instruction[21] )
                         begin
                                 o_instruction[11:0] = 12'd4;
                                 o_instruction[25]   = 1'd1;
@@ -333,26 +343,46 @@ begin:next_state_logic_and_output_logic
                 LDRD_STRD_S1:
                 begin
                         o_stall_from_decode  = 1'd0;
-                        o_instruction[31:28] = i_instruction[31:28];
-
-                        // Use arch dummy reg0 as the base address since it was incremented by 4.
-                        o_instruction[15:12] = i_instruction[15:12] + 1;
-                        o_instruction[27:26] = 2'b01;
-                        o_instruction[25]    = 1'd0;
-                        o_instruction[11:0]  = i_instruction[11:0];
-                        o_instruction[24:23] = i_instruction[24:23];
-                        o_instruction[22]    = 1'd0;
-                        o_instruction[21]    = i_instruction[21];
-                        o_instruction[15:12] = i_instruction[15:12];
-                        {o_instruction[ZAP_DP_RA_EXTEND], o_instruction[`ZAP_DP_RA]} = ARCH_DUMMY_REG0;
-
-                        if ( i_instruction[6:5] == 2'b11 )
+                        if ( !pre_index && i_instruction[6:5] == 2'b11 )
                         begin
-                                o_instruction[20] = 1'd0;       // Store
+                                // Post-indexing updates Rn after both stores, without flags.
+                                o_instruction = '0;
+                                o_instruction[31:0] = {cc, 2'b00, i_instruction[22],
+                                                       up ? ADD : SUB, 1'b0,
+                                                       base, base, 12'd0};
+                                if ( i_instruction[22] )
+                                begin
+                                        o_instruction[7:0] = {i_instruction[11:8], i_instruction[3:0]};
+                                end
+                                else
+                                begin
+                                        o_instruction[3:0] = i_instruction[3:0];
+                                end
                         end
                         else
                         begin
-                                o_instruction[20] = 1'd1;       // Load
+                                o_instruction[31:28] = i_instruction[31:28];
+
+                                // Use arch dummy reg0 as the base address since it was incremented by 4.
+                                o_instruction[15:12] = i_instruction[15:12] + 1;
+                                o_instruction[27:26] = 2'b01;
+                                o_instruction[25]    = 1'd0;
+                                o_instruction[11:0]  = i_instruction[11:0];
+                                o_instruction[24:23] = i_instruction[24:23];
+                                o_instruction[22]    = 1'd0;
+                                o_instruction[21]    = i_instruction[21];
+                                o_instruction[15:12] = i_instruction[15:12];
+                                {o_instruction[ZAP_DP_RA_EXTEND], o_instruction[`ZAP_DP_RA]} = ARCH_DUMMY_REG0;
+
+                                if ( i_instruction[6:5] == 2'b11 )
+                                begin
+                                        o_instruction[20] = 1'd0;       // Store
+                                end
+                                else
+                                begin
+                                        o_instruction[20] = 1'd1;       // Load
+                                end
+
                         end
 
                         state_nxt = IDLE;
@@ -465,6 +495,15 @@ begin:next_state_logic_and_output_logic
                                 end
 
                                 o_instruction[19:12] = i_instruction[19:12];
+
+                                if ( !pre_index && i_instruction[6:5] == 2'b11 )
+                                begin
+                                        // Both words use the original base before post-index writeback.
+                                        o_instruction[25] = 1'd0;
+                                        o_instruction[24:23] = 2'b11;
+                                        o_instruction[21] = 1'd0;
+                                        o_instruction[11:0] = 12'd0;
+                                end
 
                                 state_nxt            = LDRD_STRD_S0;
 
