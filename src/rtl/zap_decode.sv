@@ -260,9 +260,9 @@ begin
                         o_shift_source = {28'd0, instruction[ZAP_DP_RB_EXTEND], instruction[`ZAP_DP_RB]};
                         o_shift_source[32] = INDEX_EN;
 
-                        // mode32 rm=0
+                        // Non-accumulating multiply: use immediate zero, not r0.
                         o_shift_length     = 33'd0;
-                        o_shift_length[32] = INDEX_EN;
+                        o_shift_length[32] = IMMED_EN;
 
                         // Set rh=0
                         o_mem_srcdest_index = RAZ_REGISTER;
