@@ -195,14 +195,8 @@ begin
                 b <= $signed({17{i_rs[16]}});        // y = 1 for Rs
                 d <= $signed({1'd0, i_rs[31:16]});
 
-                if ( i_alu_operation_ff == OP_SMLAL01L || i_alu_operation_ff == OP_SMLAL01H )
-                begin
-                        take_upper <= 1'd1;
-                end
-                else
-                begin
-                        take_upper <= 1'd0;
-                end
+                // Halfword products and long accumulations are not scaled.
+                take_upper <= 1'd0;
         end
         else if ( i_alu_operation_ff == OP_SMUL10   || i_alu_operation_ff == OP_SMLA10 ||
                   i_alu_operation_ff == OP_SMLAL10L || i_alu_operation_ff == OP_SMLAL10H )
@@ -215,14 +209,8 @@ begin
                 b <= $signed({17{i_rs[15]}});           // y = 0 for Rs
                 d <= $signed({1'd0, i_rs[15:0]});
 
-                if ( i_alu_operation_ff == OP_SMLAL10L || i_alu_operation_ff == OP_SMLAL10H )
-                begin
-                        take_upper <= 1'd1;
-                end
-                else
-                begin
-                        take_upper <= 1'd0;
-                end
+                // Halfword products and long accumulations are not scaled.
+                take_upper <= 1'd0;
         end
         else if ( i_alu_operation_ff == OP_SMUL11   || i_alu_operation_ff == OP_SMLA11 ||
                   i_alu_operation_ff == OP_SMLAL11L || i_alu_operation_ff == OP_SMLAL11H)

@@ -846,7 +846,7 @@ begin: alu_result
                 //
                 if ( opcode == SAT_MOV )
                 begin
-                    tmp_flags[27:0] = {flags_ff[27] | i_shift_sat_ff, flags_ff[26:0]}; // Sticky 27.
+                    tmp_flags[27:0] = {flags_ff[27] | (i_flag_update_ff && i_shift_sat_ff), flags_ff[26:0]}; // Sticky Q when enabled.
                 end
                 else
                 begin

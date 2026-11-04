@@ -198,6 +198,8 @@ begin
 
                         SMLALxy:
                         begin
+                                // Long halfword MAC preserves every CPSR flag, including Q.
+                                o_flag_update       = 1'd0;
                                 o_alu_operation     = instruction[6:5] == 2'b00 ? SMLAL00H :
                                                       instruction[6:5] == 2'b01 ? SMLAL01H :
                                                       instruction[6:5] == 2'b10 ? SMLAL10H :
