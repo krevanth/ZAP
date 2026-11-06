@@ -147,6 +147,21 @@ begin
 
                 take_upper <= 1'd0;
         end
+        else if ( i_alu_operation_ff == OP_SMLAW0 || i_alu_operation_ff == OP_SMLAW1 )
+        begin
+                // The shifter connects architectural Rm to i_rs and Rs to i_rm.
+                // SMLAW multiplies signed Rm by the selected signed half of Rs.
+                a <= $signed({i_rs[31], i_rs[31:16]});
+                c <= $signed({1'd0, i_rs[15:0]});
+
+                b <= i_alu_operation_ff == OP_SMLAW0 ?
+                     $signed({17{i_rm[15]}}) : $signed({17{i_rm[31]}});
+                d <= i_alu_operation_ff == OP_SMLAW0 ?
+                     $signed({1'd0, i_rm[15:0]}) : $signed({1'd0, i_rm[31:16]});
+
+                // SMLAW discards the low product bits before accumulation in S2.
+                take_upper <= 1'd0;
+        end
         else if ( i_alu_operation_ff == OP_SMULW0 )
         begin
                 // Signed RM x Lower RS
@@ -262,6 +277,7 @@ begin
         // --------------------------------------------------
 
         logic tmp_sat;
+        logic signed [63:0] word_product;
 
         // --------------------------------------------------
         // Default Values Section
@@ -276,6 +292,7 @@ begin
         x_nxt          = x_ff;
         o_sat          = 1'd0;
         tmp_sat        = 1'd0;
+        word_product   = 64'sd0;
 
         // --------------------------------------------------
         // Main FSM code
@@ -338,8 +355,16 @@ begin
                         // 3 input adder.
                         x_nxt     = (x_ff[63:0]) + (prod_ab << 32'd32) + {i_rh, i_rn};
 
+                        if ( i_alu_operation_ff == OP_SMLAW0 || i_alu_operation_ff == OP_SMLAW1 )
+                        begin
+                                // SMLAW adds Rn after discarding the low 16 product bits.
+                                // Rh is not an accumulator for this 32-bit operation.
+                                word_product = (x_ff + (prod_ab << 32'd32)) >>> 32'd16;
+                                x_nxt = word_product + $signed({{32{i_rn[31]}}, i_rn});
+                                tmp_sat = x_nxt[31] != word_product[31] && word_product[31] == i_rn[31];
+                        end
                         // 64-bit MAC with saturation. For long DSP MAC.
-                        if ( i_alu_operation_ff == OP_SMLAL00L   ||
+                        else if ( i_alu_operation_ff == OP_SMLAL00L   ||
                              i_alu_operation_ff == OP_SMLAL01L   ||
                              i_alu_operation_ff == OP_SMLAL10L   ||
                              i_alu_operation_ff == OP_SMLAL11L   ||
