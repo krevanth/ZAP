@@ -192,7 +192,7 @@ begin
                 a <= $signed({17{i_rm[15]}});         // x = 0 for Rm
                 c <= $signed({1'd0, i_rm[15:0]});
 
-                b <= $signed({17{i_rs[16]}});        // y = 1 for Rs
+                b <= $signed({17{i_rs[31]}});        // y = 1 for Rs
                 d <= $signed({1'd0, i_rs[31:16]});
 
                 if ( i_alu_operation_ff == OP_SMLAL01L || i_alu_operation_ff == OP_SMLAL01H )
