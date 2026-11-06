@@ -665,7 +665,11 @@ begin
                 begin: tskLDecodeMult
 
                         o_condition_code        =       instruction[31:28];
-                        o_flag_update           =       instruction[20];
+                        // Keep the original flags for both condition checks.
+                        // Only the high-word uop commits N/Z for the full result;
+                        // the multiplier carries the low-word nonzero indication.
+                        o_flag_update           =       instruction[20] &&
+                                                        instruction[ZAP_OPCODE_EXTEND];
 
                         // mode32 rd.
                         o_destination_index     =       {instruction[ZAP_DP_RD_EXTEND],
