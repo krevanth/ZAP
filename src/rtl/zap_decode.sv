@@ -292,9 +292,9 @@ begin
                         o_shift_source          = {29'd0, instruction[19:16]};
                         o_shift_source[32]      = INDEX_EN;
 
-                        // Rs
-                        o_shift_operation       = LSL_SAT;
-                        o_shift_length          = 1;
+                        // QADD uses the unmodified operand; only QDADD doubles it.
+                        o_shift_operation       = {1'd0, LSL};
+                        o_shift_length          = 0;
                         o_shift_length[32]      = IMMED_EN;
 
                         // Destination index.
