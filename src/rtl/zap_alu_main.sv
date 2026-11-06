@@ -890,7 +890,6 @@ begin: alu_result
         begin
                 if ( i_flag_update_ff )
                 begin
-                        tmp_flags[31:28] = {sum[31],~|sum[31:0],sum[32],arith_overflow};
                         tmp_flags[26:0]  = flags_ff[26:0];
 
                         if ( opcode == {1'd0, OP_QADD } ||
@@ -898,10 +897,13 @@ begin: alu_result
                              opcode == {1'd0, OP_QDADD} ||
                              opcode == {1'd0, OP_QDSUB})
                         begin
+                            // Saturating arithmetic updates Q only; preserve NZCV.
+                            tmp_flags[31:28] = flags_ff[31:28];
                             tmp_flags[27] = (arith_overflow || i_shift_sat_ff || flags_ff[27]); // Sticky.
                         end
                         else
                         begin
+                            tmp_flags[31:28] = {sum[31],~|sum[31:0],sum[32],arith_overflow};
                             tmp_flags[27] = flags_ff[27];
                         end
                 end
