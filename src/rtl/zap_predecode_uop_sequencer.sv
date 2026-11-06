@@ -107,7 +107,7 @@ assign unused = |{pre_index};
 
 ///////////////////////////////////////////////////////////////////////////////
 
-enum logic [20:0] {
+enum logic [22:0] {
         IDLE            = 1 << 0 ,
         MEMOP           = 1 << 1 ,
         WRITE_PC        = 1 << 2 ,
@@ -129,6 +129,8 @@ enum logic [20:0] {
         DEP_WAIT_1      = 1 << 18 ,
         DEP_WAIT_2      = 1 << 19 ,
         DEP_WAIT_3      = 1 << 20 ,
+        LDRD_REG0       = 1 << 21 ,
+        LDRD_REG1       = 1 << 22 ,
         `ZAP_DEFAULT_XX
 } state_ff, state_nxt;
 
@@ -269,6 +271,27 @@ begin:next_state_logic_and_output_logic
                         o_instruction[5]        = 1'd0;
 
                         state_nxt               = IDLE;
+                end
+
+                LDRD_REG0, LDRD_REG1:
+                begin
+                        // The effective address was saved before either transfer,
+                        // so loading a destination that aliases Rn cannot change it.
+                        o_instruction = '0;
+                        o_instruction[31:28] = cc;
+                        o_instruction[27:26] = 2'b01;
+                        o_instruction[24:23] = 2'b11; // Pre-indexed, positive immediate.
+                        o_instruction[20] = 1'd1;
+                        {o_instruction[ZAP_BASE_EXTEND], o_instruction[`ZAP_BASE]} = ARCH_DUMMY_REG0;
+                        o_instruction[15:12] = i_instruction[15:12];
+
+                        o_stall_from_decode = state_ff == LDRD_REG0;
+                        state_nxt = state_ff == LDRD_REG0 ? LDRD_REG1 : IDLE;
+                        if ( state_ff == LDRD_REG1 )
+                        begin
+                                o_instruction[15:12] = i_instruction[15:12] + 4'd1;
+                                o_instruction[11:0] = 12'd4;
+                        end
                 end
 
                 LDRD_STRD_S0:
@@ -467,6 +490,20 @@ begin:next_state_logic_and_output_logic
                                 o_instruction[19:12] = i_instruction[19:12];
 
                                 state_nxt            = LDRD_STRD_S0;
+
+                                if ( i_instruction[6:5] == 2'b10 && !i_instruction[22] &&
+                                     i_instruction[24] && !i_instruction[21] )
+                                begin
+                                        // Register offset without writeback: save Rn +/- Rm
+                                        // before loading either destination. Keep the predicate
+                                        // and do not update flags during address calculation.
+                                        o_instruction = '0;
+                                        o_instruction[31:0] = {cc, 2'b00, 1'b0,
+                                                (i_instruction[23] ? ADD : SUB), 1'b0,
+                                                i_instruction[19:16], 4'd0, 8'd0, i_instruction[3:0]};
+                                        {o_instruction[ZAP_DP_RD_EXTEND], o_instruction[`ZAP_DP_RD]} = ARCH_DUMMY_REG0;
+                                        state_nxt = LDRD_REG0;
+                                end
 
                                 // Fine to give IRQs.
                                 o_irq = i_irq;
